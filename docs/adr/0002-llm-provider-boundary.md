@@ -22,7 +22,7 @@ resolution happens only when explicitly constructing the Bedrock agent.
 Use boto3 directly to bound connections (5 seconds), reads (15 seconds by default),
 and total SDK attempts (one). Agent validation retries are zero. Request, tool-call,
 and per-response output-token limits are configurable. Request timeout is also
-passed to Pydantic AI. The later ChatService will own the end-to-end deadline.
+passed to Pydantic AI. ChatService owns the end-to-end conversation deadline (US-06).
 
 Portuguese instructions require grounded catalog facts and polite redirection for
 accessories, unsupported policies/orders, and unrelated questions. No price/stock

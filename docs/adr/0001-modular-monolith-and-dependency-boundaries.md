@@ -20,15 +20,15 @@ Keep one deployable Python package with these responsibilities:
 | --- | --- | --- |
 | `contracts` | Validated chat/catalog values and transport-neutral errors | Implemented |
 | `ports` | Agent execution and product retrieval protocols | Implemented |
-| `application` | ChatService entry-point protocol | Interface only |
-| API | Translate HTTP input/output and errors | Deferred to US-07 |
-| Agent | Prompts, tool registration, SDK execution translation | Deferred to US-04/US-05 |
-| Infrastructure | SQLite retrieval and provider construction | Deferred to US-03/US-04 |
+| `application` | ChatService orchestration and entry-point protocol | Implemented (US-06) |
+| API | Translate HTTP input/output and errors; composition root | Implemented (US-07) |
+| Agent | Prompts, tool registration, SDK execution translation | Implemented (US-04/US-05); live validation deferred |
+| Infrastructure | SQLite import/retrieval (provider factory belongs to Agent) | Implemented (US-03) |
 
 Contracts depend only on Python and Pydantic 2. Ports depend on contracts, and the
 application may depend on contracts and ports. Future adapters depend inward;
 neither provider-specific model objects nor FastAPI objects belong in these
-interfaces. An explicit future composition root constructs adapters and injects
+interfaces. The API composition root constructs adapters and injects
 dependencies. No service locator, generic repository framework, or custom DI
 container is introduced.
 
@@ -53,7 +53,7 @@ sharing unsafe cross-thread connections.
 Validation raises Pydantic ValidationError. Adapters translate operational faults
 to ConfigurationError, ProviderUnavailableError, AgentTimeoutError,
 ProductRetrievalError, or AgentExecutionError, preserving causes internally.
-HTTP mappings and concrete orchestration remain future work. A zero-match result
+HTTP mappings and concrete orchestration were subsequently implemented in US-06/US-07. A zero-match result
 is successful data, not a retrieval failure.
 
 ## Consequences
@@ -70,3 +70,6 @@ depends on Pydantic; replacing that library would require changing the contracts
 The decision is accepted after offline contract tests, isolated import tests,
 dependency-direction checks, and strict mypy validation of independent fakes pass.
 Future changes to these boundaries require updating this ADR or superseding it.
+
+US-08 status update: the table reflects the implemented slice. The original US-02
+contract decision remains accepted; implementation evidence is in the story PRs.

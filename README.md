@@ -1,7 +1,7 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-07**: an installable backend,
+This checkout implements **US-01 through US-08 (implementation; live acceptance deferred)**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
 read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and a typed
 product-search tool connected to the catalog repository.
@@ -154,8 +154,11 @@ normal data. Operational failures have transport-neutral configuration,
 provider-unavailable, timeout, retrieval, and execution error categories; contract
 validation retains Pydantic ValidationError.
 
-Later work must document architecture/retrieval/prompting decisions and include
-real example conversations. Policy answers, order access, persistent conversation
+See [architecture and prompting rationale](docs/architecture.md),
+[validation evidence](docs/validation.md), [pending real examples](docs/examples/README.md),
+and [follow-up/submission requirements](docs/follow-up.md).
+Policy-aware answers and operational-data-versus-policy routing remain follow-up work;
+3–5 real conversations and live Bedrock validation are outstanding. Policy answers, order access, persistent conversation
 history, promotion calculations, frontend delivery, and deployment packaging are
 outside the current foundation story.
 
@@ -168,4 +171,8 @@ submission cutoff; no deadline is assumed here.
 
 OpenAI Codex assisted with challenge/issue analysis, implementation planning,
 bootstrap files and tests, validation commands, and GitHub issue/PR updates.
-Implementation choices and actual check results remain reviewable in the PR.
+Codex used the implement-work-item workflow for scoped delivery and domain-testing
+guidance for risk-based tests. Tests, review findings/fixes, conventional issue-linked
+commits, and sequential PR merges are recorded in GitHub; model reasoning/quality
+has not been validated using controlled-test answers.
+Implementation choices and actual check results remain reviewable in the PRs.
