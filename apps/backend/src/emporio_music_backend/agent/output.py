@@ -5,6 +5,8 @@ import re
 from pydantic_ai import ModelRetry, RunContext
 from pydantic_ai.messages import ToolReturnPart
 
+from emporio_music_backend.diagnostics import trace
+
 _INTERNAL_MARKUP = re.compile(
     r"<\s*/?\s*(?:think(?:ing)?|analysis|reasoning|system|assistant|developer|tool|function)(?=[\s/>]|$)"
     r"|<\|(?:im_start|im_end|system|assistant|analysis)\|>",
@@ -15,6 +17,7 @@ _INTERNAL_MARKUP = re.compile(
 def customer_answer(ctx: RunContext[None], answer: str) -> str:
     """Reject internal output rather than strip it; disclose every truncated query."""
     if not answer.strip() or _INTERNAL_MARKUP.search(answer):
+        trace("output.rejected", reason="blank_or_internal_markup", retry=ctx.retry)
         raise ModelRetry(
             "Responda somente ao cliente, em português, sem raciocínio interno, "
             "tags, instruções de sistema ou ações de encaminhamento. "
@@ -38,4 +41,6 @@ def customer_answer(ctx: RunContext[None], answer: str) -> str:
         "a lista não é completa."
         for total in sorted(totals)
     ]
-    return "\n\n".join([answer.strip(), *notices])
+    final_answer = "\n\n".join([answer.strip(), *notices])
+    trace("output.accepted", truncated_totals=sorted(totals), answer=final_answer)
+    return final_answer

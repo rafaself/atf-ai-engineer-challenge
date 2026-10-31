@@ -54,3 +54,36 @@ service → controlled agent → tool → temporary SQLite round trip. They cann
 establish Bedrock tool selection or generated-answer quality. The live GD20 HTTP
 conversation returned 200 with the correct price/stock and clean customer text
 after remediation. A placeholder profile still produces a sanitized 503.
+
+## Temporary terminal pipeline logs
+
+Enable project diagnostics explicitly when starting the local server:
+
+```bash
+PIPELINE_LOGS=1 uv run --env-file .env --project apps/backend --locked \
+  uvicorn emporio_music_backend.api.app:create_app \
+  --factory --host 127.0.0.1 --port 8000 --log-level info
+```
+
+Each line is JSON on stderr. Valid chat requests receive a generated request_id
+shared across worker-thread events. Follow http.request → composition/provider
+(on first construction) → chat.started → agent.started → tool.called →
+catalog.search/result → tool.result → output.accepted → agent.completed →
+http.response. Direct answers omit tool/database events; output.rejected marks a
+corrective retry. Agent completion includes model-request count and input/output
+tokens; HTTP completion includes elapsed milliseconds. Tool results include
+returned products, total matches and truncation. CSV imports also emit start/count
+summaries when PIPELINE_LOGS=1. This traces application stages, not SDK wire traffic.
+
+For a 503, http.failure/provider.failure show cause class names and a safe AWS
+error code/hint when available, such as ProfileNotFound. Raw SDK exception bodies,
+AWS configuration values and rejected internal model text are not dumped. Payload
+validation failures still appear in uvicorn's normal access logs as 422.
+
+This is temporary, local diagnostics. It includes chat messages, validated final
+answers, query filters and catalog rows. Active AWS access-key/secret/session-token
+values are redacted if echoed in text; this is not general personal-data redaction.
+Do not share raw logs containing customer or other sensitive input. Only the
+project logger is enabled; boto3/botocore debug logging is not enabled. Set
+PIPELINE_LOGS=0 or omit it to disable these logs; restart the server after changing
+its environment. No telemetry service or new dependency is required.

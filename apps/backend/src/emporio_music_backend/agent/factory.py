@@ -30,6 +30,7 @@ from emporio_music_backend.contracts.errors import (
     ConfigurationError,
     ProviderUnavailableError,
 )
+from emporio_music_backend.diagnostics import failure, trace
 
 
 class PydanticAgentExecutor:
@@ -38,6 +39,9 @@ class PydanticAgentExecutor:
         self.settings = settings
 
     async def run(self, request: ChatRequest) -> ChatResponse:
+        trace(
+            "agent.started", model=self.settings.model_id, region=self.settings.region
+        )
         try:
             result = await self.agent.run(
                 request.message,
@@ -45,6 +49,12 @@ class PydanticAgentExecutor:
                     request_limit=self.settings.max_requests,
                     tool_calls_limit=self.settings.max_tool_calls,
                 ),
+            )
+            trace(
+                "agent.completed",
+                requests=result.usage.requests,
+                input_tokens=result.usage.input_tokens,
+                output_tokens=result.usage.output_tokens,
             )
             return ChatResponse(answer=result.output)
         except ApplicationError:
@@ -72,7 +82,14 @@ def create_agent(
     tools: Sequence[Tool[None]] = (),
 ) -> PydanticAgentExecutor:
     """Construct explicitly, using a supplied test/alternative model without AWS setup."""
+    injected_model = model is not None
     if model is None:
+        trace(
+            "provider.initializing",
+            model=settings.model_id,
+            region=settings.region,
+            explicit_profile=settings.aws_profile is not None,
+        )
         try:
             session = boto3.Session(
                 profile_name=settings.aws_profile, region_name=settings.region
@@ -89,9 +106,16 @@ def create_agent(
                 settings.model_id, provider=BedrockProvider(bedrock_client=client)
             )
         except (BotoCoreError, ClientError, ValueError) as exc:
+            trace("provider.failure", **failure(exc))
             raise ConfigurationError(
                 "Cannot initialize Bedrock; check AWS profile, region and credentials"
             ) from exc
+    trace(
+        "provider.ready",
+        configured_model=settings.model_id,
+        region=settings.region,
+        injected_model=injected_model,
+    )
     agent = Agent[None, str](
         model,
         instructions=STORE_INSTRUCTIONS,

@@ -10,6 +10,7 @@ from emporio_music_backend.contracts import (
     ProductSummary,
 )
 from emporio_music_backend.contracts.errors import ProductRetrievalError
+from emporio_music_backend.diagnostics import failure, trace
 from emporio_music_backend.infrastructure._catalog import (
     MAX_INTEGER,
     normalize_lookup,
@@ -22,6 +23,7 @@ class SQLiteProductRepository:
         self.database_path = database_path.resolve()
 
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+        trace("catalog.search", query=query.model_dump(mode="json"))
         clauses: list[str] = []
         parameters: list[int | str] = []
         for value, expression in (
@@ -68,8 +70,10 @@ class SQLiteProductRepository:
                     ProductSummary.model_validate(dict(row)) for row in rows
                 )
                 connection.execute("COMMIT")
+                trace("catalog.result", total_matches=total, returned=len(products))
                 return ProductSearchResult(products=products, total_matches=total)
         except (OSError, sqlite3.Error, ValueError) as exc:
+            trace("catalog.failure", **failure(exc))
             raise ProductRetrievalError(
                 "Cannot read a compatible catalog snapshot"
             ) from exc

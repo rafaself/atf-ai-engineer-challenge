@@ -10,6 +10,7 @@ from pydantic_ai.models import Model
 from emporio_music_backend.agent.factory import PydanticAgentExecutor, create_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts import NonblankText, ProductSearchQuery
+from emporio_music_backend.diagnostics import trace
 from emporio_music_backend.ports import ProductRepository
 
 BRLAmount = Annotated[
@@ -58,6 +59,15 @@ class ProductSearchTool:
             max_price_brl: Inclusive maximum in Brazilian reais, NOT centavos.
             limit: Maximum returned products, 1–20. Total count includes omitted matches.
         """
+        trace(
+            "tool.called",
+            tool="search_available_products",
+            category=category,
+            product_name=product_name,
+            min_price_brl=min_price_brl,
+            max_price_brl=max_price_brl,
+            limit=limit,
+        )
         query = ProductSearchQuery(
             category=category,
             product_name=product_name,
@@ -78,6 +88,12 @@ class ProductSearchTool:
         Use for price, stock and status questions, even if availability is unknown.
         Report actual stock/status; multiple partial-name matches remain visible.
         """
+        trace(
+            "tool.called",
+            tool="get_product_details",
+            product_name=product_name,
+            limit=limit,
+        )
         return self._search(
             ProductSearchQuery(
                 product_name=product_name, available_only=False, limit=limit
@@ -86,6 +102,7 @@ class ProductSearchTool:
 
     def _search(self, query: ProductSearchQuery) -> dict[str, object]:
         result = self.repository.search(query)
+        trace("tool.result", **result.model_dump(mode="json"))
         products: list[dict[str, object]] = []
         for item in result.products:
             row = item.model_dump(mode="json")

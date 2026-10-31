@@ -4,7 +4,9 @@ import os
 from collections.abc import Callable
 from functools import lru_cache
 from pathlib import Path
+from time import perf_counter
 from typing import Annotated, cast
+from uuid import uuid4
 
 from fastapi import Body, Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -20,6 +22,7 @@ from emporio_music_backend.contracts.errors import (
     ConfigurationError,
     ProviderUnavailableError,
 )
+from emporio_music_backend.diagnostics import failure, request_id, trace
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
@@ -40,6 +43,7 @@ def create_app(service: ChatServicePort | None = None) -> FastAPI:
     def service_factory() -> ChatServicePort:
         if service is not None:
             return service
+        trace("composition.started")
         settings = AgentSettings.from_environment()
         database = Path(os.environ.get("DATABASE_PATH", "data/catalog.sqlite3"))
         try:
@@ -83,6 +87,7 @@ def create_app(service: ChatServicePort | None = None) -> FastAPI:
         },
     )
     async def chat(
+        request: Request,
         message: Annotated[
             ChatRequest,
             Body(
@@ -98,8 +103,29 @@ def create_app(service: ChatServicePort | None = None) -> FastAPI:
         ],
         factory: Annotated[ServiceFactory, Depends(get_service_factory)],
     ) -> ChatResponse:
-        # SDK credential resolution may do I/O, so construct outside the event loop.
-        chat_service = await run_in_threadpool(factory)
-        return await chat_service.chat(message)
+        token = request_id.set(uuid4().hex[:12])
+        started = perf_counter()
+        try:
+            trace("http.request", message=message.message)
+            # SDK credential resolution may do I/O; keep it off the event loop.
+            chat_service = await run_in_threadpool(factory)
+            trace("chat.started")
+            response = await chat_service.chat(message)
+            trace(
+                "http.response",
+                status=200,
+                answer=response.answer,
+                duration_ms=round((perf_counter() - started) * 1000, 1),
+            )
+            return response
+        except Exception as exc:
+            trace(
+                "http.failure",
+                **failure(exc),
+                duration_ms=round((perf_counter() - started) * 1000, 1),
+            )
+            raise
+        finally:
+            request_id.reset(token)
 
     return app

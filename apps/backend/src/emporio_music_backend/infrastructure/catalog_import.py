@@ -16,6 +16,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Never
 
+from emporio_music_backend.diagnostics import trace
 from emporio_music_backend.infrastructure._catalog import (
     MAX_INTEGER,
     SCHEMA,
@@ -230,6 +231,11 @@ def import_catalog(
     products_path: Path, categories_path: Path, database_path: Path
 ) -> ImportReport:
     """Validate both sources first, then replace the owned catalog atomically."""
+    trace(
+        "catalog.import.started",
+        products_file=products_path.name,
+        categories_file=categories_path.name,
+    )
     categories = _validate_categories(categories_path)
     products = _validate_products(products_path, {row[0] for row in categories})
     if database_path.resolve() in {products_path.resolve(), categories_path.resolve()}:
@@ -262,6 +268,9 @@ def import_catalog(
                 raise
     except (OSError, sqlite3.Error, ValueError) as exc:
         raise CatalogImportError(database_path, None, "database", str(exc)) from exc
+    trace(
+        "catalog.import.completed", categories=len(categories), products=len(products)
+    )
     return ImportReport(categories=len(categories), products=len(products))
 
 
