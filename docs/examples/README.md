@@ -9,7 +9,7 @@ command and run the opt-in tool probe in [bedrock.md](../bedrock.md). Then captu
 five independent conversations from the repository root:
 
 ```bash
-uv run --project backend --locked python -m emporio_music_backend.agent.examples \
+uv run --project apps/backend --locked python -m emporio_music_backend.agent.examples \
   --live --database data/catalog.sqlite3 --output-dir docs/examples/live
 ```
 

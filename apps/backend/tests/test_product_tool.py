@@ -81,7 +81,7 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
 def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     tmp_path: Path,
 ) -> None:
-    data = Path(__file__).parents[2] / "data"
+    data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(data / "products.csv", data / "categories.csv", database)
     repository = SQLiteProductRepository(database)

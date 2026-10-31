@@ -46,7 +46,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     price: int | None,
     stock: int | None,
 ) -> None:
-    data = Path(__file__).parents[2] / "data"
+    data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(data / "products.csv", data / "categories.csv", database)
     observed: list[dict[str, Any]] = []

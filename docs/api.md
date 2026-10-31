@@ -4,7 +4,7 @@ Import the catalog using the README command, configure a project AWS profile as
 [documented for Bedrock](bedrock.md), and run from the repository root:
 
 ```bash
-uv run --project backend --locked uvicorn emporio_music_backend.api.app:create_app \
+uv run --project apps/backend --locked uvicorn emporio_music_backend.api.app:create_app \
   --factory --host 127.0.0.1 --port 8000
 ```
 

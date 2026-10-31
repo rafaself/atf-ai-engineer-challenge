@@ -10,7 +10,7 @@
   the related issue in each commit body and link each published commit from that
   issue. Open a focused PR and record actual validation results.
 - Run backend quality commands from the repository root using the README's
-  `uv run --directory backend ...` commands. Preserve source CSV bytes.
+  `uv run --directory apps/backend ...` commands. Preserve source CSV bytes.
 
 ## Development stage and compatibility
 

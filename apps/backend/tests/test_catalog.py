@@ -65,7 +65,7 @@ def sources(
 
 
 def test_supplied_snapshot_and_grounded_searches(tmp_path: Path) -> None:
-    data = Path(__file__).parents[2] / "data"
+    data = Path(__file__).parents[3] / "data"
     products, categories = data / "products.csv", data / "categories.csv"
     hashes = [
         hashlib.sha256(path.read_bytes()).digest() for path in (products, categories)

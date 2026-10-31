@@ -20,7 +20,7 @@ configuration produces ConfigurationError. Provider construction is explicit.
 The opt-in probe incurs real model requests:
 
 ```bash
-uv run --project backend --locked python -m emporio_music_backend.agent.smoke --live
+uv run --project apps/backend --locked python -m emporio_music_backend.agent.smoke --live
 ```
 
 It must observe a fresh verification tool call/result and that code in the final

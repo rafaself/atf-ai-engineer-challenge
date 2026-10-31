@@ -93,7 +93,7 @@ def test_http_error_mapping_is_sanitized(error: Exception, status: int) -> None:
 
 
 def test_http_composes_service_agent_tool_and_real_sqlite(tmp_path: Path) -> None:
-    data = Path(__file__).parents[2] / "data"
+    data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(data / "products.csv", data / "categories.csv", database)
     observed: list[object] = []

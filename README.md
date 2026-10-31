@@ -12,20 +12,20 @@ ChatService orchestrates stateless conversations behind `POST /api/chat`. See
 ## Setup
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python
-3.12. The package supports Python 3.12 and later; `backend/.python-version` selects
+3.12. The package supports Python 3.12 and later; `apps/backend/.python-version` selects
 3.12 for a consistent development baseline. Setup was validated with uv 0.13.4 and
 Python 3.12.15.
 
 Run from the repository root:
 
 ```bash
-uv sync --project backend --locked
-uv run --directory backend python -c "import emporio_music_backend"
+uv sync --project apps/backend --locked
+uv run --directory apps/backend python -c "import emporio_music_backend"
 ```
 
-The environment is created at `backend/.venv`. Development tools live in the
+The environment is created at `apps/backend/.venv`. Development tools live in the
 `dev` dependency group and are installed by default. Production dependencies are
-Pydantic, Pydantic AI with Bedrock support, boto3, FastAPI, and uvicorn. The checked-in `backend/uv.lock` records resolved versions;
+Pydantic, Pydantic AI with Bedrock support, boto3, FastAPI, and uvicorn. The checked-in `apps/backend/uv.lock` records resolved versions;
 use `--locked` when installing an existing checkout.
 
 ## Quality checks
@@ -33,15 +33,15 @@ use `--locked` when installing an existing checkout.
 Run from the repository root:
 
 ```bash
-uv run --directory backend --locked ruff check .
-uv run --directory backend --locked ruff format --check .
-uv run --directory backend --locked mypy src tests
-uv run --directory backend --locked pytest
-uv build --project backend
+uv run --directory apps/backend --locked ruff check .
+uv run --directory apps/backend --locked ruff format --check .
+uv run --directory apps/backend --locked mypy src tests
+uv run --directory apps/backend --locked pytest
+uv build --project apps/backend
 ```
 
-`--directory backend` deliberately changes the working directory so every tool
-uses `backend/pyproject.toml` and resolves `src` and `tests` correctly. `--project`
+`--directory apps/backend` deliberately changes the working directory so every tool
+uses `apps/backend/pyproject.toml` and resolves `src` and `tests` correctly. `--project`
 selects a project without changing the command's working directory.
 
 Contract tests validate chat/catalog values, derived fields, independent typed
@@ -49,7 +49,7 @@ fakes, and dependency boundaries without network or database access. Strict mypy
 covers source and tests, including those fakes. The packaging smoke test imports
 the installed distribution in an isolated Python
 subprocess outside the source tree, without AWS configuration or provider imports.
-Build outputs are ignored under `backend/dist/`.
+Build outputs are ignored under `apps/backend/dist/`.
 
 To check the wheel with runtime dependencies only (POSIX shell):
 
@@ -57,7 +57,7 @@ To check the wheel with runtime dependencies only (POSIX shell):
 wheel_check_dir=$(mktemp -d)
 uv venv --python 3.12 "$wheel_check_dir/.venv"
 uv pip install --python "$wheel_check_dir/.venv/bin/python" \
-  backend/dist/emporio_music_backend-0.1.0-py3-none-any.whl
+  apps/backend/dist/emporio_music_backend-0.1.0-py3-none-any.whl
 (cd "$wheel_check_dir" && .venv/bin/python -I -c \
   "import emporio_music_backend; from importlib.metadata import version; print(version('emporio-music-backend'))")
 ```
@@ -68,8 +68,8 @@ The disposable directory can be removed after verification.
 
 | Directory | Responsibility |
 | --- | --- |
-| `backend/` | Installable Python package, tests, and development tooling. |
-| `frontend/` | Placeholder for a later sprint; no JavaScript toolchain. |
+| `apps/backend/` | Installable Python package, tests, and development tooling. |
+| `apps/frontend/` | Placeholder for a later sprint; no JavaScript toolchain. |
 | `data/` | Unmodified product/category CSVs, provenance, and checksums. |
 | `docs/` | Architecture decisions, setup guides, and validation evidence. |
 
@@ -95,7 +95,7 @@ filtering. Promotion calculations and customer/order access remain outside scope
 From the repository root, run:
 
 ```bash
-uv run --project backend --locked python -m \
+uv run --project apps/backend --locked python -m \
   emporio_music_backend.infrastructure.catalog_import \
   --products data/products.csv \
   --categories data/categories.csv \
@@ -112,7 +112,7 @@ schema compatibility, failure behavior, and the repository interface.
 For a local retrieval example (no server or AWS calls):
 
 ```bash
-uv run --project backend --locked python -c \
+uv run --project apps/backend --locked python -c \
   "from pathlib import Path; from emporio_music_backend.contracts import ProductSearchQuery; from emporio_music_backend.infrastructure.sqlite_repository import SQLiteProductRepository; print(SQLiteProductRepository(Path('data/catalog.sqlite3')).search(ProductSearchQuery(category='violoes', max_price_centavos=100000)).model_dump_json())"
 ```
 

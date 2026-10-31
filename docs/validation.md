@@ -13,16 +13,16 @@ It used an empty home directory and removed AWS/model/chat configuration variabl
 These documented root commands passed:
 
 ```bash
-uv sync --project backend --locked
-uv run --directory backend --locked ruff check .
-uv run --directory backend --locked ruff format --check .
-uv run --directory backend --locked mypy src tests
-uv run --directory backend --locked pytest
-uv run --project backend --locked python -m \
+uv sync --project apps/backend --locked
+uv run --directory apps/backend --locked ruff check .
+uv run --directory apps/backend --locked ruff format --check .
+uv run --directory apps/backend --locked mypy src tests
+uv run --directory apps/backend --locked pytest
+uv run --project apps/backend --locked python -m \
   emporio_music_backend.infrastructure.catalog_import \
   --products data/products.csv --categories data/categories.csv \
   --database data/catalog.sqlite3
-uv build --project backend
+uv build --project apps/backend
 (cd data && sha256sum --check SHA256SUMS)
 ```
 

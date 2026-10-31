@@ -25,7 +25,7 @@ from emporio_music_backend.ports import ProductRepository
 def test_recorder_saves_actual_tool_trace_without_claiming_acceptance(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    data = Path(__file__).parents[2] / "data"
+    data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(data / "products.csv", data / "categories.csv", database)
     monkeypatch.setattr(examples, "SCENARIOS", (("named", "Consulte GD20"),))
