@@ -5,6 +5,13 @@ amazon.nova-micro-v1:0 in us-east-1. A real fresh-code tool round trip and HTTP
 GD20 lookup passed on 2026-10-31. Five reviewed remediation scenarios passed; see
 [examples](examples/README.md). Original failing captures are preserved.
 
+The supplied [least-privilege IAM policy reference](aws/bedrock-invoke-policy.json)
+allows standard and streaming invocation of the five explicitly listed model ARNs
+in us-east-1. It is preserved as provided, not applied to AWS by this repository.
+Only Nova Micro has project live-validation evidence; the other listed model ARNs
+and their availability have not been validated here. For a Micro-only deployment,
+narrow the reference to the model and invocation actions actually used.
+
 Use a configured profile (including SSO), or the access-key option in .env.example.
 For profile authentication, export:
 
