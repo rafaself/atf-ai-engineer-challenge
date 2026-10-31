@@ -64,18 +64,36 @@ def test_provider_failure_is_explicit_and_sanitized() -> None:
     assert "private" not in str(error.value) and error.value.__cause__ is not None
 
 
-def test_request_budget_stops_model_loop() -> None:
+@pytest.mark.parametrize(
+    ("max_requests", "max_tool_calls", "expected_requests", "expected_tools"),
+    [(2, 5, 2, 2), (5, 1, 2, 1)],
+    ids=["request-cap", "tool-call-cap"],
+)
+def test_independent_budgets_stop_model_loop(
+    max_requests: int, max_tool_calls: int, expected_requests: int, expected_tools: int
+) -> None:
+    requests = 0
+    tools = 0
+
     def echo() -> str:
+        nonlocal tools
+        tools += 1
         return "ok"
 
     def repeat(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal requests
+        requests += 1
         return ModelResponse(parts=[ToolCallPart("echo", {})])
 
     executor = create_agent(
-        AgentSettings(max_requests=2), model=FunctionModel(repeat), tools=[Tool(echo)]
+        AgentSettings(max_requests=max_requests, max_tool_calls=max_tool_calls),
+        model=FunctionModel(repeat),
+        tools=[Tool(echo)],
     )
     with pytest.raises(AgentExecutionError):
         asyncio.run(executor.run(ChatRequest(message="continue")))
+    assert requests == expected_requests
+    assert tools == expected_tools
 
 
 def test_configuration_and_placeholder_profile_do_not_require_credentials() -> None:

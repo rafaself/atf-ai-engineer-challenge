@@ -50,6 +50,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     database = tmp_path / "catalog.sqlite3"
     import_catalog(data / "products.csv", data / "categories.csv", database)
     observed: list[dict[str, Any]] = []
+    answer = "Resposta de controle; não é avaliação LLM."
 
     def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
@@ -62,9 +63,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
             return ModelResponse(parts=[ToolCallPart("search_products", arguments)])
         assert isinstance(returned[-1].content, dict)
         observed.append(dict(returned[-1].content))
-        return ModelResponse(
-            parts=[TextPart("Resposta de controle; não é avaliação LLM.")]
-        )
+        return ModelResponse(parts=[TextPart(answer)])
 
     executor = create_catalog_agent(
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
@@ -72,6 +71,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     with TestClient(create_app(ChatService(executor))) as client:
         response = client.post("/api/chat", json={"message": "Consulta de integração"})
     assert response.status_code == 200
+    assert response.json() == {"answer": answer}
     assert len(observed) == 1
     result = observed[0]
     assert result["total_matches"] == total

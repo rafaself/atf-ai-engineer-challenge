@@ -1,5 +1,4 @@
-import asyncio
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 import pytest
 from pydantic import ValidationError
@@ -173,11 +172,7 @@ class FakeAgent:
 class FakeRepository:
     """Canned results demonstrate substitution without implementing filtering."""
 
-    def __init__(self) -> None:
-        self.last_query: ProductSearchQuery | None = None
-
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
-        self.last_query = query
         return ProductSearchResult(products=(product(),), total_matches=1)
 
 
@@ -186,14 +181,9 @@ class FakeChatService:
         return ChatResponse(answer=request.message)
 
 
-def test_protocols_accept_independent_typed_fakes() -> None:
+# Structural compatibility is a static guarantee; executing these canned fakes
+# would only test their own pass-through bodies, not application behavior.
+if TYPE_CHECKING:
     agent: AgentExecutor = FakeAgent()
     service: ChatServicePort = FakeChatService()
-    fake = FakeRepository()
-    repository: ProductRepository = fake
-    request = ChatRequest(message="Olá")
-    assert asyncio.run(agent.run(request)).answer == "Olá"
-    assert asyncio.run(service.chat(request)).answer == "Olá"
-    query = ProductSearchQuery(product_name="GD20", available_only=False)
-    assert repository.search(query).products[0].product_id == 95
-    assert fake.last_query is query
+    repository: ProductRepository = FakeRepository()

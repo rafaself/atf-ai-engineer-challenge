@@ -1,20 +1,7 @@
-from pathlib import Path
-
 import pytest
 from fastapi.testclient import TestClient
-from pydantic_ai.messages import (
-    ModelMessage,
-    ModelResponse,
-    TextPart,
-    ToolCallPart,
-    ToolReturnPart,
-)
-from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from emporio_music_backend.agent.catalog import create_catalog_agent
-from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.api.app import create_app, get_service_factory
-from emporio_music_backend.application import ChatService
 from emporio_music_backend.contracts import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
@@ -22,10 +9,6 @@ from emporio_music_backend.contracts.errors import (
     ConfigurationError,
     ProductRetrievalError,
     ProviderUnavailableError,
-)
-from emporio_music_backend.infrastructure.catalog_import import import_catalog
-from emporio_music_backend.infrastructure.sqlite_repository import (
-    SQLiteProductRepository,
 )
 
 
@@ -90,35 +73,3 @@ def test_http_error_mapping_is_sanitized(error: Exception, status: int) -> None:
         response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == status
     assert "private" not in response.text and "Traceback" not in response.text
-
-
-def test_http_composes_service_agent_tool_and_real_sqlite(tmp_path: Path) -> None:
-    data = Path(__file__).parents[3] / "data"
-    database = tmp_path / "catalog.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", database)
-    observed: list[object] = []
-
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        returns = [
-            part
-            for message in messages
-            for part in message.parts
-            if isinstance(part, ToolReturnPart)
-        ]
-        if not returns:
-            return ModelResponse(
-                parts=[ToolCallPart("search_products", {"product_name": "GD20"})]
-            )
-        observed.append(returns[-1].content)
-        return ModelResponse(
-            parts=[TextPart("Takamine GD20: R$ 2.199,00; 5 disponíveis.")]
-        )
-
-    agent = create_catalog_agent(
-        AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
-    )
-    with TestClient(create_app(ChatService(agent))) as client:
-        response = client.post("/api/chat", json={"message": "Quanto custa o GD20?"})
-    assert response.status_code == 200 and "2.199,00" in response.json()["answer"]
-    assert observed and isinstance(observed[0], dict)
-    assert observed[0]["total_matches"] == 1
