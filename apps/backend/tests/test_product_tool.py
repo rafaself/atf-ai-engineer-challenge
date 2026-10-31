@@ -18,6 +18,7 @@ from emporio_music_backend.agent.catalog import ProductSearchTool, create_catalo
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts import (
     ChatRequest,
+    ExecutionContext,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -117,12 +118,19 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
         AgentSettings(), repository, model=FunctionModel(respond)
     )
     response = asyncio.run(
-        executor.run(ChatRequest(message="Quais violões até R$1000?"))
+        executor.run(
+            ChatRequest(message="Quais violões até R$1000?"), context=ExecutionContext()
+        )
     )
     assert "12" in response.answer and "seleção" in response.answer
     assert observed and isinstance(observed[0], dict)
     assert observed[0]["total_matches"] == 12 and observed[0]["truncated"] is True
-    assert asyncio.run(executor.run(ChatRequest(message="Olá"))).answer == "Olá!"
+    assert (
+        asyncio.run(
+            executor.run(ChatRequest(message="Olá"), context=ExecutionContext())
+        ).answer
+        == "Olá!"
+    )
     tool = ProductSearchTool(repository)
     named = tool.get_product_details(product_name="GD20")
     assert named["products"] == [
@@ -154,7 +162,11 @@ def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
         AgentSettings(), BrokenRepository(), model=FunctionModel(respond)
     )
     with pytest.raises(ProductRetrievalError):
-        asyncio.run(executor.run(ChatRequest(message="Quanto custa o GD20?")))
+        asyncio.run(
+            executor.run(
+                ChatRequest(message="Quanto custa o GD20?"), context=ExecutionContext()
+            )
+        )
 
 
 def test_money_conversion_does_not_inherit_ambient_decimal_rounding() -> None:
@@ -180,5 +192,9 @@ def test_sdk_tool_validation_rejects_boolean_limit_before_repository() -> None:
         AgentSettings(), repository, model=FunctionModel(respond)
     )
     with pytest.raises(AgentExecutionError):
-        asyncio.run(executor.run(ChatRequest(message="Buscar instrumentos")))
+        asyncio.run(
+            executor.run(
+                ChatRequest(message="Buscar instrumentos"), context=ExecutionContext()
+            )
+        )
     assert repository.query is None

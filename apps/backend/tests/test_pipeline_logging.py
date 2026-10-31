@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from emporio_music_backend.api.app import create_app
-from emporio_music_backend.contracts import ChatRequest, ChatResponse
+from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
 from emporio_music_backend.contracts.errors import ConfigurationError
 
 
@@ -20,7 +20,9 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
 
     class Service:
-        async def chat(self, request: ChatRequest) -> ChatResponse:
+        async def chat(
+            self, request: ChatRequest, *, context: ExecutionContext
+        ) -> ChatResponse:
             return ChatResponse(answer=request.message)
 
     with TestClient(create_app(Service())) as client:
@@ -62,7 +64,9 @@ def test_failure_logs_show_cause_type_without_raw_exception_body(
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
 
     class Service:
-        async def chat(self, request: ChatRequest) -> ChatResponse:
+        async def chat(
+            self, request: ChatRequest, *, context: ExecutionContext
+        ) -> ChatResponse:
             try:
                 raise RuntimeError("private provider body and credential contents")
             except RuntimeError as exc:

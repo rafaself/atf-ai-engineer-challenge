@@ -6,6 +6,7 @@ from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
     CustomerIdentity,
+    ExecutionContext,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -22,8 +23,10 @@ class CustomerIdentityResolver(Protocol):
 
 
 class AgentExecutor(Protocol):
-    async def run(self, request: ChatRequest) -> ChatResponse:
-        """Execute a single message; adapters translate provider failures."""
+    async def run(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
+        """Execute with trusted, application-owned context; translate provider faults."""
         ...
 
 

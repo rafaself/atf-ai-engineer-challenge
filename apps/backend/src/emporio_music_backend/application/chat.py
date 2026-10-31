@@ -1,9 +1,9 @@
-"""Transport-independent, stateless conversation orchestration."""
+"""Transport-independent execution with caller-supplied, application-owned context."""
 
 import asyncio
 import math
 
-from emporio_music_backend.contracts import ChatRequest, ChatResponse
+from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
@@ -22,12 +22,15 @@ class ChatService:
         self._agent = agent
         self._timeout_seconds = timeout_seconds
 
-    async def chat(self, request: ChatRequest) -> ChatResponse:
+    async def chat(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
         # Keep contract failures distinct from execution faults.
         validated = ChatRequest.model_validate(request)
+        validated_context = ExecutionContext.model_validate(context)
         try:
             async with asyncio.timeout(self._timeout_seconds):
-                response = await self._agent.run(validated)
+                response = await self._agent.run(validated, context=validated_context)
                 return ChatResponse.model_validate(response)
         except ApplicationError:
             raise

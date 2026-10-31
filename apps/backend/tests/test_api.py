@@ -2,18 +2,25 @@ import pytest
 from fastapi.testclient import TestClient
 
 from emporio_music_backend.api.app import create_app, get_service_factory
-from emporio_music_backend.contracts import ChatRequest, ChatResponse
+from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
+    AuthenticationError,
     ConfigurationError,
+    ConversationPersistenceError,
     ProductRetrievalError,
     ProviderUnavailableError,
+    SessionAccessError,
+    SessionConflictError,
 )
 
 
 class FakeService:
-    async def chat(self, request: ChatRequest) -> ChatResponse:
+    async def chat(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
+        assert context == ExecutionContext()
         return ChatResponse(answer=request.message)
 
 
@@ -29,6 +36,10 @@ def test_http_contract_docs_and_dependency_override() -> None:
             {"message": "a" * 4001},
             {"message": 1},
             {"message": "Olá", "session_id": "unused"},
+            {"message": "Olá", "customer_id": 2},
+            {"message": "Olá", "identity": {"customer_id": 2}},
+            {"message": "Olá", "history": []},
+            {"message": "Olá", "context": {"identity": {"customer_id": 2}}},
             {},
         ):
             assert client.post("/api/chat", json=payload).status_code == 422
@@ -56,6 +67,10 @@ def test_default_docs_and_validation_do_not_initialize_aws(
 @pytest.mark.parametrize(
     ("error", "status"),
     [
+        (AuthenticationError("private credential"), 401),
+        (SessionAccessError("private session"), 404),
+        (SessionConflictError("private state"), 409),
+        (ConversationPersistenceError("private database"), 500),
         (ConfigurationError("private configuration"), 503),
         (ProviderUnavailableError("private provider body"), 503),
         (AgentTimeoutError("private timeout"), 504),
@@ -66,7 +81,9 @@ def test_default_docs_and_validation_do_not_initialize_aws(
 )
 def test_http_error_mapping_is_sanitized(error: Exception, status: int) -> None:
     class Service:
-        async def chat(self, request: ChatRequest) -> ChatResponse:
+        async def chat(
+            self, request: ChatRequest, *, context: ExecutionContext
+        ) -> ChatResponse:
             raise error
 
     with TestClient(create_app(Service()), raise_server_exceptions=False) as client:

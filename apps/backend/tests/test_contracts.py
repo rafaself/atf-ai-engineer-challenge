@@ -7,6 +7,7 @@ from emporio_music_backend.application import ChatServicePort
 from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
+    ExecutionContext,
     ProductSearchQuery,
     ProductSearchResult,
     ProductSummary,
@@ -165,7 +166,9 @@ def test_empty_complete_and_truncated_results() -> None:
 
 
 class FakeAgent:
-    async def run(self, request: ChatRequest) -> ChatResponse:
+    async def run(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
         return ChatResponse(answer=request.message)
 
 
@@ -177,7 +180,9 @@ class FakeRepository:
 
 
 class FakeChatService:
-    async def chat(self, request: ChatRequest) -> ChatResponse:
+    async def chat(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
         return ChatResponse(answer=request.message)
 
 

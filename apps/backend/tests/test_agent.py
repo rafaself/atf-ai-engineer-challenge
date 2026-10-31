@@ -16,7 +16,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ChatRequest
+from emporio_music_backend.contracts import ChatRequest, ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     ConfigurationError,
@@ -48,7 +48,12 @@ def test_controlled_tool_round_trip_and_stateless_runs() -> None:
     )
     for _ in range(2):
         assert (
-            asyncio.run(executor.run(ChatRequest(message="Verifique o código"))).answer
+            asyncio.run(
+                executor.run(
+                    ChatRequest(message="Verifique o código"),
+                    context=ExecutionContext(),
+                )
+            ).answer
             == "Verificado: checked"
         )
     assert calls == ["checked", "checked"]
@@ -60,7 +65,9 @@ def test_provider_failure_is_explicit_and_sanitized() -> None:
 
     executor = create_agent(AgentSettings(), model=FunctionModel(fail))
     with pytest.raises(ProviderUnavailableError) as error:
-        asyncio.run(executor.run(ChatRequest(message="Olá")))
+        asyncio.run(
+            executor.run(ChatRequest(message="Olá"), context=ExecutionContext())
+        )
     assert "private" not in str(error.value) and error.value.__cause__ is not None
 
 
@@ -91,7 +98,9 @@ def test_independent_budgets_stop_model_loop(
         tools=[Tool(echo)],
     )
     with pytest.raises(AgentExecutionError):
-        asyncio.run(executor.run(ChatRequest(message="continue")))
+        asyncio.run(
+            executor.run(ChatRequest(message="continue"), context=ExecutionContext())
+        )
     assert requests == expected_requests
     assert tools == expected_tools
 
