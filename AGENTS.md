@@ -6,9 +6,10 @@
 - Avoid changes that introduce security vulnerabilities. If a risky change is
   necessary, explain the risk to the user before proceeding.
 - Never commit credentials, local environment files, or generated databases.
-- Use `type(scope): message` commit subjects of at most 60 characters. Reference
-  the related issue in each commit body and link each published commit from that
-  issue. Open a focused PR and record actual validation results.
+- Use `type(scope): message` commit subjects of at most 60 characters. Every
+  commit, including documentation, tests, and tooling, must reference its related
+  GitHub issue in the body (for example, `Refs #23` for US-09). Link each published
+  commit from that issue. Open a focused PR and record actual validation results.
 - Run backend quality commands from the repository root using the README's
   `uv run --directory apps/backend ...` commands. Preserve source CSV bytes.
 
