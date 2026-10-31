@@ -4,7 +4,7 @@ from typing import Literal
 import pytest
 from pydantic import ValidationError
 
-from emporio_music_backend.application import ChatService
+from emporio_music_backend.application import ChatServicePort
 from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
@@ -188,7 +188,7 @@ class FakeChatService:
 
 def test_protocols_accept_independent_typed_fakes() -> None:
     agent: AgentExecutor = FakeAgent()
-    service: ChatService = FakeChatService()
+    service: ChatServicePort = FakeChatService()
     fake = FakeRepository()
     repository: ProductRepository = fake
     request = ChatRequest(message="Olá")
