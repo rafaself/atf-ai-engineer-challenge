@@ -1,10 +1,11 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-03**: an installable backend,
+This checkout implements **US-01 through US-04**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
-read-only SQLite retrieval. Concrete agent execution, chat orchestration, and HTTP
-remain later stories.
+read-only SQLite retrieval, and an isolated Pydantic AI/Bedrock agent adapter.
+Live Bedrock evidence is deferred until the user confirms a project AWS profile.
+Chat orchestration and HTTP remain later stories. See [agent setup](docs/bedrock.md).
 
 ## Setup
 
@@ -22,7 +23,7 @@ uv run --directory backend python -c "import emporio_music_backend"
 
 The environment is created at `backend/.venv`. Development tools live in the
 `dev` dependency group and are installed by default. Production dependencies are
-currently limited to Pydantic 2. The checked-in `backend/uv.lock` records resolved versions;
+Pydantic, Pydantic AI with Bedrock support, and boto3. The checked-in `backend/uv.lock` records resolved versions;
 use `--locked` when installing an existing checkout.
 
 ## Quality checks
@@ -75,7 +76,7 @@ The disposable directory can be removed after verification.
 `.env.example` documents future configuration only; no runtime loader exists yet.
 The provider preference is Bedrock in `us-east-1`, initially
 `amazon.nova-micro-v1:0`, or another validated low-cost feasible model. Model access
-and tool calling have **not** been validated in US-01. Future integration will use
+and tool calling have **not** been live-validated. The integration uses
 the standard AWS credential chain; no credentials are required for setup or tests.
 
 `DATABASE_PATH` documents the catalog path relative to the repository root; pass

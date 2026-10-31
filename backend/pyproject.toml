@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Customer-support agent backend for the Artefact AI Engineer challenge."
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.43.123",
     "pydantic>=2,<3",
+    "pydantic-ai-slim[bedrock]>=2.64.0",
 ]
 
 [build-system]
