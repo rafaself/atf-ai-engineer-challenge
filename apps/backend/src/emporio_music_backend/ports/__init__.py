@@ -1,12 +1,16 @@
 """Substitution boundaries for agent execution and catalog retrieval."""
 
 from typing import Protocol
+from uuid import UUID
 
 from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
+    ConversationSession,
+    ConversationSnapshot,
     CustomerIdentity,
     ExecutionContext,
+    HistoryLimits,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -19,6 +23,27 @@ class CustomerIdentityResolver(Protocol):
         A credential is supplied by the transport boundary, never model input.
         No credential is retained in the returned identity or execution context.
         """
+        ...
+
+
+class ConversationRepository(Protocol):
+    """Short, synchronous local operations; append commits one complete turn."""
+
+    def create(self, identity: CustomerIdentity) -> ConversationSession: ...
+
+    def load(
+        self, session_id: UUID, identity: CustomerIdentity, *, limits: HistoryLimits
+    ) -> ConversationSnapshot: ...
+
+    def append(
+        self,
+        session: ConversationSession,
+        expected_revision: int,
+        *,
+        user_message: str,
+        answer: str,
+    ) -> None:
+        """Atomically append or raise access, conflict, or persistence error."""
         ...
 
 

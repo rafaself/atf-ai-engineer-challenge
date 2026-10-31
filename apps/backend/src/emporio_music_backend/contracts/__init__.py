@@ -85,6 +85,26 @@ class ExecutionContext(ContractModel):
         return self
 
 
+class HistoryLimits(ContractModel):
+    max_turns: Annotated[int, Field(strict=True, ge=1, le=20)] = 6
+    max_characters: Annotated[int, Field(strict=True, ge=1, le=64000)] = 24000
+
+
+class ConversationSnapshot(ContractModel):
+    session: ConversationSession
+    revision: NonnegativeInt
+    history: tuple[ConversationMessage, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_history(self) -> Self:
+        ExecutionContext(
+            identity=self.session.owner, session=self.session, history=self.history
+        )
+        if len(self.history) // 2 > self.revision:
+            raise ValueError("History cannot exceed the committed revision")
+        return self
+
+
 class ProductSearchQuery(ContractModel):
     """Inclusive centavo bounds; textual filters combine with AND.
 
