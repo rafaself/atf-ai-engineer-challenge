@@ -1,7 +1,7 @@
 # Live validation attempt — 2026-10-31
 
-Status: authentication blocker resolved after key activation; live interactions
-completed with behavioral findings below. Earlier failed attempts are retained
+Status: authentication and the three observed behavioral findings have passing
+remediation evidence below; original failed attempts remain preserved. Earlier failed attempts are retained
 for context. Credentials and local .env contents are not recorded.
 
 ## Passed local checks
@@ -71,3 +71,29 @@ are real evidence of both working behavior and defects, not a full acceptance pa
 Next: correct/evaluate prompting or output handling for the confirmed failures,
 then rerun the affected live scenarios while preserving these original captures.
 The previous authentication next-step section is historical and is now resolved.
+
+## Remediation rerun
+
+Five new conversations in examples/live-recheck/ passed manual scenario review:
+recommendation search returned 12 total matches with explicit partial-selection
+notice; GD20 price/stock matched; get_product_details retrieved GF-3D with actual
+stock zero; no-match and out-of-scope answers were honest; all final answers were
+free of internal/control markup. Original examples/live/ files were not changed.
+
+The real HTTP GD20 request returned 200 with clean text, R$2.199,00 and stock five;
+/docs returned 200 and a blank message returned 422. The local server was stopped.
+The output guard rejects rather than strips known markup; one corrective retry
+remains inside model request/tool limits. The truncation notice is deterministic
+application output from the current run's tool results. Availability is fixed by
+the recommendation/details tools rather than chosen through a boolean flag.
+
+The final offline suite has 133 passing tests; strict mypy and Ruff checks pass.
+Model-generated wording and tool choice remain probabilistic: these captures prove
+the reviewed executions, not universal grounding or prompt-injection resistance.
+No .env or credential values were edited or added to evidence. Test processes
+removed profile selection to use the supplied environment access keys.
+
+Locked installation, wheel/sdist builds and catalog checksum verification also
+passed after remediation. A targeted scan found no access-key/private-key markers
+in tracked/proposed files. Implementation commit: [aeeb6ff](https://github.com/rafaself/atf-ai-engineer-challenge/commit/aeeb6ffd849c12ef7ccb9b2bda6cc26ee8b82d40).
+Epic closure still requires reviewed delivery and reconciliation of its checklists.
