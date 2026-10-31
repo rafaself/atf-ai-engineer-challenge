@@ -12,6 +12,19 @@
 - Run backend quality commands from the repository root using the README's
   `uv run --directory backend ...` commands. Preserve source CSV bytes.
 
+## Development stage and compatibility
+
+- This project is under active development and is not currently a production
+  system. Backward compatibility with earlier project versions is not required
+  unless the user explicitly requests it.
+- When an approved direction changes, update affected code, callers, tests, and
+  documentation together. Remove obsolete implementations and superseded paths
+  instead of preserving legacy behavior, deprecated APIs, compatibility shims,
+  fallback branches, or duplicate implementations solely for compatibility.
+- Prefer one coherent implementation of the current requirements. Do not add
+  migration machinery or production-compatibility infrastructure without a concrete
+  current need. Continue to preserve applicable domain rules and security boundaries.
+
 ## Testing
 
 - Domain rules, approved requirements, and architecture decisions define expected
