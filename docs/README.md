@@ -1,10 +1,11 @@
 # Project documentation
 
-Setup and quality commands are in the root README. US-02 adds validated chat and
-catalog contracts, structural ports, and the ChatService interface. See
-[architecture decisions](adr/README.md) for conventions and ADR-0001.
-
-US-03 implements [catalog import and SQLite retrieval](catalog.md). Provider
-execution is available behind the isolated adapter and US-06 implements ChatService
-orchestration. The HTTP endpoint remains US-07. Subsequent
-documentation will record validated provider decisions and real interactions.
+- [Root README](../README.md): installation, import and quality commands.
+- [Architecture](architecture.md): implemented boundaries and retrieval/prompt rationale.
+- [Catalog](catalog.md): validation, atomic replacement, snapshot and search semantics.
+- [Bedrock](bedrock.md): explicit configuration, limits and opt-in live probe.
+- [Local API](api.md): startup, curl, dependency injection and HTTP failures.
+- [ADRs](adr/README.md): accepted architecture/provider boundaries.
+- [Validation](validation.md): reproducibility results and remaining live checks.
+- [Examples](examples/README.md): pending real-interaction capture and review.
+- [Follow-up](follow-up.md): policy routing and final submission requirements.

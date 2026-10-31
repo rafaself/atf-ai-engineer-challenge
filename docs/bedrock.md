@@ -2,7 +2,7 @@
 
 The agent factory uses Pydantic AI 2.64.0 with boto3 1.43.123. Preferred model:
 amazon.nova-micro-v1:0 in us-east-1. **Live access/tool calling is unverified**:
-the user deferred AWS profile confirmation. No Towelbooks profile is selected.
+the user deferred AWS profile confirmation. No unrelated AWS profile is selected.
 
 Configure a project profile through the usual AWS CLI/SSO flow, then export:
 

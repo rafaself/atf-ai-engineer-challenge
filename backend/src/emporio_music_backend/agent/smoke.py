@@ -47,7 +47,7 @@ async def probe() -> dict[str, object]:
         "arguments": {},
         "tool_result": code,
         "answer": result.output,
-        "requests": result.usage().requests,
+        "requests": result.usage.requests,
     }
 
 
