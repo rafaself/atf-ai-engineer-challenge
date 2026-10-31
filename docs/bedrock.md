@@ -80,14 +80,23 @@ or answer quality; the separate reviewed live captures provide scenario evidence
 ## Conversation orchestration (US-06)
 
 `application.ChatService(agent, timeout_seconds=60)` accepts the transport-neutral
-AgentExecutor port and exposes async chat(ChatRequest) -> ChatResponse. The
-structural interface is ChatServicePort. Request validation occurs before invoking
-the agent. The service preserves typed configuration, provider, retrieval, and
-agent errors, sanitizes unexpected execution failures while preserving their cause,
+AgentExecutor port and exposes async chat(request, *, context: ExecutionContext)
+-> ChatResponse. AgentExecutor.run also requires the context keyword. The
+structural interface is ChatServicePort. Request and context validation occur
+before invoking the agent. The service preserves typed configuration, provider,
+retrieval, and agent errors, sanitizes unexpected execution failures while preserving their cause,
 and translates the overall deadline into AgentTimeoutError. Caller cancellation
-propagates. It adds no retries, session state, database, HTTP, or provider initialization.
+propagates. It adds no retries, retained session state, database, HTTP, or provider
+initialization.
 Individual model request limits/timeouts belong to the adapter; the service owns
 one deadline for the complete conversation, including tool execution.
+
+US-09 permits direct callers to supply owned, complete user/assistant text history;
+the adapter translates it into SDK messages per run. Identity/session metadata and
+historical tool returns are excluded. Pass ExecutionContext() for the existing
+stateless operation, including HTTP. Persistence and token resolution are not
+implemented. See the [direct-call contract](api.md#direct-application-calls-us-09)
+and [ADR-0003](adr/0003-owned-conversation-execution-context.md).
 
 For access keys in .env, remove AWS_PROFILE from the file and unset profile
 selection in the shell; include AWS_SESSION_TOKEN for temporary credentials. The

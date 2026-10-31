@@ -26,7 +26,21 @@ do not resolve AWS credentials. Provider setup runs in a worker thread. The SDK
 executes the synchronous catalog tool in a worker thread; the repository opens
 and closes a fresh read-only connection per search. ChatService enforces a total
 conversation deadline and preserves cancellation. No shared SQLite connection or
-conversation history crosses requests.
+conversation history crosses HTTP requests. Direct callers can supply an explicit
+ExecutionContext; ChatService and AgentExecutor require this keyword argument and
+revalidate identity/session ownership before execution. The context contains frozen
+application-owned user/assistant messages in complete pairs. The adapter builds a
+fresh SDK history list per run without identity/session metadata or old tool returns.
+Nothing is retained on the cached executor. An empty context is stateless catalog
+support and grants no customer-data access.
+
+[ADR-0003](adr/0003-owned-conversation-execution-context.md) defines this trusted
+boundary and the US-10 handoff. The session UUID is server-created metadata, not
+authorization; US-09 checks supplied ownership, not database existence or actual
+credentials. Demo-token resolution, bounded history selection, persistence,
+restart recovery, and concurrent-turn control remain US-10. Order authorization is
+US-11. No in-memory session repository, compatibility adapter, or new dependency
+is introduced for the preparatory story.
 
 ## Retrieval and prompting rationale
 
@@ -40,6 +54,8 @@ the repository. Full-snapshot replacement is documented in [catalog.md](catalog.
 The Portuguese prompt sets tone and behavioral constraints, requiring retrieval
 before catalog claims, disclosure of limited results and snapshot freshness, and
 honest redirection for accessories, unsupported policies/orders and other topics.
+Prior answers supply conversational references rather than authoritative mutable
+facts; the instructions require a fresh tool lookup for price/stock follow-ups.
 No product names/prices/stock fixtures are embedded in instructions. A prompt is
 not proof that a model follows these rules; live evaluations remain necessary.
 

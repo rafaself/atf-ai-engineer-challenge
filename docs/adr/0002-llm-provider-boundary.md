@@ -68,3 +68,13 @@ prompt-injection guarantee. Tool choice and factual wording still require live
 evaluation. Original failures remain unchanged; passing reruns do not prove all
 future model outputs are correct. No additional service, dependency or public HTTP
 contract is introduced; this revision extends the existing accepted boundary.
+
+## US-09 execution-context extension
+
+AgentExecutor.run now requires an explicit application-owned ExecutionContext.
+The adapter revalidates it and translates only completed user/assistant text pairs
+into a fresh SDK history list. It does not send identity/session metadata or replay
+historical tool calls/returns. Current-run tool returns still drive output notices.
+Empty context retains stateless execution; HTTP supplies it until US-10. See
+[ADR-0003](0003-owned-conversation-execution-context.md) for ownership, trust,
+scope, and offline evidence. No new multi-turn Bedrock validation is claimed here.

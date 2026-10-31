@@ -11,4 +11,7 @@ choices. Keep numbering stable. Link decisions from the corresponding story.
 - [ADR-0001: Modular monolith and dependency boundaries](0001-modular-monolith-and-dependency-boundaries.md)
 
 - [ADR-0002: LLM provider boundary](0002-llm-provider-boundary.md) records the
-  offline-validated adapter boundary; live model compatibility remains deferred.
+  adapter boundary and bounded customer-output policy, with Sprint 1 live evidence.
+- [ADR-0003: Owned conversation execution context](0003-owned-conversation-execution-context.md)
+  records trusted identity/session/history contracts, direct execution, and the
+  US-10 persistence/identity-resolution handoff.

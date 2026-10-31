@@ -90,3 +90,44 @@ for failed baseline, remediation evidence and remaining scope boundaries.
 
 Policy-aware answers/routing and final public-submission/cutoff checks remain
 follow-up work; no live capture guarantees correctness for every future request.
+
+## US-09 session/context validation — 2026-10-31
+
+The US-09 branch adds owned session/message/context contracts and direct execution
+of explicitly supplied trusted history. The HTTP API remains stateless. Actual
+checks from the repository root passed:
+
+```bash
+uv run --directory apps/backend --locked ruff check .
+uv run --directory apps/backend --locked ruff format --check .
+uv run --directory apps/backend --locked mypy src tests
+uv run --directory apps/backend --locked pytest
+uv build --project apps/backend
+(cd data && sha256sum --check SHA256SUMS)
+```
+
+Results: **150 tests passed**, strict mypy passed for 36 source/test files, Ruff
+lint/format passed, source/wheel builds passed, both catalog CSV checksums matched.
+The full pytest run removed AWS credential/profile/region environment variables;
+the autouse model-request guard remained enabled. No live model call was made.
+The existing packaging/import-boundary tests passed; a new clean-environment
+installation or runtime-only wheel installation was not repeated for this story.
+
+Before adding rule validation, two tests reproduced acceptance of incomplete
+history and missing/mismatched identity. After adding the contracts, three
+execution tests reproduced the missing context parameter before propagation and
+translation were implemented. The later controlled-model/SQLite regression was
+added after implementation; no failing baseline is claimed for that check.
+
+Current evidence covers history ordering, immutable independent contexts, safe
+ownership rejection at both service and direct adapter entry points, concurrency
+isolation without retained state, unchanged HTTP input/output shapes, forbidden
+client context fields, and sanitized 401/404/409/500 mappings. Existing catalog,
+provider-error, output-validation, deadline, cancellation, and package/import
+checks remain in the passing suite. The source CSVs and dependency lockfile are
+unchanged.
+
+This does not prove real authentication, session lookup/persistence, restart
+recovery, bounded context selection, concurrent persistent writes, or live model
+quality. Those remain US-10/US-11/US-13 as documented in ADR-0003. PR delivery is
+pending review; no merge or full Sprint 2 acceptance is claimed.
