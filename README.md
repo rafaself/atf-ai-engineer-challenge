@@ -1,11 +1,12 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-08 (implementation; live acceptance deferred)**: an installable backend,
+This checkout implements **US-01 through US-08**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
 read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and a typed
-product-search tool connected to the catalog repository.
-Live Bedrock evidence is deferred until the user confirms a project AWS profile.
+product-search tools connected to the catalog repository.
+Live Bedrock tool calling and five remediation scenarios have been validated;
+see [reviewed captures](docs/examples/README.md) for evidence and limitations.
 ChatService orchestrates stateless conversations behind `POST /api/chat`. See
 [local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
 
@@ -78,7 +79,7 @@ The disposable directory can be removed after verification.
 `.env.example` documents configuration; export values explicitly, without a dotenv loader.
 The provider preference is Bedrock in `us-east-1`, initially
 `amazon.nova-micro-v1:0`, or another validated low-cost feasible model. Model access
-and tool calling have **not** been live-validated. The integration uses
+and tool calling were live-validated with Nova Micro in us-east-1 on 2026-10-31. The integration uses
 the standard AWS credential chain; no credentials are required for setup or tests.
 
 `DATABASE_PATH` documents the catalog path relative to the repository root; pass
@@ -155,10 +156,11 @@ provider-unavailable, timeout, retrieval, and execution error categories; contra
 validation retains Pydantic ValidationError.
 
 See [architecture and prompting rationale](docs/architecture.md),
-[validation evidence](docs/validation.md), [pending real examples](docs/examples/README.md),
+[validation evidence](docs/validation.md), [reviewed real examples](docs/examples/README.md),
 and [follow-up/submission requirements](docs/follow-up.md).
-Policy-aware answers and operational-data-versus-policy routing remain follow-up work;
-3–5 real conversations and live Bedrock validation are outstanding. Policy answers, order access, persistent conversation
+Policy-aware answers and operational-data-versus-policy routing remain follow-up work.
+Five reviewed real conversations and a separate live tool probe are recorded;
+passing scenarios do not guarantee every future generated answer. Policy answers, order access, persistent conversation
 history, promotion calculations, frontend delivery, and deployment packaging are
 outside the current foundation story.
 

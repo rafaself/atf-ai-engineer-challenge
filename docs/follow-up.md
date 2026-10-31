@@ -1,8 +1,8 @@
 # Remaining scope and final submission
 
 Sprint 1 delivers the catalog foundation and local API. It is not the complete
-challenge solution. Live compatibility and real conversations are pending the
-user's project AWS profile, as explicitly deferred; see [examples](examples/README.md).
+challenge solution. Live compatibility and five remediation scenarios have recorded evidence;
+see [examples](examples/README.md). Broader model evaluation remains ongoing.
 
 ## Next product work
 
