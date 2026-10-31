@@ -4,7 +4,7 @@ Import the catalog using the README command, configure a project AWS profile as
 [documented for Bedrock](bedrock.md), and run from the repository root:
 
 ```bash
-uv run --project apps/backend --locked uvicorn emporio_music_backend.api.app:create_app \
+uv run --env-file .env --project apps/backend --locked uvicorn emporio_music_backend.api.app:create_app \
   --factory --host 127.0.0.1 --port 8000
 ```
 
@@ -47,6 +47,6 @@ bound to loopback; public deployment is outside the sprint.
 
 Offline tests cover HTTP contracts, error mappings, docs/schema, and an actual
 service → controlled agent → tool → temporary SQLite round trip. They cannot
-establish Bedrock tool selection or generated-answer quality. The live curl
-conversation remains deferred until the user confirms an AWS profile; a
-placeholder profile returns a sanitized 503 rather than a fabricated answer.
+establish Bedrock tool selection or generated-answer quality. The live GD20 HTTP
+conversation returned 200 with the correct price/stock and clean customer text
+after remediation. A placeholder profile still produces a sanitized 503.

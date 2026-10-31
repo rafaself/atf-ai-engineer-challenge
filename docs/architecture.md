@@ -45,12 +45,13 @@ not proof that a model follows these rules; live evaluations remain necessary.
 
 Pydantic AI supplies typed tool schemas and provider substitution. Bedrock Nova
 Micro in us-east-1 is the initial low-cost preference; access and tool behavior
-remain unverified pending the user's AWS profile. Explicit SDK/agent limits bound
+were verified in the recorded live scenarios. Explicit SDK/agent limits bound
 request work without promising a monetary cap. See [bedrock.md](bedrock.md).
 
 [ADR-0001](adr/0001-modular-monolith-and-dependency-boundaries.md) and
 [ADR-0002](adr/0002-llm-provider-boundary.md) record accepted offline-validated
-boundaries. They do not claim live provider compatibility.
+boundaries. ADR-0002 now links the recorded live compatibility checks and the
+customer-output policy revision; those checks remain specific to the evaluated model/scenarios.
 
 ## Validation strategy
 
@@ -64,3 +65,12 @@ Controlled models select known tool arguments and return known text. These tests
 prove wiring/data integrity, not natural-language interpretation, tool choice,
 Portuguese answer quality, resistance to adversarial prompts, or live Bedrock
 compatibility. Evaluate those with the [live example checklist](examples/README.md).
+
+## Customer-output policy
+
+The agent exposes distinct available-product recommendations and named-product
+details, fixing availability in code for each tool. An output validator rejects
+known internal/control tags with one corrective retry and appends a factual
+partial-selection notice for each distinct truncated-query total in the current
+run. It does not strip internal text or enforce complete semantic grounding.
+See ADR-0002 and the reviewed live captures for rationale and limits.

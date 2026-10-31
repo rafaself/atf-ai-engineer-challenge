@@ -38,7 +38,7 @@ def test_recorder_saves_actual_tool_trace_without_claiming_acceptance(
         ):
             return ModelResponse(parts=[TextPart("controlled-answer-marker")])
         return ModelResponse(
-            parts=[ToolCallPart("search_products", {"product_name": "GD20"})]
+            parts=[ToolCallPart("get_product_details", {"product_name": "GD20"})]
         )
 
     def factory(

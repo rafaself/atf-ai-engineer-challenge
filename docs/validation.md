@@ -68,15 +68,25 @@ No local environment or generated database is tracked; ignore rules cover these
 artifacts. This targeted scan does not establish that arbitrary secrets can never
 exist. No credentials were added or used for model access.
 
-## Explicitly deferred acceptance
+## Subsequent live acceptance and remediation
 
-- Real Bedrock model access/tool calling in us-east-1 (preferred Nova Micro).
-- Natural-language tool selection and generated answer grounding/scope handling.
-- Live HTTP conversation with the configured model.
-- 3–5 reviewed real conversation artifacts in docs/examples/.
+The initial live-access deferral was resolved after key activation. The fresh-code
+Bedrock probe and GD20 HTTP conversation passed. Original live scenarios exposed
+truncation, availability-selection and output-markup defects; their captures remain
+unchanged in examples/live/.
 
-The user deferred project AWS profile configuration. These checks remain incomplete;
-no mocked output is saved as real evidence. The opt-in probe and live recorder are
-ready, but have not been executed against Bedrock. Follow [the capture checklist](examples/README.md)
-after access is confirmed. Policy-aware answers/routing and final submission work
-are tracked in [follow-up scope](follow-up.md).
+The remediation uses two tools with fixed availability semantics, a deterministic
+per-run truncation notice, and one bounded corrective output retry. Five new live
+captures in examples/live-recheck/ passed review against actual tool data. The
+HTTP GD20 request returned 200 with correct price/stock and no control markup.
+
+Current checks: 133 offline tests, strict mypy (32 files), Ruff lint/format passed.
+Regression tests first reproduced raw-markup acceptance and absent truncation
+disclosure before production changes. Existing integration assertions were updated
+for the approved tool split; catalog semantics and public HTTP contracts remain.
+The original 132-test fresh-environment results above are historical, before later
+risk-based consolidation and the current regressions. See the live validation report
+for failed baseline, remediation evidence and remaining scope boundaries.
+
+Policy-aware answers/routing and final public-submission/cutoff checks remain
+follow-up work; no live capture guarantees correctness for every future request.

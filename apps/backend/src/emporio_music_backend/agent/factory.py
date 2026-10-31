@@ -19,6 +19,7 @@ from pydantic_ai.models.bedrock import BedrockConverseModel
 from pydantic_ai.providers.bedrock import BedrockProvider
 from pydantic_ai.usage import UsageLimits
 
+from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.agent.persona import STORE_INSTRUCTIONS
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts import ChatRequest, ChatResponse
@@ -95,11 +96,12 @@ def create_agent(
         model,
         instructions=STORE_INSTRUCTIONS,
         tools=tools,
-        retries=0,
+        retries={"tools": 0, "output": 1},
         model_settings={
             "max_tokens": settings.max_output_tokens,
             "temperature": 0,
             "request_timeout": settings.request_timeout_seconds,
         },
     )
+    agent.output_validator(customer_answer)
     return PydanticAgentExecutor(agent, settings)
