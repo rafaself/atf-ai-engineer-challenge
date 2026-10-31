@@ -23,3 +23,19 @@ class ProductRetrievalError(ApplicationError):
 
 class AgentExecutionError(ApplicationError):
     """Agent execution failed for another reason."""
+
+
+class AuthenticationError(ApplicationError):
+    """A session/customer operation requires a valid trusted identity."""
+
+
+class SessionAccessError(ApplicationError):
+    """A session does not exist or is inaccessible to the caller."""
+
+
+class SessionConflictError(ApplicationError):
+    """A concurrent turn conflicts with the session state."""
+
+
+class ConversationPersistenceError(ApplicationError):
+    """Conversation storage could not complete an operation."""

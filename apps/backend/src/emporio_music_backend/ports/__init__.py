@@ -5,9 +5,20 @@ from typing import Protocol
 from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
+    CustomerIdentity,
     ProductSearchQuery,
     ProductSearchResult,
 )
+
+
+class CustomerIdentityResolver(Protocol):
+    def resolve(self, credential: str | None) -> CustomerIdentity:
+        """Resolve a server-configured identity or raise AuthenticationError.
+
+        A credential is supplied by the transport boundary, never model input.
+        No credential is retained in the returned identity or execution context.
+        """
+        ...
 
 
 class AgentExecutor(Protocol):
