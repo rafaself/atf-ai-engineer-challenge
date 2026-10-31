@@ -1,8 +1,15 @@
-# Live interaction evidence — deferred
+# Live interaction evidence — captured with findings
 
-**No real model conversations have been captured yet.** The user deferred AWS
-profile confirmation. Default tests use controlled models and must never be
-presented as live examples or evidence of Bedrock reasoning/tool selection.
+Five real conversations were captured on 2026-10-31 after the user activated the
+AWS access key. See [live captures](live/) for unchanged actual answers, tool
+arguments/results and review observations. The fresh-code Bedrock probe passed;
+[probe evidence](live-probe-2026-10-31.json) records the round trip. The live HTTP
+GD20 request returned 200 with the correct price and stock.
+
+**Full acceptance has not passed:** budget truncation disclosure, unavailable-item
+tool selection, and customer-facing internal/control markup require remediation.
+See [the validation report](../live-validation-2026-10-31.md). Default controlled-model
+tests are distinct from this real-model evidence.
 
 After configuring a project profile, import the supplied CSVs with the README
 command and run the opt-in tool probe in [bedrock.md](../bedrock.md). Then capture
@@ -19,7 +26,7 @@ overwritten. Each scenario has a 60-second deadline. The recorder validates that
 the database is readable, records its SHA-256, model, region, SDK versions, UTC
 capture time, request count, actual tool arguments/results and the actual answer.
 A changed database invalidates the batch. Captures are pending review, not passes.
-No paid command has been run as part of the current deferred implementation.
+The five captured scenarios and the probe incurred real Bedrock requests.
 
 Use the supplied [snapshot identity](../../data/SHA256SUMS), copied on 2026-10-31;
 these dates describe the supplied snapshot, not current stock. The capture's
@@ -44,6 +51,6 @@ correctness from a successful request. Also evaluate unsupported policy/accessor
 questions before final submission. The existing fresh-code probe proves a tool
 round trip; it does not replace these catalog/grounding checks or an API live run.
 
-The final challenge needs 3–5 reviewed real conversations; this README is only a
-pending-evidence checklist and does not count as one. Confirm live API behavior
+The five reviewed files now provide real conversation evidence, including failures.
+This README does not count as a conversation; failed criteria require remediation. Confirm live API behavior
 with [the curl example](../api.md) after importing the same snapshot.
