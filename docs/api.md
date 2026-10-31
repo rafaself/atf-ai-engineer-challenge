@@ -40,6 +40,10 @@ restart the process after changing configuration. No .env loader is installed.
 | Conversation deadline/provider timeout | 504 |
 | Retrieval, agent execution, or unexpected internal failure | 500 |
 
+If access keys are configured but chat still returns 503, an invalid `AWS_PROFILE`
+may be selecting a nonexistent profile. See [troubleshooting](troubleshooting.md)
+for safe diagnosis, authentication options, and restart instructions.
+
 Operational responses contain stable generic details rather than exception text,
 SQL, provider payloads, credentials, or stack traces. HTTP validation retains
 FastAPI's 422 details. This local evaluation server has no authentication and is
