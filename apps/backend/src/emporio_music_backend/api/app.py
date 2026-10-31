@@ -15,12 +15,15 @@ from starlette.concurrency import run_in_threadpool
 from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.application import ChatService, ChatServicePort
-from emporio_music_backend.contracts import ChatRequest, ChatResponse
+from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentTimeoutError,
     ApplicationError,
+    AuthenticationError,
     ConfigurationError,
     ProviderUnavailableError,
+    SessionAccessError,
+    SessionConflictError,
 )
 from emporio_music_backend.diagnostics import failure, request_id, trace
 from emporio_music_backend.infrastructure.sqlite_repository import (
@@ -61,6 +64,18 @@ def create_app(service: ChatServicePort | None = None) -> FastAPI:
     async def application_failure(
         request: Request, exc: ApplicationError
     ) -> JSONResponse:
+        if isinstance(exc, AuthenticationError):
+            return JSONResponse(
+                status_code=401, content={"detail": "Customer identity required"}
+            )
+        if isinstance(exc, SessionAccessError):
+            return JSONResponse(
+                status_code=404, content={"detail": "Conversation session unavailable"}
+            )
+        if isinstance(exc, SessionConflictError):
+            return JSONResponse(
+                status_code=409, content={"detail": "Conversation turn conflicts"}
+            )
         if isinstance(exc, AgentTimeoutError):
             return JSONResponse(
                 status_code=504, content={"detail": "Conversation timed out"}
@@ -81,6 +96,9 @@ def create_app(service: ChatServicePort | None = None) -> FastAPI:
         "/api/chat",
         response_model=ChatResponse,
         responses={
+            401: {"description": "Customer identity required"},
+            404: {"description": "Conversation session unavailable"},
+            409: {"description": "Conversation turn conflicts"},
             503: {"description": "Agent service unavailable"},
             504: {"description": "Conversation timed out"},
             500: {"description": "Conversation failed"},
@@ -110,7 +128,8 @@ def create_app(service: ChatServicePort | None = None) -> FastAPI:
             # SDK credential resolution may do I/O; keep it off the event loop.
             chat_service = await run_in_threadpool(factory)
             trace("chat.started")
-            response = await chat_service.chat(message)
+            # US-09 HTTP remains stateless; trusted identity/session resolution is US-10.
+            response = await chat_service.chat(message, context=ExecutionContext())
             trace(
                 "http.response",
                 status=200,

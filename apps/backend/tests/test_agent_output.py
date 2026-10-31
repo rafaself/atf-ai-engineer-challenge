@@ -8,7 +8,7 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ChatRequest
+from emporio_music_backend.contracts import ChatRequest, ExecutionContext
 from emporio_music_backend.contracts.errors import AgentExecutionError
 
 
@@ -22,7 +22,9 @@ def test_dirty_output_is_corrected_once_without_returning_internal_text() -> Non
         return ModelResponse(parts=[TextPart(text)])
 
     agent = create_agent(AgentSettings(), model=FunctionModel(respond))
-    result = asyncio.run(agent.run(ChatRequest(message="Olá")))
+    result = asyncio.run(
+        agent.run(ChatRequest(message="Olá"), context=ExecutionContext())
+    )
     assert result.answer == "Olá!"
     assert calls == 2
 
@@ -42,6 +44,6 @@ def test_uncorrectable_output_fails_safely_within_both_budgets(
         AgentSettings(max_requests=max_requests), model=FunctionModel(respond)
     )
     with pytest.raises(AgentExecutionError) as failure:
-        asyncio.run(agent.run(ChatRequest(message="Olá")))
+        asyncio.run(agent.run(ChatRequest(message="Olá"), context=ExecutionContext()))
     assert calls == expected_calls
     assert "fake routing" not in str(failure.value)

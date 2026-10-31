@@ -16,8 +16,12 @@ see [examples](examples/README.md). Broader model evaluation remains ongoing.
   requests, no matches, unavailable products, and grounded prices/stock against
   the chosen live model. Capture failures and adjust prompts/tools from evidence.
 - Orders/customer data require an explicit access/privacy decision before any
-  integration. Persistent history, promotions, frontend/CLI and deployment are
-  separate decisions; the current sprint calculates no discounts or promotions.
+  integration. US-09 establishes trusted identity/session/history contracts and
+  direct history execution. US-10 will implement the approved server-side demo
+  token mapping, bounded persistent sessions, and concurrent-turn handling;
+  US-11 will validate customer mappings and enforce order access. US-12 promotion
+  pricing is explicitly deferred to tracked issue #26. Frontend/CLI and deployment
+  remain separate work; the current implementation calculates no discounts.
 
 These are follow-up requirements, not implemented or accepted behaviors. Reuse
 current contracts and provider boundaries where they fit; do not preserve obsolete

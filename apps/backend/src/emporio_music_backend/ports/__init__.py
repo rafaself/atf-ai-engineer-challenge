@@ -5,14 +5,28 @@ from typing import Protocol
 from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
+    CustomerIdentity,
+    ExecutionContext,
     ProductSearchQuery,
     ProductSearchResult,
 )
 
 
+class CustomerIdentityResolver(Protocol):
+    def resolve(self, credential: str | None) -> CustomerIdentity:
+        """Resolve a server-configured identity or raise AuthenticationError.
+
+        A credential is supplied by the transport boundary, never model input.
+        No credential is retained in the returned identity or execution context.
+        """
+        ...
+
+
 class AgentExecutor(Protocol):
-    async def run(self, request: ChatRequest) -> ChatResponse:
-        """Execute a single message; adapters translate provider failures."""
+    async def run(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
+        """Execute with trusted, application-owned context; translate provider faults."""
         ...
 
 

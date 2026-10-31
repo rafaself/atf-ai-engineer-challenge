@@ -14,6 +14,13 @@ from botocore.exceptions import (  # type: ignore[import-untyped]
 from pydantic import ValidationError
 from pydantic_ai import Agent, Tool
 from pydantic_ai.exceptions import AgentRunError, ModelAPIError, ModelTimeoutError
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    UserPromptPart,
+)
 from pydantic_ai.models import Model
 from pydantic_ai.models.bedrock import BedrockConverseModel
 from pydantic_ai.providers.bedrock import BedrockProvider
@@ -22,7 +29,7 @@ from pydantic_ai.usage import UsageLimits
 from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.agent.persona import STORE_INSTRUCTIONS
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ChatRequest, ChatResponse
+from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
@@ -38,13 +45,26 @@ class PydanticAgentExecutor:
         self.agent = agent
         self.settings = settings
 
-    async def run(self, request: ChatRequest) -> ChatResponse:
+    async def run(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> ChatResponse:
+        validated = ChatRequest.model_validate(request)
+        validated_context = ExecutionContext.model_validate(context)
+        # Only conversational text crosses the provider boundary, never identity,
+        # ownership metadata, credentials or old tool returns. Each run owns its list.
+        history: list[ModelMessage] = [
+            ModelRequest(parts=[UserPromptPart(message.content)])
+            if message.role == "user"
+            else ModelResponse(parts=[TextPart(message.content)])
+            for message in validated_context.history
+        ]
         trace(
             "agent.started", model=self.settings.model_id, region=self.settings.region
         )
         try:
             result = await self.agent.run(
-                request.message,
+                validated.message,
+                message_history=history,
                 usage_limits=UsageLimits(
                     request_limit=self.settings.max_requests,
                     tool_calls_limit=self.settings.max_tool_calls,

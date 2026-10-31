@@ -1,5 +1,6 @@
 """High-risk catalog facts across the complete offline HTTP/tool/SQLite boundary."""
 
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,13 @@ from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.api.app import create_app
 from emporio_music_backend.application import ChatService
+from emporio_music_backend.contracts import (
+    ChatRequest,
+    ConversationMessage,
+    ConversationSession,
+    CustomerIdentity,
+    ExecutionContext,
+)
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
@@ -110,3 +118,51 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     if stock is not None:
         assert products[0]["stock_quantity"] == stock
         assert products[0]["available"] == (stock > 0)
+
+
+def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices(
+    tmp_path: Path,
+) -> None:
+    data = Path(__file__).parents[3] / "data"
+    database = tmp_path / "catalog.sqlite3"
+    import_catalog(data / "products.csv", data / "categories.csv", database)
+    identity = CustomerIdentity(customer_id=1)
+    context = ExecutionContext(
+        identity=identity,
+        session=ConversationSession(owner=identity),
+        history=(
+            ConversationMessage(role="user", content="Quais violões vocês têm?"),
+            ConversationMessage(
+                role="assistant",
+                content="GD20 por R$1,00. Seleção de 12 opções, lista incompleta.",
+            ),
+        ),
+    )
+    observed: list[int] = []
+
+    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        returned = [
+            part
+            for message in messages
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        ]
+        if not returned:
+            return ModelResponse(
+                parts=[ToolCallPart("get_product_details", {"product_name": "GD20"})]
+            )
+        assert isinstance(returned[-1].content, dict)
+        payload: dict[str, Any] = dict(returned[-1].content)
+        observed.append(payload["products"][0]["price_centavos"])
+        return ModelResponse(parts=[TextPart("Resposta de controle da nova consulta")])
+
+    executor = create_catalog_agent(
+        AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
+    )
+    response = asyncio.run(
+        ChatService(executor).chat(
+            ChatRequest(message="E quanto custa agora?"), context=context
+        )
+    )
+    assert observed == [219900]
+    assert response.answer == "Resposta de controle da nova consulta"

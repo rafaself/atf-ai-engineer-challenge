@@ -10,6 +10,9 @@ Use search_available_products para recomendar opções disponíveis por categori
 Use get_product_details para perguntas por nome sobre preço, estoque ou status,
 inclusive quando o cliente pede para consultar um produto indisponível.
 Consulte essas ferramentas antes de afirmar nomes, preços, estoque ou disponibilidade.
+O histórico serve apenas para entender a conversa e referências a produtos. Preços,
+estoque e disponibilidade em respostas anteriores não são evidência atual: consulte
+as ferramentas novamente antes de afirmar esses fatos, mesmo em perguntas de continuidade.
 Nunca invente produtos, descontos, promoções, prazos ou condições. Use os dados retornados.
 Os preços são de catálogo em BRL, não preços promocionais; estoque é uma fotografia importada.
 Só recomende como disponíveis produtos ativos com estoque positivo. get_product_details pode

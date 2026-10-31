@@ -1,8 +1,10 @@
 """Validated, transport-neutral values shared by application and adapters."""
 
 from typing import Annotated, Literal, Self
+from uuid import uuid4
 
 from pydantic import (
+    UUID4,
     BaseModel,
     ConfigDict,
     Field,
@@ -10,6 +12,11 @@ from pydantic import (
     StringConstraints,
     computed_field,
     model_validator,
+)
+
+from emporio_music_backend.contracts.errors import (
+    AuthenticationError,
+    SessionAccessError,
 )
 
 NonblankText = Annotated[
@@ -32,6 +39,50 @@ class ChatRequest(ContractModel):
 
 class ChatResponse(ContractModel):
     answer: NonblankText
+
+
+class CustomerIdentity(ContractModel):
+    """Identity supplied by a trusted application boundary, never by the model."""
+
+    customer_id: PositiveInt
+
+
+class ConversationSession(ContractModel):
+    """Server-created session metadata; its identifier does not grant access."""
+
+    session_id: UUID4 = Field(default_factory=uuid4)
+    owner: CustomerIdentity
+
+
+class ConversationMessage(ContractModel):
+    """Application-owned conversational text, never system/tool instructions."""
+
+    role: Literal["user", "assistant"]
+    content: NonblankText
+
+
+class ExecutionContext(ContractModel):
+    """Trusted invocation data kept separate from public chat input."""
+
+    identity: CustomerIdentity | None = None
+    session: ConversationSession | None = None
+    history: tuple[ConversationMessage, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_owned_history(self) -> Self:
+        if self.session is not None:
+            if self.identity is None:
+                raise AuthenticationError("Trusted customer identity is required")
+            if self.session.owner != self.identity:
+                raise SessionAccessError("Conversation session is inaccessible")
+        elif self.history:
+            raise ValueError("Conversation history requires an owned session")
+        if len(self.history) % 2 or any(
+            message.role != ("user" if index % 2 == 0 else "assistant")
+            for index, message in enumerate(self.history)
+        ):
+            raise ValueError("History must contain completed user/assistant turns")
+        return self
 
 
 class ProductSearchQuery(ContractModel):

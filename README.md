@@ -1,13 +1,15 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-08**: an installable backend,
+This checkout implements **US-01 through US-09**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
-read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and a typed
+read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and typed
 product-search tools connected to the catalog repository.
 Live Bedrock tool calling and five remediation scenarios have been validated;
 see [reviewed captures](docs/examples/README.md) for evidence and limitations.
-ChatService orchestrates stateless conversations behind `POST /api/chat`. See
+US-09 adds owned conversation contracts and execution of history explicitly supplied
+by trusted non-HTTP callers. `POST /api/chat` still handles independent messages;
+persistent sessions and demo-token wiring belong to US-10. See
 [local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
 
 ## Setup
@@ -135,9 +137,12 @@ module responsibilities, dependency direction, and tradeoffs.
 | `ProductSearchQuery` | Optional `category` / `product_name`, inclusive `min_price_centavos` / `max_price_centavos`, `available_only=True`, limit 10 (maximum 20). |
 | `ProductSummary` | Product/category IDs and names, integer-centavo price, stock quantity, status, and derived availability. |
 | `ProductSearchResult` | Immutable product tuple, total matches before limiting, and derived truncation. |
-| `AgentExecutor.run` | Async single-message execution port returning ChatResponse. |
+| `CustomerIdentity` / `ConversationSession` | Trusted customer ID and an owned server-generated UUID4; neither carries credentials. |
+| `ConversationMessage` / `ExecutionContext` | Immutable user/assistant text history in complete pairs, with matching trusted identity/session ownership. |
+| `CustomerIdentityResolver.resolve` | Transport-neutral credential-to-identity protocol; the demo-token adapter is deferred to US-10. |
+| `AgentExecutor.run` | Async execution with required keyword-only `context: ExecutionContext`, returning ChatResponse. |
 | `ProductRepository.search` | Synchronous typed catalog search port. |
-| `ChatService.chat` / `ChatServicePort` | Concrete async orchestration and its structural interface; one 60-second default end-to-end deadline. |
+| `ChatService.chat` / `ChatServicePort` | Required keyword-only execution context; one 60-second default end-to-end deadline, with no retained conversation state. |
 
 Contracts and errors live in `emporio_music_backend.contracts`; ports and the
 application entry-point interface live in `ports` and `application`. No provider
@@ -154,6 +159,15 @@ These semantics are implemented by SQLiteProductRepository. No-match results are
 normal data. Operational failures have transport-neutral configuration,
 provider-unavailable, timeout, retrieval, and execution error categories; contract
 validation retains Pydantic ValidationError.
+
+An empty execution context permits stateless catalog support, granting no customer
+access. Supplied history requires an owned session and matching identity; unknown
+sessions must never be silently recreated by the future persistence adapter.
+Only user/assistant text is translated into provider messages. The caller owns
+session provenance and history selection; constructing an identity is not authentication.
+See the [direct-call example](docs/api.md#direct-application-calls-us-09) and
+[ADR-0003](docs/adr/0003-owned-conversation-execution-context.md) for implemented
+contracts and the explicit US-10 handoff. No new production dependency is added.
 
 See [architecture and prompting rationale](docs/architecture.md),
 [validation evidence](docs/validation.md), [reviewed real examples](docs/examples/README.md),
