@@ -1,8 +1,9 @@
 # Project documentation
 
-Setup and quality commands are in the root README. US-02 will establish module
-contracts and lightweight ADR conventions. Subsequent stories will document
-validated provider decisions and example interactions.
+Setup and quality commands are in the root README. US-02 adds validated chat and
+catalog contracts, structural ports, and the ChatService interface. See
+[architecture decisions](adr/README.md) for conventions and ADR-0001.
 
-US-01 supplies the package foundation only. Architecture contracts, database
-ingestion, agent execution, and the HTTP endpoint are not implemented yet.
+Concrete database ingestion/retrieval, provider execution, ChatService
+orchestration, and the HTTP endpoint remain later Sprint 1 stories. Subsequent
+documentation will record validated provider decisions and real interactions.
