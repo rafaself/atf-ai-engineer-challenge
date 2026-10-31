@@ -1,13 +1,13 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-06**: an installable backend,
+This checkout implements **US-01 through US-07**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
 read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and a typed
 product-search tool connected to the catalog repository.
 Live Bedrock evidence is deferred until the user confirms a project AWS profile.
-ChatService now orchestrates a stateless conversation independently of HTTP; the
-HTTP endpoint remains US-07. See [agent setup](docs/bedrock.md).
+ChatService orchestrates stateless conversations behind `POST /api/chat`. See
+[local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
 
 ## Setup
 
@@ -25,7 +25,7 @@ uv run --directory backend python -c "import emporio_music_backend"
 
 The environment is created at `backend/.venv`. Development tools live in the
 `dev` dependency group and are installed by default. Production dependencies are
-Pydantic, Pydantic AI with Bedrock support, and boto3. The checked-in `backend/uv.lock` records resolved versions;
+Pydantic, Pydantic AI with Bedrock support, boto3, FastAPI, and uvicorn. The checked-in `backend/uv.lock` records resolved versions;
 use `--locked` when installing an existing checkout.
 
 ## Quality checks
@@ -71,11 +71,11 @@ The disposable directory can be removed after verification.
 | `backend/` | Installable Python package, tests, and development tooling. |
 | `frontend/` | Placeholder for a later sprint; no JavaScript toolchain. |
 | `data/` | Unmodified product/category CSVs, provenance, and checksums. |
-| `docs/` | Placeholder for validated decisions and later interaction examples. |
+| `docs/` | Architecture decisions, setup guides, and validation evidence. |
 
 ## Configuration and data
 
-`.env.example` documents future configuration only; no runtime loader exists yet.
+`.env.example` documents configuration; export values explicitly, without a dotenv loader.
 The provider preference is Bedrock in `us-east-1`, initially
 `amazon.nova-micro-v1:0`, or another validated low-cost feasible model. Model access
 and tool calling have **not** been live-validated. The integration uses
@@ -83,7 +83,7 @@ the standard AWS credential chain; no credentials are required for setup or test
 
 `DATABASE_PATH` documents the catalog path relative to the repository root; pass
 that path explicitly to the importer below. The environment example is not loaded
-automatically. No API startup or agent execution command exists yet.
+automatically. See [local API startup](docs/api.md) for uvicorn and curl commands.
 
 Only products and categories have been copied. See [data provenance](data/README.md)
 for SHA-256 verification. These files are an imported-source snapshot, not a live
@@ -145,8 +145,8 @@ and numeric strings. Negative prices/stock, inverted bounds, blank filters, unkn
 statuses, and inconsistent totals are rejected. Availability requires active
 status and positive stock; computed availability/truncation are output-only.
 
-The future repository must combine supplied filters, normalize category/name case
-and accents, match names by literal substring, and sort by price then product ID.
+The repository combines supplied filters, normalizes category/name case
+and accents, matches names by literal substring, and sorts by price then product ID.
 Unknown categories/names return no matches, never an unrestricted search. Named
 lookups may explicitly disable `available_only` to inspect unavailable products.
 These semantics are implemented by SQLiteProductRepository. No-match results are
