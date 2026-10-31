@@ -156,6 +156,7 @@ def test_reimport_replaces_snapshot_and_removes_absent_categories(
         ("specs", "null"),
         ("specs", "invalid"),
         ("specs", '{"bad":NaN}'),
+        ("specs", '{"x":1e9999999999999999999}'),
     ],
 )
 def test_invalid_product_preserves_last_snapshot(
@@ -342,7 +343,16 @@ def test_money_is_exact_and_missing_database_is_not_created(tmp_path: Path) -> N
     assert isinstance(invalid.value.__cause__, ValueError)
 
 
-def test_import_module_command_paths_and_exits(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("invalid_specs", "diagnostic"),
+    [
+        (None, "products.csv:1: header"),
+        ('{"x":1e9999999999999999999}', "products.csv:2: specs"),
+    ],
+)
+def test_import_module_command_paths_and_exits(
+    tmp_path: Path, invalid_specs: str | None, diagnostic: str
+) -> None:
     products, categories, database = sources(tmp_path)
     command = [
         sys.executable,
@@ -367,7 +377,10 @@ def test_import_module_command_paths_and_exits(tmp_path: Path) -> None:
         timeout=10,
     )
     assert success.returncode == 0 and "2 categories and 1 products" in success.stdout
-    products.write_text("bad header\n")
+    if invalid_specs is None:
+        products.write_text("bad header\n")
+    else:
+        write_csv(products, PRODUCT_COLUMNS, [item(specs=invalid_specs)])
     failure = subprocess.run(
         command,
         cwd=tmp_path,
@@ -376,8 +389,12 @@ def test_import_module_command_paths_and_exits(tmp_path: Path) -> None:
         text=True,
         timeout=10,
     )
-    assert failure.returncode == 1 and "products.csv:1: header" in failure.stderr
+    assert failure.returncode == 1 and diagnostic in failure.stderr
     assert "Traceback" not in failure.stderr
+    assert (
+        SQLiteProductRepository(database).search(ProductSearchQuery()).total_matches
+        == 1
+    )
 
 
 @pytest.mark.parametrize(

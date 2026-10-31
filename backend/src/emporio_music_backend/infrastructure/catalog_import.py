@@ -197,7 +197,7 @@ def _validate_products(path: Path, categories: set[int]) -> list[tuple[int | str
             )
             if not isinstance(specs, dict):
                 raise ValueError
-        except (ValueError, RecursionError) as exc:
+        except (ValueError, RecursionError, InvalidOperation) as exc:
             raise CatalogImportError(
                 path, line, "specs", "expected a finite JSON object"
             ) from exc
