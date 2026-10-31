@@ -34,7 +34,7 @@ Defaults: max 5 requests, 5 tool calls, 1024 output tokens per response, 15-seco
 request/read timeout, 5-second connection timeout, one total SDK attempt, no agent
 validation retries. Tune AGENT_MAX_REQUESTS, AGENT_MAX_TOOL_CALLS,
 AGENT_MAX_OUTPUT_TOKENS, and AGENT_REQUEST_TIMEOUT_SECONDS as needed. These bounds
-limit work, not a guaranteed monetary budget. The application deadline comes in US-06.
+limit work, not a guaranteed monetary budget. ChatService owns the overall deadline.
 
 Offline checks use controlled Pydantic AI models and forbid real model requests;
 credentials are not needed. In the Codex restricted sandbox SDK worker-thread tests
@@ -63,3 +63,15 @@ The persona instructs the model to disclose truncation and consult the tool firs
 Controlled-model tests verify registration, arguments, results and failures against
 the real temporary SQLite catalog. They do not establish live Nova tool selection
 or answer quality; those checks remain deferred pending AWS profile confirmation.
+
+## Conversation orchestration (US-06)
+
+`application.ChatService(agent, timeout_seconds=60)` accepts the transport-neutral
+AgentExecutor port and exposes async chat(ChatRequest) -> ChatResponse. The
+structural interface is ChatServicePort. Request validation occurs before invoking
+the agent. The service preserves typed configuration, provider, retrieval, and
+agent errors, sanitizes unexpected execution failures while preserving their cause,
+and translates the overall deadline into AgentTimeoutError. Caller cancellation
+propagates. It adds no retries, session state, database, HTTP, or provider initialization.
+Individual model request limits/timeouts belong to the adapter; the service owns
+one deadline for the complete conversation, including tool execution.
