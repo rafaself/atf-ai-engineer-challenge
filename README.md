@@ -1,10 +1,10 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01: Project Foundation** and **US-02: Architecture
-and Contracts**: an installable backend, development checks, the supplied catalog
-snapshot, validated values, and substitution interfaces. Concrete agent execution,
-database import/retrieval, chat orchestration, and HTTP remain later stories.
+This checkout implements **US-01 through US-03**: an installable backend,
+development checks, validated values/interfaces, and atomic catalog import with
+read-only SQLite retrieval. Concrete agent execution, chat orchestration, and HTTP
+remain later stories.
 
 ## Setup
 
@@ -78,13 +78,43 @@ The provider preference is Bedrock in `us-east-1`, initially
 and tool calling have **not** been validated in US-01. Future integration will use
 the standard AWS credential chain; no credentials are required for setup or tests.
 
-`DATABASE_PATH` is a future path relative to the repository root. No database is
-created by the bootstrap. No API startup or agent execution command exists yet.
+`DATABASE_PATH` documents the catalog path relative to the repository root; pass
+that path explicitly to the importer below. The environment example is not loaded
+automatically. No API startup or agent execution command exists yet.
 
 Only products and categories have been copied. See [data provenance](data/README.md)
 for SHA-256 verification. These files are an imported-source snapshot, not a live
-inventory service. Ingestion, availability filtering, pricing, and promotions are
-not implemented yet. Customer/order datasets remain outside this story.
+inventory service. Import and retrieval now implement availability and catalog-price
+filtering. Promotion calculations and customer/order access remain outside scope.
+
+### Import the catalog
+
+From the repository root, run:
+
+```bash
+uv run --project backend --locked python -m \
+  emporio_music_backend.infrastructure.catalog_import \
+  --products data/products.csv \
+  --categories data/categories.csv \
+  --database data/catalog.sqlite3
+```
+
+Expected output: `Imported 9 categories and 65 products`. Every successful import
+replaces the entire catalog atomically, refreshing changed rows and removing absent
+products/categories. Validation failures leave an existing snapshot untouched and
+do not create a database. Empty snapshots are rejected. Generated databases remain
+ignored by Git. See [catalog behavior](docs/catalog.md) for validation, ownership,
+schema compatibility, failure behavior, and the repository interface.
+
+For a local retrieval example (no server or AWS calls):
+
+```bash
+uv run --project backend --locked python -c \
+  "from pathlib import Path; from emporio_music_backend.contracts import ProductSearchQuery; from emporio_music_backend.infrastructure.sqlite_repository import SQLiteProductRepository; print(SQLiteProductRepository(Path('data/catalog.sqlite3')).search(ProductSearchQuery(category='violoes', max_price_centavos=100000)).model_dump_json())"
+```
+
+The budget search has 12 matches in the supplied snapshot; the default limit is
+10, so truncation is reported. Use limit 20 to retrieve all 12.
 
 ## Decisions and follow-up
 
@@ -116,7 +146,7 @@ The future repository must combine supplied filters, normalize category/name cas
 and accents, match names by literal substring, and sort by price then product ID.
 Unknown categories/names return no matches, never an unrestricted search. Named
 lookups may explicitly disable `available_only` to inspect unavailable products.
-These are contract semantics; filtering itself is US-03 work. No-match results are
+These semantics are implemented by SQLiteProductRepository. No-match results are
 normal data. Operational failures have transport-neutral configuration,
 provider-unavailable, timeout, retrieval, and execution error categories; contract
 validation retains Pydantic ValidationError.
