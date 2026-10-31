@@ -5,8 +5,10 @@ description = "Customer-support agent backend for the Artefact AI Engineer chall
 requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.43.123",
+    "fastapi>=0.162.0",
     "pydantic>=2,<3",
     "pydantic-ai-slim[bedrock]>=2.64.0",
+    "uvicorn>=0.54.0",
 ]
 
 [build-system]
@@ -31,6 +33,7 @@ addopts = ["--import-mode=importlib", "--strict-config", "--strict-markers"]
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "ruff>=0.17.3",
