@@ -25,22 +25,36 @@ from emporio_music_backend.infrastructure.sqlite_repository import (
 
 
 @pytest.mark.parametrize(
-    ("arguments", "total", "price", "stock"),
+    ("tool_name", "arguments", "total", "price", "stock"),
     [
-        ({"category": "violões", "max_price_brl": 1000}, 12, None, None),
-        ({"product_name": "Takamine GD20"}, 1, 219900, 5),
-        ({"product_name": "Giannini GF-3D"}, 0, None, None),
         (
-            {"product_name": "Giannini GF-3D", "available_only": False},
+            "search_available_products",
+            {"category": "violões", "max_price_brl": 1000},
+            12,
+            None,
+            None,
+        ),
+        ("get_product_details", {"product_name": "Takamine GD20"}, 1, 219900, 5),
+        (
+            "search_available_products",
+            {"product_name": "Giannini GF-3D"},
+            0,
+            None,
+            None,
+        ),
+        (
+            "get_product_details",
+            {"product_name": "Giannini GF-3D"},
             1,
             None,
             0,
         ),
-        ({"product_name": "ZXQ-999-Inexistente"}, 0, None, None),
+        ("get_product_details", {"product_name": "ZXQ-999-Inexistente"}, 0, None, None),
     ],
 )
 def test_snapshot_facts_survive_http_agent_tool_pipeline(
     tmp_path: Path,
+    tool_name: str,
     arguments: dict[str, object],
     total: int,
     price: int | None,
@@ -60,7 +74,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
             if isinstance(part, ToolReturnPart)
         ]
         if not returned:
-            return ModelResponse(parts=[ToolCallPart("search_products", arguments)])
+            return ModelResponse(parts=[ToolCallPart(tool_name, arguments)])
         assert isinstance(returned[-1].content, dict)
         observed.append(dict(returned[-1].content))
         return ModelResponse(parts=[TextPart(answer)])
@@ -71,7 +85,14 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     with TestClient(create_app(ChatService(executor))) as client:
         response = client.post("/api/chat", json={"message": "Consulta de integração"})
     assert response.status_code == 200
-    assert response.json() == {"answer": answer}
+    if total > 10:
+        assert response.json()["answer"].startswith(answer)
+        assert (
+            "seleção" in response.json()["answer"]
+            and str(total) in response.json()["answer"]
+        )
+    else:
+        assert response.json() == {"answer": answer}
     assert len(observed) == 1
     result = observed[0]
     assert result["total_matches"] == total

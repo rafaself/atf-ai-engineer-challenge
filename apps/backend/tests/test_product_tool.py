@@ -10,6 +10,7 @@ from pydantic_ai.messages import (
     TextPart,
     ToolCallPart,
     ToolReturnPart,
+    UserPromptPart,
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
@@ -44,18 +45,17 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
 ):
     repository = RecordingRepository()
     tool = ProductSearchTool(repository)
-    result = tool.search_products(
+    result = tool.search_available_products(
         category=" Violões ",
         max_price_brl=Decimal("1000.00"),
         min_price_brl=Decimal("0.29"),
-        available_only=False,
         limit=20,
     )
     assert repository.query == ProductSearchQuery(
         category="Violões",
         min_price_centavos=29,
         max_price_centavos=100000,
-        available_only=False,
+        available_only=True,
         limit=20,
     )
     assert result["total_matches"] == 0 and result["truncated"] is False
@@ -67,14 +67,14 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
         Decimal("1e999999"),
     ):
         with pytest.raises(ValidationError):
-            tool.search_products(max_price_brl=amount)
+            tool.search_available_products(max_price_brl=amount)
     for minimum, maximum in ((Decimal("2"), Decimal("1")),):
         with pytest.raises(ValidationError):
-            tool.search_products(min_price_brl=minimum, max_price_brl=maximum)
+            tool.search_available_products(min_price_brl=minimum, max_price_brl=maximum)
     with pytest.raises(ValidationError):
-        tool.search_products(category=" ")
+        tool.search_available_products(category=" ")
     with pytest.raises(ValidationError):
-        tool.search_products(limit=21)
+        tool.search_available_products(limit=21)
     assert repository.query is expected
 
 
@@ -88,6 +88,12 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     observed: list[object] = []
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        if any(
+            isinstance(part, UserPromptPart) and part.content == "Olá"
+            for message in messages
+            for part in message.parts
+        ):
+            return ModelResponse(parts=[TextPart("Olá!")])
         returns = [
             part
             for message in messages
@@ -95,19 +101,17 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
             if isinstance(part, ToolReturnPart)
         ]
         if not returns:
-            assert info.function_tools[0].name == "search_products"
+            assert info.function_tools[0].name == "search_available_products"
             return ModelResponse(
                 parts=[
                     ToolCallPart(
-                        "search_products",
+                        "search_available_products",
                         {"category": "violoes", "max_price_brl": "1000.00"},
                     )
                 ]
             )
         observed.append(returns[-1].content)
-        return ModelResponse(
-            parts=[TextPart("Há 12 opções; a lista foi limitada a 10.")]
-        )
+        return ModelResponse(parts=[TextPart("Veja algumas opções do catálogo.")])
 
     executor = create_catalog_agent(
         AgentSettings(), repository, model=FunctionModel(respond)
@@ -115,21 +119,22 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     response = asyncio.run(
         executor.run(ChatRequest(message="Quais violões até R$1000?"))
     )
-    assert "12" in response.answer
+    assert "12" in response.answer and "seleção" in response.answer
     assert observed and isinstance(observed[0], dict)
     assert observed[0]["total_matches"] == 12 and observed[0]["truncated"] is True
+    assert asyncio.run(executor.run(ChatRequest(message="Olá"))).answer == "Olá!"
     tool = ProductSearchTool(repository)
-    named = tool.search_products(product_name="GD20")
+    named = tool.get_product_details(product_name="GD20")
     assert named["products"] == [
         repository.search(ProductSearchQuery(product_name="GD20"))
         .products[0]
         .model_dump(mode="json")
         | {"price_brl": "2199.00"}
     ]
-    unavailable = tool.search_products(product_name="GF-3D", available_only=False)
+    unavailable = tool.get_product_details(product_name="GF-3D")
     assert unavailable["total_matches"] == 1
-    assert tool.search_products(product_name="GF-3D")["total_matches"] == 0
-    assert tool.search_products(product_name="nonexistent")["products"] == []
+    assert tool.search_available_products(product_name="GF-3D")["total_matches"] == 0
+    assert tool.search_available_products(product_name="nonexistent")["products"] == []
 
 
 def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
@@ -139,12 +144,12 @@ def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(
-            parts=[ToolCallPart("search_products", {"product_name": "GD20"})]
+            parts=[ToolCallPart("search_available_products", {"product_name": "GD20"})]
         )
 
     tool = ProductSearchTool(BrokenRepository())
     with pytest.raises(ProductRetrievalError):
-        tool.search_products(product_name="GD20")
+        tool.search_available_products(product_name="GD20")
     executor = create_catalog_agent(
         AgentSettings(), BrokenRepository(), model=FunctionModel(respond)
     )
@@ -156,7 +161,9 @@ def test_money_conversion_does_not_inherit_ambient_decimal_rounding() -> None:
     repository = RecordingRepository()
     with localcontext() as context:
         context.prec = 2
-        ProductSearchTool(repository).search_products(max_price_brl=Decimal("999.99"))
+        ProductSearchTool(repository).search_available_products(
+            max_price_brl=Decimal("999.99")
+        )
     assert repository.query is not None
     assert repository.query.max_price_centavos == 99999
 
@@ -165,7 +172,9 @@ def test_sdk_tool_validation_rejects_boolean_limit_before_repository() -> None:
     repository = RecordingRepository()
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        return ModelResponse(parts=[ToolCallPart("search_products", {"limit": True})])
+        return ModelResponse(
+            parts=[ToolCallPart("search_available_products", {"limit": True})]
+        )
 
     executor = create_catalog_agent(
         AgentSettings(), repository, model=FunctionModel(respond)
