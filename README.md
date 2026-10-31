@@ -1,9 +1,10 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-04**: an installable backend,
+This checkout implements **US-01 through US-05**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
-read-only SQLite retrieval, and an isolated Pydantic AI/Bedrock agent adapter.
+read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and a typed
+product-search tool connected to the catalog repository.
 Live Bedrock evidence is deferred until the user confirms a project AWS profile.
 Chat orchestration and HTTP remain later stories. See [agent setup](docs/bedrock.md).
 

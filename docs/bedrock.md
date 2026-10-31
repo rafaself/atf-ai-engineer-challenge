@@ -40,3 +40,26 @@ Offline checks use controlled Pydantic AI models and forbid real model requests;
 credentials are not needed. In the Codex restricted sandbox SDK worker-thread tests
 stalled; the same offline suite runs outside that sandbox with the model-call guard
 still enabled. No network/model request is needed for those checks.
+
+## Product search (US-05)
+
+`agent.catalog.create_catalog_agent(settings, repository, model=...)` registers
+`search_products` against any ProductRepository. The optional model argument is
+for alternate providers or controlled tests; omit it for the configured Bedrock model.
+
+Tool filters are category, partial product_name, inclusive min_price_brl and
+max_price_brl (reais, not centavos), available_only, and limit (1–20). Prices must
+be finite, nonnegative, and have exact cents within the SQLite range. Conversion
+is independent of the caller's Decimal precision. Boolean limits and nonboolean
+availability flags are rejected at the SDK boundary.
+
+The tool delegates filtering and ordering to the repository and returns product
+IDs, names, category information, status, stock, availability, integer-centavo
+prices and exact two-decimal price_brl strings, total_matches and truncated. It
+also identifies catalog pricing and imported-snapshot inventory. Operational
+retrieval errors propagate; they do not become zero results or invented answers.
+The persona instructs the model to disclose truncation and consult the tool first.
+
+Controlled-model tests verify registration, arguments, results and failures against
+the real temporary SQLite catalog. They do not establish live Nova tool selection
+or answer quality; those checks remain deferred pending AWS profile confirmation.

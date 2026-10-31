@@ -1,0 +1,175 @@
+import asyncio
+from decimal import Decimal, localcontext
+from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelResponse,
+    TextPart,
+    ToolCallPart,
+    ToolReturnPart,
+)
+from pydantic_ai.models.function import AgentInfo, FunctionModel
+
+from emporio_music_backend.agent.catalog import ProductSearchTool, create_catalog_agent
+from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.contracts import (
+    ChatRequest,
+    ProductSearchQuery,
+    ProductSearchResult,
+)
+from emporio_music_backend.contracts.errors import (
+    AgentExecutionError,
+    ProductRetrievalError,
+)
+from emporio_music_backend.infrastructure.catalog_import import import_catalog
+from emporio_music_backend.infrastructure.sqlite_repository import (
+    SQLiteProductRepository,
+)
+
+
+class RecordingRepository:
+    def __init__(self) -> None:
+        self.query: ProductSearchQuery | None = None
+
+    def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+        self.query = query
+        return ProductSearchResult()
+
+
+def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository() -> (
+    None
+):
+    repository = RecordingRepository()
+    tool = ProductSearchTool(repository)
+    result = tool.search_products(
+        category=" Violões ",
+        max_price_brl=Decimal("1000.00"),
+        min_price_brl=Decimal("0.29"),
+        available_only=False,
+        limit=20,
+    )
+    assert repository.query == ProductSearchQuery(
+        category="Violões",
+        min_price_centavos=29,
+        max_price_centavos=100000,
+        available_only=False,
+        limit=20,
+    )
+    assert result["total_matches"] == 0 and result["truncated"] is False
+    expected = repository.query
+    for amount in (
+        Decimal("-1"),
+        Decimal("0.001"),
+        Decimal("Infinity"),
+        Decimal("1e999999"),
+    ):
+        with pytest.raises(ValidationError):
+            tool.search_products(max_price_brl=amount)
+    for minimum, maximum in ((Decimal("2"), Decimal("1")),):
+        with pytest.raises(ValidationError):
+            tool.search_products(min_price_brl=minimum, max_price_brl=maximum)
+    with pytest.raises(ValidationError):
+        tool.search_products(category=" ")
+    with pytest.raises(ValidationError):
+        tool.search_products(limit=21)
+    assert repository.query is expected
+
+
+def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
+    tmp_path: Path,
+) -> None:
+    data = Path(__file__).parents[2] / "data"
+    database = tmp_path / "catalog.sqlite3"
+    import_catalog(data / "products.csv", data / "categories.csv", database)
+    repository = SQLiteProductRepository(database)
+    observed: list[object] = []
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        returns = [
+            part
+            for message in messages
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        ]
+        if not returns:
+            assert info.function_tools[0].name == "search_products"
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "search_products",
+                        {"category": "violoes", "max_price_brl": "1000.00"},
+                    )
+                ]
+            )
+        observed.append(returns[-1].content)
+        return ModelResponse(
+            parts=[TextPart("Há 12 opções; a lista foi limitada a 10.")]
+        )
+
+    executor = create_catalog_agent(
+        AgentSettings(), repository, model=FunctionModel(respond)
+    )
+    response = asyncio.run(
+        executor.run(ChatRequest(message="Quais violões até R$1000?"))
+    )
+    assert "12" in response.answer
+    assert observed and isinstance(observed[0], dict)
+    assert observed[0]["total_matches"] == 12 and observed[0]["truncated"] is True
+    tool = ProductSearchTool(repository)
+    named = tool.search_products(product_name="GD20")
+    assert named["products"] == [
+        repository.search(ProductSearchQuery(product_name="GD20"))
+        .products[0]
+        .model_dump(mode="json")
+        | {"price_brl": "2199.00"}
+    ]
+    unavailable = tool.search_products(product_name="GF-3D", available_only=False)
+    assert unavailable["total_matches"] == 1
+    assert tool.search_products(product_name="GF-3D")["total_matches"] == 0
+    assert tool.search_products(product_name="nonexistent")["products"] == []
+
+
+def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
+    class BrokenRepository:
+        def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+            raise ProductRetrievalError("Catalog unavailable")
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        return ModelResponse(
+            parts=[ToolCallPart("search_products", {"product_name": "GD20"})]
+        )
+
+    tool = ProductSearchTool(BrokenRepository())
+    with pytest.raises(ProductRetrievalError):
+        tool.search_products(product_name="GD20")
+    executor = create_catalog_agent(
+        AgentSettings(), BrokenRepository(), model=FunctionModel(respond)
+    )
+    with pytest.raises(ProductRetrievalError):
+        asyncio.run(executor.run(ChatRequest(message="Quanto custa o GD20?")))
+
+
+def test_money_conversion_does_not_inherit_ambient_decimal_rounding() -> None:
+    repository = RecordingRepository()
+    with localcontext() as context:
+        context.prec = 2
+        ProductSearchTool(repository).search_products(max_price_brl=Decimal("999.99"))
+    assert repository.query is not None
+    assert repository.query.max_price_centavos == 99999
+
+
+def test_sdk_tool_validation_rejects_boolean_limit_before_repository() -> None:
+    repository = RecordingRepository()
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        return ModelResponse(parts=[ToolCallPart("search_products", {"limit": True})])
+
+    executor = create_catalog_agent(
+        AgentSettings(), repository, model=FunctionModel(respond)
+    )
+    with pytest.raises(AgentExecutionError):
+        asyncio.run(executor.run(ChatRequest(message="Buscar instrumentos")))
+    assert repository.query is None
