@@ -1,9 +1,10 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01: Project Foundation** only: an installable backend
-package, development checks, and the supplied catalog snapshot. The agent, database
-import, and HTTP API will be implemented in later Sprint 1 stories.
+This checkout implements **US-01: Project Foundation** and **US-02: Architecture
+and Contracts**: an installable backend, development checks, the supplied catalog
+snapshot, validated values, and substitution interfaces. Concrete agent execution,
+database import/retrieval, chat orchestration, and HTTP remain later stories.
 
 ## Setup
 
@@ -21,7 +22,7 @@ uv run --directory backend python -c "import emporio_music_backend"
 
 The environment is created at `backend/.venv`. Development tools live in the
 `dev` dependency group and are installed by default. Production dependencies are
-currently empty. The checked-in `backend/uv.lock` records the resolved versions;
+currently limited to Pydantic 2. The checked-in `backend/uv.lock` records resolved versions;
 use `--locked` when installing an existing checkout.
 
 ## Quality checks
@@ -31,7 +32,7 @@ Run from the repository root:
 ```bash
 uv run --directory backend --locked ruff check .
 uv run --directory backend --locked ruff format --check .
-uv run --directory backend --locked mypy src
+uv run --directory backend --locked mypy src tests
 uv run --directory backend --locked pytest
 uv build --project backend
 ```
@@ -40,11 +41,14 @@ uv build --project backend
 uses `backend/pyproject.toml` and resolves `src` and `tests` correctly. `--project`
 selects a project without changing the command's working directory.
 
-The packaging smoke test imports the installed distribution in an isolated Python
+Contract tests validate chat/catalog values, derived fields, independent typed
+fakes, and dependency boundaries without network or database access. Strict mypy
+covers source and tests, including those fakes. The packaging smoke test imports
+the installed distribution in an isolated Python
 subprocess outside the source tree, without AWS configuration or provider imports.
 Build outputs are ignored under `backend/dist/`.
 
-To check the wheel without development dependencies (POSIX shell):
+To check the wheel with runtime dependencies only (POSIX shell):
 
 ```bash
 wheel_check_dir=$(mktemp -d)
@@ -84,10 +88,38 @@ not implemented yet. Customer/order datasets remain outside this story.
 
 ## Decisions and follow-up
 
-The project starts with one Python package using `uv_build`, no root uv workspace,
-and no runtime dependencies. This keeps installation reproducible without adding
-application abstractions before US-02. Sprint 1 will build a modular monolith with
-typed boundaries, SQLite retrieval, provider configuration, and an API.
+The project uses one Python package with `uv_build` and no root uv workspace.
+Pydantic 2 supplies frozen models with unknown inputs forbidden. The accepted
+[ADR-0001](docs/adr/0001-modular-monolith-and-dependency-boundaries.md) describes
+module responsibilities, dependency direction, and tradeoffs.
+
+### Current application contracts
+
+| Contract | Behavior |
+| --- | --- |
+| `ChatRequest` / `ChatResponse` | Trimmed nonblank `message` / `answer`; message maximum 4,000 characters. |
+| `ProductSearchQuery` | Optional `category` / `product_name`, inclusive `min_price_centavos` / `max_price_centavos`, `available_only=True`, limit 10 (maximum 20). |
+| `ProductSummary` | Product/category IDs and names, integer-centavo price, stock quantity, status, and derived availability. |
+| `ProductSearchResult` | Immutable product tuple, total matches before limiting, and derived truncation. |
+| `AgentExecutor.run` | Async single-message execution port returning ChatResponse. |
+| `ProductRepository.search` | Synchronous typed catalog search port. |
+| `ChatService.chat` | Async application interface only; implementation belongs to US-06. |
+
+Contracts and errors live in `emporio_music_backend.contracts`; ports and the
+application entry-point interface live in `ports` and `application`. No provider
+or HTTP objects cross these boundaries. Integer fields reject booleans, fractions,
+and numeric strings. Negative prices/stock, inverted bounds, blank filters, unknown
+statuses, and inconsistent totals are rejected. Availability requires active
+status and positive stock; computed availability/truncation are output-only.
+
+The future repository must combine supplied filters, normalize category/name case
+and accents, match names by literal substring, and sort by price then product ID.
+Unknown categories/names return no matches, never an unrestricted search. Named
+lookups may explicitly disable `available_only` to inspect unavailable products.
+These are contract semantics; filtering itself is US-03 work. No-match results are
+normal data. Operational failures have transport-neutral configuration,
+provider-unavailable, timeout, retrieval, and execution error categories; contract
+validation retains Pydantic ValidationError.
 
 Later work must document architecture/retrieval/prompting decisions and include
 real example conversations. Policy answers, order access, persistent conversation
