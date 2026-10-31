@@ -23,9 +23,25 @@ the application and its documented architecture, not in test helpers or mocks.
   previous assumption, authoritative evidence, and corrected behavior. A refactor
   may change test setup while preserving the same behavioral assertion strength.
 
+## Prioritize by risk and marginal value
+
+- Assess failure impact and likelihood using domain criticality, complexity, defect
+  history, changing behavior, and fragile boundaries. Favor risks such as incorrect
+  prices/availability, data loss, broken transactions, and misleading failure responses.
+  Use judgment rather than mandatory scoring or exhaustive case matrices.
+- Before adding a test, identify the behavior/regression it protects, the meaningful
+  failure it would detect, and the confidence missing from existing checks. Make that
+  purpose clear in the test name and assertions; no separate justification form is needed.
+- Choose a check whose confidence gain warrants setup, runtime, flakiness, and future
+  maintenance. A small real integration test can be more valuable than many mocked
+  unit tests. Do not add abstractions solely to enable low-value isolated tests.
+- Skip tests for obvious pass-through code, simple accessors, library internals, or
+  already-covered paths unless they protect a concrete application risk. Exercise
+  edge cases for distinct consequential behavior, not every imaginable input.
+
 ## Choose the smallest useful check
 
-- For deterministic rules, error paths, and regressions, write a focused test first
+- For high-value deterministic rules, error paths, and regressions, write a focused test first
   and observe failure for the intended missing behavior before the implementation
   fix. Import errors or broken fixtures alone do not demonstrate the regression.
   If the fix already exists, disclose that the failing baseline was not verified.
@@ -53,5 +69,9 @@ the application and its documented architecture, not in test helpers or mocks.
 - Verify changed behavior and affected boundaries, then run the README's relevant
   quality checks. Avoid tests for trivial reversible edits or library internals,
   duplicate cases, and coverage/test-count targets without behavioral value.
+- Keep a focused set of behavior checks rather than duplicating the same guarantee
+  at every layer. Retain integration checks that catch failures isolated tests cannot.
+  Consolidate existing tests only with evidence that their domain guarantees remain
+  protected; never use redundancy or flakiness as an excuse to hide a real failure.
 - Report the domain expectation, changed behavior, commands/results, and remaining
   gaps. Never claim a live provider check based on a fake or an unexecuted command.
