@@ -10,4 +10,5 @@ choices. Keep numbering stable. Link decisions from the corresponding story.
 
 - [ADR-0001: Modular monolith and dependency boundaries](0001-modular-monolith-and-dependency-boundaries.md)
 
-ADR-0002 (provider abstraction) remains US-04 work, after validating the provider.
+- [ADR-0002: LLM provider boundary](0002-llm-provider-boundary.md) records the
+  offline-validated adapter boundary; live model compatibility remains deferred.
