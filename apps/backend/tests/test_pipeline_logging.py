@@ -3,6 +3,7 @@
 import json
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -13,7 +14,9 @@ from emporio_music_backend.contracts.errors import ConfigurationError
 
 
 def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    api_headers: dict[str, str],
 ) -> None:
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret-for-test-only")
@@ -23,9 +26,13 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
         async def chat(
             self, request: ChatRequest, *, context: ExecutionContext
         ) -> ChatResponse:
-            return ChatResponse(answer=request.message)
+            return ChatResponse(
+                answer=request.message,
+                session_id=UUID("00000000-0000-4000-8000-000000000001"),
+            )
 
     with TestClient(create_app(Service())) as client:
+        client.headers.update(api_headers)
         monkeypatch.setenv("PIPELINE_LOGS", "0")
         assert (
             client.post(
@@ -54,11 +61,13 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
     assert len({e["request_id"] for e in requests}) == 2
     assert {e["request_id"] for e in requests} == {e["request_id"] for e in responses}
     assert all("secret-for-test-only" not in json.dumps(e) for e in entries)
-    assert all("[REDACTED]" in e["message"] for e in requests)
+    assert all(set(e) == {"event", "request_id"} for e in requests)
 
 
 def test_failure_logs_show_cause_type_without_raw_exception_body(
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    api_headers: dict[str, str],
 ) -> None:
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
@@ -73,6 +82,7 @@ def test_failure_logs_show_cause_type_without_raw_exception_body(
                 raise ConfigurationError("private settings") from exc
 
     with TestClient(create_app(Service()), raise_server_exceptions=False) as client:
+        client.headers.update(api_headers)
         assert client.post("/api/chat", json={"message": "Olá"}).status_code == 503
     entries = [
         json.loads(r.getMessage())

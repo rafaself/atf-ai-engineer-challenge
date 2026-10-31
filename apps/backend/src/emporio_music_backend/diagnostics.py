@@ -15,12 +15,41 @@ if not _logger.handlers:
     handler.setFormatter(logging.Formatter("%(message)s"))
     _logger.addHandler(handler)
 
+# Per-event allowlists prevent current/future callers from accidentally dumping
+# request content, credentials, customer identities, tool rows, or session history.
+_FAILURE_FIELDS = {"causes", "aws_error_code", "hint"}
+_SAFE_FIELDS = {
+    "http.request": set(),
+    "http.response": {"status", "duration_ms"},
+    "http.failure": _FAILURE_FIELDS | {"duration_ms"},
+    "provider.initializing": {"model", "region", "explicit_profile"},
+    "provider.ready": {"configured_model", "region", "injected_model"},
+    "provider.failure": _FAILURE_FIELDS,
+    "agent.started": {"model", "region"},
+    "agent.completed": {"requests", "input_tokens", "output_tokens"},
+    "output.rejected": {"reason", "retry"},
+    "output.accepted": {"truncated_totals"},
+    "tool.called": {"tool", "limit"},
+    "tool.result": {"total_matches", "returned"},
+    "catalog.result": {"total_matches", "returned"},
+    "catalog.failure": _FAILURE_FIELDS,
+    "catalog.import.completed": {"categories", "products"},
+}
+
 
 def trace(event: str, **fields: object) -> None:
     if os.environ.get("PIPELINE_LOGS", "0") != "1":
         return
     payload = json.dumps(
-        {"event": event, "request_id": request_id.get(), **fields},
+        {
+            "event": event,
+            "request_id": request_id.get(),
+            **{
+                key: value
+                for key, value in fields.items()
+                if key in _SAFE_FIELDS.get(event, set())
+            },
+        },
         ensure_ascii=False,
         default=str,
     )

@@ -62,10 +62,6 @@ class ProductSearchTool:
         trace(
             "tool.called",
             tool="search_available_products",
-            category=category,
-            product_name=product_name,
-            min_price_brl=min_price_brl,
-            max_price_brl=max_price_brl,
             limit=limit,
         )
         query = ProductSearchQuery(
@@ -91,7 +87,6 @@ class ProductSearchTool:
         trace(
             "tool.called",
             tool="get_product_details",
-            product_name=product_name,
             limit=limit,
         )
         return self._search(
@@ -102,7 +97,11 @@ class ProductSearchTool:
 
     def _search(self, query: ProductSearchQuery) -> dict[str, object]:
         result = self.repository.search(query)
-        trace("tool.result", **result.model_dump(mode="json"))
+        trace(
+            "tool.result",
+            total_matches=result.total_matches,
+            returned=len(result.products),
+        )
         products: list[dict[str, object]] = []
         for item in result.products:
             row = item.model_dump(mode="json")

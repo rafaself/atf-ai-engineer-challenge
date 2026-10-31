@@ -1,10 +1,12 @@
 from typing import TYPE_CHECKING, Literal
+from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
 from emporio_music_backend.application import ChatServicePort
 from emporio_music_backend.contracts import (
+    AgentResponse,
     ChatRequest,
     ChatResponse,
     ExecutionContext,
@@ -31,10 +33,17 @@ def product(
     )
 
 
-def test_chat_text_is_trimmed_and_has_no_transport_fields() -> None:
+def test_chat_text_and_owned_response_contracts() -> None:
     assert ChatRequest(message="  Olá!  ").message == "Olá!"
-    assert ChatResponse(answer="  Olá!  ").model_dump() == {"answer": "Olá!"}
+    assert AgentResponse(answer="  Olá!  ").model_dump() == {"answer": "Olá!"}
     assert len(ChatRequest(message="a" * 4000).message) == 4000
+    session_id = uuid4()
+    assert (
+        ChatRequest(message="Continue", session_id=session_id).session_id == session_id
+    )
+    assert ChatResponse(answer="Saved", session_id=session_id).session_id == session_id
+    with pytest.raises(ValidationError):
+        ChatResponse.model_validate({"answer": "No successful turn without a session"})
 
 
 @pytest.mark.parametrize("value", ["", " \n\t", 123, True, None, "a" * 4001])
@@ -46,7 +55,7 @@ def test_invalid_messages_are_rejected(value: object) -> None:
 @pytest.mark.parametrize("value", ["", "  ", 123, None])
 def test_invalid_answers_are_rejected(value: object) -> None:
     with pytest.raises(ValidationError):
-        ChatResponse.model_validate({"answer": value})
+        AgentResponse.model_validate({"answer": value})
 
 
 def test_models_forbid_extra_fields_and_mutation() -> None:
@@ -168,8 +177,8 @@ def test_empty_complete_and_truncated_results() -> None:
 class FakeAgent:
     async def run(
         self, request: ChatRequest, *, context: ExecutionContext
-    ) -> ChatResponse:
-        return ChatResponse(answer=request.message)
+    ) -> AgentResponse:
+        return AgentResponse(answer=request.message)
 
 
 class FakeRepository:
@@ -183,7 +192,9 @@ class FakeChatService:
     async def chat(
         self, request: ChatRequest, *, context: ExecutionContext
     ) -> ChatResponse:
-        return ChatResponse(answer=request.message)
+        return ChatResponse(
+            answer=request.message, session_id=request.session_id or uuid4()
+        )
 
 
 # Structural compatibility is a static guarantee; executing these canned fakes

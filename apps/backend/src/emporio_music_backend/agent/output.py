@@ -25,6 +25,8 @@ def customer_answer(ctx: RunContext[None], answer: str) -> str:
         )
     totals: set[int] = set()
     for message in ctx.messages:
+        if ctx.run_id is None or message.run_id != ctx.run_id:
+            continue
         for part in message.parts:
             if (
                 isinstance(part, ToolReturnPart)
@@ -42,5 +44,5 @@ def customer_answer(ctx: RunContext[None], answer: str) -> str:
         for total in sorted(totals)
     ]
     final_answer = "\n\n".join([answer.strip(), *notices])
-    trace("output.accepted", truncated_totals=sorted(totals), answer=final_answer)
+    trace("output.accepted", truncated_totals=sorted(totals))
     return final_answer

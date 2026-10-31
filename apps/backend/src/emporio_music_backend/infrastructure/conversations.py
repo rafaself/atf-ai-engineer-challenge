@@ -68,6 +68,7 @@ class SQLiteConversationRepository:
                         "Conversation database is incompatible"
                     )
                 connection.commit()
+            self.database_path.chmod(0o600)
         except (OSError, sqlite3.Error) as exc:
             raise ConversationPersistenceError(
                 "Conversation storage is unavailable"

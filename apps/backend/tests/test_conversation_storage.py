@@ -30,6 +30,7 @@ def test_restart_history_limits_and_private_database(tmp_path: Path) -> None:
         (("A", "one"), ("B", "two"), ("C", "three"))
     ):
         repository.append(session, revision, user_message=user, answer=answer)
+    path.chmod(0o644)  # An existing/externally copied database must also be private.
     restarted = SQLiteConversationRepository(path)
     state = restarted.load(
         session.session_id, owner, limits=HistoryLimits(max_turns=2, max_characters=10)

@@ -4,8 +4,8 @@ from typing import Protocol
 from uuid import UUID
 
 from emporio_music_backend.contracts import (
+    AgentResponse,
     ChatRequest,
-    ChatResponse,
     ConversationSession,
     ConversationSnapshot,
     CustomerIdentity,
@@ -50,7 +50,7 @@ class ConversationRepository(Protocol):
 class AgentExecutor(Protocol):
     async def run(
         self, request: ChatRequest, *, context: ExecutionContext
-    ) -> ChatResponse:
+    ) -> AgentResponse:
         """Execute with trusted, application-owned context; translate provider faults."""
         ...
 
