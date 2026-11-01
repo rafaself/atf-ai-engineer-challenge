@@ -10,6 +10,9 @@ sprint and remains unfinished. The assistant states that limitation instead of
 inventing answers. [Sprint 2 live examples](docs/examples/sprint-2/README.md) cover
 catalog/context, promotions/PIX and scoped orders, with failures and corrections
 preserved. This is not complete challenge acceptance.
+The later [simplification review](docs/examples/simplification-review.md) records
+live regressions and a focused price check verified offline; no final-code live
+acceptance is claimed.
 
 ## Run locally
 
@@ -72,9 +75,8 @@ The policy PDF will use a separate simple lookup. No vector store is needed here
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
 The small `paths.py` module derives `PROJECT_ROOT` from its source location and
 defines all storage under `PROJECT_ROOT / "data"`: `catalog.sqlite3`,
-`operations.sqlite3`, `conversations.sqlite3`, and `chroma/` for future ChromaDB
-storage. Paths are fixed, independent of the launch directory; no storage-path
-environment variables or CLI overrides are needed. ChromaDB is not integrated yet.
+`operations.sqlite3` and `conversations.sqlite3`. Paths are fixed, independent of
+the launch directory; no storage-path environment variables or CLI overrides are needed.
 Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not distinguish individual
 guests. Keep the demo on loopback with fictional data; it has no authentication. Facts reflect imported snapshots, not live stock
 or carrier status. Only `is_active` establishes promotion validity; the source has

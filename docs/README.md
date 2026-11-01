@@ -13,5 +13,5 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [Local API](api.md): startup, curl, dependency injection and HTTP failures.
 - [ADRs](adr/README.md): accepted architecture/provider boundaries.
 - [Validation](validation.md): reproducibility results and remaining live checks.
-- [Examples](examples/README.md): pending real-interaction capture and review.
+- [Examples](examples/README.md): reviewed real conversations, failures and replay guidance.
 - [Follow-up](follow-up.md): policy routing and final submission requirements.

@@ -6,6 +6,9 @@ This is US-13's Sprint 2 functional evidence, not complete challenge acceptance 
 claim that the model is always correct. Policy retrieval/evaluation belongs to the
 later retrieval sprint and was neither implemented nor evaluated here.
 
+These captures predate the subsequent [simplification review](../simplification-review.md).
+They do not establish the current price check's live behavior.
+
 | Curated conversation | Observed result |
 | --- | --- |
 | [Catalog and context](01-catalog-context.md) | Budget/stock retrieval, “second option” resolution with a fresh lookup, and out-of-scope redirection |
@@ -55,8 +58,8 @@ and start the API, then replay each file's user turns using `/api/chat` and the 
 selection/session rules. For SDK evidence in a local script, wrap each request in
 its own `capture_run_messages()` context and inspect ToolCallPart/ToolReturnPart;
 see [the SDK documentation](https://pydantic.dev/docs/ai/api/pydantic-ai/agent/#pydantic_ai.agent.capture_run_messages).
-The existing `agent.examples` command remains a historical independent catalog
-probe; it does not reproduce these persisted order/guest conversations. No new
+The historical catalog-only `agent.examples` recorder was subsequently retired;
+replay through HTTP to exercise persisted order/guest conversations. No new
 recorder framework or production dependency was added.
 
 ## Automated evidence and limits

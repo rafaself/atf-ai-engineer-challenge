@@ -11,8 +11,8 @@ new dependencies or ORM are required.
 
 `infrastructure.catalog_import.import_catalog(products_path, categories_path,
 promotions_path, database_path)` accepts explicit Path objects and returns ImportReport with
-category/product/promotion counts. The root README command requires all four
-paths; relative paths resolve against the caller's working directory. Success
+category/product/promotion counts. Its CLI accepts the three CSV paths and uses
+the fixed project catalog destination; relative source paths resolve against the caller's working directory. Success
 prints counts and exits zero. Failure prints CatalogImportError to stderr and
 exits one, without a traceback. Argument errors use argparse's nonzero exit.
 
@@ -98,9 +98,10 @@ bounds use payable price for that payment choice. `price_centavos`/`price_brl`
 remain the original price; `pricing` contains payment method, final centavo/BRL
 price, applied percentage, discount kind (`none`, `promotion`, `pix`) and optional
 promotion ID/description. Results identify `computed_snapshot_quote` price basis
-and `source_is_active_snapshot` promotion validity. Current-run discounted products
-receive Portuguese original/percentage/final-price notices. History never supplies
-current pricing evidence. These notices do not validate every generated claim.
+and `source_is_active_snapshot` promotion validity. The model presents the original
+price, percentage and final price from those fields; application output adds one
+snapshot notice for discounted results, without repeating every quote. History
+never supplies current pricing evidence. The notice does not validate generated claims.
 
 The supplied four final promotional prices are 32310, 43920, 196718 and 551908
 centavos for product IDs 127, 121, 90 and 94. These are snapshot calculations, not
