@@ -1,5 +1,9 @@
 # ADR-0005: Authorized operational snapshots
 
+> Identity update: [ADR-0007](0007-simplified-demo-identity.md), accepted in #33,
+> replaces tokens and mandatory customer identity with local fictional selection
+> and guest sessions. Context separation and customer-scoped reads remain.
+
 Historical decision record. [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32)
 simplifies persistence and import infrastructure. Expected revisions, cross-instance
 coordination, exact DDL checks and runtime source fingerprints described below are

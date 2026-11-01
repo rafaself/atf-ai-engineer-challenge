@@ -23,7 +23,7 @@ from emporio_music_backend.contracts.errors import (
 from emporio_music_backend.contracts.identity import CustomerIdentity
 
 _APPLICATION_ID = 0x454D434F
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 
 
 class SQLiteConversationRepository:
@@ -50,7 +50,7 @@ class SQLiteConversationRepository:
                 if application_id == 0 and version == 0 and not tables:
                     connection.execute(
                         "CREATE TABLE sessions (session_id TEXT PRIMARY KEY, "
-                        "customer_id INTEGER NOT NULL CHECK(customer_id > 0))"
+                        "customer_id INTEGER CHECK(customer_id > 0))"
                     )
                     connection.execute(
                         "CREATE TABLE turns (session_id TEXT NOT NULL REFERENCES sessions(session_id), "
@@ -95,14 +95,18 @@ class SQLiteConversationRepository:
             raise
         return connection
 
-    def create(self, identity: CustomerIdentity) -> ConversationSession:
-        identity = CustomerIdentity.model_validate(identity)
+    def create(self, identity: CustomerIdentity | None) -> ConversationSession:
+        if identity is not None:
+            identity = CustomerIdentity.model_validate(identity)
         session = ConversationSession(owner=identity)
         try:
             with closing(self._connect()) as connection:
                 connection.execute(
                     "INSERT INTO sessions (session_id, customer_id) VALUES (?, ?)",
-                    (str(session.session_id), identity.customer_id),
+                    (
+                        str(session.session_id),
+                        identity.customer_id if identity else None,
+                    ),
                 )
         except sqlite3.Error as exc:
             raise ConversationPersistenceError(
@@ -111,16 +115,21 @@ class SQLiteConversationRepository:
         return session
 
     def load(
-        self, session_id: UUID, identity: CustomerIdentity, *, limits: HistoryLimits
+        self,
+        session_id: UUID,
+        identity: CustomerIdentity | None,
+        *,
+        limits: HistoryLimits,
     ) -> ConversationSnapshot:
-        identity = CustomerIdentity.model_validate(identity)
+        if identity is not None:
+            identity = CustomerIdentity.model_validate(identity)
         limits = HistoryLimits.model_validate(limits)
         try:
             with closing(self._connect()) as connection:
                 connection.execute("BEGIN")
                 row = connection.execute(
-                    "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id = ?",
-                    (str(session_id), identity.customer_id),
+                    "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id IS ?",
+                    (str(session_id), identity.customer_id if identity else None),
                 ).fetchone()
                 if row is None:
                     raise SessionAccessError("Conversation session is inaccessible")
@@ -176,8 +185,11 @@ class SQLiteConversationRepository:
                 connection.execute("BEGIN IMMEDIATE")
                 if (
                     connection.execute(
-                        "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id = ?",
-                        (str(session.session_id), session.owner.customer_id),
+                        "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id IS ?",
+                        (
+                            str(session.session_id),
+                            session.owner.customer_id if session.owner else None,
+                        ),
                     ).fetchone()
                     is None
                 ):

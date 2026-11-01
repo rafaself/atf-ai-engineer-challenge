@@ -65,7 +65,7 @@ from emporio_music_backend.infrastructure.sqlite_repository import (
 def test_snapshot_facts_survive_http_agent_tool_pipeline(
     tmp_path: Path,
     conversations: SQLiteConversationRepository,
-    api_headers: dict[str, str],
+    demo_customer: dict[str, int],
     tool_name: str,
     arguments: dict[str, object],
     total: int,
@@ -100,8 +100,9 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
     )
     with TestClient(create_app(ChatService(executor, conversations))) as client:
-        client.headers.update(api_headers)
-        response = client.post("/api/chat", json={"message": "Consulta de integração"})
+        response = client.post(
+            "/api/chat", json={**demo_customer, "message": "Consulta de integração"}
+        )
     assert response.status_code == 200
     if total > 10:
         assert response.json()["answer"].startswith(answer)

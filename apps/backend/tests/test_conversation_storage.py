@@ -57,12 +57,15 @@ def test_restart_history_limits_and_private_database(tmp_path: Path) -> None:
     assert path.stat().st_mode & 0o077 == 0
 
 
+@pytest.mark.parametrize("owner_id,stranger_id", [(1, 2), (1, None), (None, 1)])
 def test_foreign_and_unknown_sessions_never_expose_or_append_history(
     tmp_path: Path,
+    owner_id: int | None,
+    stranger_id: int | None,
 ) -> None:
     repository = SQLiteConversationRepository(tmp_path / "conversations.sqlite3")
-    owner = CustomerIdentity(customer_id=1)
-    stranger = CustomerIdentity(customer_id=2)
+    owner = CustomerIdentity(customer_id=owner_id) if owner_id else None
+    stranger = CustomerIdentity(customer_id=stranger_id) if stranger_id else None
     session = repository.create(owner)
     repository.append(session, user_message="Private", answer="Private answer")
     errors = []

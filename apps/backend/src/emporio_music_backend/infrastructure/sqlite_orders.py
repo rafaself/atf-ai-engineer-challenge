@@ -8,8 +8,8 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from emporio_music_backend.contracts.errors import (
-    AuthenticationError,
     ConfigurationError,
+    CustomerSelectionError,
     OperationalRetrievalError,
 )
 from emporio_music_backend.contracts.identity import CustomerIdentity
@@ -77,7 +77,7 @@ class SQLiteOrderRepository:
             ).fetchone()
             is None
         ):
-            raise AuthenticationError("Customer identity required")
+            raise CustomerSelectionError("Unknown demo customer")
 
     def exists(self, identity: CustomerIdentity) -> bool:
         customer_id = self._customer_id(identity)

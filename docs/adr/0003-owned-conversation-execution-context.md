@@ -1,5 +1,9 @@
 # ADR-0003: Owned conversation execution context
 
+> Identity update: [ADR-0007](0007-simplified-demo-identity.md), accepted in #33,
+> replaces tokens and mandatory customer identity with local fictional selection
+> and guest sessions. Context separation and customer-scoped reads remain.
+
 Status: Accepted (US-09 contracts and offline direct-history execution)
 
 Related issue: [US-09 #23](https://github.com/rafaself/atf-ai-engineer-challenge/issues/23)

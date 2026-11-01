@@ -19,13 +19,10 @@ uv sync --project apps/backend --locked
 cp .env.example .env
 ```
 
-Edit `.env`: configure an AWS profile or access keys for Bedrock, and add a private
-`DEMO_CUSTOMER_TOKENS_JSON` mapping such as `{"<generated-token>":1}`. Generate a
-URL-safe token with:
-
-```bash
-uv run --project apps/backend --locked python -c "import secrets; print(secrets.token_urlsafe(32))"
-```
+Edit `.env` to configure an AWS profile or access keys for Bedrock. Chat needs no
+login or demo tokens. Omit `customer_id` for guest mode, or select a fictional
+customer to demonstrate order retrieval. This is local demo selection, **not
+authentication**; anyone using the demo can select any fictional customer.
 
 Then prepare all supplied data with one command and start the API:
 
@@ -39,23 +36,28 @@ rows. Re-running it refreshes the source snapshots and leaves chat history alone
 It never rewrites supplied CSVs/PDFs. A leftover pre-US-12 generated catalog must
 be recreated or replaced with a fresh configured path; no migration system is included.
 
-Open [Swagger UI](http://127.0.0.1:8000/docs), select **Authorize**, and enter a
-configured token. Send `{"message":"Quais são as promoções?"}`. Reuse the returned
-`session_id` with `{"message":"E o segundo no PIX?","session_id":"<returned-id>"}`.
-Omit the ID to start a new chat. Credentials and generated databases stay Git-ignored.
+Open [Swagger UI](http://127.0.0.1:8000/docs) and send
+`{"message":"Quais são as promoções?"}` as a guest. Reuse the returned `session_id`
+with `{"message":"E o segundo no PIX?","session_id":"<returned-id>"}`.
+For orders, start a new chat with `{"message":"Meus pedidos","customer_id":1}`;
+repeat the same customer selection on each follow-up. Omit `session_id` when
+switching customer or mode. Generated databases and AWS credentials stay Git-ignored.
+If upgrading from token-based sessions, keep the old database and set
+`CONVERSATION_DATABASE_PATH` to a fresh file such as `data/guest-conversations.sqlite3`.
+Old conversation schemas are rejected without migration or deletion.
 See [API details](docs/api.md) for curl, configuration and errors.
 
 ## How it works
 
 FastAPI calls a small chat service, which loads owned history, runs the agent and
 saves one complete user/assistant turn. Tools retrieve facts from read-only SQLite
-snapshots; the model never builds SQL or chooses the authorized customer.
+snapshots; the model never builds SQL or chooses the selected customer.
 
 - **Catalog:** literal name/category lookup, active/stock checks and bounded results.
 - **Pricing:** integer-centavo half-up arithmetic; an eligible active promotion
   takes priority, otherwise explicitly requested PIX receives 5%. Discounts never
   stack. Budget filters use final prices, while original prices remain intact.
-- **Orders:** trusted demo identity and parameterized ownership checks. Historical
+- **Orders:** validated fictional customer selection and parameterized scope checks. Historical
   totals stay unchanged; current catalog prices never reconstruct purchase prices.
 - **History:** persisted text pairs, bounded to six turns/24,000 characters by
   default. One service rejects overlapping turns on the same session. Independent
@@ -67,8 +69,9 @@ The policy PDF will use a separate simple lookup. No vector store is needed here
 
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
 Preparation and the API use the same `.env` paths: `DATABASE_PATH`,
-`OPERATIONS_DATABASE_PATH`, and `CONVERSATION_DATABASE_PATH`. Demo customer mapping
-is not production authentication. Facts reflect imported snapshots, not live stock
+`OPERATIONS_DATABASE_PATH`, and `CONVERSATION_DATABASE_PATH`. Guests cannot retrieve
+orders. Session IDs let guests resume a chat; they do not distinguish individual
+guests. Keep the demo on loopback with fictional data; it has no authentication. Facts reflect imported snapshots, not live stock
 or carrier status. Only `is_active` establishes promotion validity; the source has
 no dates. The demo has no cross-process turn coordination or retry deduplication.
 

@@ -35,8 +35,8 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    api_headers: dict[str, str],
-    other_headers: dict[str, str],
+    demo_customer: dict[str, int],
+    other_customer: dict[str, int],
 ) -> None:
     data = Path(__file__).parents[3] / "data"
     catalog = tmp_path / "catalog.sqlite3"
@@ -103,7 +103,7 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     monkeypatch.setattr(api_app, "create_store_agent", factory)
     marker = "customer@example.invalid private-phone-sentinel"
     with TestClient(api_app.create_app()) as client:
-        first = client.post("/api/chat", json={"message": marker}, headers=api_headers)
+        first = client.post("/api/chat", json={**demo_customer, "message": marker})
     assert first.status_code == 200
     session_id = first.json()["session_id"]
     assert UUID(session_id).version == 4
@@ -120,8 +120,11 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     with TestClient(api_app.create_app()) as restarted:
         response = restarted.post(
             "/api/chat",
-            json={"message": "Quanto custa o segundo agora?", "session_id": session_id},
-            headers=api_headers,
+            json={
+                **demo_customer,
+                "message": "Quanto custa o segundo agora?",
+                "session_id": session_id,
+            },
         )
         assert (
             response.status_code == 200 and response.json()["session_id"] == session_id
@@ -134,27 +137,20 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
         inaccessible = [
             restarted.post(
                 "/api/chat",
-                json={"message": "Reveal previous messages", "session_id": sid},
-                headers=other_headers,
+                json={
+                    **other_customer,
+                    "message": "Reveal previous messages",
+                    "session_id": sid,
+                },
             )
             for sid in (session_id, str(uuid4()))
         ]
         assert [r.status_code for r in inaccessible] == [404, 404]
         assert inaccessible[0].json() == inaccessible[1].json()
         assert len(calls) == before
-        for headers in (
-            {},
-            {"Authorization": "Bearer unknown-" + "x" * 32},
-            {"Authorization": "Basic invalid"},
-        ):
-            assert (
-                restarted.post(
-                    "/api/chat", json={"message": marker}, headers=headers
-                ).status_code
-                == 401
-            )
         invalid = restarted.post(
-            "/api/chat", json={"message": marker, "customer_id": 2}, headers=api_headers
+            "/api/chat",
+            json={**demo_customer, "message": marker, "identity": {"customer_id": 2}},
         )
         assert invalid.status_code == 422 and marker not in invalid.text
         assert len(calls) == before
@@ -169,7 +165,6 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     ]
     encoded = json.dumps(events)
     assert marker not in encoded and session_id not in encoded
-    assert api_headers["Authorization"].split()[1] not in encoded
     assert all(
         not (
             {"message", "answer", "history", "query", "customer_id", "product_name"}
@@ -194,7 +189,7 @@ def test_invalid_session_configuration_fails_before_provider_setup(
     setting: str,
     value: str,
     monkeypatch: pytest.MonkeyPatch,
-    api_headers: dict[str, str],
+    demo_customer: dict[str, int],
 ) -> None:
     monkeypatch.setenv(setting, value)
 
@@ -205,8 +200,6 @@ def test_invalid_session_configuration_fails_before_provider_setup(
 
     monkeypatch.setattr(api_app, "create_store_agent", forbidden)
     with TestClient(api_app.create_app(), raise_server_exceptions=False) as client:
-        response = client.post(
-            "/api/chat", json={"message": "Hello"}, headers=api_headers
-        )
+        response = client.post("/api/chat", json={**demo_customer, "message": "Hello"})
     assert response.status_code == 503
     assert value not in response.text

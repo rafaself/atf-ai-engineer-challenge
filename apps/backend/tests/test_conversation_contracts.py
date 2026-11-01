@@ -1,6 +1,5 @@
 """Owned history contracts prepare sessions without pretending to authenticate callers."""
 
-from typing import TYPE_CHECKING
 from uuid import uuid4
 
 import pytest
@@ -12,7 +11,6 @@ from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
 )
 from emporio_music_backend.contracts.errors import (
-    AuthenticationError,
     SessionAccessError,
 )
 from emporio_music_backend.contracts.identity import CustomerIdentity
@@ -33,7 +31,7 @@ def test_history_requires_an_owned_session_and_complete_turns() -> None:
 def test_session_requires_trusted_matching_identity() -> None:
     owner = CustomerIdentity(customer_id=1)
     session = ConversationSession(owner=owner)
-    with pytest.raises(AuthenticationError, match="Trusted customer identity"):
+    with pytest.raises(SessionAccessError):
         ExecutionContext(session=session)
     with pytest.raises(SessionAccessError) as failure:
         ExecutionContext(identity=CustomerIdentity(customer_id=2), session=session)
@@ -83,14 +81,4 @@ def test_credentials_and_provider_roles_do_not_belong_in_contracts() -> None:
     restored = ConversationSession.model_validate(
         {"session_id": str(uuid4()), "owner": {"customer_id": 1}}
     )
-    assert restored.owner.customer_id == 1
-
-
-if TYPE_CHECKING:
-    from emporio_music_backend.ports.identity import CustomerIdentityResolver
-
-    class FakeIdentityResolver:
-        def resolve(self, credential: str | None) -> CustomerIdentity:
-            return CustomerIdentity(customer_id=1)
-
-    resolver: CustomerIdentityResolver = FakeIdentityResolver()
+    assert restored.owner is not None and restored.owner.customer_id == 1

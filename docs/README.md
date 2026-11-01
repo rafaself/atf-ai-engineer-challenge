@@ -2,12 +2,13 @@
 
 Start with the [root README](../README.md). Architecture and API guides describe
 the current demo. ADRs, validation logs and live captures preserve historical
-evidence; issue #32 retires their cross-instance coordination and provenance details.
+evidence; issue #32 retires their cross-instance coordination/provenance details.
+Issue #33 replaces token identity with guests and direct fictional-customer selection.
 
 - [Root README](../README.md): installation, import and quality commands.
 - [Architecture](architecture.md): implemented boundaries and retrieval/prompt rationale.
 - [Catalog](catalog.md): validation, atomic replacement, snapshot and search semantics.
-- [Orders](orders.md): required import, fictional provenance, customer authorization and snapshot limits.
+- [Orders](orders.md): required import, fictional provenance, customer scoping and snapshot limits.
 - [Bedrock](bedrock.md): explicit configuration, limits and opt-in live probe.
 - [Local API](api.md): startup, curl, dependency injection and HTTP failures.
 - [ADRs](adr/README.md): accepted architecture/provider boundaries.
