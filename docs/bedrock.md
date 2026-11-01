@@ -6,10 +6,17 @@ passed review on the final application code. Nova Micro/Lite produced incorrect
 PIX answers in the bounded comparison, so they were not retained as the default.
 Historical probes/captures remain available; no model is claimed universally correct.
 
-The supplied [IAM policy reference](aws/bedrock-invoke-policy.json) lists five model
-ARNs, including Qwen. It is preserved as supplied, not applied by the repository.
-Only Qwen, Nova Micro and Nova Lite have observed project runs; the other listed
-models' availability/quality is not established. No extra permissions were added.
+The [IAM policy reference](aws/bedrock-invoke-policy.json) retains the five
+existing generator ARNs and includes Titan Text Embeddings V2 in `us-east-1`. The current reference allows streaming as well
+as ordinary invocation for all listed models; the embedding benchmark itself
+only uses `bedrock:InvokeModel`. It needs no catalog-listing or IAM-management rights. The owner applies this policy; the repository never
+changes AWS permissions automatically.
+
+The first Titan inference probe was denied; after the owner updated the policy,
+Titan completed the benchmark. `GetFoundationModel` catalog lookup permission is
+not necessary to run it and is intentionally not added. No Marketplace setup or
+subscription permissions are needed for Titan. See the official
+[InvokeModel permissions](https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_InvokeModel.html).
 
 Use a configured profile (including SSO), or the access-key option in .env.example.
 For profile authentication, export:

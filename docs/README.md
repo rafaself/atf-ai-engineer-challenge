@@ -18,3 +18,5 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [Follow-up](follow-up.md): policy routing and final submission requirements.
 
 See [US-14 policy corpus preparation and evaluation protocol](policy-retrieval.md) for offline preparation; policy answers remain unimplemented.
+- [US-15 benchmark](benchmarks/README.md): opt-in setup, methodology, local hardware and provider access.
+- [Retrieval results](benchmarks/results.md): frozen-metric comparison and observed failures.

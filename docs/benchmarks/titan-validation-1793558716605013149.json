@@ -1,0 +1,617 @@
+{
+  "started_utc": "2026-11-01T18:45:08.306081+00:00",
+  "model": "titan",
+  "status": "complete",
+  "hardware": "Linux-7.2.13-100.fc43.x86_64-x86_64-with-glibc2.42",
+  "processor": "",
+  "versions": {
+    "chromadb": "1.5.9",
+    "boto3": "1.43.123",
+    "sentence-transformers": "5.7.0",
+    "transformers": "5.22.1",
+    "torch": "2.15.0+cpu"
+  },
+  "freeze": {
+    "version": 1,
+    "parser_version": "poppler-normalized-sections-v3",
+    "extractor_version": "pdftotext version 25.07.0",
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c",
+    "chunks_sha256": "6426725ac6f20628474ea4175814726ff968a08127491b239515ba6b8219303d"
+  },
+  "split": "validation",
+  "questions": 9,
+  "chunks": 26,
+  "validation_policy": "No tuning after validation results; frozen query rules v1",
+  "embedding_input": "hierarchy joined by newline + newline + section text",
+  "strategy_rule": "query-family-union-v1",
+  "repeats": 3,
+  "model_load_seconds": 0.20600681800351595,
+  "configuration": {
+    "model": "amazon.titan-embed-text-v2:0",
+    "dimensions": 1024,
+    "revision": "Bedrock managed model ID; weights not pinnable",
+    "region": "us-east-1",
+    "distance": "cosine",
+    "preprocessing": "inputText, normalize=true",
+    "tokenizer_revision": null,
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "corpus_sha256": "6426725ac6f20628474ea4175814726ff968a08127491b239515ba6b8219303d",
+    "parser_version": "poppler-normalized-sections-v3",
+    "embedding_input": "hierarchy joined by newline + newline + section text"
+  },
+  "document_embedding_seconds": null,
+  "index_write_seconds": null,
+  "rows": [
+    {
+      "id": "q02",
+      "question": "Qual é o endereço da loja?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "1",
+        "7",
+        "cover"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.7400683099986054,
+          0.3012552600011986,
+          0.2851073570018343
+        ],
+        "vector": [
+          0.002123942998878192,
+          0.0027025000017601997,
+          0.0017753540014382452
+        ],
+        "filtered": [
+          0.0017367129985359497,
+          0.0027704060012183618,
+          0.0017021479980030563
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s2",
+          "policy-v2.1-cover",
+          "policy-v2.1-s1.2",
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s7.1"
+        ],
+        "filtered": [
+          "policy-v2.1-cover",
+          "policy-v2.1-s1.2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s7.2"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 0.3333333333333333,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 0.5,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q05",
+      "question": "Posso combinar PIX e cartão?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "3",
+        "6"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.28254571999787004,
+          0.2727872089999437,
+          0.2883672839998326
+        ],
+        "vector": [
+          0.0017367629989166744,
+          0.0016144250002980698,
+          0.0016270579981210176
+        ],
+        "filtered": [
+          0.0017219150031451136,
+          0.001728155999444425,
+          0.0016510630011907779
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s3",
+          "policy-v2.1-s10",
+          "policy-v2.1-s4.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s3",
+          "policy-v2.1-s6.1"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q08",
+      "question": "Quando recebo o reembolso da devolução online?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "4"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2772806719985965,
+          0.3062436030013487,
+          0.21936716200070805
+        ],
+        "vector": [
+          0.0016215779978665523,
+          0.0029852359984943178,
+          0.0016695869999239221
+        ],
+        "filtered": [
+          0.0018511550006223843,
+          0.0024188919996959157,
+          0.0018783560008159839
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s8.2"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4",
+          "policy-v2.1-s4.4"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q10",
+      "question": "Quero trocar pela mesma peça de outra cor.",
+      "groups": 2,
+      "critical": false,
+      "filter_families": [
+        "4"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2811988339999516,
+          0.26613319600073737,
+          0.27254902600179776
+        ],
+        "vector": [
+          0.0018522169993957505,
+          0.0017908529989654198,
+          0.0017917850018420722
+        ],
+        "filtered": [
+          0.0016355040024791379,
+          0.001545176000945503,
+          0.0016232919988397043
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-cover",
+          "policy-v2.1-s4.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q13",
+      "question": "Meu pedido deu exatamente R$ 500. O frete é grátis?",
+      "groups": 1,
+      "critical": true,
+      "filter_families": [
+        "5"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2673865479991946,
+          0.26907865799876163,
+          0.27378106900141574
+        ],
+        "vector": [
+          0.0017146410027635284,
+          0.0018267499981448054,
+          0.0016853359993547201
+        ],
+        "filtered": [
+          0.0016361350026272703,
+          0.0018056909975712188,
+          0.0019427650004217867
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s8.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q16",
+      "question": "Como recebo o código de rastreio?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "5"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2749015940025856,
+          0.28034314199976507,
+          0.27390233500045724
+        ],
+        "vector": [
+          0.0017862050008261576,
+          0.0017097720010497142,
+          0.0018703409987210762
+        ],
+        "filtered": [
+          0.0015543929985142313,
+          0.0018710420008574147,
+          0.0019155949994456023
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s7.2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-cover"
+        ],
+        "filtered": [
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.1"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q19",
+      "question": "Qual é o WhatsApp correto?",
+      "groups": 2,
+      "critical": false,
+      "filter_families": [
+        "1",
+        "7",
+        "cover"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.27552608699988923,
+          0.2739395440003136,
+          0.2726097390004725
+        ],
+        "vector": [
+          0.0018045580000034533,
+          0.0016833430017868523,
+          0.0017902920008054934
+        ],
+        "filtered": [
+          0.0017699039999570232,
+          0.00161395300165168,
+          0.0016587070022069383
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s7.2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s7",
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s7.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s7.2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s7",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-cover"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 0.5,
+          "recall5": 0.5,
+          "mrr5": 0.3333333333333333,
+          "coverage5": 0.0
+        },
+        "filtered": {
+          "recall3": 0.5,
+          "recall5": 0.5,
+          "mrr5": 0.3333333333333333,
+          "coverage5": 0.0
+        }
+      }
+    },
+    {
+      "id": "q23",
+      "question": "Meu pedido pode ser devolvido e quando cai o reembolso?",
+      "groups": 2,
+      "critical": true,
+      "filter_families": [
+        "4"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.297628459000407,
+          0.2900537630011968,
+          0.2683276899988414
+        ],
+        "vector": [
+          0.0020956000007572584,
+          0.001989502001379151,
+          0.0020203300009598024
+        ],
+        "filtered": [
+          0.0018109410011675209,
+          0.0017205120020662434,
+          0.0015591209994454402
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s4"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4",
+          "policy-v2.1-s4.4"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 0.5,
+          "recall5": 0.5,
+          "mrr5": 1.0,
+          "coverage5": 0.0
+        },
+        "filtered": {
+          "recall3": 0.5,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q25",
+      "question": "Qual é a política de aluguel de instrumentos?",
+      "groups": 0,
+      "critical": false,
+      "filter_families": [],
+      "latency_seconds": {
+        "embedding": [
+          0.2679566689985222,
+          0.2706809089977469,
+          0.2159608020010637
+        ],
+        "vector": [
+          0.0024553500006732065,
+          0.001750728002662072,
+          0.0015940369994495995
+        ],
+        "filtered": [
+          0.0015659339987905696,
+          0.001376181000523502,
+          0.0012265020013728645
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s4",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s5.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s4",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s5.1"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": null,
+        "filtered": null
+      }
+    }
+  ],
+  "summary": {
+    "vector": {
+      "recall3": 0.875,
+      "recall5": 0.875,
+      "mrr5": 0.8333333333333334,
+      "multi_group_coverage5": 0.3333333333333333,
+      "answerable_cases": 8,
+      "evidence_groups": 11,
+      "unsupported_cases": 1,
+      "multi_group_cases": 3,
+      "critical_misses": [
+        "q23"
+      ],
+      "passes_frozen_targets": false
+    },
+    "filtered": {
+      "recall3": 0.875,
+      "recall5": 0.9375,
+      "mrr5": 0.8541666666666666,
+      "multi_group_coverage5": 0.6666666666666666,
+      "answerable_cases": 8,
+      "evidence_groups": 11,
+      "unsupported_cases": 1,
+      "multi_group_cases": 3,
+      "critical_misses": [],
+      "passes_frozen_targets": false
+    }
+  },
+  "usage": {
+    "provider_calls": 27,
+    "input_tokens_or_estimate": 363,
+    "input_token_counts_or_bounds": [
+      28,
+      28,
+      28,
+      29,
+      29,
+      29,
+      48,
+      48,
+      48,
+      43,
+      43,
+      43,
+      53,
+      53,
+      53,
+      34,
+      34,
+      34,
+      27,
+      27,
+      27,
+      55,
+      55,
+      55,
+      47,
+      47,
+      47
+    ],
+    "estimated_usd": 7.260000000000001e-06,
+    "reserved_upper_usd_including_failed_calls": 0.004423680000000002,
+    "rate_usd_per_1k": 2e-05,
+    "price_checked": "2026-11-01",
+    "cost_limit_usd": 0.1,
+    "billing_limitations": "E5 local tokenizer count; Titan returned token count; local electricity excluded"
+  },
+  "index_directory_bytes": 1413448,
+  "finished_utc": "2026-11-01T18:45:16.604840+00:00"
+}
