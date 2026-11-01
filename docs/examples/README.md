@@ -1,4 +1,11 @@
-# Reviewed live interaction evidence
+# Live interaction evidence
+
+For current catalog/context, promotions/PIX and customer-order conversations, see
+[the Sprint 2 evidence index](sprint-2/README.md). It curates three reviewed examples
+and preserves two failed attempts. Policy retrieval/evaluation is later-sprint work.
+The catalog-only records and recorder instructions below are historical.
+
+## Historical Sprint 1 catalog evidence
 
 The original [live captures](live/) preserve three failed behaviors: missing
 truncation disclosure, unavailable-item filtering, and internal/control markup.
@@ -8,10 +15,10 @@ proves Bedrock tool calling separately. The GD20 HTTP request also passed with
 correct facts and clean output. Tests used Nova Micro in us-east-1 on 2026-10-31.
 These are scenario-level observations, not a universal model-quality guarantee.
 They predate US-12 promotion/PIX pricing and do not establish its live behavior.
-Original captures remain unchanged; new pricing/multi-turn evidence belongs to US-13.
+Original captures remain unchanged; current pricing/multi-turn evidence is linked above.
 
 After configuring a profile or local environment access keys, import the supplied CSVs with the README
-command and run the opt-in tool probe in [bedrock.md](../bedrock.md). Then capture
+command and run the opt-in tool probe in [bedrock.md](../bedrock.md). To rerun this historical catalog suite, capture
 five independent conversations from the repository root:
 
 ```bash

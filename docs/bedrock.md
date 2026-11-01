@@ -4,6 +4,9 @@ The agent factory uses Pydantic AI 2.64.0 with boto3 1.43.123. Preferred model:
 amazon.nova-micro-v1:0 in us-east-1. A real fresh-code tool round trip and HTTP
 GD20 lookup passed on 2026-10-31. Five reviewed remediation scenarios passed; see
 [examples](examples/README.md). Original failing captures are preserved.
+Current [Sprint 2 live conversations](examples/sprint-2/README.md) review catalog
+references, promotions/PIX and scoped orders, including observed prompt failures
+and corrective runs. These remain scenario evidence, not a general quality guarantee.
 
 The supplied [least-privilege IAM policy reference](aws/bedrock-invoke-policy.json)
 allows standard and streaming invocation of the five explicitly listed model ARNs
@@ -58,7 +61,8 @@ for alternate providers or controlled tests; omit it for the configured Bedrock 
 This factory remains an isolated catalog probe. HTTP uses
 `agent.orders.create_store_agent(settings, products, orders)`, sharing those same
 product tools and adding `list_my_orders`/`get_my_order`; it requires operational
-storage and validated customer mapping. See [orders](orders.md).
+storage and a valid selected fictional customer for orders. Guests may use catalog
+tools. See [orders](orders.md).
 
 Recommendation filters are category, partial product_name, inclusive min_price_brl
 and max_price_brl (reais, not centavos), and limit (1–20). Recommendations always
@@ -86,8 +90,9 @@ search with `promotions_only`. Original prices remain in `price_centavos/price_b
 typed `pricing` supplies the exact final price, applied percentage and offer source.
 Budget filters use payable prices. Current-run discounted products receive factual
 price disclosures. Re-import the generated catalog with `--promotions` before use;
-see [pricing rules and source limits](catalog.md). Existing live captures predate
-this behavior; new promotion/PIX interpretation evaluations remain opt-in US-13.
+see [pricing rules and source limits](catalog.md). The Sprint 2 evidence includes
+a real non-stacking PIX follow-up and preserves its earlier failed attempt.
+Further provider evaluation remains opt-in.
 
 ## Conversation orchestration (US-06–US-10)
 
@@ -110,12 +115,14 @@ No persistence write runs in a background worker after cancellation. The short
 SQLite commit cannot be interrupted asynchronously; the current single-process
 and response-loss limits are in [architecture](architecture.md).
 
-Demo-token resolution occurs before session/model access. Empty context is not
-accepted by ChatService or HTTP; it remains suitable for lower-level stateless
-agent probes. Existing smoke/example modules call the SDK directly and remain
-explicit paid opt-ins, not evidence of the new persisted-session flow. New live
-multi-turn acceptance belongs to US-13. See [API setup](api.md) and
-[ADR-0004](adr/0004-persistent-conversation-turns.md).
+Guests use empty identity context and can persist catalog conversations. Non-null
+HTTP customer selection is registry-validated before session/model access; it is
+local fictional selection, not authentication. SDK dependencies carry selected
+scope separately from model messages. The existing smoke/examples modules remain
+independent catalog probes. US-13's reviewed conversations used the full HTTP
+composition and persisted sessions; see [the evidence index](examples/sprint-2/README.md)
+and [API setup](api.md). Store-policy retrieval/evaluation belongs to the later
+retrieval sprint and is not part of Sprint 2 acceptance.
 
 For access keys in .env, remove AWS_PROFILE from the file and unset profile
 selection in the shell; include AWS_SESSION_TOKEN for temporary credentials. The

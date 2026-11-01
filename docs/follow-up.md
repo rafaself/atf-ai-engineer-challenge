@@ -1,10 +1,11 @@
 # Remaining scope and final submission
 
-Sprint 1 delivers the catalog foundation and local API. It is not the complete
-challenge solution. Live compatibility and five remediation scenarios have recorded evidence;
-see [examples](examples/README.md). Broader model evaluation remains ongoing.
+Sprint 2 adds persisted context, promotions and customer-scoped orders to the
+local API. [US-13](examples/sprint-2/README.md) records three reviewed real-agent
+conversations and two preserved failures with corrections. This is not the complete
+challenge solution: store-policy retrieval and evaluation belong to the later sprint.
 
-## Next product work
+## Later retrieval sprint and submission work
 
 - Integrate the supplied policy manual for supported store information, hours,
   payment and return-policy questions, with source-grounded answers. Start with
@@ -23,8 +24,9 @@ see [examples](examples/README.md). Broader model evaluation remains ongoing.
   per-run dependencies and customer-scoped SQL. US-12 #26 was subsequently scheduled by the user and implements promotions/PIX
   pricing from unchanged sources. Frontend/CLI and deployment remain separate work.
 
-Live multi-turn Bedrock evaluation remains US-13. Other pending capabilities above
-are follow-up requirements, not implemented or accepted behaviors. Reuse
+The Sprint 2 live scenarios above are reviewed. They do not evaluate store policies
+or guarantee future model behavior. Pending capabilities above are later-sprint
+requirements, not implemented or accepted behavior. Reuse
 current contracts and provider boundaries where they fit; do not preserve obsolete
 paths merely for compatibility during this development stage.
 
@@ -42,7 +44,7 @@ the submission cutoff, and send nothing automatically. Submission is a reply to
 the original recruiting email with the public repository link; sending it is
 outside this implementation authorization.
 
-Before submission, finish the live example and policy scope, review README limits,
-rerun the documented checks from a fresh checkout, inspect tracked files/history
-for secrets, and confirm the final public link. Offline tests and a merged sprint
-PR alone do not satisfy the outstanding real-conversation requirements.
+Before submission, finish policy retrieval and its live evaluation, review the
+curated examples and README limits, rerun the documented checks from a fresh checkout, inspect tracked files/history
+for secrets, and confirm the final public link. Sprint 2 evidence does not establish the later policy capability or its real-agent
+behavior; complete that work before claiming the full challenge is delivered.

@@ -113,8 +113,10 @@ Diagnostics allow metadata only. This is not a universal semantic grounding chec
 
 Real temporary SQLite and controlled models verify domain rules, ownership,
 persistence, concurrent independent chats and failures. They do not establish live
-language understanding or tool selection. General policy lookup and fresh reviewed
-Bedrock conversations remain unfinished.
+language understanding or tool selection. [US-13 live evidence](examples/sprint-2/README.md)
+records observed catalog/context, promotion/PIX and order behavior, including two
+failed attempts and focused instruction corrections. Policy lookup/evaluation
+remains in the later retrieval sprint, outside Sprint 2 acceptance.
 
 [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
 approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation
