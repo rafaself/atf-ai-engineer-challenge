@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from emporio_music_backend.paths import DATA_DIRECTORY
 
-PARSER_VERSION = "poppler-normalized-sections-v2"
+PARSER_VERSION = "poppler-normalized-sections-v3"
 HEADING = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ].+)$")
 
 
@@ -21,6 +21,7 @@ class PolicyChunk(BaseModel):
     hierarchy: list[str]
     pages: list[int]
     text: str = Field(min_length=1)
+    indexable: bool
 
 
 class PolicyCorpus(BaseModel):
@@ -34,10 +35,10 @@ class PolicyCorpus(BaseModel):
 
 # Table widths come from the first complete data row, not centered headers.
 _TABLES = {
-    "1.2": ("Campo", 7),
-    "2": ("Dia", 3),
-    "3": ("Forma", 4),
-    "5.2": ("Modalidade", 3),
+    "1.2": (("Campo", "Informação"), 7),
+    "2": (("Dia", "Horário"), 3),
+    "3": (("Forma", "Condições", "Observações"), 4),
+    "5.2": (("Modalidade", "Prazo Estimado", "Rastreamento", "Seguro"), 3),
 }
 
 
@@ -45,12 +46,18 @@ def normalize_lines(section: str, lines: list[str]) -> str:
     """Serialize this reviewed manual's tables; unwrap prose and list items."""
     output: list[str] = []
     index = 0
+    table_count = 0
     while index < len(lines):
         line = lines[index].replace("\u200b", "")
         table = _TABLES.get(section)
-        if table and line.strip().startswith(table[0] + " "):
+        if table and line.strip().startswith(table[0][0] + " "):
             headers = re.split(r"\s{2,}", line.strip())
+            table_count += 1
+            if tuple(headers) != table[0] or table_count != 1:
+                raise ValueError(f"Unexpected table headers/count in {section}")
             index += 1
+            if index == len(lines):
+                raise ValueError(f"Missing table rows in {section}")
             first = lines[index]
             starts = [m.start() for m in re.finditer(r"\S(?:.*?)(?=\s{2,}|$)", first)]
             if len(starts) != len(headers):
@@ -98,6 +105,8 @@ def normalize_lines(section: str, lines: list[str]) -> str:
         else:
             output.append(clean)
         index += 1
+    if section in _TABLES and table_count != 1:
+        raise ValueError(f"Missing expected table in {section}")
     return "\n".join(output)
 
 
@@ -141,6 +150,7 @@ def parse_layout(text: str) -> list[PolicyChunk]:
             hierarchy=hierarchy,
             pages=pages,
             text=normalize_lines(section, lines),
+            indexable=len(lines) > 1,
         )
         for section, hierarchy, pages, lines in entries
     ]
@@ -176,6 +186,25 @@ def parse_layout(text: str) -> list[PolicyChunk]:
     ]
     if [c.section for c in chunks] != expected:
         raise ValueError("Unexpected manual structure; review extraction")
+    # Keep customer-facing cover contacts, including the conflicting email spelling.
+    cover_lines = [
+        " ".join(line.split())
+        for line in text.split("\f")[0].splitlines()
+        if "@" in line
+    ]
+    if len(cover_lines) != 1:
+        raise ValueError("Unexpected cover contact structure")
+    chunks.insert(
+        0,
+        PolicyChunk(
+            id="policy-v2.1-cover",
+            section="cover",
+            hierarchy=["Capa — contato"],
+            pages=[1],
+            text="Capa — contato\n" + cover_lines[0],
+            indexable=True,
+        ),
+    )
     return chunks
 
 

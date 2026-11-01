@@ -21,29 +21,37 @@ an error, not an empty corpus. The source is never modified.
 
 ## Preparation decisions
 
-The fixed v2.1 manual has 8 physical pages and 28 numbered sections. Each numbered
-section is one chunk; parent headings are attached as hierarchy, not duplicated
-body text. Heading-only parent sections remain as provenance-bearing chunks.
-The cover is document metadata, not customer-policy evidence. Repeated page
-headers, footers and final branding/version lines are omitted. Wrapped prose and
-list continuations are joined, repeated whitespace and invisible zero-width spaces
-are removed. The four tables become explicit header-labeled rows, including
-wrapped cell values, so conditions remain attached to their payment/delivery row.
-Column boundaries derive from the first complete data row; unexpected row/column
-counts fail for review. This is specific to the reviewed manual, not a general PDF
-table parser. Physical PDF pages are numbered from 1.
-Sections 5.2, 7.2 and 9 span pages; their content is joined without page furniture.
-No overlap is used: duplicating short rules would inflate relevance counts.
-Unexpected section structure or changed source bytes fails for explicit review.
-Poppler version is recorded because extraction can vary by version.
+The fixed v2.1 manual has 8 physical pages and 28 numbered sections. A compact page-1
+contact record preserves the cover email discrepancy, giving 29 records total. Each
+numbered section is one chunk; parent headings are attached as hierarchy, not duplicated
+body text. Heading-only parent sections 5, 6 and 8 remain as provenance-bearing records
+with `indexable=false`; US-15 must exclude those three from embeddings/search. The
+remaining 26 records are indexable. Cover branding is omitted, but the contact line is
+evidence and retains its original spelling and physical page reference. Repeated page
+headers, footers and final branding/version lines are omitted. Wrapped prose and list
+continuations are joined, repeated whitespace and invisible zero-width spaces are
+removed. The four tables become explicit header-labeled rows, including wrapped cell
+values, so conditions remain attached to their payment/delivery row. Column boundaries
+derive from the first complete data row. Each of the four known table sections must
+contain exactly one table with the expected headers and row count; missing recognition
+fails instead of flattening the table into prose. This is specific to the reviewed
+manual, not a general PDF table parser. Physical PDF pages are numbered from 1. Sections
+5.2, 7.2 and 9 span pages; their content is joined without page furniture. No overlap is
+used: duplicating short rules would inflate relevance counts. Unexpected section
+structure or changed source bytes fails for explicit review. Poppler version is recorded
+because extraction can vary by version. Semantic corpus comparison excludes that
+provenance field: an identical corpus from a different Poppler release is acceptable;
+changed content still fails.
 
-No oversized section currently needs splitting. US-15 must count the complete
-hierarchy plus text with each actual tokenizer, including query/document prefixes,
-before indexing. Never silently truncate: if any model limit is exceeded, revise
-chunks and labels together and create a new frozen corpus before comparisons.
-Stable section IDs identify this manual version; source hash and parser version
-must also accompany future indexes. The freeze records canonical chunk content
-hashes to detect extraction drift independently of the installed Poppler version.
+No oversized section currently needs splitting. US-15 must count the complete hierarchy
+plus text with each actual tokenizer, including query/document prefixes, before
+indexing. Never silently truncate: if any model limit is exceeded, revise chunks and
+labels together and create a new frozen corpus before comparisons. Stable section IDs
+identify this manual version; source hash and parser version must also accompany future
+indexes. The freeze records canonical chunk content hashes to detect extraction drift
+independently of the installed Poppler version. The dataset hash freezes evaluation
+questions/labels. Documentation is reviewed through Git changes rather than a prose-file
+hash requiring refresh for every edit.
 
 ## Ambiguities and source authority
 
@@ -94,16 +102,17 @@ text, with the same rule across configurations, and cannot use gold labels.
 
 ## Permission and later work
 
-Source provenance and original checksums are in `data/README.md`. On 2026-11-01,
-the owner confirmed the manual is fictional and explicitly approved versioning
-the extracted corpus, superseding the former ignored-output/distribution gate.
-`corpus.json` is a reviewable repository artifact; the original PDF stays unchanged.
-Raw layout output is reproducible with `pdftotext -layout` and need not be tracked.
-Normalization removes PDF presentation noise and makes table relationships explicit
-for retrieval and lower-cost generators. No quality/token-cost improvement is
-claimed before US-15/US-17 measure it. Chunk IDs and gold labels are unchanged;
-parser version and frozen chunk/protocol hashes are revised before benchmarking.
-External provider processing has not been performed or separately authorized. Paid runs additionally require explicit opt-in,
-confirmed region/access and a bounded cost estimate. US-15 implements comparisons;
-US-16 integrates the existing agent; US-17 evaluates generated answers. Review
-this delivery before beginning those dependent stories.
+Source provenance and original checksums are in `data/README.md`. On 2026-11-01, the
+owner confirmed the manual is fictional and explicitly approved versioning the extracted
+corpus, superseding the former ignored-output/distribution gate. `corpus.json` is a
+reviewable repository artifact; the original PDF stays unchanged. Raw layout output is
+reproducible with `pdftotext -layout` and need not be tracked. Normalization removes PDF
+presentation noise and makes table relationships explicit for retrieval and lower-cost
+generators. No quality/token-cost improvement is claimed before US-15/US-17 measure it.
+Existing section IDs and gold labels are unchanged; the cover contact has its own ID.
+The parser version and frozen chunk hash are revised before benchmarking. External
+provider processing has not been performed or separately authorized. Paid runs
+additionally require explicit opt-in, confirmed region/access and a bounded cost
+estimate. US-15 implements comparisons; US-16 integrates the existing agent; US-17
+evaluates generated answers. Review this delivery before beginning those dependent
+stories.

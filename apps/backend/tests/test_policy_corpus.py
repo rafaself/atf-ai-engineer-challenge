@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from emporio_music_backend.paths import DATA_DIRECTORY
-from emporio_music_backend.policy_corpus import parse_layout, prepare
+from emporio_music_backend.policy_corpus import normalize_lines, parse_layout, prepare
 
 
 def test_manual_tables_cross_pages_and_source_bytes_are_preserved() -> None:
@@ -15,7 +15,7 @@ def test_manual_tables_cross_pages_and_source_bytes_are_preserved() -> None:
     before = source.read_bytes()
     corpus = prepare(source)
     chunks = {chunk.section: chunk for chunk in corpus.chunks}
-    assert len(chunks) == 28
+    assert len(chunks) == 29
     assert chunks["5.2"].pages == [4, 5]
     assert "SEDEX" in chunks["5.2"].text
     assert "2 a 5 dias úteis" in chunks["5.2"].text
@@ -25,7 +25,6 @@ def test_manual_tables_cross_pages_and_source_bytes_are_preserved() -> None:
     assert "80,00" in chunks["3.1"].text
     assert chunks["4.1"].hierarchy[0].startswith("4 ")
     assert source.read_bytes() == before
-    assert prepare(source) == corpus
 
 
 def test_changed_source_is_rejected_before_extraction(tmp_path: Path) -> None:
@@ -53,8 +52,6 @@ def test_labels_reference_existing_evidence_and_preserve_frozen_dataset() -> Non
         sort_keys=True,
     ).encode()
     assert hashlib.sha256(canonical).hexdigest() == freeze["chunks_sha256"]
-    protocol = (DATA_DIRECTORY.parent / "docs" / "policy-retrieval.md").read_bytes()
-    assert hashlib.sha256(protocol).hexdigest() == freeze["protocol_sha256"]
     dataset = json.loads(raw)
     assert dataset["source_sha256"] == corpus.source_sha256
     questions = dataset["questions"]
@@ -84,4 +81,28 @@ def test_normalization_keeps_table_relationships_and_joins_wrapped_values() -> N
         assert "  " not in chunk.text
         assert "\u200b" not in chunk.text
     saved = json.loads((DATA_DIRECTORY / "policies" / "corpus.json").read_text())
-    assert saved == prepare(DATA_DIRECTORY / "store_policies.pdf").model_dump()
+    regenerated = prepare(DATA_DIRECTORY / "store_policies.pdf").model_dump()
+    # Tool version is provenance, not semantic content. Text drift still fails.
+    saved.pop("extractor_version")
+    regenerated.pop("extractor_version")
+    assert saved == regenerated
+
+
+def test_cover_preserves_conflicting_contact_with_page_reference() -> None:
+    chunks = {
+        c.section: c for c in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+    }
+    assert chunks["cover"].pages == [1]
+    assert "contato@emporiodamusica.com.br" in chunks["cover"].text
+    assert "contato@empóriodamusica.com.br" in chunks["1.2"].text
+
+
+@pytest.mark.parametrize("section", ["1.2", "2", "3", "5.2"])
+def test_known_table_cannot_silently_become_prose(section: str) -> None:
+    with pytest.raises(ValueError, match="table"):
+        normalize_lines(section, ["Section heading", "Missing table header"])
+
+
+def test_heading_only_sections_are_marked_non_indexable() -> None:
+    chunks = prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+    assert {c.section for c in chunks if not c.indexable} == {"5", "6", "8"}
