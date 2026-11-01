@@ -1,18 +1,30 @@
-# Catalog source snapshot
+# Fictional source snapshots
 
 These files were copied byte-for-byte from the supplied
 `ai-engineer-technical-challenge-2026/data/` directory on 2026-10-31:
 
 - `products.csv` (source: `desafio_tecnico_ai_eng - products.csv`)
 - `categories.csv` (source: `desafio_tecnico_ai_eng - categories.csv`)
+- `customers.csv` (source: `desafio_tecnico_ai_eng - customers.csv`)
+- `orders.csv` (source: `desafio_tecnico_ai_eng - orders.csv`)
+- `order_items.csv` (source: `desafio_tecnico_ai_eng - order_items.csv`)
 
 Filenames are translated to English; original encoding, line endings, and contents
 are preserved. Git attributes
 disable line-ending conversion for these CSVs on checkout. The source
 bundle is `Desafio_Técnico_AI_Engineer_2026-20260616T150750Z-3-001.zip`; copies here
-come from its supplied extracted resource directory. No cleaning or ingestion is
-performed in US-01. Customer, order, promotion, policy, archive, and editor lock
-files are not copied into this catalog foundation.
+for products/categories come from its supplied extracted resource directory.
+US-11 copies customer/order/item entries directly from that same original ZIP.
+The project owner confirmed on 2026-10-31 that this data is **fictitious** and
+approved committing these three original CSVs. Customer names/contact fields and
+order notes are fictional source fixtures, not real customer records. No cleaning,
+re-encoding, or newline conversion is applied. The snapshot has 50 customers,
+20 orders, and 22 order-item rows. Promotions and policies remain separate work.
+
+The operational importer retains customer IDs, minimal order headers and item
+references only; contacts, customer names/cities, notes and payment methods never
+enter its database or model-facing tool results. Generated databases remain
+private and Git-ignored.
 
 From this directory, verify the checked-in snapshot with:
 

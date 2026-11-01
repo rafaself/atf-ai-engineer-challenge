@@ -65,7 +65,7 @@ class ChatResponse(AgentResponse):
 class CustomerIdentity(ContractModel):
     """Identity supplied by a trusted application boundary, never by the model."""
 
-    customer_id: PositiveInt
+    customer_id: Annotated[PositiveInt, Field(le=2**63 - 1)]
 
 
 class ConversationSession(ContractModel):

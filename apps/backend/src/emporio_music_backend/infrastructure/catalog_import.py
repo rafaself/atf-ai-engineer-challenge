@@ -24,6 +24,7 @@ from emporio_music_backend.infrastructure._catalog import (
     normalize_lookup,
     validate_schema,
 )
+from emporio_music_backend.infrastructure.money import parse_centavos
 
 CATEGORY_COLUMNS = ("category_id", "name", "description")
 PRODUCT_COLUMNS = (
@@ -113,27 +114,8 @@ def _lookup(path: Path, line: int, value: str) -> str:
 
 def _price(path: Path, line: int, value: str) -> int:
     try:
-        amount = Decimal(value.strip())
-        if (
-            not amount.is_finite()
-            or amount <= 0
-            or amount > Decimal("92233720368547758.07")
-        ):
-            raise ValueError
-        parts = amount.as_tuple()
-        assert isinstance(parts.exponent, int)
-        digits = "".join(str(digit) for digit in parts.digits)
-        shift = parts.exponent + 2
-        if shift < 0:
-            if -shift >= len(digits) or any(digit != "0" for digit in digits[shift:]):
-                raise ValueError
-            digits = digits[:shift]
-        else:
-            if len(digits) + shift > 19:
-                raise ValueError
-            digits += "0" * shift
-        return int(digits)
-    except (InvalidOperation, ValueError) as exc:
+        return parse_centavos(value)
+    except ValueError as exc:
         raise CatalogImportError(
             path,
             line,
