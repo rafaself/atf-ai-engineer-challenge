@@ -6,7 +6,8 @@ from pathlib import Path
 import pytest
 from pydantic_ai import models
 
-from emporio_music_backend.contracts import CustomerIdentity, ExecutionContext
+from emporio_music_backend.contracts.conversations import ExecutionContext
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,

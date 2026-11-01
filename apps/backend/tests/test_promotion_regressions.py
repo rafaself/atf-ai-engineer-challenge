@@ -9,7 +9,7 @@ from pydantic_ai.usage import RunUsage
 
 from emporio_music_backend.agent.catalog import ProductSearchTool
 from emporio_music_backend.agent.output import customer_answer
-from emporio_music_backend.contracts import ExecutionContext
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,

@@ -16,12 +16,12 @@ def test_contracts_and_application_import_without_provider_modules(
             sys.executable,
             "-I",
             "-c",
-            "import sys; "
-            "import emporio_music_backend.contracts; "
-            "import emporio_music_backend.contracts.errors; "
-            "import emporio_music_backend.ports; "
-            "import emporio_music_backend.application; "
-            "assert not {'fastapi', 'boto3', 'botocore', 'pydantic_ai'} & sys.modules.keys()",
+            "import sys, importlib, pkgutil; "
+            "packages = [importlib.import_module('emporio_music_backend.' + name) "
+            "for name in ('contracts', 'ports', 'application')]; "
+            "[importlib.import_module(module.name) for package in packages "
+            "for module in pkgutil.walk_packages(package.__path__, package.__name__ + '.')]; "
+            "assert not {'fastapi', 'boto3', 'botocore', 'pydantic_ai', 'sqlite3'} & sys.modules.keys()",
         ],
         cwd=tmp_path,
         env=environment,
@@ -60,3 +60,33 @@ def test_core_dependencies_point_inward() -> None:
                         "pydantic_ai",
                         "sqlite3",
                     }, path
+
+
+def test_package_initializers_have_no_implementations_or_barrel_imports() -> None:
+    root = Path(__file__).parents[1] / "src" / "emporio_music_backend"
+    barrels = {
+        f"emporio_music_backend.{name}"
+        for name in ("contracts", "ports", "application")
+    }
+    for path in root.rglob("*.py"):
+        tree = ast.parse(path.read_text())
+        if path.name == "__init__.py":
+            assert all(
+                isinstance(node, (ast.Import, ast.ImportFrom))
+                or (
+                    isinstance(node, ast.Expr)
+                    and isinstance(node.value, ast.Constant)
+                    and isinstance(node.value.value, str)
+                )
+                or (
+                    isinstance(node, ast.Assign)
+                    and all(
+                        isinstance(target, ast.Name) and target.id == "__all__"
+                        for target in node.targets
+                    )
+                )
+                for node in tree.body
+            ), path
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                assert node.module not in barrels, (path, node.module)

@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from emporio_music_backend.contracts import ProductSearchQuery
+from emporio_music_backend.contracts.catalog import ProductSearchQuery
 from emporio_music_backend.contracts.errors import ProductRetrievalError
 from emporio_music_backend.infrastructure.catalog_import import (
     CATEGORY_COLUMNS,
@@ -21,7 +21,7 @@ from emporio_music_backend.infrastructure.catalog_import import (
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.ports import ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
 
 
 def write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, str]]) -> None:

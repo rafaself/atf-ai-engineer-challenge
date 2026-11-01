@@ -19,7 +19,7 @@ from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
-from emporio_music_backend.ports import ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
 
 
 def test_recorder_saves_actual_tool_trace_without_claiming_acceptance(
@@ -57,7 +57,7 @@ def test_recorder_saves_actual_tool_trace_without_claiming_acceptance(
     text = (output / "named.md").read_text()
     assert '"product_name": "GD20"' in text
     assert '"price_centavos": 219900' in text and '"stock_quantity": 5' in text
-    assert examples.snapshot_identity(database) in text
+    assert examples.calculate_catalog_snapshot_hash(database) in text
     assert "controlled-answer-marker" in text
     assert "pending human grounding and scope review" in text
 

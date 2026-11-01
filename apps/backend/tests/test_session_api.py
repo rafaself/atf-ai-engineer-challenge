@@ -27,7 +27,8 @@ from emporio_music_backend.infrastructure.catalog_import import import_catalog
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.ports import OrderRepository, ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
+from emporio_music_backend.ports.orders import OrderRepository
 
 
 def test_restart_followup_refresh_isolation_and_safe_diagnostics(
@@ -178,7 +179,6 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     )
     with sqlite3.connect(conversations) as connection:
         assert connection.execute("SELECT count(*) FROM sessions").fetchone()[0] == 1
-        assert connection.execute("SELECT revision FROM sessions").fetchone()[0] == 2
         assert connection.execute("SELECT count(*) FROM turns").fetchone()[0] == 2
 
 

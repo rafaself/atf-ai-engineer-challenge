@@ -1,5 +1,10 @@
 # ADR-0006: Immutable promotion sources and exact pricing
 
+Historical decision record. [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32)
+simplifies persistence and import infrastructure. Expected revisions, cross-instance
+coordination, exact DDL checks and runtime source fingerprints described below are
+retired where applicable. See the current [architecture](../architecture.md).
+
 Status: Accepted (offline import, arithmetic and HTTP integration evidence)
 
 Related issue: [US-12 #26](https://github.com/rafaself/atf-ai-engineer-challenge/issues/26)

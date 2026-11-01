@@ -5,13 +5,13 @@ from contextlib import closing
 from pathlib import Path
 
 from emporio_music_backend.application.pricing import calculate_pricing
-from emporio_music_backend.contracts import (
+from emporio_music_backend.contracts.catalog import (
     ProductSearchQuery,
     ProductSearchResult,
     ProductSummary,
-    PromotionOffer,
 )
 from emporio_music_backend.contracts.errors import ProductRetrievalError
+from emporio_music_backend.contracts.pricing import PromotionOffer
 from emporio_music_backend.diagnostics import failure, trace
 from emporio_music_backend.infrastructure._catalog import (
     normalize_lookup,

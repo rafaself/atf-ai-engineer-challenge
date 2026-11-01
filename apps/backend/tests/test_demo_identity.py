@@ -4,11 +4,11 @@ import json
 
 import pytest
 
-from emporio_music_backend.contracts import CustomerIdentity
 from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     ConfigurationError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.demo_identity import DemoIdentityResolver
 
 

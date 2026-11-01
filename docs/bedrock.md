@@ -91,12 +91,12 @@ this behavior; new promotion/PIX interpretation evaluations remain opt-in US-13.
 
 ## Conversation orchestration (US-06–US-10)
 
-`application.ChatService(agent, conversation_repository, timeout_seconds=60)`
+`application.chat.ChatService(agent, conversation_repository, timeout_seconds=60)`
 requires an AgentExecutor and a ConversationRepository. The public async
 `chat(request, *, context: ExecutionContext)` entry point receives resolved
 identity only, loads owned bounded history, and commits the completed turn before
 returning ChatResponse with a session ID. The structural interface remains
-ChatServicePort; HTTP and provider objects do not enter the application layer.
+`ports.chat.ChatServicePort`; HTTP and provider objects do not enter the application layer.
 
 AgentExecutor.run also requires context, but returns AgentResponse without a
 persistence claim. The adapter translates application-owned user/assistant text
@@ -107,8 +107,8 @@ for stateless probes, or a trusted owned context for order execution. Current-ru
 historical results cannot add new selection notices; corrective retries are still
 included. The service preserves typed errors, timeout, and caller cancellation.
 No persistence write runs in a background worker after cancellation. The short
-SQLite commit cannot be interrupted asynchronously; see ADR-0004 for this local
-single-process tradeoff and the response-loss boundary.
+SQLite commit cannot be interrupted asynchronously; the current single-process
+and response-loss limits are in [architecture](architecture.md).
 
 Demo-token resolution occurs before session/model access. Empty context is not
 accepted by ChatService or HTTP; it remains suitable for lower-level stateless

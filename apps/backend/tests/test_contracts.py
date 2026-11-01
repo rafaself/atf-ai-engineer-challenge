@@ -4,18 +4,21 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from emporio_music_backend.application import ChatServicePort
-from emporio_music_backend.contracts import (
-    AgentResponse,
-    ChatRequest,
-    ChatResponse,
-    ExecutionContext,
-    ProductPricing,
+from emporio_music_backend.contracts.catalog import (
     ProductSearchQuery,
     ProductSearchResult,
     ProductSummary,
 )
-from emporio_music_backend.ports import AgentExecutor, ProductRepository
+from emporio_music_backend.contracts.chat import (
+    AgentResponse,
+    ChatRequest,
+    ChatResponse,
+)
+from emporio_music_backend.contracts.conversations import ExecutionContext
+from emporio_music_backend.contracts.pricing import ProductPricing
+from emporio_music_backend.ports.agent import AgentExecutor
+from emporio_music_backend.ports.catalog import ProductRepository
+from emporio_music_backend.ports.chat import ChatServicePort
 
 
 def product(

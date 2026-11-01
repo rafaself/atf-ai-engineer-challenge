@@ -16,13 +16,14 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ChatRequest, ExecutionContext
+from emporio_music_backend.contracts.chat import ChatRequest
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     ConfigurationError,
     ProviderUnavailableError,
 )
-from emporio_music_backend.ports import AgentExecutor
+from emporio_music_backend.ports.agent import AgentExecutor
 
 
 def test_controlled_tool_round_trip_and_stateless_runs() -> None:

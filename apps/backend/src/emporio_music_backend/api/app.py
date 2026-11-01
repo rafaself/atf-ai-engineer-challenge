@@ -17,11 +17,9 @@ from starlette.concurrency import run_in_threadpool
 
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.application import ChatService, ChatServicePort
-from emporio_music_backend.contracts import (
-    ChatRequest,
-    ChatResponse,
-    CustomerIdentity,
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
+from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
@@ -34,6 +32,7 @@ from emporio_music_backend.contracts.errors import (
     SessionAccessError,
     SessionConflictError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.diagnostics import failure, request_id, trace
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
@@ -43,16 +42,17 @@ from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderReposi
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.ports import CustomerIdentityResolver
+from emporio_music_backend.ports.chat import ChatServicePort
+from emporio_music_backend.ports.identity import CustomerIdentityResolver
 
-ServiceFactory = Callable[[], ChatServicePort]
+ChatServiceFactory = Callable[[], ChatServicePort]
 IdentityResolverFactory = Callable[[], CustomerIdentityResolver]
 _bearer = HTTPBearer(auto_error=False)
 
 
-def get_service_factory(request: Request) -> ServiceFactory:
-    """Return a constructor without resolving credentials before payload validation."""
-    return cast(ServiceFactory, request.app.state.service_factory)
+def get_chat_service_factory(request: Request) -> ChatServiceFactory:
+    """Return the callable that lazily supplies the chat service."""
+    return cast(ChatServiceFactory, request.app.state.chat_service_factory)
 
 
 def get_identity_resolver_factory(request: Request) -> IdentityResolverFactory:
@@ -61,11 +61,13 @@ def get_identity_resolver_factory(request: Request) -> IdentityResolverFactory:
 
 def resolve_identity(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-    factory: Annotated[IdentityResolverFactory, Depends(get_identity_resolver_factory)],
+    identity_resolver_factory: Annotated[
+        IdentityResolverFactory, Depends(get_identity_resolver_factory)
+    ],
 ) -> CustomerIdentity:
     if credentials is None:
         raise AuthenticationError("Customer identity required")
-    return factory().resolve(credentials.credentials)
+    return identity_resolver_factory().resolve(credentials.credentials)
 
 
 def _database_paths() -> tuple[Path, Path, Path]:
@@ -89,7 +91,7 @@ def _database_paths() -> tuple[Path, Path, Path]:
 
 
 def create_app(
-    service: ChatServicePort | None = None,
+    chat_service: ChatServicePort | None = None,
     *,
     identity_resolver: CustomerIdentityResolver | None = None,
 ) -> FastAPI:
@@ -107,18 +109,20 @@ def create_app(
         )
 
     app.state.identity_resolver_factory = identity_resolver_factory
-    service_lock = Lock()
+    chat_service_initialization_lock = Lock()
 
     @lru_cache(maxsize=1)
-    def build_service() -> ChatServicePort:
-        if service is not None:
-            return service
+    def build_chat_service() -> ChatServicePort:
+        if chat_service is not None:
+            return chat_service
         trace("composition.started")
-        settings = AgentSettings.from_environment()
-        database, operations, conversations = _database_paths()
+        agent_settings = AgentSettings.from_environment()
+        catalog_database_path, operations_database_path, conversation_database_path = (
+            _database_paths()
+        )
         try:
-            timeout = float(os.environ.get("CHAT_TIMEOUT_SECONDS", "60"))
-            limits = HistoryLimits(
+            chat_timeout_seconds = float(os.environ.get("CHAT_TIMEOUT_SECONDS", "60"))
+            history_limits = HistoryLimits(
                 max_turns=int(os.environ.get("HISTORY_MAX_TURNS", "6")),
                 max_characters=int(os.environ.get("HISTORY_MAX_CHARACTERS", "24000")),
             )
@@ -126,21 +130,21 @@ def create_app(
             raise ConfigurationError("Invalid conversation limits") from exc
         return ChatService(
             create_store_agent(
-                settings,
-                SQLiteProductRepository(database),
-                SQLiteOrderRepository(operations),
+                agent_settings,
+                SQLiteProductRepository(catalog_database_path),
+                SQLiteOrderRepository(operations_database_path),
             ),
-            SQLiteConversationRepository(conversations),
-            timeout_seconds=timeout,
-            history_limits=limits,
+            SQLiteConversationRepository(conversation_database_path),
+            timeout_seconds=chat_timeout_seconds,
+            history_limits=history_limits,
         )
 
-    def service_factory() -> ChatServicePort:
+    def chat_service_factory() -> ChatServicePort:
         # lru_cache alone can invoke initialization concurrently on cache misses.
-        with service_lock:
-            return build_service()
+        with chat_service_initialization_lock:
+            return build_chat_service()
 
-    app.state.service_factory = service_factory
+    app.state.chat_service_factory = chat_service_factory
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(
@@ -196,7 +200,7 @@ def create_app(
     )
     async def chat(
         request: Request,
-        message: Annotated[
+        chat_request: Annotated[
             ChatRequest,
             Body(
                 openapi_examples={
@@ -210,17 +214,19 @@ def create_app(
             ),
         ],
         identity: Annotated[CustomerIdentity, Depends(resolve_identity)],
-        factory: Annotated[ServiceFactory, Depends(get_service_factory)],
+        chat_service_factory: Annotated[
+            ChatServiceFactory, Depends(get_chat_service_factory)
+        ],
     ) -> ChatResponse:
-        token = request_id.set(uuid4().hex[:12])
+        request_id_reset_token = request_id.set(uuid4().hex[:12])
         started = perf_counter()
         try:
             trace("http.request")
             # SDK credential resolution may do I/O; keep it off the event loop.
-            chat_service = await run_in_threadpool(factory)
+            chat_service = await run_in_threadpool(chat_service_factory)
             trace("chat.started")
             response = await chat_service.chat(
-                message, context=ExecutionContext(identity=identity)
+                chat_request, context=ExecutionContext(identity=identity)
             )
             trace(
                 "http.response",
@@ -236,6 +242,6 @@ def create_app(
             )
             raise
         finally:
-            request_id.reset(token)
+            request_id.reset(request_id_reset_token)
 
     return app

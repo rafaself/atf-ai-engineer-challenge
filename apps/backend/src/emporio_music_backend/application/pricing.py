@@ -1,6 +1,6 @@
 """Small exact-price rule; source prices and promotion records are never rewritten."""
 
-from emporio_music_backend.contracts import (
+from emporio_music_backend.contracts.pricing import (
     PaymentMethod,
     ProductPricing,
     PromotionOffer,

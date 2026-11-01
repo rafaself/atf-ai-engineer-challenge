@@ -16,12 +16,12 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from emporio_music_backend.agent.catalog import ProductSearchTool, create_catalog_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import (
-    ChatRequest,
-    ExecutionContext,
+from emporio_music_backend.contracts.catalog import (
     ProductSearchQuery,
     ProductSearchResult,
 )
+from emporio_music_backend.contracts.chat import ChatRequest
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     ProductRetrievalError,

@@ -1,5 +1,10 @@
 # ADR-0004: Persistent conversation turns
 
+Historical decision record. [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32)
+simplifies persistence and import infrastructure. Expected revisions, cross-instance
+coordination, exact DDL checks and runtime source fingerprints described below are
+retired where applicable. See the current [architecture](../architecture.md).
+
 Status: Accepted (offline persistence, demo identity, and integration evidence)
 
 Related issue: [US-10 #24](https://github.com/rafaself/atf-ai-engineer-challenge/issues/24)

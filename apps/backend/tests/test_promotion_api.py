@@ -27,7 +27,8 @@ from emporio_music_backend.infrastructure.catalog_import import (
     PROMOTION_COLUMNS,
     import_catalog,
 )
-from emporio_music_backend.ports import OrderRepository, ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
+from emporio_music_backend.ports.orders import OrderRepository
 
 DATA = Path(__file__).parents[3] / "data"
 
@@ -213,12 +214,6 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
             "detail": "Conversation failed"
         }
     with sqlite3.connect(conversations) as conn:
-        assert (
-            conn.execute(
-                "SELECT revision FROM sessions WHERE session_id=?", (session,)
-            ).fetchone()[0]
-            == 3
-        )
         assert (
             conn.execute(
                 "SELECT count(*) FROM turns WHERE session_id=?", (session,)

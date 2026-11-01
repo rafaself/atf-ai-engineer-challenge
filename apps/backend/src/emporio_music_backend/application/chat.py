@@ -4,10 +4,12 @@ import asyncio
 import math
 from uuid import UUID
 
-from emporio_music_backend.contracts import (
+from emporio_music_backend.contracts.chat import (
     AgentResponse,
     ChatRequest,
     ChatResponse,
+)
+from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
@@ -19,7 +21,8 @@ from emporio_music_backend.contracts.errors import (
     ConfigurationError,
     SessionConflictError,
 )
-from emporio_music_backend.ports import AgentExecutor, ConversationRepository
+from emporio_music_backend.ports.agent import AgentExecutor
+from emporio_music_backend.ports.conversations import ConversationRepository
 
 
 class ChatService:
@@ -42,7 +45,7 @@ class ChatService:
             history_limits or HistoryLimits()
         )
         # Only active IDs are retained. Access is synchronous on the local server loop;
-        # version-checked SQLite append is the final guard across service instances.
+        # The demo supports one service instance/process; no cross-instance coordinator.
         self._active: set[UUID] = set()
 
     async def chat(
@@ -90,7 +93,6 @@ class ChatService:
                 # later after async cancellation. No transaction spans the model call.
                 self._conversations.append(
                     snapshot.session,
-                    snapshot.revision,
                     user_message=validated.message,
                     answer=result.answer,
                 )

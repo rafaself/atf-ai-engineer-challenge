@@ -7,8 +7,8 @@ This is snapshot retrieval, not production authentication or a fulfillment syste
 
 ## Required import
 
-From the repository root, import the catalog first using the [README](../README.md),
-then import operational data explicitly:
+For normal setup use the single [README preparation command](../README.md#run-locally).
+For a focused operational refresh after catalog setup, the individual importer is:
 
 ```bash
 uv run --project apps/backend --locked python -m \
@@ -55,13 +55,12 @@ order/item snapshots are valid; the customer registry itself must be nonempty.
 | Orders | Order/customer IDs, order date, status, supplied total in centavos, optional tracking/estimated delivery |
 | Items | Order/product IDs and quantity |
 | Product references | Referenced product IDs and names copied from the validated catalog snapshot |
-| Import metadata | Original SHA-256 for each of the three CSV byte streams; SHA-256 of the referenced catalog projection |
 
 Customer names, contacts/cities, order notes and payment methods are excluded from
-the derived database and tool results. The catalog fingerprint hashes UTF-8 compact
-JSON of referenced `[product_id, name]` pairs sorted by ID. It identifies the logical
-projection used, independently of SQLite page layout or WAL state. Copied names remain
-stable if the separate catalog changes; re-import operations to refresh references.
+the derived database and tool results. Source fingerprints and hash metadata are
+not generated. Copied product names remain stable if the catalog changes; an
+operational re-import refreshes them. Storage checks require expected columns and
+a simple ownership marker, without comparing full SQL definitions.
 Historical order totals are preserved even when they differ from current catalog
 prices. There are no historical unit prices to infer or totals to recalculate.
 

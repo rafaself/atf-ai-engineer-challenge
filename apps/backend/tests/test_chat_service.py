@@ -4,8 +4,9 @@ from typing import cast
 import pytest
 from pydantic import ValidationError
 
-from emporio_music_backend.application import ChatService, ChatServicePort
-from emporio_music_backend.contracts import AgentResponse, ChatRequest, ExecutionContext
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import AgentResponse, ChatRequest
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
@@ -17,6 +18,7 @@ from emporio_music_backend.contracts.errors import (
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
+from emporio_music_backend.ports.chat import ChatServicePort
 
 
 def test_service_runs_without_http_and_keeps_no_match_as_success(

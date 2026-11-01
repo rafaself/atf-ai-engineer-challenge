@@ -47,14 +47,20 @@ def validate_schema(
 ) -> bool:
     """Return whether a new schema is needed; never modify existing structures."""
     version = connection.execute("PRAGMA user_version").fetchone()[0]
-    objects = dict(
-        connection.execute(
-            "SELECT name, sql FROM sqlite_master "
-            "WHERE type IN ('table', 'view') AND name NOT GLOB 'sqlite_*'"
-        ).fetchall()
-    )
-    if allow_empty and version == 0 and not objects:
+    tables = {
+        row[0]
+        for row in connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table'"
+        )
+    }
+    if allow_empty and version == 0 and not tables:
         return True
-    if version != SCHEMA_VERSION or objects != SCHEMA:
-        raise ValueError("database is not a compatible schema-version-2 catalog")
+    if version != SCHEMA_VERSION or not SCHEMA.keys() <= tables:
+        raise ValueError("database is not a compatible catalog")
+    for table, columns in {
+        "categories": "category_id, name, description, normalized_name",
+        "products": "product_id, category_id, name, description, price_centavos, stock_quantity, status, specs, created_at, normalized_name",
+        "promotions": "promotion_id, product_id, discount_percent, description, is_active",
+    }.items():
+        connection.execute(f"SELECT {columns} FROM {table} LIMIT 0")
     return False

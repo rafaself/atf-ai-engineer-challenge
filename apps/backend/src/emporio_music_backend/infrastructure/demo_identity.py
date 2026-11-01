@@ -9,13 +9,13 @@ from collections.abc import Mapping
 
 from pydantic import ValidationError
 
-from emporio_music_backend.contracts import CustomerIdentity
 from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     ConfigurationError,
     OperationalRetrievalError,
 )
-from emporio_music_backend.ports import CustomerRepository
+from emporio_music_backend.contracts.identity import CustomerIdentity
+from emporio_music_backend.ports.identity import CustomerRepository
 
 _TOKEN = re.compile(r"[A-Za-z0-9_-]{32,256}\Z", re.ASCII)
 
