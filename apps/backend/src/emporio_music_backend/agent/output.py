@@ -141,6 +141,8 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "Não há ferramenta de encaminhamento. Revise também todos os valores: "
             "Copie preços/totais das ferramentas, sem recalcular; "
             "valores do cliente são contexto, não preços confirmados. "
+            "Se faltam os valores necessários, consulte a ferramenta adequada "
+            "nesta rodada antes de responder. "
             f"Ferramentas e filtros: {tool_amount_text or 'nenhum'}. "
             f"Cliente: {customer_amount_text or 'nenhum'}."
         )
