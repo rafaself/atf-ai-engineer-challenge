@@ -1,11 +1,12 @@
 # Live interaction evidence
 
-Start with the [Sprint 2 conversations](sprint-2/README.md): catalog/context,
-promotions/PIX and customer orders, including failed attempts and their corrections.
+Start with the [Sprint 2 closing conversations](sprint-2/closure/README.md): budget/context,
+promotions/PIX and customer orders on the final application code, including failed attempts.
 Policy retrieval/evaluation remains later-sprint work.
 
-The later [simplification review](simplification-review.md) records live regressions
-and the new price check, which has offline verification only.
+The [original Sprint 2 evidence](sprint-2/README.md) and
+[simplification review](simplification-review.md) preserve earlier versions and
+failures. Their offline-only statements describe those earlier delivery stages.
 
 ## Repeating a conversation
 

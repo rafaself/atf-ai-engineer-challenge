@@ -12,7 +12,7 @@ from emporio_music_backend.contracts.errors import ConfigurationError
 class AgentSettings(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    model_id: NonblankText = "amazon.nova-micro-v1:0"
+    model_id: NonblankText = "qwen.qwen3-32b-v1:0"
     region: NonblankText = "us-east-1"
     aws_profile: NonblankText | None = None
     request_timeout_seconds: float = Field(

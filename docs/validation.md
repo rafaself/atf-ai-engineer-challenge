@@ -1,4 +1,30 @@
-# Latest simplification verification
+# Final Sprint 2 verification
+
+Three [closing conversations](examples/sprint-2/closure/README.md) on application
+commit 8b9c321 pass review against actual tool results: 10 HTTP turns with Qwen 3,
+budget/context, promotions/PIX and selected-customer orders. The owner explicitly
+authorized completion and epic closure. Earlier failures remain published; the
+full closing exercise used 53 HTTP attempts, including six safe HTTP 500 failures.
+
+A combined markup/price failure exposed incomplete correction feedback. Its
+focused regression failed before the fix; the same single correction now carries
+current monetary facts and an instruction to retrieve missing facts. Nova Micro
+and Lite still failed the PIX scenario. Qwen passed that case and became the
+default through the existing model setting; no dependencies or budgets were added.
+A final full Qwen batch passed after the missing-facts guidance was made explicit.
+These are scenario observations, not statistical proof or universal hallucination prevention.
+
+258 offline tests, Ruff lint/format, strict mypy (69 files), source/wheel builds,
+source-byte checks, evidence-link/content checks and diff checks passed. All 14
+supplied CSV/PDF files and earlier captured answers remain unchanged. Local chat
+history was untouched. No independent human review or hosted-CI success is claimed.
+
+Order list/detail answers do not repeat the snapshot caveat each time, but the
+follow-up explicitly explains imported rather than live data. Policy retrieval
+and its evaluation remain later-sprint/full-challenge work. Historical records
+below retain their original code, model and verification boundaries.
+
+# Earlier simplification verification
 
 The local cleanup accepts omitted/null session IDs as new conversations, retires
 only the catalog recorder and its dedicated tests, removes the unused ChromaDB
@@ -28,7 +54,7 @@ Final offline checks: 257 tests, Ruff lint/format, strict mypy (69 files), and
 source/wheel builds pass. All 14 supplied CSV/PDF files and earlier capture contents
 remain unchanged. No dependencies were added. These checks precede PR publication.
 
-# Current Sprint 2 functional validation (US-13)
+# Original Sprint 2 functional validation (US-13)
 
 The owner explicitly opted into bounded paid Bedrock evaluation. Five conversations
 (15 HTTP turns) were captured through the existing HTTP → ChatService → real agent

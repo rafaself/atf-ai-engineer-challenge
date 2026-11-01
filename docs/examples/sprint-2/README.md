@@ -1,5 +1,8 @@
 # Sprint 2 real-agent validation
 
+For the final application and default model, use the [closing evidence](closure/README.md).
+The original records below remain historical and unchanged.
+
 Three representative conversations passed review against actual Bedrock/tool
 results. Two earlier failed conversations remain intact alongside their corrections.
 This is US-13's Sprint 2 functional evidence, not complete challenge acceptance or a

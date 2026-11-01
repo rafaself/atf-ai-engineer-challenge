@@ -7,12 +7,10 @@ across restarts. Run one local server process; this is a challenge demonstration
 
 General policy retrieval (hours, address and returns) belongs to the later retrieval
 sprint and remains unfinished. The assistant states that limitation instead of
-inventing answers. [Sprint 2 live examples](docs/examples/sprint-2/README.md) cover
-catalog/context, promotions/PIX and scoped orders, with failures and corrections
-preserved. This is not complete challenge acceptance.
-The later [simplification review](docs/examples/simplification-review.md) records
-live regressions and a focused price check verified offline; no final-code live
-acceptance is claimed.
+inventing answers. [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
+cover budget/context, promotions/PIX and scoped orders on the final application
+code. Failed attempts and model comparisons remain published. These observations
+do not establish complete challenge acceptance or guarantee every future answer.
 
 ## Run locally
 
@@ -68,8 +66,11 @@ snapshots; the model never builds SQL or chooses the selected customer.
   default. One service rejects overlapping turns on the same session. Independent
   chats can run concurrently. Failed/cancelled calls save no completed turn.
 
-Bedrock Nova Micro in `us-east-1` is the default model. Pydantic AI provides typed
+Bedrock Qwen 3 (`qwen.qwen3-32b-v1:0`) in `us-east-1` is the default model,
+selected after the bounded comparison reproduced invalid PIX answers with Nova
+Micro/Lite and Qwen passed the final conversations. Pydantic AI provides typed
 function calling; straightforward Python/SQL handles the small structured dataset.
+Existing `.env` files should set `BEDROCK_MODEL_ID=qwen.qwen3-32b-v1:0` to use this selection.
 The policy PDF will use a separate simple lookup. No vector store is needed here.
 
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
