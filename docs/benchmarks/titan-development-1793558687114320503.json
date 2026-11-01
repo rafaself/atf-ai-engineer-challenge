@@ -1,0 +1,1030 @@
+{
+  "started_utc": "2026-11-01T18:44:32.389307+00:00",
+  "model": "titan",
+  "status": "complete",
+  "hardware": "Linux-7.2.13-100.fc43.x86_64-x86_64-with-glibc2.42",
+  "processor": "",
+  "versions": {
+    "chromadb": "1.5.9",
+    "boto3": "1.43.123",
+    "sentence-transformers": "5.7.0",
+    "transformers": "5.22.1",
+    "torch": "2.15.0+cpu"
+  },
+  "freeze": {
+    "version": 1,
+    "parser_version": "poppler-normalized-sections-v3",
+    "extractor_version": "pdftotext version 25.07.0",
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c",
+    "chunks_sha256": "6426725ac6f20628474ea4175814726ff968a08127491b239515ba6b8219303d"
+  },
+  "split": "development",
+  "questions": 16,
+  "chunks": 26,
+  "validation_policy": "No tuning after validation results; frozen query rules v1",
+  "embedding_input": "hierarchy joined by newline + newline + section text",
+  "strategy_rule": "query-family-union-v1",
+  "repeats": 3,
+  "model_load_seconds": 0.20226096699843765,
+  "configuration": {
+    "model": "amazon.titan-embed-text-v2:0",
+    "dimensions": 1024,
+    "revision": "Bedrock managed model ID; weights not pinnable",
+    "region": "us-east-1",
+    "distance": "cosine",
+    "preprocessing": "inputText, normalize=true",
+    "tokenizer_revision": null,
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "corpus_sha256": "6426725ac6f20628474ea4175814726ff968a08127491b239515ba6b8219303d",
+    "parser_version": "poppler-normalized-sections-v3",
+    "embedding_input": "hierarchy joined by newline + newline + section text"
+  },
+  "document_embedding_seconds": null,
+  "index_write_seconds": null,
+  "rows": [
+    {
+      "id": "q01",
+      "question": "Vocês abrem aos sábados?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "2"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.7385219230018265,
+          0.3045844150001358,
+          0.29519626399996923
+        ],
+        "vector": [
+          0.0027502089978952426,
+          0.0019467730016913265,
+          0.0015847290014789905
+        ],
+        "filtered": [
+          0.0019775599976128433,
+          0.001917468001920497,
+          0.0016606409990345128
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s2",
+          "policy-v2.1-s1.1",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s1",
+          "policy-v2.1-s8.2"
+        ],
+        "filtered": [
+          "policy-v2.1-s2"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q03",
+      "question": "Quais formas de pagamento aceitam?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "3",
+        "6"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.27533975899859797,
+          0.27668624599755276,
+          0.29332961999898544
+        ],
+        "vector": [
+          0.002328062997548841,
+          0.0016734540004108567,
+          0.00161735000074259
+        ],
+        "filtered": [
+          0.0017501670008641668,
+          0.0015871440009505022,
+          0.0015718949980509933
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s3",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-cover"
+        ],
+        "filtered": [
+          "policy-v2.1-s3",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s6.2"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q04",
+      "question": "Posso dividir em cinco vezes?",
+      "groups": 2,
+      "critical": false,
+      "filter_families": [
+        "3",
+        "6"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2816245159992832,
+          0.27526004199899035,
+          0.2858829910001077
+        ],
+        "vector": [
+          0.0016321279981639236,
+          0.0017756849993020296,
+          0.001843620997533435
+        ],
+        "filtered": [
+          0.0016407039984187577,
+          0.0015487630007555708,
+          0.0016185919994313736
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s8.1",
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s6.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s3",
+          "policy-v2.1-s6.2"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 0.5,
+          "recall5": 0.5,
+          "mrr5": 1.0,
+          "coverage5": 0.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q06",
+      "question": "Comprei online e me arrependi. Como devolver?",
+      "groups": 2,
+      "critical": true,
+      "filter_families": [
+        "4"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.29070638800112647,
+          0.27620925700102816,
+          0.31115227800182765
+        ],
+        "vector": [
+          0.0017365610001434106,
+          0.0016770510010246653,
+          0.001628981000976637
+        ],
+        "filtered": [
+          0.0015143790005822666,
+          0.0015235249993565958,
+          0.0014986489986767992
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q07",
+      "question": "Quem paga o frete no arrependimento online?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "4",
+        "5"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2778938539995579,
+          0.2713077759981388,
+          0.2717143730005773
+        ],
+        "vector": [
+          0.0018941150010505226,
+          0.0018302759999642149,
+          0.002897823000239441
+        ],
+        "filtered": [
+          0.001769652997609228,
+          0.0017915950011229143,
+          0.002413130998320412
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s3",
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s4.2"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q09",
+      "question": "O instrumento veio com defeito. E agora?",
+      "groups": 3,
+      "critical": true,
+      "filter_families": [
+        "4",
+        "8"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.3079549069989298,
+          0.29226728299909155,
+          0.2828278750021127
+        ],
+        "vector": [
+          0.0016900849986996036,
+          0.0016932609978539404,
+          0.0018696699989959598
+        ],
+        "filtered": [
+          0.0019367349996173289,
+          0.001476878001994919,
+          0.0016929010016610846
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s1",
+          "policy-v2.1-s1.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4",
+          "policy-v2.1-s8.1"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 0.3333333333333333,
+          "recall5": 0.3333333333333333,
+          "mrr5": 1.0,
+          "coverage5": 0.0
+        },
+        "filtered": {
+          "recall3": 0.3333333333333333,
+          "recall5": 0.6666666666666666,
+          "mrr5": 1.0,
+          "coverage5": 0.0
+        }
+      }
+    },
+    {
+      "id": "q11",
+      "question": "Um instrumento personalizado pode ser trocado?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "4"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.29870942200068384,
+          0.31837676299983286,
+          0.2725246700028947
+        ],
+        "vector": [
+          0.0016577850001340266,
+          0.0018668939992494415,
+          0.0016463030005979817
+        ],
+        "filtered": [
+          0.0015225840033963323,
+          0.0017306209992966615,
+          0.0015659240016248077
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s4",
+          "policy-v2.1-s9"
+        ],
+        "filtered": [
+          "policy-v2.1-s4.4",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.1"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q12",
+      "question": "Quanto custa entregar na região de Campo Grande?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "5"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2806377300003078,
+          0.28067776399984723,
+          0.2774352689993975
+        ],
+        "vector": [
+          0.0016335899999830872,
+          0.0017261030006920919,
+          0.0016833529989526141
+        ],
+        "filtered": [
+          0.001451983000151813,
+          0.0017334759977529757,
+          0.0015690299987909384
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s5.3",
+          "policy-v2.1-s3"
+        ],
+        "filtered": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q14",
+      "question": "Quais modalidades enviam para outra cidade?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "5"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.27541896700131474,
+          0.26707727299799444,
+          0.30140671099798055
+        ],
+        "vector": [
+          0.0017257909967156593,
+          0.0018226120009785518,
+          0.0018216300013591535
+        ],
+        "filtered": [
+          0.0016073309998319019,
+          0.002075372001854703,
+          0.001554171998577658
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s3",
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q15",
+      "question": "Uma bateria grande tem frete normal?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "5"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.27355420700041577,
+          0.2962452760002634,
+          0.28727451099985046
+        ],
+        "vector": [
+          0.0016509819979546592,
+          0.0017092720008804463,
+          0.0016650689976813737
+        ],
+        "filtered": [
+          0.0014959639993321616,
+          0.0014761370002815966,
+          0.0017074479983421043
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s8.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s8.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 0.0,
+          "recall5": 1.0,
+          "mrr5": 0.25,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 0.5,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q17",
+      "question": "Posso somar PIX com promoção?",
+      "groups": 2,
+      "critical": true,
+      "filter_families": [
+        "3",
+        "6"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.27668213799915975,
+          0.30389584400109015,
+          0.2804104559982079
+        ],
+        "vector": [
+          0.00205774999994901,
+          0.0016790350018709432,
+          0.0016074710001703352
+        ],
+        "filtered": [
+          0.0017727289996400941,
+          0.0014665290000266396,
+          0.00147577600000659
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s7.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 0.5,
+          "recall5": 0.5,
+          "mrr5": 1.0,
+          "coverage5": 0.0
+        },
+        "filtered": {
+          "recall3": 0.5,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q18",
+      "question": "Quais campanhas de desconto a loja costuma fazer?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "3",
+        "6"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2709807079991151,
+          0.2718298469990259,
+          0.2747549710002204
+        ],
+        "vector": [
+          0.0016066999996837694,
+          0.0016106479997688439,
+          0.0017374029994243756
+        ],
+        "filtered": [
+          0.0014668399999209214,
+          0.001629062000574777,
+          0.0015210100027616136
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s4.1",
+          "policy-v2.1-s4.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s6.1",
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q20",
+      "question": "Qual garantia cobre defeito e queda?",
+      "groups": 2,
+      "critical": false,
+      "filter_families": [
+        "4",
+        "8"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2815498670024681,
+          0.2693151370003761,
+          0.2815556480018131
+        ],
+        "vector": [
+          0.001692690002528252,
+          0.0015868730006332044,
+          0.002663667000888381
+        ],
+        "filtered": [
+          0.0019135910006298218,
+          0.001460979001421947,
+          0.002613003001897596
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s8.1",
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s5.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s8.1",
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s4.2",
+          "policy-v2.1-s4.4"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q21",
+      "question": "Por quanto tempo vale a garantia do fabricante?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "4",
+        "8"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2785614250024082,
+          0.2834616050022305,
+          0.3847209030027443
+        ],
+        "vector": [
+          0.002082315000734525,
+          0.0016365960000257473,
+          0.0017817150001064874
+        ],
+        "filtered": [
+          0.0016473460018460173,
+          0.001455148001696216,
+          0.0016100870016089175
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s8.1",
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2"
+        ],
+        "filtered": [
+          "policy-v2.1-s8.2",
+          "policy-v2.1-s8.1",
+          "policy-v2.1-s8.3",
+          "policy-v2.1-s4.3",
+          "policy-v2.1-s4.2"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q22",
+      "question": "Vocês vendem meus dados para marketing?",
+      "groups": 1,
+      "critical": false,
+      "filter_families": [
+        "9"
+      ],
+      "latency_seconds": {
+        "embedding": [
+          0.2703510949977499,
+          0.2763947730018117,
+          0.30557354600023245
+        ],
+        "vector": [
+          0.001682742000411963,
+          0.0018364979987381957,
+          0.002393834001850337
+        ],
+        "filtered": [
+          0.0014375059981830418,
+          0.0014544969999406021,
+          0.0018849680018320214
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s9",
+          "policy-v2.1-s1.2",
+          "policy-v2.1-s5.3",
+          "policy-v2.1-cover",
+          "policy-v2.1-s6.1"
+        ],
+        "filtered": [
+          "policy-v2.1-s9"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        },
+        "filtered": {
+          "recall3": 1.0,
+          "recall5": 1.0,
+          "mrr5": 1.0,
+          "coverage5": 1.0
+        }
+      }
+    },
+    {
+      "id": "q24",
+      "question": "Qual é a senha do Wi-Fi da loja?",
+      "groups": 0,
+      "critical": false,
+      "filter_families": [],
+      "latency_seconds": {
+        "embedding": [
+          0.2689071780005179,
+          0.2828130979978596,
+          0.273946386998432
+        ],
+        "vector": [
+          0.001964076000149362,
+          0.0017644440013100393,
+          0.0018758910009637475
+        ],
+        "filtered": [
+          0.0013571159979619551,
+          0.0012871049984823912,
+          0.0019352719973539934
+        ]
+      },
+      "rankings": {
+        "vector": [
+          "policy-v2.1-s2",
+          "policy-v2.1-s7.2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s5.3"
+        ],
+        "filtered": [
+          "policy-v2.1-s2",
+          "policy-v2.1-s7.2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s5.3"
+        ]
+      },
+      "evidence_lost_by_filter": [],
+      "metrics": {
+        "vector": null,
+        "filtered": null
+      }
+    }
+  ],
+  "summary": {
+    "vector": {
+      "recall3": 0.8222222222222222,
+      "recall5": 0.8888888888888888,
+      "mrr5": 0.95,
+      "multi_group_coverage5": 0.4,
+      "answerable_cases": 15,
+      "evidence_groups": 21,
+      "unsupported_cases": 1,
+      "multi_group_cases": 5,
+      "critical_misses": [
+        "q09",
+        "q17"
+      ],
+      "passes_frozen_targets": false
+    },
+    "filtered": {
+      "recall3": 0.9222222222222223,
+      "recall5": 0.9777777777777777,
+      "mrr5": 0.9666666666666667,
+      "multi_group_coverage5": 0.8,
+      "answerable_cases": 15,
+      "evidence_groups": 21,
+      "unsupported_cases": 1,
+      "multi_group_cases": 5,
+      "critical_misses": [
+        "q09"
+      ],
+      "passes_frozen_targets": false
+    }
+  },
+  "usage": {
+    "provider_calls": 48,
+    "input_tokens_or_estimate": 585,
+    "input_token_counts_or_bounds": [
+      26,
+      26,
+      26,
+      34,
+      34,
+      34,
+      29,
+      29,
+      29,
+      45,
+      45,
+      45,
+      43,
+      43,
+      43,
+      40,
+      40,
+      40,
+      46,
+      46,
+      46,
+      49,
+      49,
+      49,
+      43,
+      43,
+      43,
+      36,
+      36,
+      36,
+      31,
+      31,
+      31,
+      49,
+      49,
+      49,
+      36,
+      36,
+      36,
+      47,
+      47,
+      47,
+      40,
+      40,
+      40,
+      33,
+      33,
+      33
+    ],
+    "estimated_usd": 1.17e-05,
+    "reserved_upper_usd_including_failed_calls": 0.007864320000000005,
+    "rate_usd_per_1k": 2e-05,
+    "price_checked": "2026-11-01",
+    "cost_limit_usd": 0.1,
+    "billing_limitations": "E5 local tokenizer count; Titan returned token count; local electricity excluded"
+  },
+  "index_directory_bytes": 1413448,
+  "finished_utc": "2026-11-01T18:44:47.114203+00:00"
+}

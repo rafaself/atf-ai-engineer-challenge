@@ -1,0 +1,163 @@
+{
+  "language": "pt-BR",
+  "questions": [
+    {
+      "id": "n01",
+      "question": "Meu teclado apresentou defeito 45 dias após a compra. A loja ainda troca ou tenho garantia?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.2"
+        ],
+        [
+          "policy-v2.1-s8.1"
+        ],
+        [
+          "policy-v2.1-s8.2"
+        ],
+        [
+          "policy-v2.1-s8.3"
+        ]
+      ],
+      "rubric": "Distinguish 30-day store exchange from legal/manufacturer warranty; ask receipt date and certificate; exclude misuse.",
+      "critical": true
+    },
+    {
+      "id": "n02",
+      "question": "Recebi ontem uma compra online marcada venda final. Posso desistir automaticamente?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "rubric": "Present online return rule and final-sale exclusion as source tension; do not assert automatic eligibility.",
+      "critical": true
+    },
+    {
+      "id": "n03",
+      "question": "Quero mudar o modelo de um violão comprado há cinco dias, com regulagem personalizada. Posso?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.3"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "rubric": "Mention preference exchange conditions and customization exclusion; no automatic approval.",
+      "critical": true
+    },
+    {
+      "id": "n04",
+      "question": "Qual a parcela mínima para pagar em oito vezes, e posso juntar PIX?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-s3.1"
+        ]
+      ],
+      "rubric": "Specific eight-installment minimum R$100; mixed-payment threshold above R$2000; note general versus tier rule.",
+      "critical": true
+    },
+    {
+      "id": "n05",
+      "question": "Se a guitarra já está em oferta, o PIX reduz mais cinco por cento?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-s6.2"
+        ]
+      ],
+      "rubric": "No stacking; never calculate unsupported product price.",
+      "critical": true
+    },
+    {
+      "id": "n06",
+      "question": "Achei dois telefones no manual. Qual uso para falar com a loja?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s1.2"
+        ],
+        [
+          "policy-v2.1-s7"
+        ]
+      ],
+      "rubric": "Disclose differing contacts without inventing an authoritative choice.",
+      "critical": true
+    },
+    {
+      "id": "n07",
+      "question": "Se eu pedir um piano digital para outra cidade, o envio padrão é garantido?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.2"
+        ]
+      ],
+      "rubric": "Special quote may be needed; no guaranteed live freight value or deadline.",
+      "critical": false
+    },
+    {
+      "id": "n08",
+      "question": "No feriado, consigo atendimento presencial ou pelo WhatsApp?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s2"
+        ]
+      ],
+      "rubric": "Closed on holidays; WhatsApp same schedule; no invented special opening.",
+      "critical": false
+    },
+    {
+      "id": "n09",
+      "question": "Comprei online, recebi há quatro dias e usei o produto. Vocês aprovam o estorno agora?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "rubric": "No approval/action; unused/original packaging conditions, exceptions, original payment, 10 business days if eligible.",
+      "critical": true
+    },
+    {
+      "id": "n10",
+      "question": "Minha peça ficou marcada depois de cair. A garantia cobre o dano?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s8.1"
+        ],
+        [
+          "policy-v2.1-s8.3"
+        ]
+      ],
+      "rubric": "Do not equate manufacturing warranty with fall/cosmetic damage coverage.",
+      "critical": true
+    },
+    {
+      "id": "n11",
+      "question": "O frete é gratuito se o pedido na região metropolitana totalizar exatamente quinhentos reais?",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.1"
+        ]
+      ],
+      "rubric": "Equality is unspecified; do not invent eligibility.",
+      "critical": false
+    },
+    {
+      "id": "n12",
+      "question": "Vocês emprestam um instrumento enquanto o meu está na garantia?",
+      "evidence_groups": [],
+      "rubric": "No loan/replacement-instrument policy provided; state missing evidence.",
+      "critical": false
+    }
+  ]
+}

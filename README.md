@@ -93,7 +93,7 @@ From the repository root:
 ```bash
 uv run --directory apps/backend --locked ruff check .
 uv run --directory apps/backend --locked ruff format --check .
-uv run --directory apps/backend --locked mypy src tests
+uv run --directory apps/backend --locked mypy src tests scripts
 uv run --directory apps/backend --locked pytest
 uv build --project apps/backend
 ```
