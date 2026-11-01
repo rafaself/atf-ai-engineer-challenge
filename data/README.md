@@ -1,6 +1,6 @@
 # Fictional source snapshots
 
-These files were copied byte-for-byte from the supplied
+These CSV files were copied byte-for-byte from the supplied
 `ai-engineer-technical-challenge-2026/data/` directory on 2026-10-31:
 
 - `products.csv` (source: `desafio_tecnico_ai_eng - products.csv`)
@@ -9,6 +9,9 @@ These files were copied byte-for-byte from the supplied
 - `orders.csv` (source: `desafio_tecnico_ai_eng - orders.csv`)
 - `order_items.csv` (source: `desafio_tecnico_ai_eng - order_items.csv`)
 - `promotions.csv` (source: `desafio_tecnico_ai_eng - promotions.csv`)
+
+`store_policies.pdf` was copied byte-for-byte from `políticas_da_loja.pdf` in the
+same reference directory on 2026-11-01. Only its filename is translated.
 
 Filenames are translated to English; original encoding, line endings, and contents
 are preserved. Git attributes
@@ -23,8 +26,8 @@ re-encoding, or newline conversion is applied. The snapshot has 50 customers,
 20 orders, and 22 order-item rows. US-12 copies all 25 original promotion records
 from the same ZIP, with four marked active. Its bytes match both the archive entry
 and extracted supplied file. No dates/columns are added and no values, inactive
-records, line endings or encodings are changed. Policy PDFs remain in the supplied
-resources; general policy retrieval is separate work.
+records, line endings or encodings are changed. The original policy PDF remains
+in the supplied resources as well; general policy retrieval is separate work.
 
 The operational importer retains customer IDs, minimal order headers and item
 references only; contacts, customer names/cities, notes and payment methods never
@@ -37,10 +40,9 @@ From this directory, verify the checked-in snapshot with:
 sha256sum --check SHA256SUMS
 ```
 
-The existing manifest covers the five earlier CSV copies. The new promotions
-copy is verified directly against its supplied original; no new checksum
-subsystem is introduced. These checks establish source identity, not live prices
-or availability.
+The manifest covers all six CSV files and `store_policies.pdf`. Each copy matches
+its supplied original byte-for-byte. These checks establish source identity,
+not live prices or availability.
 US-03 ingestion preserves these source files. It converts prices exactly to
 integer centavos, validates references/types/statuses/dates/specs, and stores
 additional normalized name columns for lookup. Original descriptive fields are
