@@ -1,4 +1,32 @@
-# Current fixed-path verification
+# Current Sprint 2 functional validation (US-13)
+
+The owner explicitly opted into bounded paid Bedrock evaluation. Five conversations
+(15 HTTP turns) were captured through the existing HTTP → ChatService → real agent
+→ tools → SQLite flow, using temporary snapshots imported from unchanged sources.
+Three scenario examples passed Codex review; two original semantic failures remain
+preserved. HTTP 200 was not treated as proof of a correct answer.
+
+The failed PIX follow-up invented a stacked discount without a tool call; the
+failed order follow-up refused details exposed by get_my_order. A small instruction
+clarification prompted fresh PIX quotes and order-detail retrieval. The two
+corrective conversations used the same prompts and data. No validation framework,
+new dependency or duplicated deterministic test matrix was added. The catalog
+example's actual pre-correction baseline is labeled in the evidence index.
+
+[Captures and review index](examples/sprint-2/README.md) records the model/date/code
+context, actual answers, tool arguments/results, curated passes, preserved failures
+and limitations. Existing tests cover guest/customer isolation, persistence,
+pricing and failure boundaries. Policy retrieval/evaluation is excluded from
+Sprint 2 and remains later-sprint/full-challenge work per the owner's clarification.
+
+Ruff lint/format, strict mypy (71 files), 246 offline tests and source/wheel builds
+passed from the repository root. Offline runs removed AWS configuration and kept
+live-model calls prohibited. The provider runs were separate explicit opt-ins.
+All 14 supplied CSV/PDF files retain their bytes, and local history was untouched.
+No independent human review or hosted-CI success is claimed. Earlier records below
+preserve their historical scope, including superseded token/path assumptions.
+
+# Earlier fixed-path verification
 
 Storage now uses `emporio_music_backend.paths`: PROJECT_ROOT derives from the
 package's source location; catalog, orders, history and the reserved ChromaDB

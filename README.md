@@ -5,9 +5,11 @@ price, availability, promotion and account-order questions in Portuguese using
 Pydantic AI tools and the supplied fictional data. SQLite keeps chat history
 across restarts. Run one local server process; this is a challenge demonstration.
 
-General policy retrieval (hours, address and returns) remains unfinished. The
-assistant states that limitation instead of inventing answers. Existing live
-examples predate the latest features; fresh multi-turn evaluation remains US-13.
+General policy retrieval (hours, address and returns) belongs to the later retrieval
+sprint and remains unfinished. The assistant states that limitation instead of
+inventing answers. [Sprint 2 live examples](docs/examples/sprint-2/README.md) cover
+catalog/context, promotions/PIX and scoped orders, with failures and corrections
+preserved. This is not complete challenge acceptance.
 
 ## Run locally
 
@@ -101,9 +103,9 @@ Contracts and protocols are grouped by responsibility. Import definitions direct
 `application.chat.ChatService`); package initializers hold no implementation.
 
 Start here; use the [documentation index](docs/README.md) for implementation details
-and historical decisions. Next priorities are policy retrieval and 3–5 reviewed,
-representative live conversations. Frontend, deployment and production authentication
-are outside the current demo. The recruiting email determines the submission cutoff.
+and historical decisions. Three representative live conversations are reviewed;
+next comes policy retrieval and its evaluation in the later retrieval sprint.
+Frontend, deployment and production authentication are outside the current demo. The recruiting email determines the submission cutoff.
 
 OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
 Scoped commits and PRs record that workflow; controlled test answers are not claimed
