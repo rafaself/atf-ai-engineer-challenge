@@ -8,9 +8,11 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    JsonValue,
     StrictBool,
     StringConstraints,
     computed_field,
+    field_validator,
     model_validator,
 )
 
@@ -33,12 +35,31 @@ class ContractModel(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
 
+def _session_id_schema(schema: dict[str, JsonValue]) -> None:
+    # Omission creates a session, but explicit null must not silently create one.
+    schema.pop("default", None)
+    schema.pop("anyOf", None)
+    schema.update(type="string", format="uuid4")
+
+
 class ChatRequest(ContractModel):
     message: Annotated[NonblankText, Field(max_length=4000)]
+    session_id: UUID4 | None = Field(default=None, json_schema_extra=_session_id_schema)
+
+    @field_validator("session_id", mode="before")
+    @classmethod
+    def require_identifier_when_supplied(cls, value: object) -> object:
+        if value is None:
+            raise ValueError("Omit session_id to create a conversation")
+        return value
 
 
-class ChatResponse(ContractModel):
+class AgentResponse(ContractModel):
     answer: NonblankText
+
+
+class ChatResponse(AgentResponse):
+    session_id: UUID4
 
 
 class CustomerIdentity(ContractModel):
@@ -82,6 +103,26 @@ class ExecutionContext(ContractModel):
             for index, message in enumerate(self.history)
         ):
             raise ValueError("History must contain completed user/assistant turns")
+        return self
+
+
+class HistoryLimits(ContractModel):
+    max_turns: Annotated[int, Field(strict=True, ge=1, le=20)] = 6
+    max_characters: Annotated[int, Field(strict=True, ge=1, le=64000)] = 24000
+
+
+class ConversationSnapshot(ContractModel):
+    session: ConversationSession
+    revision: NonnegativeInt
+    history: tuple[ConversationMessage, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_history(self) -> Self:
+        ExecutionContext(
+            identity=self.session.owner, session=self.session, history=self.history
+        )
+        if len(self.history) // 2 > self.revision:
+            raise ValueError("History cannot exceed the committed revision")
         return self
 
 

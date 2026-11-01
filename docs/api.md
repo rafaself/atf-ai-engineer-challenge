@@ -1,159 +1,189 @@
 # Local conversational API
 
-Import the catalog using the README command, configure a project AWS profile as
-[documented for Bedrock](bedrock.md), and run from the repository root:
+The local API uses demo bearer identities, owned SQLite sessions, and bounded
+multi-turn history. Run one uvicorn worker on loopback; public deployment and
+production authentication remain outside this project slice.
+
+## Demo identity setup
+
+Generate a private URL-safe token locally:
+
+```bash
+uv run --project apps/backend --locked python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+Put the resulting token in the ignored local `.env` using a token-to-customer JSON
+mapping. Replace the placeholder; do not use it as a credential:
+
+```text
+DEMO_CUSTOMER_TOKENS_JSON='{"<generated-token>":1}'
+```
+
+Multiple tokens/customers can be configured. Tokens must contain 32–256 ASCII
+letters, digits, underscores, or hyphens. IDs must be positive integers, with no
+boolean/string coercion or duplicate JSON keys. Missing or invalid configuration
+fails closed. The resolver retains token digests, not plaintext tokens, and does
+not expose credentials to the application context or model. Customer existence
+is not yet verified against datasets; US-11 owns that validation and order access.
+
+The server reads environment configuration explicitly; it does not load `.env`.
+The `uv --env-file` option below loads your local file. Restart after changing
+configuration or rotating tokens. Tokens mapped to the same customer share that
+customer's session ownership. Never commit tokens or publish their headers.
+
+## Startup and requests
+
+Import the catalog using README instructions and configure Bedrock as documented
+in [agent setup](bedrock.md). Start from the repository root:
 
 ```bash
 uv run --env-file .env --project apps/backend --locked uvicorn emporio_music_backend.api.app:create_app \
   --factory --host 127.0.0.1 --port 8000
 ```
 
-Then, in another terminal:
+In the client terminal set `DEMO_CUSTOMER_TOKEN` to one token in the server mapping
+(this variable is a curl helper, not server configuration). Send a first message:
 
 ```bash
 curl --fail-with-body http://127.0.0.1:8000/api/chat \
+  -H "Authorization: Bearer $DEMO_CUSTOMER_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"message":"Qual o preço e estoque do Takamine GD20?"}'
+  -d '{"message":"Quais violões disponíveis custam até R$1.000?"}'
 ```
 
-A successful response contains only `{"answer":"..."}`. The supplied snapshot
-lists GD20 at R$ 2.199,00 with five in stock. This is catalog snapshot evidence,
-not a live inventory guarantee. Each request is independent; there is no history.
-
-Open http://127.0.0.1:8000/docs for examples and interactive OpenAPI documentation.
-Documentation and validation work without AWS credentials. A valid chat lazily
-constructs the configured Bedrock client, repository and ChatService; AWS setup is
-offloaded from the event loop. The factory can accept a ChatServicePort directly,
-and tests can override get_service_factory through FastAPI dependency_overrides.
-SQLite connections are short-lived and owned by each repository operation.
-
-Export DATABASE_PATH to override data/catalog.sqlite3 (relative to the server's
-working directory). CHAT_TIMEOUT_SECONDS defaults to 60 for the complete agent
-conversation; individual provider request limits are described in bedrock.md.
-Environment values are read on first valid chat and the service is then reused;
-restart the process after changing configuration. No .env loader is installed.
-
-| Failure | HTTP status |
-| --- | --- |
-| Invalid message/payload | 422 |
-| Missing/invalid trusted identity for session/customer operations | 401 |
-| Unknown or inaccessible conversation session | 404 |
-| Concurrent conversation turn conflict | 409 |
-| Missing/invalid configuration or unavailable provider | 503 |
-| Conversation deadline/provider timeout | 504 |
-| Conversation persistence, retrieval, agent execution, or unexpected failure | 500 |
-
-If access keys are configured but chat still returns 503, an invalid `AWS_PROFILE`
-may be selecting a nonexistent profile. See [agent configuration](bedrock.md)
-for safe diagnosis, authentication options, and restart instructions.
-
-Operational responses contain stable generic details rather than exception text,
-SQL, provider payloads, credentials, or stack traces. HTTP validation retains
-FastAPI's 422 details. This local evaluation server has no authentication and is
-bound to loopback; public deployment is outside the sprint.
-
-The 401/404/409 mappings prepare the application error boundary for US-10. They
-do not mean this endpoint implements sessions or authentication today. Each HTTP
-request supplies a new empty ExecutionContext internally. Client-supplied
-session_id, customer_id, identity, history, and context fields are rejected with
-422; no caller-provided history or customer selection reaches the agent.
-
-Offline tests cover HTTP contracts, error mappings, docs/schema, and an actual
-service → controlled agent → tool → temporary SQLite round trip. They cannot
-establish Bedrock tool selection or generated-answer quality. The live GD20 HTTP
-conversation returned 200 with the correct price/stock and clean customer text
-after remediation. A placeholder profile still produces a sanitized 503.
-
-## Direct application calls (US-09)
-
-Trusted non-HTTP consumers can invoke an existing ChatService instance with
-explicit application-owned history:
-
-```python
-from emporio_music_backend.contracts import (
-    ChatRequest,
-    ConversationMessage,
-    ConversationSession,
-    CustomerIdentity,
-    ExecutionContext,
-)
-
-# Inside an async function, after resolving identity at a trusted boundary.
-# This ID is illustrative: constructing CustomerIdentity does not authenticate it.
-identity = CustomerIdentity(customer_id=1)
-session = ConversationSession(owner=identity)  # server-generated UUID4
-context = ExecutionContext(
-    identity=identity,
-    session=session,
-    history=(
-        ConversationMessage(role="user", content="Estou procurando um violão."),
-        ConversationMessage(role="assistant", content="Qual seu orçamento?"),
-    ),
-)
-response = await service.chat(ChatRequest(message="Até R$1.000"), context=context)
-```
-
-Here service is an explicitly composed ChatService with an AgentExecutor; creation
-is separate from this snippet. Both chat(request, *, context) and
-run(request, *, context) require the keyword argument. For a stateless call, pass
-ExecutionContext(). The service and adapter revalidate supplied contexts before
-model execution. Nonempty history requires a session with matching trusted identity,
-and complete alternating user/assistant pairs. System/tool roles are not accepted.
-Only text history reaches the provider, without identity/session metadata or old
-tool returns. The cached executor retains no session history between calls.
-
-These calls neither save turns nor check session existence in a database. Trusted
-callers must supply authentic session metadata and history; the UUID alone is not
-proof of ownership. Context size/retention limits and restart persistence are US-10.
-Historical answers provide conversational references, not current prices or stock:
-tools must retrieve mutable facts again. Controlled-model tests verify this wiring,
-not natural-language correctness or a prompt-injection guarantee.
-
-### Session and identity handoff to US-10
-
-The approved local demo uses `Authorization: Bearer <demo-token>`, resolved through
-a server-side token-to-customer mapping implementing CustomerIdentityResolver.
-The adapter/configuration parser is not implemented in US-09; no token environment
-variable is supported yet. Tokens must never enter public chat fields, context
-values, model messages, diagnostics, or committed examples.
-
-US-10 will create an owned session when session_id is omitted, return its identifier,
-and load persisted history only after identity resolution and ownership checks.
-An explicit malformed ID is invalid input; an unknown/foreign ID must yield the
-same sanitized 404 without creating or switching sessions. Missing/invalid identity
-yields 401; identity changes cannot reassign an existing session. Same-session
-overlap yields 409, and failed persistence yields a generic 500. Catalog-only
-stateless HTTP access remains the current implemented behavior until that story.
-
-## Temporary terminal pipeline logs
-
-Enable project diagnostics explicitly when starting the local server:
+A successful response has `answer` and a server-generated UUID4 `session_id`.
+Copy that identifier to `SESSION_ID` in the client terminal and continue:
 
 ```bash
-PIPELINE_LOGS=1 uv run --env-file .env --project apps/backend --locked \
-  uvicorn emporio_music_backend.api.app:create_app \
-  --factory --host 127.0.0.1 --port 8000 --log-level info
+curl --fail-with-body http://127.0.0.1:8000/api/chat \
+  -H "Authorization: Bearer $DEMO_CUSTOMER_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d "{\"message\":\"Quanto custa o segundo agora?\",\"session_id\":\"$SESSION_ID\"}"
 ```
 
-Each line is JSON on stderr. Valid chat requests receive a generated request_id
-shared across worker-thread events. Follow http.request → composition/provider
-(on first construction) → chat.started → agent.started → tool.called →
-catalog.search/result → tool.result → output.accepted → agent.completed →
-http.response. Direct answers omit tool/database events; output.rejected marks a
-corrective retry. Agent completion includes model-request count and input/output
-tokens; HTTP completion includes elapsed milliseconds. Tool results include
-returned products, total matches and truncation. CSV imports also emit start/count
-summaries when PIPELINE_LOGS=1. This traces application stages, not SDK wire traffic.
+Omitting `session_id` creates a new session for the resolved customer. Explicit
+null, malformed, or non-UUID4 values are invalid; an explicit unknown or foreign
+ID never creates/reassigns a session. Client `customer_id`, identity, history,
+and context fields are forbidden. Body validation errors use generic details
+rather than echoing potentially sensitive input. Open `/docs` for OpenAPI and
+use its Authorize control with a configured bearer token; docs require no AWS
+credentials and do not initialize the provider or conversation database.
 
-For a 503, http.failure/provider.failure show cause class names and a safe AWS
-error code/hint when available, such as ProfileNotFound. Raw SDK exception bodies,
-AWS configuration values and rejected internal model text are not dumped. Payload
-validation failures still appear in uvicorn's normal access logs as 422.
+Identity resolution precedes session/model access. Provider and storage creation
+are lazy after valid input/identity, with serialized factory initialization.
+`create_app(service=..., identity_resolver=...)` and `get_service_factory` remain
+available for deterministic composition/testing. These interfaces do not permit
+an unauthenticated fallback in the running API.
 
-This is temporary, local diagnostics. It includes chat messages, validated final
-answers, query filters and catalog rows. Active AWS access-key/secret/session-token
-values are redacted if echoed in text; this is not general personal-data redaction.
-Do not share raw logs containing customer or other sensitive input. Only the
-project logger is enabled; boto3/botocore debug logging is not enabled. Set
-PIPELINE_LOGS=0 or omit it to disable these logs; restart the server after changing
-its environment. No telemetry service or new dependency is required.
+## Configuration and history
+
+| Setting | Default / supported range |
+| --- | --- |
+| `DATABASE_PATH` | `data/catalog.sqlite3`, imported read-only catalog |
+| `CONVERSATION_DATABASE_PATH` | `data/conversations.sqlite3`, separate writable storage |
+| `CHAT_TIMEOUT_SECONDS` | 60, positive finite deadline |
+| `HISTORY_MAX_TURNS` | 6, integer 1–20 |
+| `HISTORY_MAX_CHARACTERS` | 24000, integer 1–64000 |
+| `PIPELINE_LOGS` | 0; 1 enables metadata diagnostics |
+
+Paths are relative to the server's working directory. The storage parent directory
+must exist. Conversation files are created automatically with owner-only access;
+owned existing files are reset to mode 0600. The repository rejects a foreign
+SQLite schema, and configuration rejects a catalog/conversation path collision.
+Catalog import remains separate and cannot replace the conversation file.
+
+All completed turns remain on disk until reset. The model receives only the newest
+contiguous suffix of complete user/assistant pairs fitting both history limits.
+The character budget counts saved conversational text, not instructions, the
+current message (maximum 4000 characters), output, or token usage. No message is
+partially truncated. If the newest saved turn alone exceeds the budget, history
+is empty; the assistant must clarify references it cannot resolve. References in
+retained answers preserve displayed product ordering. Historical prices/stock
+are not current evidence: prompts require fresh tool retrieval. The adapter sends
+text only, without identity/session metadata or old tool returns; output notices
+use messages stamped with the current SDK run ID, including corrective retries.
+
+## Failures and completed turns
+
+| Failure | Status |
+| --- | --- |
+| Missing/invalid bearer identity | 401, `WWW-Authenticate: Bearer` |
+| Unknown or foreign session | 404, same safe detail |
+| Overlapping turn or stale expected revision | 409, retry after the in-flight turn finishes |
+| Invalid request | 422, generic detail without input values |
+| Missing/invalid configuration or unavailable provider | 503 |
+| Deadline/provider timeout | 504 |
+| Retrieval, persistence, agent, or unexpected failure | 500, generic detail |
+
+ChatService validates identity and loads owned history before execution. It rejects
+same-session overlap while independent sessions can make model calls concurrently.
+A complete user/assistant turn and revision increment commit atomically before
+success is returned. Failures/cancellation before commit leave no completed turn.
+A failed first call may leave an empty owned session; it is not a completed turn.
+
+SQLite operations are synchronous, short, and use no busy wait. No transaction is
+held across a model call. Cancellation is delivered and the deadline checked before
+the final non-awaiting commit, preventing delayed worker writes after cancellation.
+The final local filesystem commit cannot be asynchronously interrupted and can
+briefly block the event loop; this is an intentional single-process demo tradeoff.
+Unexpected external SQLite lock contention fails safely as a storage error.
+Expected-revision append also rejects stale writes from separate service instances;
+this does not claim distributed turn scheduling or multi-worker support.
+
+A committed turn remains saved even if its HTTP response is lost. The client must
+recover/reconcile before retrying; no exactly-once delivery or retry deduplication
+is implemented. There is no transcript-list API in this story. Storage, model,
+and network failures are never disguised as empty retrieval or successful turns.
+For AWS profile diagnosis see [agent configuration](bedrock.md).
+
+## Direct application calls
+
+Inside trusted application code, compose an agent and conversation repository,
+resolve identity independently of model input, and call the same service:
+
+```python
+from pathlib import Path
+from emporio_music_backend.application import ChatService
+from emporio_music_backend.contracts import ChatRequest, ExecutionContext
+from emporio_music_backend.infrastructure.conversations import SQLiteConversationRepository
+
+# agent implements AgentExecutor; identity came from a trusted resolver.
+service = ChatService(agent, SQLiteConversationRepository(Path("data/conversations.sqlite3")))
+context = ExecutionContext(identity=identity)
+first = await service.chat(ChatRequest(message="Procuro um violão"), context=context)
+second = await service.chat(
+    ChatRequest(message="Até R$1.000", session_id=first.session_id), context=context
+)
+```
+
+ChatService requires identity-only context and loads history itself; supplied
+session metadata/history is rejected. The lower-level AgentExecutor can still
+execute owned history explicitly and returns AgentResponse, without saving turns.
+Only ChatService returns ChatResponse with the durable session ID. Constructing a
+CustomerIdentity value alone is not authentication of an external caller.
+
+## Local reset
+
+Stop the server and any other process using the conversation file. Confirm the
+configured conversation path, then remove that file (and any SQLite journal
+sidecars after processes have stopped). On the next valid request, the repository
+creates empty storage. All previous session IDs become inaccessible. Keep catalog
+and source CSV files intact. No automatic expiration, deletion endpoint, or schema
+migration framework is included; do not remove a live database.
+
+## Metadata diagnostics and evidence
+
+Set `PIPELINE_LOGS=1` explicitly before startup to emit JSON on stderr with a fresh
+request correlation ID. Supported events include HTTP status/timing, provider
+setup, request/token counts, tool names/result counts, output-retry reasons,
+truncation totals, and safe error classes/hints. Per-event allowlists exclude raw
+messages, answers, history, query text, customer/session identifiers, credentials,
+source paths, and tool rows. Unknown events carry no arbitrary fields. Third-party
+SDK debug logging is not enabled. Omit the flag or set 0 to disable diagnostics.
+
+Offline tests exercise real temporary SQLite, restart through new application
+instances, referential product follow-ups, catalog re-import, changed prices,
+isolation, cancellation/conflicts, rollback, and log privacy. Actual loopback
+startup checks cover docs/401/422/503 without model calls. These do not establish
+live Bedrock interpretation/answer quality; new multi-turn live evidence remains
+explicitly opted in under US-13. Sprint 1's saved live captures are historical.

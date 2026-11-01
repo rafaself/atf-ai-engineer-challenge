@@ -77,26 +77,31 @@ Controlled-model tests verify registration, arguments, results and failures agai
 the real temporary SQLite catalog. They do not establish live Nova tool selection
 or answer quality; the separate reviewed live captures provide scenario evidence.
 
-## Conversation orchestration (US-06)
+## Conversation orchestration (US-06–US-10)
 
-`application.ChatService(agent, timeout_seconds=60)` accepts the transport-neutral
-AgentExecutor port and exposes async chat(request, *, context: ExecutionContext)
--> ChatResponse. AgentExecutor.run also requires the context keyword. The
-structural interface is ChatServicePort. Request and context validation occur
-before invoking the agent. The service preserves typed configuration, provider,
-retrieval, and agent errors, sanitizes unexpected execution failures while preserving their cause,
-and translates the overall deadline into AgentTimeoutError. Caller cancellation
-propagates. It adds no retries, retained session state, database, HTTP, or provider
-initialization.
-Individual model request limits/timeouts belong to the adapter; the service owns
-one deadline for the complete conversation, including tool execution.
+`application.ChatService(agent, conversation_repository, timeout_seconds=60)`
+requires an AgentExecutor and a ConversationRepository. The public async
+`chat(request, *, context: ExecutionContext)` entry point receives resolved
+identity only, loads owned bounded history, and commits the completed turn before
+returning ChatResponse with a session ID. The structural interface remains
+ChatServicePort; HTTP and provider objects do not enter the application layer.
 
-US-09 permits direct callers to supply owned, complete user/assistant text history;
-the adapter translates it into SDK messages per run. Identity/session metadata and
-historical tool returns are excluded. Pass ExecutionContext() for the existing
-stateless operation, including HTTP. Persistence and token resolution are not
-implemented. See the [direct-call contract](api.md#direct-application-calls-us-09)
-and [ADR-0003](adr/0003-owned-conversation-execution-context.md).
+AgentExecutor.run also requires context, but returns AgentResponse without a
+persistence claim. The adapter translates application-owned user/assistant text
+into fresh SDK messages. Identity/session metadata and old tool returns are not
+sent. Current-run message IDs select the output validator's tool evidence, so
+historical results cannot add new selection notices; corrective retries are still
+included. The service preserves typed errors, timeout, and caller cancellation.
+No persistence write runs in a background worker after cancellation. The short
+SQLite commit cannot be interrupted asynchronously; see ADR-0004 for this local
+single-process tradeoff and the response-loss boundary.
+
+Demo-token resolution occurs before session/model access. Empty context is not
+accepted by ChatService or HTTP; it remains suitable for lower-level stateless
+agent probes. Existing smoke/example modules call the SDK directly and remain
+explicit paid opt-ins, not evidence of the new persisted-session flow. New live
+multi-turn acceptance belongs to US-13. See [API setup](api.md) and
+[ADR-0004](adr/0004-persistent-conversation-turns.md).
 
 For access keys in .env, remove AWS_PROFILE from the file and unset profile
 selection in the shell; include AWS_SESSION_TOKEN for temporary credentials. The

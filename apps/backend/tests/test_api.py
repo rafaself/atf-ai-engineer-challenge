@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,22 +22,31 @@ class FakeService:
     async def chat(
         self, request: ChatRequest, *, context: ExecutionContext
     ) -> ChatResponse:
-        assert context == ExecutionContext()
-        return ChatResponse(answer=request.message)
+        assert context.identity is not None and context.identity.customer_id == 1
+        assert context.history == () and context.session is None
+        return ChatResponse(
+            answer=request.message,
+            session_id=UUID("00000000-0000-4000-8000-000000000001"),
+        )
 
 
-def test_http_contract_docs_and_dependency_override() -> None:
+def test_http_contract_docs_and_dependency_override(
+    api_headers: dict[str, str],
+) -> None:
     app = create_app()
     app.dependency_overrides[get_service_factory] = lambda: lambda: FakeService()
     with TestClient(app) as client:
+        client.headers.update(api_headers)
         assert client.post("/api/chat", json={"message": " Olá "}).json() == {
-            "answer": "Olá"
+            "answer": "Olá",
+            "session_id": "00000000-0000-4000-8000-000000000001",
         }
         for payload in (
             {"message": " "},
             {"message": "a" * 4001},
             {"message": 1},
             {"message": "Olá", "session_id": "unused"},
+            {"message": "Olá", "session_id": None},
             {"message": "Olá", "customer_id": 2},
             {"message": "Olá", "identity": {"customer_id": 2}},
             {"message": "Olá", "history": []},
@@ -47,15 +58,20 @@ def test_http_contract_docs_and_dependency_override() -> None:
         schema = client.get("/openapi.json").json()
         assert "/api/chat" in schema["paths"]
         assert set(schema["components"]["schemas"]["ChatResponse"]["properties"]) == {
-            "answer"
+            "answer",
+            "session_id",
         }
+        request_schema = schema["components"]["schemas"]["ChatRequest"]
+        assert request_schema["properties"]["session_id"]["type"] == "string"
+        assert "session_id" not in request_schema["required"]
 
 
 def test_default_docs_and_validation_do_not_initialize_aws(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, api_headers: dict[str, str]
 ) -> None:
     monkeypatch.setenv("AWS_PROFILE", "unconfigured-project-profile")
     with TestClient(create_app(), raise_server_exceptions=False) as client:
+        client.headers.update(api_headers)
         assert client.get("/docs").status_code == 200
         assert client.post("/api/chat", json={"message": " "}).status_code == 422
         response = client.post("/api/chat", json={"message": "Olá"})
@@ -79,7 +95,9 @@ def test_default_docs_and_validation_do_not_initialize_aws(
         (RuntimeError("private unexpected fault"), 500),
     ],
 )
-def test_http_error_mapping_is_sanitized(error: Exception, status: int) -> None:
+def test_http_error_mapping_is_sanitized(
+    error: Exception, status: int, api_headers: dict[str, str]
+) -> None:
     class Service:
         async def chat(
             self, request: ChatRequest, *, context: ExecutionContext
@@ -87,6 +105,7 @@ def test_http_error_mapping_is_sanitized(error: Exception, status: int) -> None:
             raise error
 
     with TestClient(create_app(Service()), raise_server_exceptions=False) as client:
+        client.headers.update(api_headers)
         response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == status
     assert "private" not in response.text and "Traceback" not in response.text

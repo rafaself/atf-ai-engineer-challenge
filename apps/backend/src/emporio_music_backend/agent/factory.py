@@ -29,7 +29,7 @@ from pydantic_ai.usage import UsageLimits
 from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.agent.persona import STORE_INSTRUCTIONS
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
+from emporio_music_backend.contracts import AgentResponse, ChatRequest, ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
@@ -47,7 +47,7 @@ class PydanticAgentExecutor:
 
     async def run(
         self, request: ChatRequest, *, context: ExecutionContext
-    ) -> ChatResponse:
+    ) -> AgentResponse:
         validated = ChatRequest.model_validate(request)
         validated_context = ExecutionContext.model_validate(context)
         # Only conversational text crosses the provider boundary, never identity,
@@ -76,7 +76,7 @@ class PydanticAgentExecutor:
                 input_tokens=result.usage.input_tokens,
                 output_tokens=result.usage.output_tokens,
             )
-            return ChatResponse(answer=result.output)
+            return AgentResponse(answer=result.output)
         except ApplicationError:
             raise
         except (ModelTimeoutError, TimeoutError) as exc:

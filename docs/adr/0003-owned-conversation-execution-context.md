@@ -4,6 +4,10 @@ Status: Accepted (US-09 contracts and offline direct-history execution)
 
 Related issue: [US-09 #23](https://github.com/rafaself/atf-ai-engineer-challenge/issues/23)
 
+US-10 update: [ADR-0004](0004-persistent-conversation-turns.md) implements the
+handoff described below and replaces the US-09 stateless HTTP/service behavior.
+The lower-level owned text-history and provider-boundary decisions remain in use.
+
 ## Context
 
 Sprint 2 needs contextual conversations and secure customer operations without

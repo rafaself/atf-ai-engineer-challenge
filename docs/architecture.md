@@ -7,6 +7,8 @@ boundaries. There is no distributed service, ORM, vector store, or custom DI lay
 flowchart LR
     HTTP[FastAPI factory] --> Service[ChatService]
     Service --> Executor[AgentExecutor port]
+    Service --> History[ConversationRepository port]
+    History --> Sessions[Writable conversation SQLite]
     Executor --> Adapter[Pydantic AI / Bedrock adapter]
     Adapter --> Tool[Typed product-search tool]
     Tool --> Port[ProductRepository port]
@@ -24,23 +26,32 @@ SQLite queries. `api.app.create_app` is the composition root and transport mappe
 FastAPI dependencies expose a lazy service factory so payload validation and docs
 do not resolve AWS credentials. Provider setup runs in a worker thread. The SDK
 executes the synchronous catalog tool in a worker thread; the repository opens
-and closes a fresh read-only connection per search. ChatService enforces a total
-conversation deadline and preserves cancellation. No shared SQLite connection or
-conversation history crosses HTTP requests. Direct callers can supply an explicit
-ExecutionContext; ChatService and AgentExecutor require this keyword argument and
-revalidate identity/session ownership before execution. The context contains frozen
-application-owned user/assistant messages in complete pairs. The adapter builds a
-fresh SDK history list per run without identity/session metadata or old tool returns.
-Nothing is retained on the cached executor. An empty context is stateless catalog
-support and grants no customer-data access.
+and closes a fresh read-only connection per search. HTTP resolves a server-configured
+demo token into trusted identity before constructing the service or accessing data.
+ChatService requires identity-only context, creates or loads an owned session, loads
+bounded completed turns, invokes AgentExecutor, and commits before returning a
+ChatResponse with its session ID. UUID possession never establishes ownership.
 
-[ADR-0003](adr/0003-owned-conversation-execution-context.md) defines this trusted
-boundary and the US-10 handoff. The session UUID is server-created metadata, not
-authorization; US-09 checks supplied ownership, not database existence or actual
-credentials. Demo-token resolution, bounded history selection, persistence,
-restart recovery, and concurrent-turn control remain US-10. Order authorization is
-US-11. No in-memory session repository, compatibility adapter, or new dependency
-is introduced for the preparatory story.
+The conversation adapter owns a separate writable SQLite file. A complete turn and
+expected-revision increment commit together. No transaction spans model execution;
+each operation owns its connection. Short synchronous operations with zero SQLite
+busy wait prevent asynchronous worker appends after cancellation. The deadline is
+checked before the final non-awaiting commit; local filesystem commit cannot be
+interrupted and may briefly block the event loop. A per-service active-ID guard
+rejects same-session overlap, while revision checks reject stale commits across
+instances. The supported deployment is a single process/event loop on loopback.
+
+History is a bounded suffix of complete user/assistant text pairs; all turns remain
+on disk until local reset. The provider adapter constructs fresh SDK messages per
+invocation without identity/session metadata or historical tool returns. No history
+or identity is cached on the executor. AgentResponse contains the generated answer;
+ChatService supplies the durable session ID only after successful append.
+
+[ADR-0003](adr/0003-owned-conversation-execution-context.md) records the original
+trust contracts; [ADR-0004](adr/0004-persistent-conversation-turns.md) records their
+persistent implementation and response-loss limits. Customer-dataset validation
+and order authorization remain US-11. No compatibility shim, generic repository
+framework, distributed coordination, or new production dependency is introduced.
 
 ## Retrieval and prompting rationale
 
@@ -88,5 +99,10 @@ The agent exposes distinct available-product recommendations and named-product
 details, fixing availability in code for each tool. An output validator rejects
 known internal/control tags with one corrective retry and appends a factual
 partial-selection notice for each distinct truncated-query total in the current
-run. It does not strip internal text or enforce complete semantic grounding.
+run, selected by SDK message run ID. It does not strip internal text or enforce
+complete semantic grounding.
 See ADR-0002 and the reviewed live captures for rationale and limits.
+
+Diagnostics use per-event metadata allowlists: no raw chat text, answers, history,
+query text, identifiers, credentials, paths, or tool rows. Configuration exposes
+private demo-token mapping and history limits explicitly; see the [API guide](api.md).

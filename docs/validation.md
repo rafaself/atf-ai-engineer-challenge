@@ -131,3 +131,44 @@ This does not prove real authentication, session lookup/persistence, restart
 recovery, bounded context selection, concurrent persistent writes, or live model
 quality. Those remain US-10/US-11/US-13 as documented in ADR-0003. PR delivery is
 pending review; no merge or full Sprint 2 acceptance is claimed.
+
+## US-10 persistence validation — 2026-10-31
+
+Actual root-level Ruff lint/format checks, strict mypy, pytest, and `uv build
+--project apps/backend` passed. Results: **168 offline tests passed**, strict mypy
+passed for 43 files, source/wheel builds passed, and the supplied CSV checksums
+matched. The final full pytest run removed AWS access-key/secret/session-token,
+profile, and region environment variables; the live-model request guard stayed on.
+Dependency declarations, lockfile, and source CSV bytes are unchanged.
+
+The HTTP contract now intentionally requires demo identity, accepts an optional
+continuation UUID, and returns a required session ID. Tests were updated from the
+superseded stateless service/API assumptions using issue #24's requirements; no
+catalog assertions were weakened. A dropped product-name query filter introduced
+while removing log fields was caught by existing regressions and restored.
+
+Three regressions were observed failing before their fixes: unauthenticated chat
+returned 200, historical tool evidence appended an unrelated truncation notice,
+and an existing/copied database retained public-read permissions. Other added
+storage/service integration cases were checked after implementation; no test-first
+baseline is claimed for them.
+
+Real temporary SQLite and controlled models verify complete-turn atomicity,
+rollback/retry, ownership, bounded coherent history, stale-revision conflicts,
+independent-session progress, cancellation/timeout without completed turns, new
+repository/service/application instances resuming state, catalog re-import safety,
+and a retained second-product reference followed by retrieval of a changed price.
+Enabled diagnostics omit raw messages, answers, query strings, customer/session
+identifiers, tokens, and result rows. These checks prove wiring and data boundaries,
+not natural-language understanding or universal model grounding.
+
+An actual uvicorn process on an ephemeral loopback port returned `/docs` 200,
+missing identity 401, invalid authenticated input 422, and a generic 503 for a
+valid demo token with a deliberately nonexistent AWS profile. The process was
+stopped; no live provider call occurred and no token appeared in captured server
+output. The setup used temporary conversation storage and synthetic identity.
+
+No new clean-environment/runtime-only wheel installation or live multi-turn
+Bedrock evaluation was performed. Existing package/import tests passed; fresh
+provider conversations remain US-13. The short synchronous SQLite commit and
+commit-before-response loss boundary are documented in ADR-0004 and the API guide.

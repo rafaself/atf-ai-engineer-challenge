@@ -15,14 +15,17 @@ from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.application import ChatService
 from emporio_music_backend.contracts import (
+    AgentResponse,
     ChatRequest,
-    ChatResponse,
     ConversationMessage,
     ConversationSession,
     CustomerIdentity,
     ExecutionContext,
 )
 from emporio_music_backend.contracts.errors import SessionAccessError
+from emporio_music_backend.infrastructure.conversations import (
+    SQLiteConversationRepository,
+)
 
 
 def owned_context(customer_id: int, topic: str) -> ExecutionContext:
@@ -37,24 +40,44 @@ def owned_context(customer_id: int, topic: str) -> ExecutionContext:
     )
 
 
-def test_service_propagates_independent_contexts_without_mutating_them() -> None:
+def test_service_propagates_independent_contexts_without_mutating_them(
+    conversations: SQLiteConversationRepository,
+) -> None:
     contexts = [owned_context(1, "Violões"), owned_context(2, "Teclados")]
+    contexts = [
+        ExecutionContext(
+            identity=c.identity,
+            session=conversations.create(c.identity),
+            history=c.history,
+        )
+        for c in contexts
+        if c.identity
+    ]
+    for c in contexts:
+        assert c.session
+        conversations.append(
+            c.session, 0, user_message=c.history[0].content, answer=c.history[1].content
+        )
     observed: list[ExecutionContext] = []
 
     class Agent:
         async def run(
             self, request: ChatRequest, *, context: ExecutionContext
-        ) -> ChatResponse:
+        ) -> AgentResponse:
             observed.append(context)
             await asyncio.sleep(0)
-            return ChatResponse(answer="Resposta de controle")
+            return AgentResponse(answer="Resposta de controle")
 
     async def exercise() -> None:
-        service = ChatService(Agent())
+        service = ChatService(Agent(), conversations)
         await asyncio.gather(
             *(
-                service.chat(ChatRequest(message="Até R$1000"), context=c)
+                service.chat(
+                    ChatRequest(message="Até R$1000", session_id=c.session.session_id),
+                    context=ExecutionContext(identity=c.identity),
+                )
                 for c in contexts
+                if c.session
             )
         )
 
@@ -105,7 +128,9 @@ def test_adapter_translates_text_history_per_run_without_identity_metadata() -> 
     assert "8181" not in repr(observed) and "9292" not in repr(observed)
 
 
-def test_service_and_direct_adapter_revalidate_ownership_before_model_call() -> None:
+def test_service_and_direct_adapter_revalidate_ownership_before_model_call(
+    conversations: SQLiteConversationRepository,
+) -> None:
     def forbidden(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         raise AssertionError("The model must not receive a foreign history")
 
@@ -118,7 +143,7 @@ def test_service_and_direct_adapter_revalidate_ownership_before_model_call() -> 
     )
 
     async def exercise() -> None:
-        for runner in (executor.run, ChatService(executor).chat):
+        for runner in (executor.run, ChatService(executor, conversations).chat):
             with pytest.raises(
                 SessionAccessError, match="Conversation session is inaccessible"
             ):

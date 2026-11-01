@@ -23,7 +23,7 @@ class SQLiteProductRepository:
         self.database_path = database_path.resolve()
 
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
-        trace("catalog.search", query=query.model_dump(mode="json"))
+        trace("catalog.search")
         clauses: list[str] = []
         parameters: list[int | str] = []
         for value, expression in (

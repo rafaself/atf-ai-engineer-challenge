@@ -22,11 +22,13 @@ from emporio_music_backend.application import ChatService
 from emporio_music_backend.contracts import (
     ChatRequest,
     ConversationMessage,
-    ConversationSession,
     CustomerIdentity,
     ExecutionContext,
 )
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
+from emporio_music_backend.infrastructure.conversations import (
+    SQLiteConversationRepository,
+)
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
@@ -62,6 +64,8 @@ from emporio_music_backend.infrastructure.sqlite_repository import (
 )
 def test_snapshot_facts_survive_http_agent_tool_pipeline(
     tmp_path: Path,
+    conversations: SQLiteConversationRepository,
+    api_headers: dict[str, str],
     tool_name: str,
     arguments: dict[str, object],
     total: int,
@@ -90,7 +94,8 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     executor = create_catalog_agent(
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
     )
-    with TestClient(create_app(ChatService(executor))) as client:
+    with TestClient(create_app(ChatService(executor, conversations))) as client:
+        client.headers.update(api_headers)
         response = client.post("/api/chat", json={"message": "Consulta de integração"})
     assert response.status_code == 200
     if total > 10:
@@ -100,7 +105,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
             and str(total) in response.json()["answer"]
         )
     else:
-        assert response.json() == {"answer": answer}
+        assert response.json()["answer"] == answer
     assert len(observed) == 1
     result = observed[0]
     assert result["total_matches"] == total
@@ -122,6 +127,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
 
 def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices(
     tmp_path: Path,
+    conversations: SQLiteConversationRepository,
 ) -> None:
     data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
@@ -129,7 +135,7 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
     identity = CustomerIdentity(customer_id=1)
     context = ExecutionContext(
         identity=identity,
-        session=ConversationSession(owner=identity),
+        session=conversations.create(identity),
         history=(
             ConversationMessage(role="user", content="Quais violões vocês têm?"),
             ConversationMessage(
@@ -137,6 +143,13 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
                 content="GD20 por R$1,00. Seleção de 12 opções, lista incompleta.",
             ),
         ),
+    )
+    assert context.session is not None
+    conversations.append(
+        context.session,
+        0,
+        user_message=context.history[0].content,
+        answer=context.history[1].content,
     )
     observed: list[int] = []
 
@@ -160,8 +173,11 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
     )
     response = asyncio.run(
-        ChatService(executor).chat(
-            ChatRequest(message="E quanto custa agora?"), context=context
+        ChatService(executor, conversations).chat(
+            ChatRequest(
+                message="E quanto custa agora?", session_id=context.session.session_id
+            ),
+            context=ExecutionContext(identity=identity),
         )
     )
     assert observed == [219900]
