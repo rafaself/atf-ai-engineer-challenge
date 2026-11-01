@@ -9,7 +9,9 @@ challenge solution: store-policy retrieval and evaluation belong to the later sp
 
 - Integrate the supplied policy manual for supported store information, hours,
   payment and return-policy questions, with source-grounded answers. Start with
-  simple document extraction/section lookup; a vector database is not required.
+  structure-aware extraction and embedded ChromaDB, explicitly required by
+  [Sprint 3 #49](https://github.com/rafaself/atf-ai-engineer-challenge/issues/49).
+  See [integration and delivery guidance](sprint-3.md).
 - Route operational catalog questions to the product tool and policy questions
   to the policy source. Support mixed questions without using model memory as a
   substitute for either source. Preserve an honest unsupported response meanwhile.

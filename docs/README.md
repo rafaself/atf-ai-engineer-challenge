@@ -14,4 +14,5 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [ADRs](adr/README.md): accepted architecture/provider boundaries.
 - [Validation](validation.md): reproducibility results and remaining live checks.
 - [Examples](examples/README.md): reviewed real conversations, failures and replay guidance.
+- [Sprint 3](sprint-3.md): integration branch, story sequence and approved scope.
 - [Follow-up](follow-up.md): policy routing and final submission requirements.
