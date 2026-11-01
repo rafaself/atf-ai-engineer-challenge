@@ -1,4 +1,22 @@
-# Current demo verification
+# Current package verification
+
+The package-cohesion follow-up in issue #32 moves contracts/protocols out of
+initializers into defining modules. All callers/tests use explicit imports;
+`ChatServicePort` is in `ports.chat`, with `ChatService` in `application.chat`.
+The moved definitions have unchanged ASTs. A structural regression failed before
+these changes; the boundary probe now imports every core module, checking that
+minimal initializers do not hide provider or SQLite dependencies.
+
+The isolated committed copy passed locked sync, Ruff lint/format, strict mypy
+(**70 files**), **237 tests**, and source/wheel builds. The built wheel was installed
+into the disposable verification environment; all core modules and defining imports
+worked outside the source tree without HTTP/AWS/SQLite/Pydantic AI imports.
+No live provider call was made. Source files, dependencies and the lockfile remain
+unchanged. The existing unrelated API rename is preserved in the working tree;
+only this refactor's import declarations are committed from that file. Its old-name
+test-import mismatch still prevents claiming a full working-tree pass.
+
+# Initial demo simplification verification
 
 Issue #32 simplifies the existing challenge demo while keeping persistent SQLite
 history and customer-scoped tools. The README is now the primary setup guide.

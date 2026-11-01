@@ -79,7 +79,16 @@ still leave a saved turn; automatic retry deduplication is outside the demo.
 
 ## Direct application calls
 
-Trusted code calls `ChatService.chat(request, context=ExecutionContext(identity=...))`.
+Trusted code imports the defining modules:
+
+```python
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import ChatRequest
+from emporio_music_backend.contracts.conversations import ExecutionContext
+from emporio_music_backend.ports.chat import ChatServicePort
+```
+
+It calls `ChatService.chat(request, context=ExecutionContext(identity=...))`.
 The service loads history itself; externally supplied session metadata/history is
 rejected. The lower-level agent can execute explicitly trusted owned history without
 saving it. A CustomerIdentity value alone does not authenticate an external caller.

@@ -91,12 +91,12 @@ this behavior; new promotion/PIX interpretation evaluations remain opt-in US-13.
 
 ## Conversation orchestration (US-06–US-10)
 
-`application.ChatService(agent, conversation_repository, timeout_seconds=60)`
+`application.chat.ChatService(agent, conversation_repository, timeout_seconds=60)`
 requires an AgentExecutor and a ConversationRepository. The public async
 `chat(request, *, context: ExecutionContext)` entry point receives resolved
 identity only, loads owned bounded history, and commits the completed turn before
 returning ChatResponse with a session ID. The structural interface remains
-ChatServicePort; HTTP and provider objects do not enter the application layer.
+`ports.chat.ChatServicePort`; HTTP and provider objects do not enter the application layer.
 
 AgentExecutor.run also requires context, but returns AgentResponse without a
 persistence claim. The adapter translates application-owned user/assistant text

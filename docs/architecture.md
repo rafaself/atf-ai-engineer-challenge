@@ -19,11 +19,22 @@ flowchart LR
     Prepare --> Operations
 ```
 
-`contracts` holds immutable values; small ports describe the agent and repository
-boundaries used by typed tests. `application` owns chat execution and the pure
-pricing function. `infrastructure` loads CSVs and performs parameterized SQL.
-`agent` owns provider construction, persona, tool schemas and output checks.
-`api` composes those pieces. Core modules do not import FastAPI, AWS or Pydantic AI.
+`contracts` groups immutable values in focused modules: `chat` for request/response
+values, `identity` for trusted customer identity, `conversations` for owned history
+and execution context, `catalog` for product search, `pricing` for quotes, and
+`orders` for order projections. `base` contains shared validation types and the
+frozen model base; `errors` contains application failures.
+
+`ports` groups protocols by boundary (`chat`, `agent`, `catalog`, `identity`,
+`conversations`, `orders`). `ChatServicePort` lives in `ports.chat`; its implementation
+lives in `application.chat`. `application.pricing` owns the pure price calculation.
+Package initializers contain docstrings only; callers import each symbol directly
+from its defining module, without compatibility re-exports.
+
+`infrastructure` loads CSVs and performs parameterized SQL. `agent` owns provider
+construction, persona, tool schemas and output checks. `api` composes those pieces.
+Core modules do not import FastAPI, AWS, SQLite or Pydantic AI. Boundary tests import
+all core modules so minimal initializers cannot hide an accidental dependency.
 
 ## Chat history
 

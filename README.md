@@ -90,6 +90,10 @@ forbidden. Paid Bedrock probes require explicit opt-in. See [validation](docs/va
 
 ## Documentation and remaining work
 
+Contracts and protocols are grouped by responsibility. Import definitions directly
+(for example, `contracts.chat.ChatRequest`, `ports.chat.ChatServicePort` and
+`application.chat.ChatService`); package initializers hold no implementation.
+
 Start here; use the [documentation index](docs/README.md) for implementation details
 and historical decisions. Next priorities are policy retrieval and 3–5 reviewed,
 representative live conversations. Frontend, deployment and production authentication
