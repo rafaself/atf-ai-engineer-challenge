@@ -1,4 +1,33 @@
-# Current shared-checkout verification
+# Current guest/demo-selection verification
+
+Issue #33 removes demo bearer mapping, token parsing/digests/comparison, the
+resolver and its unused protocols. Guests and selected fictional customers share
+the existing bounded SQLite conversation service. Non-null customer selection is
+HTTP-validated on every request and kept out of agent input/model tool arguments.
+Session mode/customer mismatches fail before model execution. Guest order tools
+return a selection-required message without reading customer orders.
+
+Three new guest regressions were observed failing with 401 before implementation:
+guest restart/history continuity and both order-tool guards. They pass afterward.
+Other new/extended checks were verified after implementation; no failing baseline
+is claimed for them. Token/no-guest assertions are replaced because the owner
+explicitly superseded those requirements in #33. Order-query scoping, forged tool
+arguments, historical evidence, storage failure, cancellation, bounded history,
+atomic turns, pricing and diagnostics remain covered. Promotion/PIX integration
+now exercises both guest and selected-customer modes.
+
+From the repository root, the README Ruff lint/format, strict mypy (**69 files**),
+**249 offline tests**, and source/wheel builds passed. AWS configuration variables
+were removed; default tests prohibit live model requests. No live provider or
+language-quality acceptance is claimed. All 14 supplied CSV/PDF files retain their
+original bytes. No production dependencies or lockfile changes were introduced.
+
+Conversation schema v2 supports null guest owners. Older v1 files are rejected
+unchanged; use a fresh configured path and retain prior history files. There is no
+migration or automatic reset. ADR-0007 remains Proposed pending delivery review.
+Earlier records below describe intermediate implementations and historical auth.
+
+# Earlier naming verification
 
 The approved naming follow-up completes the `chat_service_factory` rename in the
 API, dependency overrides and documentation. Names now identify factory roles,

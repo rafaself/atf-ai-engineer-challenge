@@ -7,7 +7,7 @@ a vector store, an ORM or a generic ingestion framework.
 
 ```mermaid
 flowchart LR
-    HTTP[FastAPI] --> Identity[Demo token resolver]
+    HTTP[FastAPI] --> Selection[Optional fictional customer selection]
     HTTP --> Chat[ChatService]
     Chat --> History[Conversation SQLite]
     Chat --> Agent[Pydantic AI / Bedrock]
@@ -20,12 +20,12 @@ flowchart LR
 ```
 
 `contracts` groups immutable values in focused modules: `chat` for request/response
-values, `identity` for trusted customer identity, `conversations` for owned history
+values, `identity` for selected customer scope, `conversations` for owned history
 and execution context, `catalog` for product search, `pricing` for quotes, and
 `orders` for order projections. `base` contains shared validation types and the
 frozen model base; `errors` contains application failures.
 
-`ports` groups protocols by boundary (`chat`, `agent`, `catalog`, `identity`,
+`ports` groups protocols by boundary (`chat`, `agent`, `catalog`,
 `conversations`, `orders`). `ChatServicePort` lives in `ports.chat`; its implementation
 lives in `application.chat`. `application.pricing` owns the pure price calculation.
 Package initializers contain docstrings only; callers import each symbol directly
@@ -36,13 +36,32 @@ construction, persona, tool schemas and output checks. `api` composes those piec
 Core modules do not import FastAPI, AWS, SQLite or Pydantic AI. Boundary tests import
 all core modules so minimal initializers cannot hide an accidental dependency.
 
+## Local demo selection
+
+HTTP accepts optional `customer_id`; omitted/null means guest. Selected IDs must
+exist in the operational registry on each request. No bearer tokens, resolver
+protocol, or authentication framework is used. A small HTTP request schema carries
+the selector; the boundary removes it from the agent request and supplies immutable
+ExecutionContext dependencies. The model cannot choose scope through text or tools.
+
+The selector is not authentication: any demo user may select any fictional customer.
+Run on loopback with fictional data. Guest order calls return a selection-required
+message before repository access; selected calls retain parameterized customer scoping.
+No frontend selector is required. See [ADR-0007](adr/0007-simplified-demo-identity.md).
+
 ## Chat history
 
 Use one server process and one ChatService instance. The service checks session
-ownership, rejects same-session overlap with an in-memory active-ID set, loads a
-bounded suffix of complete turns and invokes the agent. A short SQLite transaction
-appends a complete pair under the next sequence number. There is no expected
+mode/customer matching, rejects same-session overlap with an in-memory active-ID
+set, loads a bounded suffix of complete turns and invokes the agent. Session ownership is an
+optional customer: null denotes guest. Loading/appending compares the selected
+customer or null explicitly; changing customer/mode requires a new session. Guest
+continuation relies on possession of the session ID, not individual-user identity.
+A short SQLite transaction appends a complete pair under the next sequence number. There is no expected
 revision, compare-and-swap or coordination between separate service instances.
+
+Conversation schema v2 permits null owners. Older v1 files are rejected untouched;
+use a fresh configured path, without migration or automatic history deletion.
 
 Cancellation and the deadline are checked before saving. Failed execution/append
 returns an error and saves no completed turn; a failed first call may leave an empty
@@ -68,7 +87,7 @@ before payable-price filtering, ordering/counting and limiting. The original pri
 is retained. Active, stocked products may receive one active promotion, otherwise
 explicit PIX pricing. Inactive/unavailable offers do not apply. No dates are inferred.
 
-Order tools retain a repository, not customer state. Each read validates trusted
+Order tools retain a repository, not customer state. Each read validates selected
 customer existence and scopes order/item/count SQL by customer identity. Foreign
 and missing orders have the same result. Contacts, notes and payment methods are
 excluded. Copied product references and historical totals survive catalog changes.

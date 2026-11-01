@@ -5,41 +5,53 @@ process on loopback. Setup reads the same environment paths as the API and never
 opens the conversation database. The application does not load `.env` automatically;
 `uv --env-file .env` does. Existing shell variables take precedence.
 
-## Demo identity setup
+## Guest and fictional-customer requests
 
-Generate a private URL-safe token using the README command, then set this in the
-ignored `.env` (replace the placeholder):
-
-```text
-DEMO_CUSTOMER_TOKENS_JSON='{"<generated-token>":1}'
-```
-
-Mapped IDs must exist in imported customers. The resolver checks every configured
-mapping initially and rechecks the matched customer on resolution. Tokens use
-32–256 ASCII letters/digits/underscores/hyphens; IDs are positive integers. Token
-digests are retained, and credentials never enter model messages or execution context.
-Restart after changing mappings. This is a demo identity mechanism, not production auth.
-
-## Requests
-
-Set `DEMO_CUSTOMER_TOKEN` in the client terminal to a configured token, then:
+No credentials are required. Guest catalog/promotion chat:
 
 ```bash
 curl --fail-with-body http://127.0.0.1:8000/api/chat \
-  -H "Authorization: Bearer $DEMO_CUSTOMER_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"message":"Quais violões custam até R$1.000?"}'
 ```
 
-Successful responses contain `answer` and a UUID4 `session_id`. Supply that ID to
-continue, or omit it to start a chat. Null/invalid IDs are rejected. Unknown and
-foreign IDs never create/reassign a session. Payload fields for customer identity,
-history, context and payment are forbidden; payment selection comes from the message
-through typed tools. Message length is limited to 4,000 characters.
+Select an existing fictional customer for orders:
 
-Try promotions followed by `E o segundo no PIX?`, or an order-list/detail follow-up.
-History survives server restarts. Tools retrieve fresh facts for each factual claim;
-previous answers are conversational context. Docs/OpenAPI require no provider setup.
+```bash
+curl --fail-with-body http://127.0.0.1:8000/api/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"Meus pedidos","customer_id":1}'
+```
+
+This is **local fictional demo selection, not authentication**. Anyone using the
+demo can select any imported customer. Bind to loopback; do not deploy this selector
+as a public service with real data. Guest order tools return a selection-required
+message without reading orders. Customer IDs are strict positive 64-bit integers,
+validated against the current registry on each selected request. Unknown IDs fail
+explicitly. Omitted or null `customer_id` means guest; no ID is inferred from chat text.
+
+Success contains `answer` and a UUID4 `session_id`. Repeat that ID and the same
+customer selection to continue, for example:
+
+```json
+{"message":"Detalhe o primeiro pedido","customer_id":1,"session_id":"<returned-id>"}
+```
+
+Omit `session_id` to start another chat. Explicit null/invalid session IDs are
+rejected. Guest/customer switching and customer changes require a new session;
+unknown or differently scoped session IDs return the same 404 without model execution.
+Guest sessions are distinguished only by their IDs: anyone with a guest session ID
+can resume it. There is no identity protection for individual demo users.
+
+Nested identity, history, context and payment fields remain forbidden; payment
+selection comes from conversational text through typed tools. Message length is
+limited to 4,000 characters. `customer_id` is HTTP-only: the boundary removes it from
+ChatRequest and passes the validated selection through ExecutionContext. It never
+becomes a model-generated tool argument or shared mutable customer state.
+
+History survives restarts. Try promotions followed by `E o segundo no PIX?`.
+Tools retrieve fresh facts; previous answers are context, not evidence.
+Docs/OpenAPI require no provider setup.
 
 ## Configuration
 
@@ -56,17 +68,18 @@ previous answers are conversational context. Docs/OpenAPI require no provider se
 Paths are relative to the working directory and must be separate. Conversation
 files are created privately; their parent directory must exist. Preparation refreshes
 only source snapshots. A leftover pre-US-12 catalog needs a fresh configured path
-or recreation of that generated file. Source files and chat history must remain intact.
+or recreation of that generated file. Source files and chat history must remain intact. Conversation schema v2 supports
+nullable guest owners. An earlier v1 database is rejected unchanged; keep it and
+configure a fresh conversation path. There is no automatic reset or migration.
 
 ## Errors and persistence
 
 | Case | Status |
 | --- | --- |
-| Missing/invalid identity | 401 |
 | Unknown/foreign session | 404 |
 | Another turn is active on this session in this service | 409 |
-| Invalid request | 422 |
-| Missing configuration, invalid mapping or unavailable provider | 503 |
+| Invalid request or unknown selected customer | 422 |
+| Missing configuration or unavailable provider | 503 |
 | Deadline/provider timeout | 504 |
 | Retrieval, persistence or execution failure | 500 |
 
@@ -88,13 +101,16 @@ from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.ports.chat import ChatServicePort
 ```
 
-It calls `ChatService.chat(request, context=ExecutionContext(identity=...))`.
+It calls `ChatService.chat(request, context=ExecutionContext())` for guests or
+supplies a validated CustomerIdentity as `ExecutionContext(identity=...)` for a
+selected customer. Direct callers own registry validation at their application
+boundary; order repositories independently recheck customer existence.
 The service loads history itself; externally supplied session metadata/history is
 rejected. The lower-level agent can execute explicitly trusted owned history without
 saving it. A CustomerIdentity value alone does not authenticate an external caller.
 
-`create_app(chat_service=..., identity_resolver=...)` supports controlled tests. Default
-composition retains trusted customer checks for all chats. Stop the server before
+`create_app(chat_service=...)` supports controlled tests. HTTP selection always
+validates non-null IDs against the operational registry. Stop the server before
 manually resetting conversation storage; removing it makes old session IDs inaccessible.
 Diagnostics contain counts, timings and safe error classes, not raw messages, answers,
 identifiers, credentials or tool rows. See [architecture](architecture.md) and

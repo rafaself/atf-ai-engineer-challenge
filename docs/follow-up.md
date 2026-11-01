@@ -17,9 +17,9 @@ see [examples](examples/README.md). Broader model evaluation remains ongoing.
   the chosen live model. Capture failures and adjust prompts/tools from evidence.
 - The owner confirmed the customer/order fixtures are fictional and approved
   committing their original bytes. US-09 establishes trusted identity/session/history contracts and
-  direct history execution. US-10 implements the approved server-side demo
-  token mapping, bounded persistent sessions, and concurrent-turn handling;
-  US-11 validates customer mappings and enforces read-only order access using
+  direct history execution. US-10 added bounded persistent sessions and
+  concurrent-turn handling. Issue #33 replaces its former demo-token mechanism
+  with guests/direct fictional-customer selection. US-11 enforces read-only order access using
   per-run dependencies and customer-scoped SQL. US-12 #26 was subsequently scheduled by the user and implements promotions/PIX
   pricing from unchanged sources. Frontend/CLI and deployment remain separate work.
 

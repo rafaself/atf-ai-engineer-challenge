@@ -1,6 +1,6 @@
-# Authorized order snapshots
+# Customer-scoped order snapshots
 
-US-11 adds read-only account orders to the authenticated local demo. The project
+US-11 adds read-only account orders to the local fictional demo. The project
 owner confirmed the supplied customer/order data is fictitious and approved its
 publication. Original CSVs, provenance and SHA-256 checksums are in [data](../data/README.md).
 This is snapshot retrieval, not production authentication or a fulfillment system.
@@ -64,16 +64,14 @@ a simple ownership marker, without comparing full SQL definitions.
 Historical order totals are preserved even when they differ from current catalog
 prices. There are no historical unit prices to infer or totals to recalculate.
 
-## Authorization and tools
+## Customer selection and tools
 
-Import before configuring demo tokens. `DemoIdentityResolver(mappings, customers)`
-requires a CustomerRepository; environment construction takes the same dependency.
-It validates **every** configured customer during initialization and rechecks the
-matched customer at each resolution. Removing a customer by re-import therefore
-invalidates that mapping; update mappings and restart after configuration changes.
-Unknown mappings or missing/incompatible initial operational storage produce safe
-configuration failures (503). Missing/invalid credentials remain 401; later storage
-faults are explicit retrieval failures (500), not successful empty results.
+Import before selecting a fictional `customer_id` in the HTTP body. The API checks
+that selected customer on every request, including after re-import. Unknown IDs
+return 422. Guest order calls ask for a demo selection without querying orders.
+This is not authentication: any local demo user can select any fictional customer.
+Keep the server on loopback with fictional data. Missing/incompatible initial
+storage produces 503; later retrieval faults remain explicit failures (500).
 
 The HTTP agent is composed with `create_store_agent(settings, products, orders)`.
 ExecutionContext travels through SDK per-run dependencies, outside model messages.
@@ -90,7 +88,7 @@ access enforces the same ownership; it does not depend on HTTP checks or prompt 
 Neither tool exposes `customer_id`. Unexpected scope fields and invalid identifiers
 fail tool validation. Foreign and nonexistent IDs both return `order: null` and
 `Pedido não encontrado na sua conta.` Known customers with no orders receive a
-successful empty list. Unknown trusted customers fail authorization even when
+successful empty list. Unknown selected customers fail selection validation even when
 calling the repository directly. Results carry `data_basis: imported_snapshot`;
 integer-centavo totals also have an exact two-decimal `total_brl` string. `total_items`
 counts distinct product rows, not summed quantities. No pagination or order changes
