@@ -2,8 +2,8 @@
 
 [Issue #49](https://github.com/rafaself/atf-ai-engineer-challenge/issues/49)
 is the single authoritative planning/tracking issue, including the hardened
-acceptance contract. US-14–US-17 remain within that epic; do not create separate
-story issues. This document describes branch use, not completed functionality.
+acceptance contract. US-14 is tracked as sub-issue #50 by explicit owner request;
+US-15–US-17 remain in the epic unless separately requested.
 
 ## Integration base
 
@@ -21,7 +21,9 @@ target its PR at `integration/sprint-3`. Suggested names:
 Review each delivery before starting its dependent story. Reference `Refs #49`
 in every commit body, link published commits from #49, and record actual checks
 in PRs. Story PRs must not close the epic. Final integration into `main` is a
-separate delivery decision; this preparation does not authorize that merge.
+separate delivery decision. The owner authorized delivery of US-14 directly into
+`main` on 2026-11-01; its PR therefore targets `main`. Before subsequent stories,
+fast-forward the integration branch to include the delivered US-14 changes.
 
 ## Approved scope and current state
 
@@ -29,8 +31,9 @@ Use embedded ChromaDB without a server for policy retrieval; retain SQLite for
 operational snapshots and history. Benchmark E5 Base, Titan V2 and Cohere
 Multilingual v3 against identical chunks and Portuguese questions. This evaluates
 Portuguese retrieval with multilingual models, not cross-language quality.
-No policy pipeline, embedding dependency or benchmark is implemented by this
-preparation. All story acceptance remains pending.
+US-14 implements offline policy extraction, a reviewed versionable corpus and a
+frozen 25-question evaluation set. US-15–US-17 remain pending: no embedding
+dependency, Chroma index, retrieval tool or benchmark results are delivered yet.
 
 Before tuning, US-14 freezes evidence groups/alternative chunks, a held-out
 subset, metric definitions, numerical selection targets and critical cases.

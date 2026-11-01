@@ -1,7 +1,8 @@
 # Policy corpus and evaluation protocol (US-14)
 
 Status: local corpus preparation only; no embeddings, index or agent integration.
-Related: #50, parent #49. Changes are intentionally uncommitted.
+Related: #50, parent #49. US-14 delivers corpus preparation and the frozen
+evaluation protocol; retrieval and live answer quality remain later-story work.
 
 ## Reproduce offline
 
