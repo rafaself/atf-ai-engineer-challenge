@@ -1,0 +1,351 @@
+{
+  "version": 1,
+  "language": "pt-BR",
+  "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+  "questions": [
+    {
+      "id": "q01",
+      "question": "Vocês abrem aos sábados?",
+      "split": "development",
+      "topic": "hours",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s2"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q02",
+      "question": "Qual é o endereço da loja?",
+      "split": "validation",
+      "topic": "address",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s1.2"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q03",
+      "question": "Quais formas de pagamento aceitam?",
+      "split": "development",
+      "topic": "payment",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q04",
+      "question": "Posso dividir em cinco vezes?",
+      "split": "development",
+      "topic": "payment",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-s3.1"
+        ]
+      ],
+      "expectation": "qualify_conflict",
+      "critical": false
+    },
+    {
+      "id": "q05",
+      "question": "Posso combinar PIX e cartão?",
+      "split": "validation",
+      "topic": "payment",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3.1"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q06",
+      "question": "Comprei online e me arrependi. Como devolver?",
+      "split": "development",
+      "topic": "returns",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "expectation": "ask_eligibility",
+      "critical": true
+    },
+    {
+      "id": "q07",
+      "question": "Quem paga o frete no arrependimento online?",
+      "split": "development",
+      "topic": "returns",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q08",
+      "question": "Quando recebo o reembolso da devolução online?",
+      "split": "validation",
+      "topic": "returns",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q09",
+      "question": "O instrumento veio com defeito. E agora?",
+      "split": "development",
+      "topic": "warranty",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.2"
+        ],
+        [
+          "policy-v2.1-s8.1"
+        ],
+        [
+          "policy-v2.1-s8.2"
+        ]
+      ],
+      "expectation": "ask_eligibility",
+      "critical": true
+    },
+    {
+      "id": "q10",
+      "question": "Quero trocar pela mesma peça de outra cor.",
+      "split": "validation",
+      "topic": "returns",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.3"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "expectation": "ask_eligibility",
+      "critical": false
+    },
+    {
+      "id": "q11",
+      "question": "Um instrumento personalizado pode ser trocado?",
+      "split": "development",
+      "topic": "returns",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q12",
+      "question": "Quanto custa entregar na região de Campo Grande?",
+      "split": "development",
+      "topic": "shipping",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.1"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q13",
+      "question": "Meu pedido deu exatamente R$ 500. O frete é grátis?",
+      "split": "validation",
+      "topic": "shipping",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.1"
+        ]
+      ],
+      "expectation": "qualify_gap",
+      "critical": true
+    },
+    {
+      "id": "q14",
+      "question": "Quais modalidades enviam para outra cidade?",
+      "split": "development",
+      "topic": "shipping",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.2"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q15",
+      "question": "Uma bateria grande tem frete normal?",
+      "split": "development",
+      "topic": "shipping",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.2"
+        ]
+      ],
+      "expectation": "ask_quote",
+      "critical": false
+    },
+    {
+      "id": "q16",
+      "question": "Como recebo o código de rastreio?",
+      "split": "validation",
+      "topic": "shipping",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.3"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q17",
+      "question": "Posso somar PIX com promoção?",
+      "split": "development",
+      "topic": "promotion",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-s6.2"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": true
+    },
+    {
+      "id": "q18",
+      "question": "Quais campanhas de desconto a loja costuma fazer?",
+      "split": "development",
+      "topic": "promotion",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s6.1"
+        ]
+      ],
+      "expectation": "no_live_promotion_claim",
+      "critical": false
+    },
+    {
+      "id": "q19",
+      "question": "Qual é o WhatsApp correto?",
+      "split": "validation",
+      "topic": "contact",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s1.2"
+        ],
+        [
+          "policy-v2.1-s7"
+        ]
+      ],
+      "expectation": "qualify_conflict",
+      "critical": false
+    },
+    {
+      "id": "q20",
+      "question": "Qual garantia cobre defeito e queda?",
+      "split": "development",
+      "topic": "warranty",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s8.1"
+        ],
+        [
+          "policy-v2.1-s8.3"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q21",
+      "question": "Por quanto tempo vale a garantia do fabricante?",
+      "split": "development",
+      "topic": "warranty",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s8.2"
+        ]
+      ],
+      "expectation": "ask_certificate",
+      "critical": false
+    },
+    {
+      "id": "q22",
+      "question": "Vocês vendem meus dados para marketing?",
+      "split": "development",
+      "topic": "privacy",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s9"
+        ]
+      ],
+      "expectation": "state_conditions",
+      "critical": false
+    },
+    {
+      "id": "q23",
+      "question": "Meu pedido pode ser devolvido e quando cai o reembolso?",
+      "split": "validation",
+      "topic": "mixed",
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "expectation": "ask_order_and_eligibility",
+      "critical": true
+    },
+    {
+      "id": "q24",
+      "question": "Qual é a senha do Wi-Fi da loja?",
+      "split": "development",
+      "topic": "unsupported",
+      "evidence_groups": [],
+      "expectation": "unsupported",
+      "critical": false
+    },
+    {
+      "id": "q25",
+      "question": "Qual é a política de aluguel de instrumentos?",
+      "split": "validation",
+      "topic": "unsupported",
+      "evidence_groups": [],
+      "expectation": "unsupported",
+      "critical": false
+    }
+  ]
+}

@@ -41,9 +41,9 @@ and correct policy applicability must be evaluated separately.
 
 The original PDF is already tracked at `data/store_policies.pdf`; provenance and
 its checksum are in `data/README.md` and `data/SHA256SUMS`. Preserve its bytes.
-Tracking does not establish permission to redistribute derived source content or
-send it to providers. Record distribution and external-processing permission
-separately before those actions. Local preparation can proceed. Paid calls also
+The owner confirmed on 2026-11-01 that the manual is fictional and approved
+versioning its normalized corpus (US-14 #50), superseding the earlier distribution
+gate for that artifact. External provider processing remains a separate decision. Paid calls also
 require explicit opt-in, confirmed access/region and a bounded cost estimate.
 
 Keep model downloads, indexing and paid evaluation explicit. Application startup
