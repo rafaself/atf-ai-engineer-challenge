@@ -1,155 +1,79 @@
-# Implemented architecture
+# Demo architecture
 
-One Python package keeps deployment simple while ports isolate replaceable
-boundaries. There is no distributed service, ORM, vector store, or custom DI layer.
+The project is one Python package. FastAPI supplies a local text API, Pydantic AI
+supplies typed tool calling, Bedrock supplies the model, and SQLite stores source
+snapshots and chat history. The small dataset does not need distributed services,
+a vector store, an ORM or a generic ingestion framework.
 
 ```mermaid
 flowchart LR
-    HTTP[FastAPI factory] --> Identity[Demo identity resolver]
-    Identity --> Customers[CustomerRepository]
-    Customers --> Operations[Read-only operational SQLite]
-    HTTP --> Service[ChatService]
-    Service --> Executor[AgentExecutor port]
-    Service --> History[ConversationRepository port]
-    History --> Sessions[Writable conversation SQLite]
-    Executor --> Adapter[Pydantic AI / Bedrock adapter]
-    Adapter --> Tool[Typed product-search tool]
-    Adapter --> Orders[Order tools / per-run ExecutionContext]
-    Orders --> OrderPort[Customer-scoped OrderRepository]
-    OrderPort --> Operations
-    OperationalCSV[Validated operational import + catalog references] --> Operations
-    Tool --> Port[ProductRepository port]
-    Port --> SQLite[Read-only SQLite repository]
-    CSV[Unchanged catalog + promotion CSV import] --> SQLite
+    HTTP[FastAPI] --> Identity[Demo token resolver]
+    HTTP --> Chat[ChatService]
+    Chat --> History[Conversation SQLite]
+    Chat --> Agent[Pydantic AI / Bedrock]
+    Agent --> Products[Product tools and exact pricing]
+    Agent --> Orders[Customer-scoped order tools]
+    Products --> Catalog[Catalog SQLite]
+    Orders --> Operations[Operational SQLite]
+    Prepare[One preparation command] --> Catalog
+    Prepare --> Operations
 ```
 
-`contracts` owns immutable Pydantic chat/catalog/order values and transport-neutral
-errors. `ports` owns agent/repository interfaces. `application` owns ChatService
-and ChatServicePort plus the pure pricing function, with no HTTP/AWS/SDK imports. `agent` owns settings, Portuguese
-instructions, tool schemas, exact BRL-to-centavo conversion, provider construction
-and execution/error translation. `infrastructure` owns atomic CSV ingestion and
-SQLite queries. `api.app.create_app` is the composition root and transport mapper.
+`contracts` holds immutable values; small ports describe the agent and repository
+boundaries used by typed tests. `application` owns chat execution and the pure
+pricing function. `infrastructure` loads CSVs and performs parameterized SQL.
+`agent` owns provider construction, persona, tool schemas and output checks.
+`api` composes those pieces. Core modules do not import FastAPI, AWS or Pydantic AI.
 
-FastAPI dependencies expose a lazy service factory so payload validation and docs
-do not resolve AWS credentials. Provider setup runs in a worker thread. The SDK
-executes the synchronous catalog tool in a worker thread; the repository opens
-and closes a fresh read-only connection per search. HTTP resolves a server-configured
-demo token into trusted identity by validating imported customer existence before
-constructing the service or accessing sessions/model.
-ChatService requires identity-only context, creates or loads an owned session, loads
-bounded completed turns, invokes AgentExecutor, and commits before returning a
-ChatResponse with its session ID. UUID possession never establishes ownership.
+## Chat history
 
-The conversation adapter owns a separate writable SQLite file. A complete turn and
-expected-revision increment commit together. No transaction spans model execution;
-each operation owns its connection. Short synchronous operations with zero SQLite
-busy wait prevent asynchronous worker appends after cancellation. The deadline is
-checked before the final non-awaiting commit; local filesystem commit cannot be
-interrupted and may briefly block the event loop. A per-service active-ID guard
-rejects same-session overlap, while revision checks reject stale commits across
-instances. The supported deployment is a single process/event loop on loopback.
+Use one server process and one ChatService instance. The service checks session
+ownership, rejects same-session overlap with an in-memory active-ID set, loads a
+bounded suffix of complete turns and invokes the agent. A short SQLite transaction
+appends a complete pair under the next sequence number. There is no expected
+revision, compare-and-swap or coordination between separate service instances.
 
-History is a bounded suffix of complete user/assistant text pairs; all turns remain
-on disk until local reset. The provider adapter constructs fresh SDK messages per
-invocation without identity/session metadata or historical tool returns. No history
-or identity is cached on the executor. AgentResponse contains the generated answer;
-ChatService supplies the durable session ID only after successful append.
+Cancellation and the deadline are checked before saving. Failed execution/append
+returns an error and saves no completed turn; a failed first call may leave an empty
+session. No transaction spans model work. SQLite operations are short and synchronous;
+local commit can briefly block the event loop. Saved responses may be lost on the
+network, so automatic retries are not deduplicated. These are documented demo limits.
 
-[ADR-0003](adr/0003-owned-conversation-execution-context.md) records the original
-trust contracts; [ADR-0004](adr/0004-persistent-conversation-turns.md) records their
-persistent implementation and response-loss limits. [ADR-0005](adr/0005-authorized-operational-snapshots.md)
-records the US-11 operational snapshot, customer validation and read-only order
-authorization. No compatibility shim, generic repository
-framework, distributed coordination, or new production dependency is introduced.
+The adapter sends fresh user/assistant text messages each run. Trusted identity and
+session metadata travel separately as SDK dependencies, never model-controlled
+arguments. Prior answers preserve references but are not current factual evidence.
 
-## Retrieval and prompting rationale
+## Data and tools
 
-The small structured catalog needs exact prices, stock/status rules, bounded
-results, and deterministic filtering. Application-owned retrieval and exact pricing code provide these guarantees. The model selects typed tool arguments; it never
-constructs SQL. Category/name normalization, inclusive integer-centavo bounds,
-active plus positive-stock availability, stable sorting and truncation live in
-the repository. Products and active promotions share one SQL snapshot; Python
-calculates exact quotes before payable-price filtering, ordering and limiting.
-Full-snapshot replacement is documented in [catalog.md](catalog.md).
+One preparation command refreshes catalog and operational snapshots using the
+supplied files unchanged. Each import validates inputs/references before its own
+transaction; the two database imports are not one cross-file transaction. Storage
+checks cover expected tables/columns and simple markers, without exact SQL-definition
+auditing or source fingerprints. Transactions and schema constraints still protect
+writes. Conversation storage is untouched by preparation.
 
-The Portuguese prompt sets tone and behavioral constraints, requiring retrieval
-before catalog claims, disclosure of limited results and snapshot freshness, and
-honest redirection for accessories, unsupported policies and other topics.
-Prior answers supply conversational references rather than authoritative mutable
-facts; the instructions require a fresh tool lookup for price/stock/order follow-ups.
-No product names/prices/stock fixtures are embedded in instructions. A prompt is
-not proof that a model follows these rules; live evaluations remain necessary.
+Catalog tools share one repository. Python calculates integer-centavo price quotes
+before payable-price filtering, ordering/counting and limiting. The original price
+is retained. Active, stocked products may receive one active promotion, otherwise
+explicit PIX pricing. Inactive/unavailable offers do not apply. No dates are inferred.
 
-Pydantic AI supplies typed tool schemas and provider substitution. Bedrock Nova
-Micro in us-east-1 is the initial low-cost preference; access and tool behavior
-were verified in the recorded live scenarios. Explicit SDK/agent limits bound
-request work without promising a monetary cap. See [bedrock.md](bedrock.md).
+Order tools retain a repository, not customer state. Each read validates trusted
+customer existence and scopes order/item/count SQL by customer identity. Foreign
+and missing orders have the same result. Contacts, notes and payment methods are
+excluded. Copied product references and historical totals survive catalog changes.
+See [catalog](catalog.md) and [orders](orders.md).
 
-[ADR-0001](adr/0001-modular-monolith-and-dependency-boundaries.md) and
-[ADR-0002](adr/0002-llm-provider-boundary.md) record accepted offline-validated
-boundaries. ADR-0002 now links the recorded live compatibility checks and the
-customer-output policy revision; those checks remain specific to the evaluated model/scenarios.
+The output validator rejects blank/internal markup and adds current-run truncation
+and price disclosures. Discounted products share one concise snapshot notice.
+Diagnostics allow metadata only. This is not a universal semantic grounding check.
 
-## Promotions using immutable sources
+## Evidence and limits
 
-US-12 extends the existing catalog import/schema with all original promotion rows;
-source files are read-only, and no dates or values are invented. One pure application
-function applies an eligible active promotion, otherwise explicitly requested PIX,
-using integer-centavo half-up arithmetic with no stacking. Stored original prices
-and historical orders are unchanged. Product tools expose payment selection and
-promotion filtering, with typed original/final price evidence. The output validator
-appends current-run discount disclosures as well as truncation notices. No separate
-database, date subsystem, policy RAG or production dependency is added.
-See [catalog pricing](catalog.md) and [ADR-0006](adr/0006-immutable-promotion-pricing.md).
+Real temporary SQLite and controlled models verify domain rules, ownership,
+persistence, concurrent independent chats and failures. They do not establish live
+language understanding or tool selection. General policy lookup and fresh reviewed
+Bedrock conversations remain unfinished.
 
-## Customer-order boundary
-
-The full HTTP composition shares product tools with isolated catalog probes and
-adds two read-only order tools. Catalog-only probes are never a runtime fallback.
-Three distinct storage paths are required: catalog, operations and conversations.
-The explicit operational importer validates complete sources before an atomic full
-replacement, retaining customer IDs only, minimal orders, quantities and copied
-catalog product IDs/names. It records source hashes plus a logical reference hash.
-Contacts, customer names/cities, notes and payment fields are excluded. Historical
-totals remain exact supplied centavos; current prices never reconstruct unit prices.
-See [operational data and tools](orders.md).
-
-The token resolver validates every mapped customer initially and rechecks the
-matched one after re-import. Each repository read separately checks trusted customer
-existence and scopes order/item/count SQL using parameters inside one read transaction.
-Unknown/foreign order IDs are indistinguishable; known empty accounts succeed while
-storage faults fail explicitly. SDK per-run dependencies carry ExecutionContext;
-model messages do not contain trusted identity/session metadata. Cached tools retain
-repositories, without mutable per-customer state. Results include snapshot basis,
-counts and bounded ordering, with current-run truncation notices for lists/items.
-
-No component claims production authentication, live carrier status, actual receipt,
-payment confirmation or return eligibility. Prompts require fresh order retrieval;
-controlled models prove data flow and SQL isolation, not semantic adherence.
-
-## Validation strategy
-
-Tests concentrate on exact money, availability, validation, atomic replacement,
-schema ownership, literal SQL search, failure mapping, cancellation and import
-boundaries. Real temporary SQLite tests catch persistence risks; typed fakes and
-controlled SDK models isolate application contracts. Selected HTTP integrations
-exercise the whole slice. Default tests forbid live model requests.
-
-Controlled models select known tool arguments and return known text. These tests
-prove wiring/data integrity, not natural-language interpretation, tool choice,
-Portuguese answer quality, resistance to adversarial prompts, or live Bedrock
-compatibility. Evaluate those with the [live example checklist](examples/README.md).
-
-## Customer-output policy
-
-The agent exposes distinct available-product recommendations and named-product
-details, fixing availability in code for each tool. An output validator rejects
-known internal/control tags with one corrective retry and appends a factual
-partial-selection notice for each distinct truncated-query total in the current
-run, selected by SDK message run ID. It does not strip internal text or enforce
-complete semantic grounding.
-See ADR-0002 and the reviewed live captures for rationale and limits.
-
-Diagnostics use per-event metadata allowlists: no raw chat text, answers, history,
-query text, identifiers, credentials, paths, or tool rows. Configuration exposes
-private demo-token mapping and history limits explicitly; see the [API guide](api.md).
+[Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
+approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation
+history; this guide is authoritative for the current single-process demo boundary.

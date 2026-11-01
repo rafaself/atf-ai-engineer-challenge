@@ -1,4 +1,8 @@
-# Project documentation
+# Documentation map
+
+Start with the [root README](../README.md). Architecture and API guides describe
+the current demo. ADRs, validation logs and live captures preserve historical
+evidence; issue #32 retires their cross-instance coordination and provenance details.
 
 - [Root README](../README.md): installation, import and quality commands.
 - [Architecture](architecture.md): implemented boundaries and retrieval/prompt rationale.

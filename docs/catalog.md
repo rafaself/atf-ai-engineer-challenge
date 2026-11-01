@@ -1,4 +1,7 @@
-# Catalog import and SQLite retrieval
+# Catalog and pricing reference
+
+Use the [README preparation command](../README.md#run-locally) for normal setup.
+The individual importer below remains available for focused experiments.
 
 US-03 introduced the synchronous ProductRepository port. US-12 extends its
 contracts and import with the unchanged promotions source. It uses Python's csv, sqlite3, Decimal, and Unicode modules; no
@@ -28,9 +31,9 @@ price is R$92,233,720,368,547,758.07. Prices such as 0.2900 are exact; 0.001 is 
 
 The database is a generated, exclusively managed catalog, not a place for user
 edits or history. Existing empty databases can be initialized. Existing catalogs
-must have user_version 2 and the exact importer-owned categories/products/promotions table
-definitions; unrelated tables/views, altered definitions, and other versions are
-rejected without migration or modification. Schema creation is in the same
+must have user_version 2 and the required catalog tables/columns. SQL definition
+text is not compared; harmless additional columns do not invalidate a snapshot.
+Unrelated or incomplete storage is rejected without rewriting it. Schema creation is in the same
 transaction as data replacement. Foreign keys, IDs, required fields, integer
 price/stock, and statuses are constrained in the schema.
 

@@ -107,8 +107,8 @@ for stateless probes, or a trusted owned context for order execution. Current-ru
 historical results cannot add new selection notices; corrective retries are still
 included. The service preserves typed errors, timeout, and caller cancellation.
 No persistence write runs in a background worker after cancellation. The short
-SQLite commit cannot be interrupted asynchronously; see ADR-0004 for this local
-single-process tradeoff and the response-loss boundary.
+SQLite commit cannot be interrupted asynchronously; the current single-process
+and response-loss limits are in [architecture](architecture.md).
 
 Demo-token resolution occurs before session/model access. Empty context is not
 accepted by ChatService or HTTP; it remains suitable for lower-level stateless

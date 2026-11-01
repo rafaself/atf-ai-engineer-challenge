@@ -1,46 +1,80 @@
-# Empório da Música — AI Engineer Challenge
+# Empório da Música — customer-support agent
 
-Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-12**: an installable backend,
-development checks, validated values/interfaces, and atomic catalog import with
-read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and typed
-product-search tools connected to the catalog repository.
-Live Bedrock tool calling and five remediation scenarios have been validated;
-see [reviewed captures](docs/examples/README.md) for evidence and limitations.
-US-10 adds persistent owned sessions behind `POST /api/chat`, using server-configured
-demo bearer identities and a separate writable SQLite database. Complete turns are
-committed before responses; bounded text history survives application restarts.
-US-11 adds a minimal customer/order snapshot, validated demo-customer mappings,
-and read-only order tools scoped by trusted per-run identity. The original
-customer/order fixtures are fictional and committed with the owner's confirmation.
-US-12 adds active-snapshot promotions and exact non-cumulative PIX pricing using
-the supplied records unchanged. Original catalog prices and historical order totals
-remain intact; final prices are calculated separately.
-See [catalog and pricing](docs/catalog.md), [operational import and authorization](docs/orders.md),
-[local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
+A Python prototype for the Artefact AI Engineer challenge. It answers product,
+price, availability, promotion and account-order questions in Portuguese using
+Pydantic AI tools and the supplied fictional data. SQLite keeps chat history
+across restarts. Run one local server process; this is a challenge demonstration.
 
-## Setup
+General policy retrieval (hours, address and returns) remains unfinished. The
+assistant states that limitation instead of inventing answers. Existing live
+examples predate the latest features; fresh multi-turn evaluation remains US-13.
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python
-3.12. The package supports Python 3.12 and later; `apps/backend/.python-version` selects
-3.12 for a consistent development baseline. Setup was validated with uv 0.13.4 and
-Python 3.12.15.
+## Run locally
 
-Run from the repository root:
+Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Run these commands from the repository root:
 
 ```bash
 uv sync --project apps/backend --locked
-uv run --directory apps/backend python -c "import emporio_music_backend"
+cp .env.example .env
 ```
 
-The environment is created at `apps/backend/.venv`. Development tools live in the
-`dev` dependency group and are installed by default. Production dependencies are
-Pydantic, Pydantic AI with Bedrock support, boto3, FastAPI, and uvicorn. The checked-in `apps/backend/uv.lock` records resolved versions;
-use `--locked` when installing an existing checkout.
+Edit `.env`: configure an AWS profile or access keys for Bedrock, and add a private
+`DEMO_CUSTOMER_TOKENS_JSON` mapping such as `{"<generated-token>":1}`. Generate a
+URL-safe token with:
 
-## Quality checks
+```bash
+uv run --project apps/backend --locked python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
 
-Run from the repository root:
+Then prepare all supplied data with one command and start the API:
+
+```bash
+uv run --env-file .env --project apps/backend --locked python -m emporio_music_backend.prepare
+uv run --env-file .env --project apps/backend --locked uvicorn emporio_music_backend.api.app:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Preparation imports 65 products, 25 promotions, 50 customers, 20 orders and 22 item
+rows. Re-running it refreshes the source snapshots and leaves chat history alone.
+It never rewrites supplied CSVs/PDFs. A leftover pre-US-12 generated catalog must
+be recreated or replaced with a fresh configured path; no migration system is included.
+
+Open [Swagger UI](http://127.0.0.1:8000/docs), select **Authorize**, and enter a
+configured token. Send `{"message":"Quais são as promoções?"}`. Reuse the returned
+`session_id` with `{"message":"E o segundo no PIX?","session_id":"<returned-id>"}`.
+Omit the ID to start a new chat. Credentials and generated databases stay Git-ignored.
+See [API details](docs/api.md) for curl, configuration and errors.
+
+## How it works
+
+FastAPI calls a small chat service, which loads owned history, runs the agent and
+saves one complete user/assistant turn. Tools retrieve facts from read-only SQLite
+snapshots; the model never builds SQL or chooses the authorized customer.
+
+- **Catalog:** literal name/category lookup, active/stock checks and bounded results.
+- **Pricing:** integer-centavo half-up arithmetic; an eligible active promotion
+  takes priority, otherwise explicitly requested PIX receives 5%. Discounts never
+  stack. Budget filters use final prices, while original prices remain intact.
+- **Orders:** trusted demo identity and parameterized ownership checks. Historical
+  totals stay unchanged; current catalog prices never reconstruct purchase prices.
+- **History:** persisted text pairs, bounded to six turns/24,000 characters by
+  default. One service rejects overlapping turns on the same session. Independent
+  chats can run concurrently. Failed/cancelled calls save no completed turn.
+
+Bedrock Nova Micro in `us-east-1` is the default model. Pydantic AI provides typed
+function calling; straightforward Python/SQL handles the small structured dataset.
+The policy PDF will use a separate simple lookup. No vector store is needed here.
+
+Three SQLite files separate replaceable catalog/order snapshots from chat history.
+Preparation and the API use the same `.env` paths: `DATABASE_PATH`,
+`OPERATIONS_DATABASE_PATH`, and `CONVERSATION_DATABASE_PATH`. Demo customer mapping
+is not production authentication. Facts reflect imported snapshots, not live stock
+or carrier status. Only `is_active` establishes promotion validity; the source has
+no dates. The demo has no cross-process turn coordination or retry deduplication.
+
+## Development checks
+
+From the repository root:
 
 ```bash
 uv run --directory apps/backend --locked ruff check .
@@ -50,196 +84,18 @@ uv run --directory apps/backend --locked pytest
 uv build --project apps/backend
 ```
 
-`--directory apps/backend` deliberately changes the working directory so every tool
-uses `apps/backend/pyproject.toml` and resolves `src` and `tests` correctly. `--project`
-selects a project without changing the command's working directory.
+Default tests use temporary SQLite and controlled models; real model requests are
+forbidden. Paid Bedrock probes require explicit opt-in. See [validation](docs/validation.md),
+[real examples](docs/examples/README.md) and [provider setup](docs/bedrock.md).
 
-Contract tests validate chat/catalog values, derived fields, independent typed
-fakes, and dependency boundaries without network or database access. Strict mypy
-covers source and tests, including those fakes. The packaging smoke test imports
-the installed distribution in an isolated Python
-subprocess outside the source tree, without AWS configuration or provider imports.
-Build outputs are ignored under `apps/backend/dist/`.
+## Documentation and remaining work
 
-To check the wheel with runtime dependencies only (POSIX shell):
+Start here; use the [documentation index](docs/README.md) for implementation details
+and historical decisions. Next priorities are policy retrieval and 3–5 reviewed,
+representative live conversations. Frontend, deployment and production authentication
+are outside the current demo. The recruiting email determines the submission cutoff.
 
-```bash
-wheel_check_dir=$(mktemp -d)
-uv venv --python 3.12 "$wheel_check_dir/.venv"
-uv pip install --python "$wheel_check_dir/.venv/bin/python" \
-  apps/backend/dist/emporio_music_backend-0.1.0-py3-none-any.whl
-(cd "$wheel_check_dir" && .venv/bin/python -I -c \
-  "import emporio_music_backend; from importlib.metadata import version; print(version('emporio-music-backend'))")
-```
-
-The disposable directory can be removed after verification.
-
-## Repository structure
-
-| Directory | Responsibility |
-| --- | --- |
-| `apps/backend/` | Installable Python package, tests, and development tooling. |
-| `apps/frontend/` | Placeholder for a later sprint; no JavaScript toolchain. |
-| `data/` | Unmodified fictional catalog/customer/order CSVs, provenance, and checksums. |
-| `docs/` | Architecture decisions, setup guides, and validation evidence. |
-
-## Configuration and data
-
-`.env.example` documents configuration; export values explicitly, without a dotenv loader.
-The API requires `DEMO_CUSTOMER_TOKENS_JSON`, a private token-to-customer mapping;
-follow [demo identity setup](docs/api.md#demo-identity-setup). Keep generated tokens
-in the ignored local environment. This is a local demonstration of identity and
-isolation, not production authentication. Conversation data defaults to
-`data/conversations.sqlite3`; catalog and operational re-import never replace it.
-Operational data defaults to `data/operations.sqlite3`, independent of the catalog.
-The provider preference is Bedrock in `us-east-1`, initially
-`amazon.nova-micro-v1:0`, or another validated low-cost feasible model. Model access
-and tool calling were live-validated with Nova Micro in us-east-1 on 2026-10-31. The integration uses
-the standard AWS credential chain; no credentials are required for setup or tests.
-
-`DATABASE_PATH` documents the catalog path relative to the repository root; pass
-that path explicitly to the importer below. The environment example is not loaded
-automatically. See [local API startup](docs/api.md) for uvicorn and curl commands.
-
-Products, categories, customers, orders, order items and promotions are copied byte-for-byte.
-See [data provenance](data/README.md) for fictional origin and SHA-256 verification.
-These files are an imported-source snapshot, not a live inventory service. Product
-filters and ordering use the payable price, with promotions or explicitly requested
-PIX pricing. Order access remains scoped to the authenticated account.
-
-### Import the catalog
-
-From the repository root, run:
-
-```bash
-uv run --project apps/backend --locked python -m \
-  emporio_music_backend.infrastructure.catalog_import \
-  --products data/products.csv \
-  --categories data/categories.csv \
-  --promotions data/promotions.csv \
-  --database data/catalog.sqlite3
-```
-
-Expected output: `Imported 9 categories and 65 products; 25 promotions`. Every successful import
-replaces the entire catalog atomically, refreshing changed rows and removing absent
-products/categories/promotions. Validation failures leave an existing snapshot untouched and
-do not create a database. Empty product/category snapshots are rejected; an empty
-promotions snapshot is allowed. Generated databases remain
-ignored by Git. See [catalog behavior](docs/catalog.md) for validation, ownership,
-schema compatibility, failure behavior, and the repository interface.
-
-US-12 uses catalog schema version 2. If a generated version-1 catalog exists, stop
-the server, remove **only that generated catalog file**, then run this command; the
-importer rejects old/foreign schemas instead of migrating them. Alternatively,
-import to a new path and set `DATABASE_PATH` accordingly. Never edit/delete source
-CSVs/PDFs or reset operational/conversation storage as part of this step.
-
-For a local retrieval example (no server or AWS calls):
-
-```bash
-uv run --project apps/backend --locked python -c \
-  "from pathlib import Path; from emporio_music_backend.contracts import ProductSearchQuery; from emporio_music_backend.infrastructure.sqlite_repository import SQLiteProductRepository; print(SQLiteProductRepository(Path('data/catalog.sqlite3')).search(ProductSearchQuery(category='violoes', max_price_centavos=100000)).model_dump_json())"
-```
-
-The budget search has 12 matches in the supplied snapshot; the default limit is
-10, so truncation is reported. Use limit 20 to retrieve all 12.
-
-### Import operational data
-
-After importing the catalog, run from the repository root:
-
-```bash
-uv run --project apps/backend --locked python -m \
-  emporio_music_backend.infrastructure.operations_import \
-  --customers data/customers.csv --orders data/orders.csv \
-  --order-items data/order_items.csv --catalog data/catalog.sqlite3 \
-  --database data/operations.sqlite3
-```
-
-Expected: `Imported 50 customers, 20 orders and 22 items`. This required import
-validates references and replaces the minimal operational snapshot atomically.
-All configured demo-token customer IDs must exist in this snapshot; the resolver
-rechecks the matched customer on every request. Missing/incompatible storage or
-invalid mappings fail safely; HTTP has no catalog-only fallback. Generated files
-are private and Git-ignored. See [order import, fields and failures](docs/orders.md).
-
-## Decisions and follow-up
-
-The project uses one Python package with `uv_build` and no root uv workspace.
-Pydantic 2 supplies frozen models with unknown inputs forbidden. The accepted
-[ADR-0001](docs/adr/0001-modular-monolith-and-dependency-boundaries.md) describes
-module responsibilities, dependency direction, and tradeoffs.
-
-### Current application contracts
-
-| Contract | Behavior |
-| --- | --- |
-| `ChatRequest` / `ChatResponse` | Message (maximum 4,000 characters), optional continuation `session_id`; successful answer and required server session ID. Omit the ID to create a session; explicit null/invalid IDs are rejected. |
-| `AgentResponse` | Validated answer from the provider adapter; the application supplies the session ID after saving. |
-| `ProductSearchQuery` | Category/name filters, inclusive payable-price bounds, `available_only=True`, `payment_method="standard"` or `"pix"`, `promotions_only=False`, limit 10 (maximum 20). |
-| `ProductSummary` | Product/category IDs and names, original integer-centavo price, stock/status, availability, and typed `pricing` with applied percentage, final price and source offer. |
-| `ProductSearchResult` | Immutable product tuple, total matches before limiting, and derived truncation. |
-| `CustomerIdentity` / `ConversationSession` | Trusted customer ID and an owned server-generated UUID4; neither carries credentials. |
-| `ConversationMessage` / `ExecutionContext` | Immutable user/assistant text history in complete pairs, with matching trusted identity/session ownership. |
-| `CustomerIdentityResolver.resolve` | Resolves server-configured demo bearer tokens to trusted identities; credentials stay outside execution context. |
-| `ConversationRepository` | Owned session creation, bounded history loading, and atomic expected-revision append. |
-| `HistoryLimits` | Last 6 complete turns within 24,000 characters by default; configurable up to 20 turns / 64,000 characters. |
-| `AgentExecutor.run` | Async execution with required keyword-only `context: ExecutionContext`, returning AgentResponse. |
-| `ProductRepository.search` | Synchronous typed catalog search port. |
-| `CustomerRepository.exists` | Current imported customer existence for trusted identity validation. |
-| `OrderRepository.list_orders` / `get_order` | Required trusted identity; scoped SQL, bounded typed results, indistinguishable foreign/unknown order IDs. |
-| `OrderSummary` / `OrderDetail` / `OrderListResult` | Exact supplied totals, optional tracking/estimate, bounded product references/quantities and truncation metadata. |
-| `ChatService.chat` / `ChatServicePort` | Requires resolved identity in context; loads owned history, executes, and saves a completed turn under the default 60-second deadline. |
-
-Contracts and errors live in `emporio_music_backend.contracts`; ports and the
-application entry-point interface live in `ports` and `application`. No provider
-or HTTP objects cross these boundaries. Integer fields reject booleans, fractions,
-and numeric strings. Negative prices/stock, inverted bounds, blank filters, unknown
-statuses, and inconsistent totals are rejected. Availability requires active
-status and positive stock; computed availability/truncation are output-only.
-
-The repository combines supplied filters, normalizes category/name case
-and accents, matches names by literal substring, and sorts by calculated payable price then product ID.
-Unknown categories/names return no matches, never an unrestricted search. Named
-lookups may explicitly disable `available_only` to inspect unavailable products.
-These semantics are implemented by SQLiteProductRepository. No-match results are
-normal data. Operational failures have transport-neutral configuration,
-provider-unavailable, timeout, retrieval, and execution error categories; contract
-validation retains Pydantic ValidationError.
-
-ChatService accepts only resolved identity in its execution context and loads all
-session/history data from its repository. A UUID alone never grants access;
-unknown and foreign sessions return the same safe error. The lower-level agent
-adapter still accepts explicit owned text history, but does not persist it.
-Identity/session metadata stays outside model messages; current tool results
-provide minimal scoped facts to the provider. Current-run tool evidence drives
-output notices.
-See [direct application calls](docs/api.md#direct-application-calls) and
-[ADR-0004](docs/adr/0004-persistent-conversation-turns.md) for the implemented
-storage, concurrency, timeout, and response-loss boundaries. No new production
-dependency is added.
-
-See [architecture and prompting rationale](docs/architecture.md),
-[validation evidence](docs/validation.md), [reviewed real examples](docs/examples/README.md),
-and [follow-up/submission requirements](docs/follow-up.md).
-Policy-aware answers and operational-data-versus-policy routing remain follow-up work.
-Five reviewed real conversations and a separate live tool probe are recorded;
-passing scenarios do not guarantee every future generated answer. Those live
-captures predate persistent sessions; new multi-turn Bedrock evaluation remains
-US-13. Policy answers, frontend delivery,
-and deployment packaging remain follow-up work.
-
-## Development workflow and coding assistants
-
-Use `type(scope): message` commits with the related issue referenced in the body.
-Link each published commit from its issue, open a focused PR, and report checks
-that actually ran. Preserve an incremental history and respect the challenge's
-submission cutoff; no deadline is assumed here.
-
-OpenAI Codex assisted with challenge/issue analysis, implementation planning,
-bootstrap files and tests, validation commands, and GitHub issue/PR updates.
-Codex used the implement-work-item workflow for scoped delivery and domain-testing
-guidance for risk-based tests. Tests, review findings/fixes, conventional issue-linked
-commits, and sequential PR merges are recorded in GitHub; model reasoning/quality
-has not been validated using controlled-test answers.
-Implementation choices and actual check results remain reviewable in the PRs.
+OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
+Scoped commits and PRs record that workflow; controlled test answers are not claimed
+as live model-quality evidence. Preserve source bytes and reference the related issue
+in every commit body. See [working agreements](AGENTS.md).
