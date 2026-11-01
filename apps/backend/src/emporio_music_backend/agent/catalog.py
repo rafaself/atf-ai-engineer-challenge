@@ -3,7 +3,7 @@
 from decimal import Decimal, localcontext
 from typing import Annotated
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field, StrictBool, TypeAdapter
 from pydantic_ai import Tool
 from pydantic_ai.models import Model
 
@@ -12,6 +12,7 @@ from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts import (
     ExecutionContext,
     NonblankText,
+    PaymentMethod,
     ProductSearchQuery,
 )
 from emporio_music_backend.diagnostics import trace
@@ -51,6 +52,8 @@ class ProductSearchTool:
         min_price_brl: BRLAmount | None = None,
         max_price_brl: BRLAmount | None = None,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10,
+        payment_method: PaymentMethod = "standard",
+        promotions_only: StrictBool = False,
     ) -> dict[str, object]:
         """Find available instruments for recommendations, by category, budget or partial name.
 
@@ -59,9 +62,11 @@ class ProductSearchTool:
         Args:
             category: Instrument category, e.g. Violões, not an individual model name.
             product_name: Partial product/model name, e.g. Takamine GD20.
-            min_price_brl: Inclusive minimum in Brazilian reais, NOT centavos.
-            max_price_brl: Inclusive maximum in Brazilian reais, NOT centavos.
+            min_price_brl: Inclusive payable-price minimum in reais, NOT centavos.
+            max_price_brl: Inclusive payable-price maximum in reais, NOT centavos.
             limit: Maximum returned products, 1–20. Total count includes omitted matches.
+            payment_method: standard unless the customer explicitly requests pix pricing.
+            promotions_only: Return only eligible active promotional products, not PIX-only discounts.
         """
         trace(
             "tool.called",
@@ -74,6 +79,8 @@ class ProductSearchTool:
             min_price_centavos=_centavos(min_price_brl),
             max_price_centavos=_centavos(max_price_brl),
             available_only=True,
+            payment_method=payment_method,
+            promotions_only=promotions_only,
             limit=limit,
         )
         return self._search(query)
@@ -82,6 +89,7 @@ class ProductSearchTool:
         self,
         product_name: NonblankText,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10,
+        payment_method: PaymentMethod = "standard",
     ) -> dict[str, object]:
         """Look up named products, including out-of-stock/discontinued/coming-soon.
 
@@ -95,7 +103,10 @@ class ProductSearchTool:
         )
         return self._search(
             ProductSearchQuery(
-                product_name=product_name, available_only=False, limit=limit
+                product_name=product_name,
+                available_only=False,
+                limit=limit,
+                payment_method=payment_method,
             )
         )
 
@@ -117,7 +128,8 @@ class ProductSearchTool:
             "products": products,
             "total_matches": result.total_matches,
             "truncated": result.truncated,
-            "price_basis": "catalog",
+            "price_basis": "computed_snapshot_quote",
+            "promotion_validity_basis": "source_is_active_snapshot",
             "inventory_basis": "imported_snapshot",
         }
 

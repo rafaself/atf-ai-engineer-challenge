@@ -430,7 +430,7 @@ def test_count_and_rows_share_snapshot_during_concurrent_import(tmp_path: Path) 
         database.resolve().as_uri() + "?mode=ro", uri=True, autocommit=True
     )
     # The repository still opens read-only connections normally; this hook only
-    # schedules a second real transaction between its count and row statements.
+    # schedules a second real transaction after schema validation, before product projection.
     changed = False
 
     write_csv(products, PRODUCT_COLUMNS, [item()])
