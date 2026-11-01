@@ -117,3 +117,5 @@ OpenAI Codex assisted with analysis, implementation, tests, review and GitHub de
 Scoped commits and PRs record that workflow; controlled test answers are not claimed
 as live model-quality evidence. Preserve source bytes and reference the related issue
 in every commit body. See [working agreements](AGENTS.md).
+
+See [US-14 policy corpus preparation and evaluation protocol](docs/policy-retrieval.md) for offline preparation; policy answers remain unimplemented.
