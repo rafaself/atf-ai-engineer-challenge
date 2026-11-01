@@ -223,3 +223,52 @@ Bedrock evaluation is claimed. Controlled models prove wiring/data boundaries,
 not natural-language interpretation, adversarial prompt resistance, Portuguese
 answer quality or universal semantic grounding. Real multi-turn evaluation remains
 explicitly opted in under US-13; US-12 promotions stay deferred.
+
+## US-12 promotions validation
+
+The user scheduled the previously deferred story with an explicit immutable-source
+requirement. All 13 previously present CSV/PDF files matched their before/after
+checksums, including the original resource directory. The new `data/promotions.csv`
+copy matches both the original ZIP entry and extracted supplied file byte-for-byte.
+The existing five-entry checksum manifest remains unchanged and passes. No source
+values, records, columns, dates, encoding or line endings were rewritten. Invalid
+input tests create independent temporary CSV fixtures. No new hashing subsystem,
+production dependency or database path was introduced.
+
+Actual root-level README Ruff lint/format, strict mypy (56 source/test files),
+pytest (**234 tests**), and `uv build --project apps/backend` passed. The final
+suite removed AWS access-key/secret/session-token, profile and region environment
+variables; the live-model request guard remained enabled. Source distribution and
+wheel builds passed. Dependency declarations and lockfile remain unchanged.
+
+Two regressions failed before implementation: the supplied active Kalani offer
+had no separate final-price quote, and discounted results had no current-run price
+disclosure. Other added cases were verified after implementation; no failing
+baseline is claimed for those. One controlled-model fixture initially used only
+the brand Ohana, which correctly returned multiple matches. It was corrected to
+preserve and query the displayed full product name; production matching rules
+and the expected promotional price were not weakened.
+
+Real SQLite tests verify all 25 source promotion records, four active offers,
+source prices, exact half-up ties and large integer arithmetic, promotion-first
+PIX exclusion, unavailable statuses/stock, payable-price boundaries/order, bounded
+counts, invalid references/flags/percentages, conflicts, atomic rollback, replacement
+and empty offers. Existing catalog snapshot consistency and customer-order/session
+regressions pass. Controlled HTTP tests exercise promotional ordering, product
+follow-ups, PIX, application reconstruction, refreshed snapshots, concurrent payment
+choices, historical order totals, safe diagnostics and failed turns without commits.
+
+The updated importer CLI actually loaded 9 categories, 65 products and 25 promotions
+into temporary catalog storage, followed by 50 customers/20 orders/22 items into
+separate operations storage. An actual temporary uvicorn process returned docs 200,
+missing identity 401, invalid authenticated input 422 and sanitized 503 with a
+purposefully nonexistent AWS profile. The process stopped, and its captured output
+contained no synthetic token. No provider invocation occurred.
+
+Catalog schema version 2 intentionally requires regeneration of disposable old
+catalogs; no source edits or migration layer are involved. The final diff was
+reviewed locally for source immutability, atomic import, price/availability rules,
+strict tool inputs and evidence boundaries. No independent review, fresh runtime-only
+wheel installation or live pricing/language evaluation is claimed. Original live
+captures are preserved and predate this feature. Real promotion/PIX and multi-turn
+Bedrock evaluation remains explicitly opted in under US-13.

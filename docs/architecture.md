@@ -20,12 +20,12 @@ flowchart LR
     OperationalCSV[Validated operational import + catalog references] --> Operations
     Tool --> Port[ProductRepository port]
     Port --> SQLite[Read-only SQLite repository]
-    CSV[Validated CSV snapshot import] --> SQLite
+    CSV[Unchanged catalog + promotion CSV import] --> SQLite
 ```
 
 `contracts` owns immutable Pydantic chat/catalog/order values and transport-neutral
 errors. `ports` owns agent/repository interfaces. `application` owns ChatService
-and ChatServicePort, with no HTTP/AWS/SDK imports. `agent` owns settings, Portuguese
+and ChatServicePort plus the pure pricing function, with no HTTP/AWS/SDK imports. `agent` owns settings, Portuguese
 instructions, tool schemas, exact BRL-to-centavo conversion, provider construction
 and execution/error translation. `infrastructure` owns atomic CSV ingestion and
 SQLite queries. `api.app.create_app` is the composition root and transport mapper.
@@ -65,11 +65,12 @@ framework, distributed coordination, or new production dependency is introduced.
 ## Retrieval and prompting rationale
 
 The small structured catalog needs exact prices, stock/status rules, bounded
-results, and deterministic filtering. Application-owned parameterized SQL offers
-these guarantees directly. The model selects typed tool arguments; it never
+results, and deterministic filtering. Application-owned retrieval and exact pricing code provide these guarantees. The model selects typed tool arguments; it never
 constructs SQL. Category/name normalization, inclusive integer-centavo bounds,
 active plus positive-stock availability, stable sorting and truncation live in
-the repository. Full-snapshot replacement is documented in [catalog.md](catalog.md).
+the repository. Products and active promotions share one SQL snapshot; Python
+calculates exact quotes before payable-price filtering, ordering and limiting.
+Full-snapshot replacement is documented in [catalog.md](catalog.md).
 
 The Portuguese prompt sets tone and behavioral constraints, requiring retrieval
 before catalog claims, disclosure of limited results and snapshot freshness, and
@@ -88,6 +89,18 @@ request work without promising a monetary cap. See [bedrock.md](bedrock.md).
 [ADR-0002](adr/0002-llm-provider-boundary.md) record accepted offline-validated
 boundaries. ADR-0002 now links the recorded live compatibility checks and the
 customer-output policy revision; those checks remain specific to the evaluated model/scenarios.
+
+## Promotions using immutable sources
+
+US-12 extends the existing catalog import/schema with all original promotion rows;
+source files are read-only, and no dates or values are invented. One pure application
+function applies an eligible active promotion, otherwise explicitly requested PIX,
+using integer-centavo half-up arithmetic with no stacking. Stored original prices
+and historical orders are unchanged. Product tools expose payment selection and
+promotion filtering, with typed original/final price evidence. The output validator
+appends current-run discount disclosures as well as truncation notices. No separate
+database, date subsystem, policy RAG or production dependency is added.
+See [catalog pricing](catalog.md) and [ADR-0006](adr/0006-immutable-promotion-pricing.md).
 
 ## Customer-order boundary
 

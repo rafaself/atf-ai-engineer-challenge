@@ -1,7 +1,7 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-11**: an installable backend,
+This checkout implements **US-01 through US-12**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
 read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and typed
 product-search tools connected to the catalog repository.
@@ -13,7 +13,10 @@ committed before responses; bounded text history survives application restarts.
 US-11 adds a minimal customer/order snapshot, validated demo-customer mappings,
 and read-only order tools scoped by trusted per-run identity. The original
 customer/order fixtures are fictional and committed with the owner's confirmation.
-See [operational import and authorization](docs/orders.md),
+US-12 adds active-snapshot promotions and exact non-cumulative PIX pricing using
+the supplied records unchanged. Original catalog prices and historical order totals
+remain intact; final prices are calculated separately.
+See [catalog and pricing](docs/catalog.md), [operational import and authorization](docs/orders.md),
 [local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
 
 ## Setup
@@ -98,11 +101,11 @@ the standard AWS credential chain; no credentials are required for setup or test
 that path explicitly to the importer below. The environment example is not loaded
 automatically. See [local API startup](docs/api.md) for uvicorn and curl commands.
 
-Products, categories, customers, orders and order items are copied byte-for-byte.
+Products, categories, customers, orders, order items and promotions are copied byte-for-byte.
 See [data provenance](data/README.md) for fictional origin and SHA-256 verification.
-These files are an imported-source snapshot, not a live inventory service. Import and retrieval now implement availability and catalog-price
-filtering. Promotion calculations remain deferred; order access is scoped to the
-authenticated account.
+These files are an imported-source snapshot, not a live inventory service. Product
+filters and ordering use the payable price, with promotions or explicitly requested
+PIX pricing. Order access remains scoped to the authenticated account.
 
 ### Import the catalog
 
@@ -113,15 +116,23 @@ uv run --project apps/backend --locked python -m \
   emporio_music_backend.infrastructure.catalog_import \
   --products data/products.csv \
   --categories data/categories.csv \
+  --promotions data/promotions.csv \
   --database data/catalog.sqlite3
 ```
 
-Expected output: `Imported 9 categories and 65 products`. Every successful import
+Expected output: `Imported 9 categories and 65 products; 25 promotions`. Every successful import
 replaces the entire catalog atomically, refreshing changed rows and removing absent
-products/categories. Validation failures leave an existing snapshot untouched and
-do not create a database. Empty snapshots are rejected. Generated databases remain
+products/categories/promotions. Validation failures leave an existing snapshot untouched and
+do not create a database. Empty product/category snapshots are rejected; an empty
+promotions snapshot is allowed. Generated databases remain
 ignored by Git. See [catalog behavior](docs/catalog.md) for validation, ownership,
 schema compatibility, failure behavior, and the repository interface.
+
+US-12 uses catalog schema version 2. If a generated version-1 catalog exists, stop
+the server, remove **only that generated catalog file**, then run this command; the
+importer rejects old/foreign schemas instead of migrating them. Alternatively,
+import to a new path and set `DATABASE_PATH` accordingly. Never edit/delete source
+CSVs/PDFs or reset operational/conversation storage as part of this step.
 
 For a local retrieval example (no server or AWS calls):
 
@@ -165,8 +176,8 @@ module responsibilities, dependency direction, and tradeoffs.
 | --- | --- |
 | `ChatRequest` / `ChatResponse` | Message (maximum 4,000 characters), optional continuation `session_id`; successful answer and required server session ID. Omit the ID to create a session; explicit null/invalid IDs are rejected. |
 | `AgentResponse` | Validated answer from the provider adapter; the application supplies the session ID after saving. |
-| `ProductSearchQuery` | Optional `category` / `product_name`, inclusive `min_price_centavos` / `max_price_centavos`, `available_only=True`, limit 10 (maximum 20). |
-| `ProductSummary` | Product/category IDs and names, integer-centavo price, stock quantity, status, and derived availability. |
+| `ProductSearchQuery` | Category/name filters, inclusive payable-price bounds, `available_only=True`, `payment_method="standard"` or `"pix"`, `promotions_only=False`, limit 10 (maximum 20). |
+| `ProductSummary` | Product/category IDs and names, original integer-centavo price, stock/status, availability, and typed `pricing` with applied percentage, final price and source offer. |
 | `ProductSearchResult` | Immutable product tuple, total matches before limiting, and derived truncation. |
 | `CustomerIdentity` / `ConversationSession` | Trusted customer ID and an owned server-generated UUID4; neither carries credentials. |
 | `ConversationMessage` / `ExecutionContext` | Immutable user/assistant text history in complete pairs, with matching trusted identity/session ownership. |
@@ -188,7 +199,7 @@ statuses, and inconsistent totals are rejected. Availability requires active
 status and positive stock; computed availability/truncation are output-only.
 
 The repository combines supplied filters, normalizes category/name case
-and accents, matches names by literal substring, and sorts by price then product ID.
+and accents, matches names by literal substring, and sorts by calculated payable price then product ID.
 Unknown categories/names return no matches, never an unrestricted search. Named
 lookups may explicitly disable `available_only` to inspect unavailable products.
 These semantics are implemented by SQLiteProductRepository. No-match results are
@@ -215,7 +226,7 @@ Policy-aware answers and operational-data-versus-policy routing remain follow-up
 Five reviewed real conversations and a separate live tool probe are recorded;
 passing scenarios do not guarantee every future generated answer. Those live
 captures predate persistent sessions; new multi-turn Bedrock evaluation remains
-US-13. Policy answers, promotion calculations, frontend delivery,
+US-13. Policy answers, frontend delivery,
 and deployment packaging remain follow-up work.
 
 ## Development workflow and coding assistants

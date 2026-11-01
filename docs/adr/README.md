@@ -21,3 +21,6 @@ choices. Keep numbering stable. Link decisions from the corresponding story.
 - [ADR-0005: Authorized operational snapshots](0005-authorized-operational-snapshots.md)
   records minimal operational import, trusted per-run scope, token validation,
   bounded order tools, snapshot limitations and safe diagnostics.
+- [ADR-0006: Immutable promotion sources and exact pricing](0006-immutable-promotion-pricing.md)
+  records unchanged promotion data, atomic catalog ingestion, exact non-stacking
+  pricing, payable-price filtering and the offline/live evidence boundary.
