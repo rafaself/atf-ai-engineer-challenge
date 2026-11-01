@@ -95,7 +95,6 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
     chat_service_initialization_lock = Lock()
 
     def chat_service_factory() -> ChatServicePort:
-        # lru_cache alone can invoke initialization concurrently on cache misses.
         with chat_service_initialization_lock:
             return build_chat_service()
 
