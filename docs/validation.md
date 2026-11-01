@@ -24,7 +24,11 @@ original bytes. No production dependencies or lockfile changes were introduced.
 
 Conversation schema v2 supports null guest owners. Older v1 files are rejected
 unchanged; use a fresh configured path and retain prior history files. There is no
-migration or automatic reset. ADR-0007 remains Proposed pending delivery review.
+migration or automatic reset. ADR-0007 is Accepted after the delivery review.
+The pre-merge review found no functional blockers or need for additional
+abstractions. The full README checks were rerun: 249 tests, Ruff, strict mypy
+(69 files), source/wheel builds and all 14 source byte checks passed. No live
+model calls were made; this is Codex review, not independent model-quality acceptance.
 Earlier records below describe intermediate implementations and historical auth.
 
 # Earlier naming verification

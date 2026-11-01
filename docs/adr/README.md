@@ -26,5 +26,5 @@ choices. Keep numbering stable. Link decisions from the corresponding story.
   pricing, payable-price filtering and the offline/live evidence boundary.
 
 - [ADR-0007: Simplified demo identity for local evaluation](0007-simplified-demo-identity.md)
-  proposes guest sessions and direct fictional-customer selection, superseding
+  accepts guest sessions and direct fictional-customer selection, superseding
   token authentication and mandatory customer ownership in ADR-0003/0004/0005.

@@ -1,6 +1,6 @@
 # ADR-0007: Simplified demo identity for local evaluation
 
-Status: Proposed — implemented offline; acceptance pending delivery review.
+Status: Accepted — reviewed and verified offline on 2026-11-01.
 
 Related: [#33](https://github.com/rafaself/atf-ai-engineer-challenge/issues/33).
 
@@ -43,7 +43,7 @@ the same customer is claimed. Run on loopback with fictional data, not a public
 service with real customer information. No frontend, distributed guest identity,
 JWT/OAuth, policy retrieval or paid model evaluation is included.
 
-Tokens and the no-guest choice in ADR-0003/0004/0005 are superseded by this proposed
-direction. App-owned context, history integrity, customer-scoped reads and the
+Tokens and the no-guest choice in ADR-0003/0004/0005 are superseded by this
+decision. App-owned context, history integrity, customer-scoped reads and the
 historical rationale/evidence remain valid. Controlled models and real temporary
 SQLite verify the implementation; fresh live model quality remains US-13.
