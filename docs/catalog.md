@@ -92,6 +92,8 @@ No floats, ambient Decimal rounding, historical unit-price reconstruction or ord
 repricing are involved.
 
 Both product tools accept `payment_method="standard"` (default) or `"pix"`.
+Search budget bounds are capped at R$1,000,000,000 each as a commercial limit,
+with at most two decimal places, rather than exposing SQLite's storage ceiling.
 `search_available_products` additionally accepts strict `promotions_only=False`;
 true selects eligible active promotions, excluding PIX-only discounts. Budget
 bounds use payable price for that payment choice. `price_centavos`/`price_brl`

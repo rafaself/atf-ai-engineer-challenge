@@ -79,6 +79,24 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
     assert repository.query is expected
 
 
+@pytest.mark.parametrize("bound", ["minimum", "maximum"])
+def test_search_price_bounds_use_the_commercial_limit(bound: str) -> None:
+    repository = RecordingRepository()
+    tool = ProductSearchTool(repository)
+    limit = Decimal("1000000000.00")
+    tool.search_available_products(min_price_brl=limit, max_price_brl=limit)
+    assert repository.query is not None
+    assert repository.query.min_price_centavos == 100000000000
+    assert repository.query.max_price_centavos == 100000000000
+    expected = repository.query
+    with pytest.raises(ValidationError):
+        if bound == "minimum":
+            tool.search_available_products(min_price_brl=Decimal("1000000000.01"))
+        else:
+            tool.search_available_products(max_price_brl=Decimal("1000000000.01"))
+    assert repository.query is expected
+
+
 def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     tmp_path: Path,
 ) -> None:

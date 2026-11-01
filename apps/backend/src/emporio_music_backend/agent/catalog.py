@@ -20,8 +20,8 @@ BRLAmount = Annotated[
     Decimal,
     Field(
         ge=0,
-        le=Decimal("92233720368547758.07"),
-        max_digits=19,
+        le=Decimal("1000000000"),
+        max_digits=12,
         decimal_places=2,
         allow_inf_nan=False,
     ),
@@ -60,8 +60,8 @@ class ProductSearchTool:
         Args:
             category: Instrument category, e.g. Violões, not an individual model name.
             product_name: Partial product/model name, e.g. Takamine GD20.
-            min_price_brl: Inclusive payable-price minimum in reais, NOT centavos.
-            max_price_brl: Inclusive payable-price maximum in reais, NOT centavos.
+            min_price_brl: Inclusive payable-price minimum in reais, up to 1 billion, NOT centavos.
+            max_price_brl: Inclusive payable-price maximum in reais, up to 1 billion, NOT centavos.
             limit: Maximum returned products, 1–20. Total count includes omitted matches.
             payment_method: standard unless the customer explicitly requests pix pricing.
             promotions_only: Return only eligible active promotional products, not PIX-only discounts.
