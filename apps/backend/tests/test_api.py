@@ -58,10 +58,9 @@ def test_http_contract_docs_and_dependency_override(
             {"message": "Olá", "context": {"identity": {"customer_id": 2}}},
             {},
         ):
-            assert (
-                client.post("/api/chat", json={**demo_customer, **payload}).status_code
-                == 422
-            )
+            response = client.post("/api/chat", json={**demo_customer, **payload})
+            assert response.status_code == 422
+            assert response.json() == {"detail": "Invalid chat request"}
         assert client.get("/docs").status_code == 200
         schema = client.get("/openapi.json").json()
         assert "/api/chat" in schema["paths"]
@@ -92,22 +91,30 @@ def test_default_docs_and_validation_do_not_initialize_aws(
 
 
 @pytest.mark.parametrize(
-    ("error", "status"),
+    ("error", "status", "detail"),
     [
-        (CustomerSelectionError("private customer"), 422),
-        (SessionAccessError("private session"), 404),
-        (SessionConflictError("private state"), 409),
-        (ConversationPersistenceError("private database"), 500),
-        (ConfigurationError("private configuration"), 503),
-        (ProviderUnavailableError("private provider body"), 503),
-        (AgentTimeoutError("private timeout"), 504),
-        (ProductRetrievalError("private SQL"), 500),
-        (AgentExecutionError("private SDK"), 500),
-        (RuntimeError("private unexpected fault"), 500),
+        (CustomerSelectionError("private customer"), 422, "Unknown demo customer"),
+        (
+            SessionAccessError("private session"),
+            404,
+            "Conversation session unavailable",
+        ),
+        (SessionConflictError("private state"), 409, "Conversation turn conflicts"),
+        (ConversationPersistenceError("private database"), 500, "Conversation failed"),
+        (ConfigurationError("private configuration"), 503, "Agent service unavailable"),
+        (
+            ProviderUnavailableError("private provider body"),
+            503,
+            "Agent service unavailable",
+        ),
+        (AgentTimeoutError("private timeout"), 504, "Conversation timed out"),
+        (ProductRetrievalError("private SQL"), 500, "Conversation failed"),
+        (AgentExecutionError("private SDK"), 500, "Conversation failed"),
+        (RuntimeError("private unexpected fault"), 500, "Internal server error"),
     ],
 )
 def test_http_error_mapping_is_sanitized(
-    error: Exception, status: int, demo_customer: dict[str, int]
+    error: Exception, status: int, detail: str, demo_customer: dict[str, int]
 ) -> None:
     class Service:
         async def chat(
@@ -120,4 +127,5 @@ def test_http_error_mapping_is_sanitized(
     ) as client:
         response = client.post("/api/chat", json={**demo_customer, "message": "Olá"})
     assert response.status_code == status
+    assert response.json() == {"detail": detail}
     assert "private" not in response.text and "Traceback" not in response.text

@@ -16,6 +16,11 @@ from starlette.concurrency import run_in_threadpool
 from emporio_music_backend import paths
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.api.errors import (
+    application_failure_handler,
+    invalid_request_handler,
+    unexpected_failure_handler,
+)
 from emporio_music_backend.api.schemas import DemoChatRequest
 from emporio_music_backend.application.chat import ChatService
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
@@ -24,13 +29,9 @@ from emporio_music_backend.contracts.conversations import (
     HistoryLimits,
 )
 from emporio_music_backend.contracts.errors import (
-    AgentTimeoutError,
     ApplicationError,
     ConfigurationError,
     CustomerSelectionError,
-    ProviderUnavailableError,
-    SessionAccessError,
-    SessionConflictError,
 )
 from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.diagnostics import failure, request_id, trace
@@ -102,42 +103,19 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
 
     @app.exception_handler(RequestValidationError)
     async def invalid_request(
-        request: Request, exc: RequestValidationError
+        _request: Request, _exc: RequestValidationError
     ) -> JSONResponse:
-        return JSONResponse(status_code=422, content={"detail": "Invalid chat request"})
+        return invalid_request_handler()
 
     @app.exception_handler(ApplicationError)
     async def application_failure(
-        request: Request, exc: ApplicationError
+        _request: Request, exc: ApplicationError
     ) -> JSONResponse:
-        if isinstance(exc, CustomerSelectionError):
-            return JSONResponse(
-                status_code=422,
-                content={"detail": "Unknown demo customer"},
-            )
-        if isinstance(exc, SessionAccessError):
-            return JSONResponse(
-                status_code=404, content={"detail": "Conversation session unavailable"}
-            )
-        if isinstance(exc, SessionConflictError):
-            return JSONResponse(
-                status_code=409, content={"detail": "Conversation turn conflicts"}
-            )
-        if isinstance(exc, AgentTimeoutError):
-            return JSONResponse(
-                status_code=504, content={"detail": "Conversation timed out"}
-            )
-        if isinstance(exc, (ConfigurationError, ProviderUnavailableError)):
-            return JSONResponse(
-                status_code=503, content={"detail": "Agent service unavailable"}
-            )
-        return JSONResponse(status_code=500, content={"detail": "Conversation failed"})
+        return application_failure_handler(exc)
 
     @app.exception_handler(Exception)
-    async def unexpected_failure(request: Request, exc: Exception) -> JSONResponse:
-        return JSONResponse(
-            status_code=500, content={"detail": "Internal server error"}
-        )
+    async def unexpected_failure(_request: Request, _exc: Exception) -> JSONResponse:
+        return unexpected_failure_handler()
 
     @app.post(
         "/api/chat",
@@ -152,7 +130,6 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         },
     )
     async def chat(
-        request: Request,
         chat_request: Annotated[
             DemoChatRequest,
             Body(
