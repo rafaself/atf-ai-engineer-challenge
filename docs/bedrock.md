@@ -22,8 +22,11 @@ export BEDROCK_MODEL_ID=qwen.qwen3-32b-v1:0
 
 Do not send or commit keys. The environment example is documentation, not a dotenv
 loader. Omit AWS_PROFILE to use the standard default credential chain intentionally.
-AgentSettings.from_environment reads only configuration, not credentials. Invalid
-configuration produces ConfigurationError. Provider construction is explicit.
+`AgentSettings` uses Pydantic Settings to read and validate configuration from the
+environment. `AWS_DEFAULT_REGION` takes precedence over `AWS_REGION`; explicit
+constructor values override environment values. `load_agent_settings()` translates
+invalid configuration into a sanitized `ConfigurationError`. Credentials remain
+in boto3's default credential chain, and provider construction is explicit.
 
 The opt-in probe incurs real model requests:
 
@@ -32,7 +35,7 @@ uv run --env-file .env --project apps/backend --locked python -m emporio_music_b
 ```
 
 It must observe a fresh verification tool call/result and that code in the final
-answer before printing JSON evidence with model, region, SDK versions, arguments,
+answer before printing JSON evidence with model, `aws_region`, SDK versions, arguments,
 result, answer, and request count. A text-only response is not accepted as proof.
 Save verified output only after it succeeds. Re-run it with another low-cost feasible
 model if the configured model is unavailable, documenting the reason. Never replace live

@@ -8,6 +8,7 @@ dependencies = [
     "fastapi>=0.162.0",
     "pydantic>=2,<3",
     "pydantic-ai-slim[bedrock]>=2.64.0",
+    "pydantic-settings>=2.14,<3",
     "uvicorn>=0.54.0",
 ]
 

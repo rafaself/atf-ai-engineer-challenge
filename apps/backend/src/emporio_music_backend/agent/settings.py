@@ -1,54 +1,60 @@
-"""Explicit environment configuration without loading dotenv files or credentials."""
+"""Validated agent configuration; dotenv loading and credentials stay external."""
 
-import os
-from collections.abc import Mapping
-
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import AliasChoices, Field, ValidationError, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from emporio_music_backend.contracts.base import NonblankText
 from emporio_music_backend.contracts.errors import ConfigurationError
 
 
-class AgentSettings(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-    model_id: NonblankText = "qwen.qwen3-32b-v1:0"
-    region: NonblankText = "us-east-1"
-    aws_profile: NonblankText | None = None
-    request_timeout_seconds: float = Field(
-        default=15, gt=0, le=120, allow_inf_nan=False
+class AgentSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        frozen=True, extra="forbid", populate_by_name=True, case_sensitive=True
     )
-    max_requests: int = Field(default=5, ge=1, le=20, strict=True)
-    max_tool_calls: int = Field(default=5, ge=1, le=20, strict=True)
-    max_output_tokens: int = Field(default=1024, ge=64, le=4096, strict=True)
 
+    model_id: NonblankText = Field(
+        default="qwen.qwen3-32b-v1:0", validation_alias="BEDROCK_MODEL_ID"
+    )
+    aws_region: NonblankText = Field(
+        default="us-east-1",
+        validation_alias=AliasChoices("AWS_DEFAULT_REGION", "AWS_REGION"),
+    )
+    aws_profile: NonblankText | None = Field(
+        default=None, validation_alias="AWS_PROFILE"
+    )
+    request_timeout_seconds: float = Field(
+        default=15,
+        gt=0,
+        le=120,
+        allow_inf_nan=False,
+        validation_alias="AGENT_REQUEST_TIMEOUT_SECONDS",
+    )
+    max_requests: int = Field(
+        default=5, ge=1, le=20, strict=True, validation_alias="AGENT_MAX_REQUESTS"
+    )
+    max_tool_calls: int = Field(
+        default=5, ge=1, le=20, strict=True, validation_alias="AGENT_MAX_TOOL_CALLS"
+    )
+    max_output_tokens: int = Field(
+        default=1024,
+        ge=64,
+        le=4096,
+        strict=True,
+        validation_alias="AGENT_MAX_OUTPUT_TOKENS",
+    )
+
+    @field_validator(
+        "max_requests", "max_tool_calls", "max_output_tokens", mode="before"
+    )
     @classmethod
-    def from_environment(
-        cls, environment: Mapping[str, str] | None = None
-    ) -> "AgentSettings":
-        env = os.environ if environment is None else environment
-        try:
-            values: dict[str, object] = {}
-            for variable, field in (
-                ("BEDROCK_MODEL_ID", "model_id"),
-                ("AWS_PROFILE", "aws_profile"),
-                ("AWS_DEFAULT_REGION", "region"),
-            ):
-                if variable in env:
-                    values[field] = env[variable]
-            if "AWS_DEFAULT_REGION" not in env and "AWS_REGION" in env:
-                values["region"] = env["AWS_REGION"]
-            for variable, field in (
-                ("AGENT_MAX_REQUESTS", "max_requests"),
-                ("AGENT_MAX_TOOL_CALLS", "max_tool_calls"),
-                ("AGENT_MAX_OUTPUT_TOKENS", "max_output_tokens"),
-            ):
-                if variable in env:
-                    values[field] = int(env[variable])
-            if "AGENT_REQUEST_TIMEOUT_SECONDS" in env:
-                values["request_timeout_seconds"] = float(
-                    env["AGENT_REQUEST_TIMEOUT_SECONDS"]
-                )
-            return cls.model_validate(values)
-        except (ValueError, ValidationError) as exc:
-            raise ConfigurationError("Invalid agent environment configuration") from exc
+    def parse_integer_setting(cls, value: object) -> object:
+        """Accept integer environment strings without coercing floats or booleans."""
+        return int(value) if isinstance(value, str) else value
+
+
+def load_agent_settings() -> AgentSettings:
+    """Load environment configuration with an application-safe failure message."""
+    try:
+        return AgentSettings()
+    except ValidationError as exc:
+        raise ConfigurationError("Invalid agent environment configuration") from exc

@@ -1,8 +1,10 @@
 import asyncio
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 from pydantic_ai import Tool
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import (
@@ -15,7 +17,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from emporio_music_backend.agent.factory import create_agent
-from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.agent.settings import AgentSettings, load_agent_settings
 from emporio_music_backend.contracts.chat import ChatRequest
 from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
@@ -106,17 +108,82 @@ def test_independent_budgets_stop_model_loop(
     assert tools == expected_tools
 
 
-def test_configuration_and_placeholder_profile_do_not_require_credentials() -> None:
-    settings = AgentSettings.from_environment(
-        {"AWS_PROFILE": "configure-project-profile", "AWS_REGION": "us-east-1"}
-    )
+def test_environment_settings_load_and_explicit_values_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name, value in {
+        "BEDROCK_MODEL_ID": "configured-model",
+        "AWS_PROFILE": "configure-project-profile",
+        "AWS_DEFAULT_REGION": "sa-east-1",
+        "AWS_REGION": "us-east-1",
+        "AGENT_MAX_REQUESTS": "3",
+        "AGENT_MAX_TOOL_CALLS": "4",
+        "AGENT_MAX_OUTPUT_TOKENS": "512",
+        "AGENT_REQUEST_TIMEOUT_SECONDS": "12.5",
+    }.items():
+        monkeypatch.setenv(name, value)
+
+    settings = AgentSettings()
+    assert settings.model_id == "configured-model"
     assert settings.aws_profile == "configure-project-profile"
+    assert settings.aws_region == "sa-east-1"
+    assert settings.max_requests == 3
+    assert settings.max_tool_calls == 4
+    assert settings.max_output_tokens == 512
+    assert settings.request_timeout_seconds == 12.5
+    assert AgentSettings(max_requests=2, aws_region="eu-west-1").max_requests == 2
+    assert AgentSettings(aws_region="eu-west-1").aws_region == "eu-west-1"
+
+
+def test_configuration_and_placeholder_profile_do_not_require_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AWS_PROFILE", "configure-project-profile")
+    monkeypatch.setenv("AWS_REGION", "sa-east-1")
+    settings = load_agent_settings()
+    assert settings.aws_profile == "configure-project-profile"
+    assert settings.aws_region == "sa-east-1"
     with pytest.raises(ConfigurationError):
         create_agent(settings)
-    with pytest.raises(ConfigurationError):
-        AgentSettings.from_environment({"AGENT_MAX_REQUESTS": "0"})
-    with pytest.raises(ConfigurationError):
-        AgentSettings.from_environment({"BEDROCK_MODEL_ID": " "})
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        ("AGENT_MAX_REQUESTS", "0"),
+        ("AGENT_MAX_REQUESTS", "21"),
+        ("AGENT_MAX_TOOL_CALLS", "3.0"),
+        ("AGENT_MAX_TOOL_CALLS", "true"),
+        ("AGENT_MAX_OUTPUT_TOKENS", "4097"),
+        ("AGENT_REQUEST_TIMEOUT_SECONDS", "nan"),
+        ("AGENT_REQUEST_TIMEOUT_SECONDS", "121"),
+        ("BEDROCK_MODEL_ID", " "),
+        ("AWS_DEFAULT_REGION", " "),
+    ],
+)
+def test_invalid_environment_settings_fail_with_sanitized_error(
+    monkeypatch: pytest.MonkeyPatch, variable: str, value: str
+) -> None:
+    monkeypatch.setenv(variable, value)
+    with pytest.raises(
+        ConfigurationError, match="^Invalid agent environment configuration$"
+    ) as error:
+        load_agent_settings()
+    assert isinstance(error.value.__cause__, ValidationError)
+
+
+@pytest.mark.parametrize("value", [True, 3.0])
+def test_explicit_request_budget_rejects_boolean_and_float(value: object) -> None:
+    with pytest.raises(ValidationError):
+        AgentSettings.model_validate({"max_requests": value})
+
+
+def test_settings_leave_dotenv_loading_to_launcher(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / ".env").write_text("AGENT_MAX_REQUESTS=0\n")
+    monkeypatch.chdir(tmp_path)
+    assert load_agent_settings().max_requests == 5
 
 
 def test_live_probe_requires_explicit_opt_in() -> None:

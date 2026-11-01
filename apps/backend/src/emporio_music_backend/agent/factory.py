@@ -62,7 +62,9 @@ class PydanticAgentExecutor:
             for message in validated_context.history
         ]
         trace(
-            "agent.started", model=self.settings.model_id, region=self.settings.region
+            "agent.started",
+            model=self.settings.model_id,
+            aws_region=self.settings.aws_region,
         )
         try:
             result = await self.agent.run(
@@ -111,12 +113,12 @@ def create_agent(
         trace(
             "provider.initializing",
             model=settings.model_id,
-            region=settings.region,
+            aws_region=settings.aws_region,
             explicit_profile=settings.aws_profile is not None,
         )
         try:
             session = boto3.Session(
-                profile_name=settings.aws_profile, region_name=settings.region
+                profile_name=settings.aws_profile, region_name=settings.aws_region
             )
             client = session.client(
                 "bedrock-runtime",
@@ -137,7 +139,7 @@ def create_agent(
     trace(
         "provider.ready",
         configured_model=settings.model_id,
-        region=settings.region,
+        aws_region=settings.aws_region,
         injected_model=injected_model,
     )
     agent = Agent[ExecutionContext, str](

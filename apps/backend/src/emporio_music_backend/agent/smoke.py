@@ -11,12 +11,12 @@ from pydantic_ai.messages import ToolCallPart, ToolReturnPart
 from pydantic_ai.usage import UsageLimits
 
 from emporio_music_backend.agent.factory import create_agent
-from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.agent.settings import load_agent_settings
 from emporio_music_backend.contracts.conversations import ExecutionContext
 
 
 async def probe() -> dict[str, object]:
-    settings = AgentSettings.from_environment()
+    settings = load_agent_settings()
     code = "verificado-" + secrets.token_hex(4)
 
     def verify_store_integration() -> str:
@@ -42,7 +42,7 @@ async def probe() -> dict[str, object]:
         raise RuntimeError("Live model did not complete the required tool round trip")
     return {
         "model": settings.model_id,
-        "region": settings.region,
+        "aws_region": settings.aws_region,
         "pydantic_ai_version": version("pydantic-ai-slim"),
         "boto3_version": version("boto3"),
         "tool": "verify_store_integration",

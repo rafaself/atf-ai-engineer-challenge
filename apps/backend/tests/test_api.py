@@ -76,10 +76,20 @@ def test_http_contract_docs_and_dependency_override(
         assert "securitySchemes" not in schema["components"]
 
 
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        ("AWS_PROFILE", "unconfigured-project-profile"),
+        ("AGENT_MAX_REQUESTS", "private-invalid-budget"),
+    ],
+)
 def test_default_docs_and_validation_do_not_initialize_aws(
-    monkeypatch: pytest.MonkeyPatch, demo_customer: dict[str, int]
+    monkeypatch: pytest.MonkeyPatch,
+    demo_customer: dict[str, int],
+    variable: str,
+    value: str,
 ) -> None:
-    monkeypatch.setenv("AWS_PROFILE", "unconfigured-project-profile")
+    monkeypatch.setenv(variable, value)
     with TestClient(create_app(), raise_server_exceptions=False) as client:
         assert client.get("/docs").status_code == 200
         assert (
@@ -89,7 +99,7 @@ def test_default_docs_and_validation_do_not_initialize_aws(
         response = client.post("/api/chat", json={**demo_customer, "message": "Olá"})
         assert response.status_code == 503
         assert response.json() == {"detail": "Agent service unavailable"}
-        assert "unconfigured" not in response.text
+        assert value not in response.text
 
 
 @pytest.mark.parametrize(

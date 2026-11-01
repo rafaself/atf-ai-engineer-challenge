@@ -21,6 +21,22 @@ def forbid_live_model_requests(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(models, "ALLOW_MODEL_REQUESTS", False)
 
 
+@pytest.fixture(autouse=True)
+def isolate_agent_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Keep local model selections and budgets from affecting controlled tests."""
+    for name in (
+        "BEDROCK_MODEL_ID",
+        "AWS_PROFILE",
+        "AWS_DEFAULT_REGION",
+        "AWS_REGION",
+        "AGENT_MAX_REQUESTS",
+        "AGENT_MAX_TOOL_CALLS",
+        "AGENT_MAX_OUTPUT_TOKENS",
+        "AGENT_REQUEST_TIMEOUT_SECONDS",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def conversations(tmp_path: "Path") -> "SQLiteConversationRepository":
     return SQLiteConversationRepository(tmp_path / "conversations.sqlite3")

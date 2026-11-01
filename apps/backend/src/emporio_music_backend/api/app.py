@@ -15,7 +15,7 @@ from starlette.concurrency import run_in_threadpool
 
 from emporio_music_backend import paths
 from emporio_music_backend.agent.orders import create_store_agent
-from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.agent.settings import load_agent_settings
 from emporio_music_backend.api.errors import (
     application_failure_handler,
     invalid_request_handler,
@@ -73,7 +73,7 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         if chat_service is not None:
             return chat_service
         trace("composition.started")
-        agent_settings = AgentSettings.from_environment()
+        agent_settings = load_agent_settings()
         try:
             chat_timeout_seconds = float(os.environ.get("CHAT_TIMEOUT_SECONDS", "60"))
             history_limits = HistoryLimits(
