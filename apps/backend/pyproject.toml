@@ -33,9 +33,20 @@ testpaths = ["tests"]
 addopts = ["--import-mode=importlib", "--strict-config", "--strict-markers"]
 
 [dependency-groups]
+benchmark = [ "sentence-transformers>=5,<6", "torch>=2,<3"]
 dev = [
+    "chromadb>=1,<2",
     "httpx>=0.28.1",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "ruff>=0.17.3",
 ]
+
+# The small local embedding benchmark uses CPU; avoid CUDA runtime downloads.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

@@ -28,12 +28,12 @@ fast-forward the integration branch to include the delivered US-14 changes.
 ## Approved scope and current state
 
 Use embedded ChromaDB without a server for policy retrieval; retain SQLite for
-operational snapshots and history. Benchmark E5 Base, Titan V2 and Cohere
-Multilingual v3 against identical chunks and Portuguese questions. This evaluates
+operational snapshots and history. Benchmark E5 Base and Titan V2 against identical chunks and Portuguese questions. This evaluates
 Portuguese retrieval with multilingual models, not cross-language quality.
 US-14 implements offline policy extraction, a reviewed versionable corpus and a
-frozen 25-question evaluation set. US-15–US-17 remain pending: no embedding
-dependency, Chroma index, retrieval tool or benchmark results are delivered yet.
+frozen 25-question evaluation set. US-15 adds the local E5/Titan benchmark,
+controlled Chroma index and measurement reports; its measurements and methodology have been reviewed.
+US-16–US-17 remain pending; no policy tool is integrated into the chat agent.
 
 Before tuning, US-14 freezes evidence groups/alternative chunks, a held-out
 subset, metric definitions, numerical selection targets and critical cases.

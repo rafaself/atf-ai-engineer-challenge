@@ -28,3 +28,8 @@ dist/
 .~lock.*#
 ~$*
 .DS_Store
+
+# Explicit local policy embedding indexes (never commit generated vectors).
+data/policy-indexes/
+# Local model/tokenizer and package caches; keep them on disk rather than tmpfs.
+data/benchmark-cache/
