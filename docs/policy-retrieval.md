@@ -1,7 +1,9 @@
 # Policy corpus, runtime retrieval and evaluation protocol
 
-Status: US-14 corpus and US-15 benchmark are complete. US-16 adds the existing-agent
-policy tool on this branch; US-17 still owns reviewed answer-quality evidence.
+Status: US-14 corpus, US-15 retrieval benchmark, US-16 policy tool, and US-17
+paired answer review are complete. US-15 met none of the frozen configurations'
+full target set; US-17 also found answer and tool-selection failures in both
+retrieval and full-policy-context runs. See the [US-17 results](examples/us-17/results.md).
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
 ## Reproduce offline
@@ -65,8 +67,11 @@ avoid claims based on the manual's silence. An empty successful result is marked
 `insufficient_evidence`; model/index errors remain operational failures. US-15 found no
 configuration meeting every frozen target, so E5 with metadata filtering and this bounded
 expansion remain provisional. The prior full-policy-context comparison did not establish
-reliable answers either. US-17 must review real conversations; these controls and offline
-tests do not establish generated-answer quality.
+reliable answers either. US-17 reviewed four real conversations in both modes. The RAG arm
+returned one HTTP 500, and both modes missed a required policy-tool call in the mixed-order
+case. Full details, including failures, are in the [paired results](examples/us-17/results.md).
+These controls, offline tests and eight observed route calls do not establish future
+generated-answer quality.
 
 ## Preparation decisions
 
@@ -158,7 +163,10 @@ the original PDF stays unchanged. Raw layout output is reproducible with
 noise and makes table relationships explicit for retrieval and lower-cost generators.
 No quality improvement is claimed from that choice. The owner separately approved the
 US-15 fictional-data Titan V2 benchmark in `us-east-1` with a total paid-run cap of US$1.
-US-16 runtime embeddings use local E5; this story makes no paid provider calls. Any new
+US-16 runtime embeddings use local E5. For US-17, the owner separately approved four
+paired Qwen3 32B conversations in `us-east-1`, capped at US$0.50. The recorded cost
+estimate, including a worst-case reserve for the failed call, is US$0.0573106 under the
+stated token-rate assumption; this is not an invoice. No Cohere calls were made. Any new
 external processing or paid runs require their own explicit authorization and bounded
 scope. Existing section IDs and gold labels remain unchanged; the cover contact has its
 own ID.

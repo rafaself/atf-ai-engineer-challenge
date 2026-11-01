@@ -2,7 +2,11 @@
 
 Start with the [Sprint 2 closing conversations](sprint-2/closure/README.md): budget/context,
 promotions/PIX and customer orders on the final application code, including failed attempts.
-Policy retrieval/evaluation remains later-sprint work.
+The [US-17 paired policy review](us-17/results.md) adds four real Portuguese
+scenarios through `/api/chat`, comparing provisional RAG with full-policy context.
+It preserves actual tool results and model responses, including an HTTP 500 and
+incorrect answers. These examples are limited qualitative evidence; they do not
+establish general answer quality or that retrieval meets the frozen targets.
 
 The [original Sprint 2 evidence](sprint-2/README.md) and
 [simplification review](simplification-review.md) preserve earlier versions and
