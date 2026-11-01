@@ -1,4 +1,4 @@
-"""Opt-in fixed-corpus benchmark: python -m emporio_music_backend.benchmark.run."""
+"""Opt-in fixed-corpus benchmark: python -m scripts.policy_benchmark.run."""
 
 import argparse
 import hashlib
@@ -10,11 +10,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from emporio_music_backend.benchmark.embeddings import MODELS, RATES, Embedder
-from emporio_music_backend.benchmark.evaluation import query_families, score, summarize
-from emporio_music_backend.benchmark.index import PolicyIndex
 from emporio_music_backend.paths import DATA_DIRECTORY
 from emporio_music_backend.policy_corpus import PolicyCorpus
+from scripts.policy_benchmark.embeddings import MODELS, RATES, Embedder
+from scripts.policy_benchmark.evaluation import query_families, score, summarize
+from scripts.policy_benchmark.index import PolicyIndex
 
 
 def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:

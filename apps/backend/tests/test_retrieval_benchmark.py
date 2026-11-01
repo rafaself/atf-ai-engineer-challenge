@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from emporio_music_backend.benchmark.evaluation import query_families, score, summarize
+from scripts.policy_benchmark.evaluation import query_families, score, summarize
 
 
 def test_group_recall_and_first_relevant_rank_ignore_duplicate_ids() -> None:
@@ -31,8 +31,8 @@ def test_real_persistent_index_rejects_mismatch_and_preserves_scoping(
 ) -> None:
     import pytest
 
-    from emporio_music_backend.benchmark.index import PolicyIndex
     from emporio_music_backend.policy_corpus import PolicyChunk
+    from scripts.policy_benchmark.index import PolicyIndex
 
     chunks = [
         PolicyChunk(
@@ -86,7 +86,7 @@ def test_critical_miss_blocks_selection_even_with_high_mean_scores() -> None:
 def test_paid_adapter_requires_opt_in_before_aws_initialization() -> None:
     import pytest
 
-    from emporio_music_backend.benchmark.embeddings import Embedder
+    from scripts.policy_benchmark.embeddings import Embedder
 
     with pytest.raises(ValueError, match="allow-paid"):
         Embedder(
@@ -101,7 +101,7 @@ def test_paid_adapter_requires_opt_in_before_aws_initialization() -> None:
 def test_budget_and_input_limits_reject_before_provider_call() -> None:
     import pytest
 
-    from emporio_music_backend.benchmark.embeddings import Embedder
+    from scripts.policy_benchmark.embeddings import Embedder
 
     adapter = object.__new__(Embedder)
     adapter.name = "titan"

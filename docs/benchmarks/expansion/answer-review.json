@@ -1,0 +1,78 @@
+{
+  "review_method": "Codex inspected each answer against frozen rubrics and source text; no separate judge API calls. Provisional, not independent human review.",
+  "scale": "pass = substantially satisfies source/rubric; partial = qualified/incomplete; fail = unsupported or contradictory conclusion. Minor citation omissions noted separately.",
+  "rows": [
+    {
+      "id": "n01",
+      "expanded": "fail",
+      "full": "fail",
+      "reason": "Expanded says legal warranty begins after 30 days, contrary to receipt-based start. Full assumes eligibility from purchase date and promises store exchange/repair without the receipt/certificate facts or the 4.2 manufacturer route."
+    },
+    {
+      "id": "n02",
+      "expanded": "fail",
+      "full": "fail",
+      "reason": "Both resolve the tension between online withdrawal and final-sale exchange exclusions as a categorical denial, rather than explaining the conflicting manual language."
+    },
+    {
+      "id": "n03",
+      "expanded": "pass",
+      "full": "pass",
+      "reason": "Both cite preference-exchange conditions and the explicitly supplied customized-setup exclusion."
+    },
+    {
+      "id": "n04",
+      "expanded": "pass",
+      "full": "pass",
+      "reason": "Both give the eight-installment minimum and mixed-payment threshold correctly. For eight installments the general and tier minima agree; no conflict penalty is warranted despite the rubric reminder about general/tier rules."
+    },
+    {
+      "id": "n05",
+      "expanded": "pass",
+      "full": "pass",
+      "reason": "Both correctly reject stacking discounts. Expanded cites section 6.2 but omits its page: minor citation defect, not a factual failure."
+    },
+    {
+      "id": "n06",
+      "expanded": "partial",
+      "full": "fail",
+      "reason": "Expanded safely acknowledges missing contact evidence but cannot answer. Full reproduces both numbers but silently separates telephone/WhatsApp uses despite 1.2 itself listing telephone/WhatsApp: source conflict remains unresolved."
+    },
+    {
+      "id": "n07",
+      "expanded": "pass",
+      "full": "pass",
+      "reason": "Both preserve possible special freight quotation for large instruments without guaranteeing a live price or standard shipment."
+    },
+    {
+      "id": "n08",
+      "expanded": "pass",
+      "full": "pass",
+      "reason": "Both state holiday closure and the shared service schedule. Neither mentions automatic out-of-hours WhatsApp replies; this is a completeness caveat, not a fabricated opening schedule."
+    },
+    {
+      "id": "n09",
+      "expanded": "partial",
+      "full": "partial",
+      "reason": "Both state packaging/no-use conditions and do not claim an executed refund. They give a definitive eligibility denial from reported use rather than establishing signs of use and remaining eligibility conditions; neither is a complete conditional response under the frozen rubric."
+    },
+    {
+      "id": "n10",
+      "expanded": "pass",
+      "full": "pass",
+      "reason": "Both ground the fall-damage exclusion in section 8.3."
+    },
+    {
+      "id": "n11",
+      "expanded": "fail",
+      "full": "fail",
+      "reason": "Both infer that equality is ineligible for free freight instead of acknowledging the unspecified equality case; expanded additionally asserts the R$35 fee. Numeric membership checks pass despite incorrect applicability."
+    },
+    {
+      "id": "n12",
+      "expanded": "pass",
+      "full": "fail",
+      "reason": "Expanded states the loan policy is absent. Full turns absence of evidence into a categorical claim that loans are not offered."
+    }
+  ]
+}

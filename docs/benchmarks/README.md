@@ -25,7 +25,7 @@ call providers. Model/download caches and generated indexes are Git-ignored.
 For each configuration (`e5`, `titan`), first run development only:
 
 ```bash
-uv run --env-file .env --project apps/backend --group benchmark --locked python -m emporio_music_backend.benchmark.run --model e5 --index --allow-download
+uv run --directory apps/backend --env-file ../../.env --group benchmark --locked python -m scripts.policy_benchmark.run --model e5 --index --allow-download
 ```
 
 Replace `e5` with a Bedrock configuration and add `--allow-paid --budget-usd 0.10`
@@ -50,7 +50,7 @@ After freezing the configuration and query rules, run the untouched validation
 split exactly once per model, without indexing again:
 
 ```bash
-uv run --env-file .env --project apps/backend --group benchmark --locked python -m emporio_music_backend.benchmark.run --model e5 --split validation --final-validation
+uv run --directory apps/backend --env-file ../../.env --group benchmark --locked python -m scripts.policy_benchmark.run --model e5 --split validation --final-validation
 ```
 
 Do not tune after viewing validation scores. Report contamination if a later
@@ -70,7 +70,7 @@ the non-truncating API reports exact input token counts after invocation. These
 limitations must remain visible; estimates are not exact provider billing data.
 Oversized inputs fail, requiring explicit corpus/label review rather than truncation.
 
-The query-only filtering rule is frozen in `benchmark/evaluation.py` before runs.
+The query-only filtering rule is frozen in `apps/backend/scripts/policy_benchmark/evaluation.py` before runs.
 It unions broad policy families when multiple recognized terms occur and applies
 no filter for unknown topics. It never reads question topics/gold labels. Each
 query embedding is reused between vector-only and filtered search for fairness;
@@ -117,3 +117,30 @@ but are not required for embedding inference and are not added to runtime access
 All approved experimentation and setup probes consumed a conservative upper
 reservation below US$0.022, within the approved US$1 cap. Reservations are not
 billed costs. No SDK retries were enabled.
+
+## Follow-up experiment
+
+See the [bounded expansion and full-manual comparison](expansion/results.md)
+for fresh questions, frozen methodology, raw contexts/answers and provisional
+source-based answer review. Original US-15 reports and thresholds are unchanged.
+
+
+## Development scripts, outside runtime
+
+Benchmark runners and helpers live in `apps/backend/scripts/policy_benchmark/`.
+They are excluded from the built backend wheel. Run from the repository root
+using the `--directory apps/backend` commands above; the dotenv path is relative
+to that working directory. Tests import the development scripts through pytest's
+explicit backend-root search path. To type-check scripts as well as application
+code, run `uv run --directory apps/backend --locked mypy src tests scripts`.
+
+The follow-up comparison can be reproduced with:
+
+```bash
+uv run --directory apps/backend --group benchmark --locked python -m scripts.policy_benchmark.context_experiment
+uv run --directory apps/backend --env-file ../../.env --group benchmark --locked python -m scripts.policy_benchmark.context_experiment --generate --retrieval-report ../../docs/benchmarks/expansion/<retrieval-report>.json
+```
+
+The second command makes paid calls; use it only with explicit approval and the
+recorded experiment budget. Moving these scripts does not alter the frozen rule,
+questions or recorded model outputs.
