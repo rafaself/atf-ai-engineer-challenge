@@ -124,9 +124,11 @@ records observed catalog/context, promotion/PIX and order behavior, including tw
 failed attempts and focused instruction corrections. Policy lookup/evaluation
 remains in the later retrieval sprint, outside Sprint 2 acceptance.
 
-The [simplification review](examples/simplification-review.md) records later live
-failures and the resulting price check. That check is verified offline; the owner
-declined further paid evaluation after it was added.
+The [simplification review](examples/simplification-review.md) preserves an earlier
+offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)
+records the final Qwen conversations, failed Nova comparisons and a combined
+correction message that preserves the same single-retry limit. Order snapshot
+limits were explicit when asked, but not repeated in every answer.
 
 [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
 approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation

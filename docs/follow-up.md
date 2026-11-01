@@ -1,8 +1,8 @@
 # Remaining scope and final submission
 
 Sprint 2 adds persisted context, promotions and customer-scoped orders to the
-local API. [US-13](examples/sprint-2/README.md) records three reviewed real-agent
-conversations and two preserved failures with corrections. This is not the complete
+local API. [US-13 closing evidence](examples/sprint-2/closure/README.md) records
+three reviewed final-code conversations and preserves failed comparisons. This is not the complete
 challenge solution: store-policy retrieval and evaluation belong to the later sprint.
 
 ## Later retrieval sprint and submission work
