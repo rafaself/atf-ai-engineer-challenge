@@ -1,15 +1,16 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-09**: an installable backend,
+This checkout implements **US-01 through US-10**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
 read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and typed
 product-search tools connected to the catalog repository.
 Live Bedrock tool calling and five remediation scenarios have been validated;
 see [reviewed captures](docs/examples/README.md) for evidence and limitations.
-US-09 adds owned conversation contracts and execution of history explicitly supplied
-by trusted non-HTTP callers. `POST /api/chat` still handles independent messages;
-persistent sessions and demo-token wiring belong to US-10. See
+US-10 adds persistent owned sessions behind `POST /api/chat`, using server-configured
+demo bearer identities and a separate writable SQLite database. Complete turns are
+committed before responses; bounded text history survives application restarts.
+See
 [local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
 
 ## Setup
@@ -79,6 +80,11 @@ The disposable directory can be removed after verification.
 ## Configuration and data
 
 `.env.example` documents configuration; export values explicitly, without a dotenv loader.
+The API requires `DEMO_CUSTOMER_TOKENS_JSON`, a private token-to-customer mapping;
+follow [demo identity setup](docs/api.md#demo-identity-setup). Keep generated tokens
+in the ignored local environment. This is a local demonstration of identity and
+isolation, not production authentication. Conversation data defaults to
+`data/conversations.sqlite3`; catalog re-import never replaces it.
 The provider preference is Bedrock in `us-east-1`, initially
 `amazon.nova-micro-v1:0`, or another validated low-cost feasible model. Model access
 and tool calling were live-validated with Nova Micro in us-east-1 on 2026-10-31. The integration uses
@@ -133,16 +139,19 @@ module responsibilities, dependency direction, and tradeoffs.
 
 | Contract | Behavior |
 | --- | --- |
-| `ChatRequest` / `ChatResponse` | Trimmed nonblank `message` / `answer`; message maximum 4,000 characters. |
+| `ChatRequest` / `ChatResponse` | Message (maximum 4,000 characters), optional continuation `session_id`; successful answer and required server session ID. Omit the ID to create a session; explicit null/invalid IDs are rejected. |
+| `AgentResponse` | Validated answer from the provider adapter; the application supplies the session ID after saving. |
 | `ProductSearchQuery` | Optional `category` / `product_name`, inclusive `min_price_centavos` / `max_price_centavos`, `available_only=True`, limit 10 (maximum 20). |
 | `ProductSummary` | Product/category IDs and names, integer-centavo price, stock quantity, status, and derived availability. |
 | `ProductSearchResult` | Immutable product tuple, total matches before limiting, and derived truncation. |
 | `CustomerIdentity` / `ConversationSession` | Trusted customer ID and an owned server-generated UUID4; neither carries credentials. |
 | `ConversationMessage` / `ExecutionContext` | Immutable user/assistant text history in complete pairs, with matching trusted identity/session ownership. |
-| `CustomerIdentityResolver.resolve` | Transport-neutral credential-to-identity protocol; the demo-token adapter is deferred to US-10. |
-| `AgentExecutor.run` | Async execution with required keyword-only `context: ExecutionContext`, returning ChatResponse. |
+| `CustomerIdentityResolver.resolve` | Resolves server-configured demo bearer tokens to trusted identities; credentials stay outside execution context. |
+| `ConversationRepository` | Owned session creation, bounded history loading, and atomic expected-revision append. |
+| `HistoryLimits` | Last 6 complete turns within 24,000 characters by default; configurable up to 20 turns / 64,000 characters. |
+| `AgentExecutor.run` | Async execution with required keyword-only `context: ExecutionContext`, returning AgentResponse. |
 | `ProductRepository.search` | Synchronous typed catalog search port. |
-| `ChatService.chat` / `ChatServicePort` | Required keyword-only execution context; one 60-second default end-to-end deadline, with no retained conversation state. |
+| `ChatService.chat` / `ChatServicePort` | Requires resolved identity in context; loads owned history, executes, and saves a completed turn under the default 60-second deadline. |
 
 Contracts and errors live in `emporio_music_backend.contracts`; ports and the
 application entry-point interface live in `ports` and `application`. No provider
@@ -160,23 +169,25 @@ normal data. Operational failures have transport-neutral configuration,
 provider-unavailable, timeout, retrieval, and execution error categories; contract
 validation retains Pydantic ValidationError.
 
-An empty execution context permits stateless catalog support, granting no customer
-access. Supplied history requires an owned session and matching identity; unknown
-sessions must never be silently recreated by the future persistence adapter.
-Only user/assistant text is translated into provider messages. The caller owns
-session provenance and history selection; constructing an identity is not authentication.
-See the [direct-call example](docs/api.md#direct-application-calls-us-09) and
-[ADR-0003](docs/adr/0003-owned-conversation-execution-context.md) for implemented
-contracts and the explicit US-10 handoff. No new production dependency is added.
+ChatService accepts only resolved identity in its execution context and loads all
+session/history data from its repository. A UUID alone never grants access;
+unknown and foreign sessions return the same safe error. The lower-level agent
+adapter still accepts explicit owned text history, but does not persist it. Only
+text reaches the provider; current-run tool evidence drives output notices.
+See [direct application calls](docs/api.md#direct-application-calls) and
+[ADR-0004](docs/adr/0004-persistent-conversation-turns.md) for the implemented
+storage, concurrency, timeout, and response-loss boundaries. No new production
+dependency is added.
 
 See [architecture and prompting rationale](docs/architecture.md),
 [validation evidence](docs/validation.md), [reviewed real examples](docs/examples/README.md),
 and [follow-up/submission requirements](docs/follow-up.md).
 Policy-aware answers and operational-data-versus-policy routing remain follow-up work.
 Five reviewed real conversations and a separate live tool probe are recorded;
-passing scenarios do not guarantee every future generated answer. Policy answers, order access, persistent conversation
-history, promotion calculations, frontend delivery, and deployment packaging are
-outside the current foundation story.
+passing scenarios do not guarantee every future generated answer. Those live
+captures predate persistent sessions; new multi-turn Bedrock evaluation remains
+US-13. Policy answers, order access, promotion calculations, frontend delivery,
+and deployment packaging remain follow-up work.
 
 ## Development workflow and coding assistants
 

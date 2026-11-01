@@ -78,3 +78,8 @@ historical tool calls/returns. Current-run tool returns still drive output notic
 Empty context retains stateless execution; HTTP supplies it until US-10. See
 [ADR-0003](0003-owned-conversation-execution-context.md) for ownership, trust,
 scope, and offline evidence. No new multi-turn Bedrock validation is claimed here.
+
+US-10 update: the service now resolves persisted history for authenticated demo
+sessions; the executor returns AgentResponse before persistence. Output notices
+filter SDK messages by the current run ID, including corrective retries. HTTP no
+longer supplies empty context; see [ADR-0004](0004-persistent-conversation-turns.md).

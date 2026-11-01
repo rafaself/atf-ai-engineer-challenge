@@ -15,3 +15,6 @@ choices. Keep numbering stable. Link decisions from the corresponding story.
 - [ADR-0003: Owned conversation execution context](0003-owned-conversation-execution-context.md)
   records trusted identity/session/history contracts, direct execution, and the
   US-10 persistence/identity-resolution handoff.
+- [ADR-0004: Persistent conversation turns](0004-persistent-conversation-turns.md)
+  records demo identity, SQLite ownership, bounded history, commit/cancellation,
+  concurrency, diagnostics, and API behavior.
