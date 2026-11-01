@@ -1,3 +1,41 @@
+# Current demo verification
+
+Issue #32 simplifies the existing challenge demo while keeping persistent SQLite
+history and customer-scoped tools. The README is now the primary setup guide.
+Historical sprint records follow below; their earlier revision/provenance claims
+are not the current contract.
+
+The exact committed simplification was verified in an isolated source copy with
+`uv sync --project apps/backend --locked`, the README Ruff lint/format commands,
+strict mypy, pytest and package build. Results: **236 tests passed**, strict mypy
+passed for 58 source/test files, Ruff passed, and source/wheel builds passed.
+AWS configuration variables were removed and the live-model guard stayed enabled.
+
+Two regressions were observed failing before their fixes: an extra nullable product
+column invalidated exact-DDL checks, and two discounted products repeated the full
+snapshot disclaimer twice. New preparation tests verify both data stores, repeat
+runs, source/history preservation, no runtime fingerprint metadata, and path collisions.
+Other new tests were checked after implementation; no failing baseline is claimed.
+
+The approved single-service/process boundary retires cross-instance stale-revision
+coordination. Only that dedicated test and stale-append subcase were removed;
+expected-revision parameters/assertions were replaced by saved-history assertions.
+Runtime fingerprint checks were removed with their retired metadata. Ownership,
+atomic failure/rollback, restart history, bounded context, same-session overlap,
+independent chats, cancellation, pricing, tools and safe diagnostics remain tested.
+
+An actual temporary uvicorn server and the new one-command preparation passed
+loopback docs/401/422/503 checks using an invalid AWS profile. Preparation loaded
+65 products, 25 promotions, 50 customers, 20 orders and 22 item rows. The server
+stopped, without a model call or logged token. All 14 original CSV/PDF byte checks
+passed. No dependencies or lockfile changed.
+
+An unrelated API naming edit appeared in the shared checkout during validation.
+It leaves `test_api.py` importing the old factory name, causing mypy/collection
+failure in that working tree. It is preserved and excluded from this PR. The clean
+committed copy described above passed independently. No working-tree-wide pass,
+hosted CI success, independent review or live Bedrock acceptance is claimed.
+
 # Sprint 1 validation evidence
 
 Validated on 2026-10-31 with Python 3.12.15 and uv 0.13.4. US-04–US-08
