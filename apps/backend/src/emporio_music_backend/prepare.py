@@ -19,12 +19,12 @@ from emporio_music_backend.infrastructure.operations_import import (
 
 def prepare_data(
     data_directory: Path,
-    catalog: Path,
-    operations: Path,
+    catalog_database_path: Path,
+    operations_database_path: Path,
     *,
-    conversations: Path,
+    conversation_database_path: Path,
 ) -> tuple[ImportReport, OperationsImportReport]:
-    sources = [
+    source_paths = [
         data_directory / (name + ".csv")
         for name in (
             "products",
@@ -35,18 +35,30 @@ def prepare_data(
             "order_items",
         )
     ]
-    paths = [catalog, operations, conversations]
-    for index, path in enumerate(paths):
-        for other in [*paths[index + 1 :], *sources]:
-            if path.resolve() == other.resolve() or (
-                path.exists() and other.exists() and path.samefile(other)
+    database_paths = [
+        catalog_database_path,
+        operations_database_path,
+        conversation_database_path,
+    ]
+    for index, database_path in enumerate(database_paths):
+        for other_path in [*database_paths[index + 1 :], *source_paths]:
+            if database_path.resolve() == other_path.resolve() or (
+                database_path.exists()
+                and other_path.exists()
+                and database_path.samefile(other_path)
             ):
                 raise ValueError("Source and database paths must be separate")
-    product_report = import_catalog(sources[0], sources[1], sources[2], catalog)
-    order_report = import_operations(
-        sources[3], sources[4], sources[5], catalog, operations
+    catalog_import_report = import_catalog(
+        source_paths[0], source_paths[1], source_paths[2], catalog_database_path
     )
-    return product_report, order_report
+    operations_import_report = import_operations(
+        source_paths[3],
+        source_paths[4],
+        source_paths[5],
+        catalog_database_path,
+        operations_database_path,
+    )
+    return catalog_import_report, operations_import_report
 
 
 def main() -> int:
@@ -56,11 +68,11 @@ def main() -> int:
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     args = parser.parse_args()
     try:
-        products, orders = prepare_data(
+        catalog_import_report, operations_import_report = prepare_data(
             args.data_dir,
             Path(os.environ.get("DATABASE_PATH", "data/catalog.sqlite3")),
             Path(os.environ.get("OPERATIONS_DATABASE_PATH", "data/operations.sqlite3")),
-            conversations=Path(
+            conversation_database_path=Path(
                 os.environ.get(
                     "CONVERSATION_DATABASE_PATH", "data/conversations.sqlite3"
                 )
@@ -70,7 +82,11 @@ def main() -> int:
         print(str(exc), file=sys.stderr)
         return 1
     print(
-        f"Prepared {products.products} products, {products.promotions} promotions, {orders.customers} customers, {orders.orders} orders and {orders.items} items."
+        f"Prepared {catalog_import_report.products} products, "
+        f"{catalog_import_report.promotions} promotions, "
+        f"{operations_import_report.customers} customers, "
+        f"{operations_import_report.orders} orders and "
+        f"{operations_import_report.items} items."
     )
     print("Chat history was preserved. Start the API using the README command.")
     return 0

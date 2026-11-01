@@ -44,7 +44,7 @@ def test_readers_accept_additional_columns_without_exact_ddl_auditing(
         data,
         catalog,
         operational_database,
-        conversations=operational_database.parent / "untouched.sqlite3",
+        conversation_database_path=operational_database.parent / "untouched.sqlite3",
     )
     assert products.search(query) == before_product
     assert orders.list_orders(identity, OrderListQuery()) == before_orders
@@ -134,7 +134,12 @@ def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
             is None
         )
     with pytest.raises(ValueError, match="separate"):
-        prepare_data(data, catalog, catalog, conversations=conversations)
+        prepare_data(data, catalog, catalog, conversation_database_path=conversations)
     with pytest.raises(ValueError, match="separate"):
-        prepare_data(data, data / "orders.csv", operations, conversations=conversations)
+        prepare_data(
+            data,
+            data / "orders.csv",
+            operations,
+            conversation_database_path=conversations,
+        )
     assert all(path.read_bytes() == raw for path, raw in original.items())

@@ -3,7 +3,7 @@ from uuid import UUID
 import pytest
 from fastapi.testclient import TestClient
 
-from emporio_music_backend.api.app import create_app, get_service_factory
+from emporio_music_backend.api.app import create_app, get_chat_service_factory
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
@@ -35,7 +35,7 @@ def test_http_contract_docs_and_dependency_override(
     api_headers: dict[str, str],
 ) -> None:
     app = create_app()
-    app.dependency_overrides[get_service_factory] = lambda: lambda: FakeService()
+    app.dependency_overrides[get_chat_service_factory] = lambda: lambda: FakeService()
     with TestClient(app) as client:
         client.headers.update(api_headers)
         assert client.post("/api/chat", json={"message": " Olá "}).json() == {
@@ -105,7 +105,9 @@ def test_http_error_mapping_is_sanitized(
         ) -> ChatResponse:
             raise error
 
-    with TestClient(create_app(Service()), raise_server_exceptions=False) as client:
+    with TestClient(
+        create_app(chat_service=Service()), raise_server_exceptions=False
+    ) as client:
         client.headers.update(api_headers)
         response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == status

@@ -31,16 +31,16 @@ SCENARIOS = (
 )
 
 
-def snapshot_identity(database: Path) -> str:
-    with database.open("rb") as source:
+def calculate_catalog_snapshot_hash(catalog_database_path: Path) -> str:
+    with catalog_database_path.open("rb") as source:
         return hashlib.file_digest(source, "sha256").hexdigest()
 
 
-async def record(database: Path, output: Path) -> None:
+async def record(catalog_database_path: Path, output_directory: Path) -> None:
     """Capture real SDK messages, never replacing a missing trace with invented data."""
     settings = AgentSettings.from_environment()
-    identity = snapshot_identity(database)
-    repository = SQLiteProductRepository(database)
+    catalog_snapshot_hash = calculate_catalog_snapshot_hash(catalog_database_path)
+    repository = SQLiteProductRepository(catalog_database_path)
     repository.search(ProductSearchQuery(limit=1))
     executor = create_catalog_agent(settings, repository)
     captured: list[tuple[str, str]] = []
@@ -81,7 +81,7 @@ async def record(database: Path, output: Path) -> None:
             "region": settings.region,
             "pydantic_ai": version("pydantic-ai-slim"),
             "boto3": version("boto3"),
-            "database_sha256": identity,
+            "database_sha256": catalog_snapshot_hash,
             "requests": result.usage.requests,
         }
         document = (
@@ -95,14 +95,16 @@ async def record(database: Path, output: Path) -> None:
             f"## Actual answer\n\n{result.output}\n"
         )
         captured.append((name, document))
-    if snapshot_identity(database) != identity:
+    if calculate_catalog_snapshot_hash(catalog_database_path) != catalog_snapshot_hash:
         raise RuntimeError("Catalog changed during capture; no evidence saved")
-    output.mkdir(parents=True, exist_ok=True)
+    output_directory.mkdir(parents=True, exist_ok=True)
     for name, document in captured:
-        with (output / f"{name}.md").open("x", encoding="utf-8") as destination:
+        with (output_directory / f"{name}.md").open(
+            "x", encoding="utf-8"
+        ) as destination:
             destination.write(document)
     print(
-        f"Saved {len(captured)} live captures to {output}; review each before acceptance"
+        f"Saved {len(captured)} live captures to {output_directory}; review each before acceptance"
     )
 
 

@@ -1,4 +1,19 @@
-# Current package verification
+# Current shared-checkout verification
+
+The approved naming follow-up completes the `chat_service_factory` rename in the
+API, dependency overrides and documentation. Names now identify factory roles,
+chat-service initialization, database paths, chat requests, request-context reset
+tokens, import reports and the catalog snapshot hash. CLI flags and HTTP payloads
+are unchanged; there are no compatibility aliases or new dependencies.
+
+The full shared checkout now passes Ruff lint/format, strict mypy (**70 files**),
+**237 tests** and source/wheel builds. AWS configuration variables were removed
+and live-model requests remained forbidden. The previous API factory import
+mismatch is resolved; isolated-copy verification is no longer needed for that
+reason. All supplied CSV/PDF bytes remain unchanged. Earlier records below describe
+the intermediate work, including the then-incomplete user rename.
+
+# Earlier package verification
 
 The package-cohesion follow-up in issue #32 moves contracts/protocols out of
 initializers into defining modules. All callers/tests use explicit imports;

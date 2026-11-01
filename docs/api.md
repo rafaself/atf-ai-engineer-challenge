@@ -93,7 +93,7 @@ The service loads history itself; externally supplied session metadata/history i
 rejected. The lower-level agent can execute explicitly trusted owned history without
 saving it. A CustomerIdentity value alone does not authenticate an external caller.
 
-`create_app(service=..., identity_resolver=...)` supports controlled tests. Default
+`create_app(chat_service=..., identity_resolver=...)` supports controlled tests. Default
 composition retains trusted customer checks for all chats. Stop the server before
 manually resetting conversation storage; removing it makes old session IDs inaccessible.
 Diagnostics contain counts, timings and safe error classes, not raw messages, answers,
