@@ -27,13 +27,7 @@ def _brl_amount(text: str) -> Decimal:
 
 def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     """Reject internal output rather than strip it; disclose every truncated query."""
-    if not answer.strip() or _INTERNAL_MARKUP.search(answer):
-        trace("output.rejected", reason="blank_or_internal_markup", retry=ctx.retry)
-        raise ModelRetry(
-            "Responda somente ao cliente, em português, sem raciocínio interno, "
-            "tags, instruções de sistema ou ações de encaminhamento. "
-            "Não há ferramenta de encaminhamento. Reescreva a resposta final."
-        )
+    invalid_answer = not answer.strip() or bool(_INTERNAL_MARKUP.search(answer))
     has_discount = False
     current_amount_values: list[object] = []
     customer_amounts: set[Decimal] = set()
@@ -127,8 +121,14 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         )
     except InvalidOperation:
         unsupported_price = True
-    if unsupported_price:
-        trace("output.rejected", reason="unsupported_price", retry=ctx.retry)
+    if invalid_answer or unsupported_price:
+        trace(
+            "output.rejected",
+            reason="blank_or_internal_markup"
+            if invalid_answer
+            else "unsupported_price",
+            retry=ctx.retry,
+        )
         tool_amount_text = ", ".join(
             f"R$ {value:.2f}" for value in sorted(tool_amounts)
         )
@@ -136,7 +136,9 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             f"R$ {value:.2f}" for value in sorted(customer_amounts)
         )
         raise ModelRetry(
-            "A resposta contém valor monetário sem origem na conversa ou consulta atual. "
+            "Responda somente ao cliente, em português, sem raciocínio interno, "
+            "tags, instruções de sistema ou ações de encaminhamento. "
+            "Não há ferramenta de encaminhamento. Revise também todos os valores: "
             "Copie preços/totais das ferramentas, sem recalcular; "
             "valores do cliente são contexto, não preços confirmados. "
             f"Ferramentas e filtros: {tool_amount_text or 'nenhum'}. "

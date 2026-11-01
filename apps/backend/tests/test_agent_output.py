@@ -191,6 +191,37 @@ def test_price_without_current_retrieval_requires_correction() -> None:
         customer_answer(context, "O preço é R$ 405,28.")
 
 
+def test_combined_output_failures_include_current_prices_in_one_correction() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "get_product_details",
+                        {
+                            "products": [
+                                {
+                                    "price_brl": "549.00",
+                                    "pricing": {"final_price_brl": "439.20"},
+                                }
+                            ]
+                        },
+                    )
+                ],
+                run_id="current",
+            )
+        ],
+    )
+    with pytest.raises(ModelRetry) as correction:
+        customer_answer(context, "<thinking>Rascunho</thinking>Preço: R$ 405,28.")
+    assert "439.20" in str(correction.value)
+    assert "549.00" in str(correction.value)
+
+
 @pytest.mark.parametrize("customer_history", [True, False])
 def test_budget_reference_uses_customer_history_but_not_old_assistant_prices(
     customer_history: bool,
