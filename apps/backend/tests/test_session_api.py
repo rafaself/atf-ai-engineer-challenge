@@ -178,7 +178,6 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     )
     with sqlite3.connect(conversations) as connection:
         assert connection.execute("SELECT count(*) FROM sessions").fetchone()[0] == 1
-        assert connection.execute("SELECT revision FROM sessions").fetchone()[0] == 2
         assert connection.execute("SELECT count(*) FROM turns").fetchone()[0] == 2
 
 

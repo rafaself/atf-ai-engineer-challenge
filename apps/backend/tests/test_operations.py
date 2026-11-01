@@ -1,7 +1,6 @@
 """Real SQLite snapshot replacement, exact facts and independent authorization."""
 
 import csv
-import hashlib
 import sqlite3
 from decimal import Decimal
 from pathlib import Path
@@ -99,13 +98,7 @@ def test_original_import_is_repeatable_minimal_and_preserves_exact_totals(
             "phone",
             "city",
         }
-        metadata = dict(conn.execute("SELECT * FROM metadata"))
         rows_before = conn.execute("SELECT * FROM orders ORDER BY order_id").fetchall()
-    for name in ("customers", "orders", "order_items"):
-        assert (
-            metadata[name + "_sha256"]
-            == hashlib.sha256((DATA / (name + ".csv")).read_bytes()).hexdigest()
-        )
     with (DATA / "orders.csv").open(newline="") as stream:
         original = list(csv.DictReader(stream))
     row = original[0]
@@ -115,7 +108,6 @@ def test_original_import_is_repeatable_minimal_and_preserves_exact_totals(
     )
     assert detail is not None and Decimal(detail.total_brl) == Decimal(row["total_brl"])
     assert not hasattr(detail, "unit_price")
-    assert len(metadata["catalog_references_sha256"]) == 64
     assert operational_database.stat().st_mode & 0o777 == 0o600
     import_operations(
         DATA / "customers.csv",
@@ -129,7 +121,6 @@ def test_original_import_is_repeatable_minimal_and_preserves_exact_totals(
             conn.execute("SELECT * FROM orders ORDER BY order_id").fetchall()
             == rows_before
         )
-        assert dict(conn.execute("SELECT * FROM metadata")) == metadata
 
 
 def test_scoped_reads_limits_ordering_and_full_replacement(
@@ -312,7 +303,7 @@ def test_order_input_bounds_reject_coercion_and_overflow() -> None:
             OrderListQuery.model_validate({"limit": invalid})
 
 
-def test_copied_product_references_survive_catalog_changes_and_have_logical_fingerprint(
+def test_copied_product_references_survive_catalog_changes(
     operational_database: Path,
 ) -> None:
     repository = SQLiteOrderRepository(operational_database)
@@ -321,10 +312,6 @@ def test_copied_product_references_survive_catalog_changes_and_have_logical_fing
     query = OrderLookupQuery(order_id=1)
     original = repository.get_order(identity, query)
     assert original is not None
-    with sqlite3.connect(operational_database) as conn:
-        fingerprint = dict(conn.execute("SELECT * FROM metadata"))[
-            "catalog_references_sha256"
-        ]
     with sqlite3.connect(catalog) as conn:
         conn.execute(
             "UPDATE products SET name = 'Renamed reference', price_centavos = 1 WHERE product_id = 93"
@@ -342,11 +329,6 @@ def test_copied_product_references_survive_catalog_changes_and_have_logical_fing
     assert refreshed is not None
     assert refreshed.items[0].product_name == "Renamed reference"
     assert refreshed.total_centavos == original.total_centavos
-    with sqlite3.connect(operational_database) as conn:
-        assert (
-            dict(conn.execute("SELECT * FROM metadata"))["catalog_references_sha256"]
-            != fingerprint
-        )
     with sqlite3.connect(catalog) as conn:
         conn.execute("DELETE FROM products WHERE product_id = 93")
     assert repository.get_order(identity, query) == refreshed

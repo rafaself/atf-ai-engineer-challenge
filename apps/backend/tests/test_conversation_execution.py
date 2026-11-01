@@ -56,7 +56,7 @@ def test_service_propagates_independent_contexts_without_mutating_them(
     for c in contexts:
         assert c.session
         conversations.append(
-            c.session, 0, user_message=c.history[0].content, answer=c.history[1].content
+            c.session, user_message=c.history[0].content, answer=c.history[1].content
         )
     observed: list[ExecutionContext] = []
 

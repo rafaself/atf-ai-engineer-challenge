@@ -157,7 +157,6 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
     assert context.session is not None
     conversations.append(
         context.session,
-        0,
         user_message=context.history[0].content,
         answer=context.history[1].content,
     )

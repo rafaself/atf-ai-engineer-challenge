@@ -67,12 +67,11 @@ class ConversationRepository(Protocol):
     def append(
         self,
         session: ConversationSession,
-        expected_revision: int,
         *,
         user_message: str,
         answer: str,
     ) -> None:
-        """Atomically append or raise access, conflict, or persistence error."""
+        """Atomically append or raise access or persistence error."""
         ...
 
 

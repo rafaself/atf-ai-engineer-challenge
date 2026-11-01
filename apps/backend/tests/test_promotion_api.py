@@ -215,12 +215,6 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     with sqlite3.connect(conversations) as conn:
         assert (
             conn.execute(
-                "SELECT revision FROM sessions WHERE session_id=?", (session,)
-            ).fetchone()[0]
-            == 3
-        )
-        assert (
-            conn.execute(
                 "SELECT count(*) FROM turns WHERE session_id=?", (session,)
             ).fetchone()[0]
             == 3

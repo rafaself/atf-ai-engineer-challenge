@@ -113,7 +113,6 @@ class HistoryLimits(ContractModel):
 
 class ConversationSnapshot(ContractModel):
     session: ConversationSession
-    revision: NonnegativeInt
     history: tuple[ConversationMessage, ...] = ()
 
     @model_validator(mode="after")
@@ -121,8 +120,6 @@ class ConversationSnapshot(ContractModel):
         ExecutionContext(
             identity=self.session.owner, session=self.session, history=self.history
         )
-        if len(self.history) // 2 > self.revision:
-            raise ValueError("History cannot exceed the committed revision")
         return self
 
 

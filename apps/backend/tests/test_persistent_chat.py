@@ -79,8 +79,8 @@ def test_overlap_rejected_foreign_access_hidden_and_cancellation_recovers(
         assert (
             conversations.load(
                 session.session_id, owner, limits=HistoryLimits()
-            ).revision
-            == 0
+            ).history
+            == ()
         )
         await service.chat(
             ChatRequest(message="retry", session_id=session.session_id),
@@ -90,8 +90,12 @@ def test_overlap_rejected_foreign_access_hidden_and_cancellation_recovers(
     asyncio.run(exercise())
     assert calls == ["hold", "independent", "retry"]
     assert (
-        conversations.load(session.session_id, owner, limits=HistoryLimits()).revision
-        == 1
+        len(
+            conversations.load(
+                session.session_id, owner, limits=HistoryLimits()
+            ).history
+        )
+        == 2
     )
 
 
@@ -130,7 +134,7 @@ def test_execution_failures_never_complete_turns(
     state = conversations.load(
         session.session_id, trusted_context.identity, limits=HistoryLimits()
     )
-    assert state.revision == 0 and state.history == ()
+    assert state.history == ()
 
 
 def test_failed_append_is_not_success_and_retry_does_not_duplicate(
@@ -158,8 +162,8 @@ def test_failed_append_is_not_success_and_retry_does_not_duplicate(
     assert (
         repository.load(
             session.session_id, trusted_context.identity, limits=HistoryLimits()
-        ).revision
-        == 0
+        ).history
+        == ()
     )
     with sqlite3.connect(path) as connection:
         connection.execute("DROP TRIGGER fail_save")
@@ -168,56 +172,7 @@ def test_failed_append_is_not_success_and_retry_does_not_duplicate(
     state = repository.load(
         session.session_id, trusted_context.identity, limits=HistoryLimits()
     )
-    assert state.revision == 1 and [m.content for m in state.history] == [
+    assert [m.content for m in state.history] == [
         "Retry me",
         "Valid answer",
     ]
-
-
-def test_separate_service_instances_detect_stale_history(
-    conversations: SQLiteConversationRepository, trusted_context: ExecutionContext
-) -> None:
-    assert trusted_context.identity
-    session = conversations.create(trusted_context.identity)
-
-    async def exercise() -> None:
-        entered = 0
-        ready = asyncio.Event()
-
-        class Agent:
-            async def run(
-                self, request: ChatRequest, *, context: ExecutionContext
-            ) -> AgentResponse:
-                nonlocal entered
-                entered += 1
-                if entered == 2:
-                    ready.set()
-                await ready.wait()
-                return AgentResponse(answer="Only one commit wins")
-
-        services = [
-            ChatService(Agent(), conversations),
-            ChatService(
-                Agent(), SQLiteConversationRepository(conversations.database_path)
-            ),
-        ]
-        outcomes = await asyncio.gather(
-            *(
-                service.chat(
-                    ChatRequest(message="Race", session_id=session.session_id),
-                    context=trusted_context,
-                )
-                for service in services
-            ),
-            return_exceptions=True,
-        )
-        assert (
-            sum(isinstance(outcome, SessionConflictError) for outcome in outcomes) == 1
-        )
-        assert sum(not isinstance(outcome, BaseException) for outcome in outcomes) == 1
-
-    asyncio.run(exercise())
-    state = conversations.load(
-        session.session_id, trusted_context.identity, limits=HistoryLimits()
-    )
-    assert state.revision == 1 and len(state.history) == 2

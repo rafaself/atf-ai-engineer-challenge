@@ -2,9 +2,7 @@
 
 import argparse
 import csv
-import hashlib
 import io
-import json
 import os
 import re
 import sqlite3
@@ -59,7 +57,7 @@ class OperationsImportReport:
 
 def _read_rows(
     path: Path, source: str, columns: tuple[str, ...]
-) -> tuple[list[tuple[int, dict[str, str]]], str]:
+) -> list[tuple[int, dict[str, str]]]:
     try:
         raw = path.read_bytes()
         reader = csv.reader(
@@ -77,7 +75,7 @@ def _read_rows(
                     source, reader.line_num, "row", "incorrect number of fields"
                 )
             rows.append((reader.line_num, dict(zip(header, cells, strict=True))))
-        return rows, hashlib.sha256(raw).hexdigest()
+        return rows
     except (OSError, UnicodeError, csv.Error) as exc:
         raise OperationsImportError(
             source, None, "file", "cannot read valid UTF-8 CSV"
@@ -125,11 +123,9 @@ def import_operations(
             raise OperationsImportError(
                 "database", None, "path", "must not overwrite an input"
             )
-    customers, customers_hash = _read_rows(
-        customers_path, "customers", CUSTOMER_COLUMNS
-    )
-    orders, orders_hash = _read_rows(orders_path, "orders", ORDER_COLUMNS)
-    items, items_hash = _read_rows(items_path, "order_items", ITEM_COLUMNS)
+    customers = _read_rows(customers_path, "customers", CUSTOMER_COLUMNS)
+    orders = _read_rows(orders_path, "orders", ORDER_COLUMNS)
+    items = _read_rows(items_path, "order_items", ITEM_COLUMNS)
     customer_ids: set[int] = set()
     for line, row in customers:
         identifier = _integer(row["customer_id"], "customers", line, "customer_id")
@@ -227,15 +223,6 @@ def import_operations(
     products = [
         (identifier, product_names[identifier]) for identifier in sorted(references)
     ]
-    reference_hash = hashlib.sha256(
-        json.dumps(products, ensure_ascii=False, separators=(",", ":")).encode()
-    ).hexdigest()
-    metadata = {
-        "customers_sha256": customers_hash,
-        "orders_sha256": orders_hash,
-        "order_items_sha256": items_hash,
-        "catalog_references_sha256": reference_hash,
-    }
     try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -259,22 +246,22 @@ def import_operations(
                     "orders",
                     "products",
                     "customers",
-                    "metadata",
                 ):
                     connection.execute(f"DELETE FROM {table}")
                 connection.executemany(
-                    "INSERT INTO customers VALUES (?)",
+                    "INSERT INTO customers (customer_id) VALUES (?)",
                     [(key,) for key in sorted(customer_ids)],
                 )
-                connection.executemany("INSERT INTO products VALUES (?, ?)", products)
                 connection.executemany(
-                    "INSERT INTO orders VALUES (?, ?, ?, ?, ?, ?, ?)", order_records
+                    "INSERT INTO products (product_id, name) VALUES (?, ?)", products
                 )
                 connection.executemany(
-                    "INSERT INTO order_items VALUES (?, ?, ?)", item_records
+                    "INSERT INTO orders (order_id, customer_id, order_date, status, total_centavos, tracking_code, estimated_delivery) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    order_records,
                 )
                 connection.executemany(
-                    "INSERT INTO metadata VALUES (?, ?)", metadata.items()
+                    "INSERT INTO order_items (order_id, product_id, quantity) VALUES (?, ?, ?)",
+                    item_records,
                 )
                 connection.execute("COMMIT")
             except BaseException:

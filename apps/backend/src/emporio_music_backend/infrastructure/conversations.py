@@ -20,7 +20,6 @@ from emporio_music_backend.contracts import (
 from emporio_music_backend.contracts.errors import (
     ConversationPersistenceError,
     SessionAccessError,
-    SessionConflictError,
 )
 
 _APPLICATION_ID = 0x454D434F
@@ -51,8 +50,7 @@ class SQLiteConversationRepository:
                 if application_id == 0 and version == 0 and not tables:
                     connection.execute(
                         "CREATE TABLE sessions (session_id TEXT PRIMARY KEY, "
-                        "customer_id INTEGER NOT NULL CHECK(customer_id > 0), "
-                        "revision INTEGER NOT NULL DEFAULT 0 CHECK(revision >= 0))"
+                        "customer_id INTEGER NOT NULL CHECK(customer_id > 0))"
                     )
                     connection.execute(
                         "CREATE TABLE turns (session_id TEXT NOT NULL REFERENCES sessions(session_id), "
@@ -121,7 +119,7 @@ class SQLiteConversationRepository:
             with closing(self._connect()) as connection:
                 connection.execute("BEGIN")
                 row = connection.execute(
-                    "SELECT revision FROM sessions WHERE session_id = ? AND customer_id = ?",
+                    "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id = ?",
                     (str(session_id), identity.customer_id),
                 ).fetchone()
                 if row is None:
@@ -150,7 +148,6 @@ class SQLiteConversationRepository:
                 )
                 return ConversationSnapshot(
                     session=ConversationSession(session_id=session_id, owner=identity),
-                    revision=row[0],
                     history=history,
                 )
         except (sqlite3.Error, ValidationError, ValueError) as exc:
@@ -161,7 +158,6 @@ class SQLiteConversationRepository:
     def append(
         self,
         session: ConversationSession,
-        expected_revision: int,
         *,
         user_message: str,
         answer: str,
@@ -178,28 +174,23 @@ class SQLiteConversationRepository:
         try:
             with closing(self._connect()) as connection:
                 connection.execute("BEGIN IMMEDIATE")
-                changed = connection.execute(
-                    "UPDATE sessions SET revision = revision + 1 "
-                    "WHERE session_id = ? AND customer_id = ? AND revision = ?",
-                    (
-                        str(session.session_id),
-                        session.owner.customer_id,
-                        expected_revision,
-                    ),
-                ).rowcount
-                if changed != 1:
-                    exists = connection.execute(
+                if (
+                    connection.execute(
                         "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id = ?",
                         (str(session.session_id), session.owner.customer_id),
                     ).fetchone()
-                    if exists is None:
-                        raise SessionAccessError("Conversation session is inaccessible")
-                    raise SessionConflictError("Conversation turn conflicts")
+                    is None
+                ):
+                    raise SessionAccessError("Conversation session is inaccessible")
+                sequence = connection.execute(
+                    "SELECT coalesce(max(sequence), 0) + 1 FROM turns WHERE session_id = ?",
+                    (str(session.session_id),),
+                ).fetchone()[0]
                 connection.execute(
                     "INSERT INTO turns (session_id, sequence, user_message, answer) VALUES (?, ?, ?, ?)",
                     (
                         str(session.session_id),
-                        expected_revision + 1,
+                        sequence,
                         user_message,
                         context.history[1].content,
                     ),

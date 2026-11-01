@@ -76,8 +76,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                                 pricing_notices[key] = (
                                     f"{name}: preço original R$ {original.replace('.', ',')}; "
                                     f"{percentage}% de desconto; preço final R$ {final.replace('.', ',')} "
-                                    f"{label}, sem acumular descontos. Dados de uma fotografia importada; "
-                                    "o arquivo não informa datas de validade das promoções."
+                                    f"{label}, sem acumular descontos."
                                 )
                 if (
                     part.tool_name == "list_my_orders"
@@ -119,6 +118,10 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         for total in sorted(item_totals)
     )
     notices.extend(pricing_notices.values())
+    if pricing_notices:
+        notices.append(
+            "Dados de uma fotografia importada; não há datas de validade informadas para as promoções."
+        )
     final_answer = "\n\n".join([answer.strip(), *notices])
     trace("output.accepted", truncated_totals=sorted(totals))
     return final_answer

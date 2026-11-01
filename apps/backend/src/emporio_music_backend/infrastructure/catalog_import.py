@@ -311,14 +311,16 @@ def import_catalog(
                 connection.execute("DELETE FROM products")
                 connection.execute("DELETE FROM categories")
                 connection.executemany(
-                    "INSERT INTO categories VALUES (?, ?, ?, ?)", categories
+                    "INSERT INTO categories (category_id, name, description, normalized_name) VALUES (?, ?, ?, ?)",
+                    categories,
                 )
                 connection.executemany(
-                    "INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO products (product_id, category_id, name, description, price_centavos, stock_quantity, status, specs, created_at, normalized_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     products,
                 )
                 connection.executemany(
-                    "INSERT INTO promotions VALUES (?, ?, ?, ?, ?)", promotions
+                    "INSERT INTO promotions (promotion_id, product_id, discount_percent, description, is_active) VALUES (?, ?, ?, ?, ?)",
+                    promotions,
                 )
                 connection.execute("COMMIT")
             except BaseException:

@@ -236,7 +236,7 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
         CustomerIdentity(customer_id=1),
         limits=HistoryLimits(),
     )
-    assert stored.revision == 2 and len(stored.history) == 4
+    assert len(stored.history) == 4
     backup.rename(operational_database)
     # Restore snapshot and exercise one cached executor with overlapping customers.
     import_operations(

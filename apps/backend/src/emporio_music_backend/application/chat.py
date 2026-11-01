@@ -42,7 +42,7 @@ class ChatService:
             history_limits or HistoryLimits()
         )
         # Only active IDs are retained. Access is synchronous on the local server loop;
-        # version-checked SQLite append is the final guard across service instances.
+        # The demo supports one service instance/process; no cross-instance coordinator.
         self._active: set[UUID] = set()
 
     async def chat(
@@ -90,7 +90,6 @@ class ChatService:
                 # later after async cancellation. No transaction spans the model call.
                 self._conversations.append(
                     snapshot.session,
-                    snapshot.revision,
                     user_message=validated.message,
                     answer=result.answer,
                 )
