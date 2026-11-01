@@ -10,7 +10,8 @@ from pydantic_ai.usage import RunUsage
 
 from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.api.app import create_app
-from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
+from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
+from emporio_music_backend.contracts.conversations import ExecutionContext
 
 
 def test_missing_identity_rejected_before_chat_service() -> None:

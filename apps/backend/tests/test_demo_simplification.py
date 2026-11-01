@@ -13,11 +13,9 @@ from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
 from emporio_music_backend.agent.output import customer_answer
-from emporio_music_backend.contracts import (
-    CustomerIdentity,
-    ExecutionContext,
-    ProductSearchQuery,
-)
+from emporio_music_backend.contracts.catalog import ProductSearchQuery
+from emporio_music_backend.contracts.conversations import ExecutionContext
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.contracts.orders import OrderListQuery
 from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music_backend.infrastructure.sqlite_repository import (

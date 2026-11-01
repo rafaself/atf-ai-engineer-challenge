@@ -5,7 +5,7 @@ import re
 from pydantic_ai import ModelRetry, RunContext
 from pydantic_ai.messages import ToolReturnPart
 
-from emporio_music_backend.contracts import ExecutionContext
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.diagnostics import trace
 
 _INTERNAL_MARKUP = re.compile(

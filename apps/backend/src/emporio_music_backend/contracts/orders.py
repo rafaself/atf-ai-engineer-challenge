@@ -5,7 +5,11 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, computed_field, model_validator
 
-from emporio_music_backend.contracts import ContractModel, NonblankText, NonnegativeInt
+from emporio_music_backend.contracts.base import (
+    ContractModel,
+    NonblankText,
+    NonnegativeInt,
+)
 
 DatabaseId = Annotated[int, Field(strict=True, gt=0, le=2**63 - 1)]
 OrderStatus = Literal["delivered", "shipped", "confirmed", "pending", "cancelled"]

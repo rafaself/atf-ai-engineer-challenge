@@ -17,11 +17,9 @@ from starlette.concurrency import run_in_threadpool
 
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.application import ChatService, ChatServicePort
-from emporio_music_backend.contracts import (
-    ChatRequest,
-    ChatResponse,
-    CustomerIdentity,
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
+from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
@@ -34,6 +32,7 @@ from emporio_music_backend.contracts.errors import (
     SessionAccessError,
     SessionConflictError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.diagnostics import failure, request_id, trace
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
@@ -43,7 +42,8 @@ from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderReposi
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.ports import CustomerIdentityResolver
+from emporio_music_backend.ports.chat import ChatServicePort
+from emporio_music_backend.ports.identity import CustomerIdentityResolver
 
 ServiceFactory = Callable[[], ChatServicePort]
 IdentityResolverFactory = Callable[[], CustomerIdentityResolver]

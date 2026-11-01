@@ -9,8 +9,9 @@ import pytest
 from pydantic import ValidationError
 
 from emporio_music_backend.application.pricing import calculate_pricing
-from emporio_music_backend.contracts import ProductSearchQuery, PromotionOffer
+from emporio_music_backend.contracts.catalog import ProductSearchQuery
 from emporio_music_backend.contracts.errors import ProductRetrievalError
+from emporio_music_backend.contracts.pricing import PromotionOffer
 from emporio_music_backend.infrastructure.catalog_import import (
     CATEGORY_COLUMNS,
     PRODUCT_COLUMNS,

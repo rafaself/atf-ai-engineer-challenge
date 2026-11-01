@@ -4,10 +4,12 @@ import asyncio
 import math
 from uuid import UUID
 
-from emporio_music_backend.contracts import (
+from emporio_music_backend.contracts.chat import (
     AgentResponse,
     ChatRequest,
     ChatResponse,
+)
+from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
@@ -19,7 +21,8 @@ from emporio_music_backend.contracts.errors import (
     ConfigurationError,
     SessionConflictError,
 )
-from emporio_music_backend.ports import AgentExecutor, ConversationRepository
+from emporio_music_backend.ports.agent import AgentExecutor
+from emporio_music_backend.ports.conversations import ConversationRepository
 
 
 class ChatService:

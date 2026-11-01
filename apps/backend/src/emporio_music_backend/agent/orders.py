@@ -9,15 +9,17 @@ from pydantic_ai.models import Model
 from emporio_music_backend.agent.catalog import product_tools
 from emporio_music_backend.agent.factory import PydanticAgentExecutor, create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import CustomerIdentity, ExecutionContext
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import AuthenticationError
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.contracts.orders import (
     DatabaseId,
     OrderListQuery,
     OrderLookupQuery,
 )
 from emporio_music_backend.diagnostics import trace
-from emporio_music_backend.ports import OrderRepository, ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
+from emporio_music_backend.ports.orders import OrderRepository
 
 
 def _identity(ctx: RunContext[ExecutionContext]) -> CustomerIdentity:

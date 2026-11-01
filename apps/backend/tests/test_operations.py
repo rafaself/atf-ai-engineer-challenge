@@ -9,12 +9,12 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from emporio_music_backend.contracts import CustomerIdentity
 from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     ConfigurationError,
     OperationalRetrievalError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.contracts.orders import OrderListQuery, OrderLookupQuery
 from emporio_music_backend.infrastructure.operations_import import (
     CUSTOMER_COLUMNS,

@@ -6,15 +6,15 @@ from uuid import uuid4
 
 import pytest
 
-from emporio_music_backend.contracts import (
+from emporio_music_backend.contracts.conversations import (
     ConversationSession,
-    CustomerIdentity,
     HistoryLimits,
 )
 from emporio_music_backend.contracts.errors import (
     ConversationPersistenceError,
     SessionAccessError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )

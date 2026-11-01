@@ -27,7 +27,8 @@ from emporio_music_backend.infrastructure.catalog_import import (
     PROMOTION_COLUMNS,
     import_catalog,
 )
-from emporio_music_backend.ports import OrderRepository, ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
+from emporio_music_backend.ports.orders import OrderRepository
 
 DATA = Path(__file__).parents[3] / "data"
 

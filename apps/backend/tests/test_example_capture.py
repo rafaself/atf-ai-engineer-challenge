@@ -19,7 +19,7 @@ from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
-from emporio_music_backend.ports import ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
 
 
 def test_recorder_saves_actual_tool_trace_without_claiming_acceptance(

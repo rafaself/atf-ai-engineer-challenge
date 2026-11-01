@@ -7,12 +7,12 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from emporio_music_backend.contracts import CustomerIdentity
 from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     ConfigurationError,
     OperationalRetrievalError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.contracts.orders import (
     DatabaseId,
     OrderDetail,

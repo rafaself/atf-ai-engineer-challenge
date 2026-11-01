@@ -13,16 +13,15 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.application import ChatService
-from emporio_music_backend.contracts import (
-    AgentResponse,
-    ChatRequest,
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import AgentResponse, ChatRequest
+from emporio_music_backend.contracts.conversations import (
     ConversationMessage,
     ConversationSession,
-    CustomerIdentity,
     ExecutionContext,
 )
 from emporio_music_backend.contracts.errors import SessionAccessError
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )

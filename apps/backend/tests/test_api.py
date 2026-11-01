@@ -4,7 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from emporio_music_backend.api.app import create_app, get_service_factory
-from emporio_music_backend.contracts import ChatRequest, ChatResponse, ExecutionContext
+from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,

@@ -13,7 +13,8 @@ from pydantic_ai.usage import UsageLimits
 
 from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ExecutionContext, ProductSearchQuery
+from emporio_music_backend.contracts.catalog import ProductSearchQuery
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )

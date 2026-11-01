@@ -9,14 +9,12 @@ from pydantic_ai.models import Model
 
 from emporio_music_backend.agent.factory import PydanticAgentExecutor, create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import (
-    ExecutionContext,
-    NonblankText,
-    PaymentMethod,
-    ProductSearchQuery,
-)
+from emporio_music_backend.contracts.base import NonblankText
+from emporio_music_backend.contracts.catalog import ProductSearchQuery
+from emporio_music_backend.contracts.conversations import ExecutionContext
+from emporio_music_backend.contracts.pricing import PaymentMethod
 from emporio_music_backend.diagnostics import trace
-from emporio_music_backend.ports import ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
 
 BRLAmount = Annotated[
     Decimal,

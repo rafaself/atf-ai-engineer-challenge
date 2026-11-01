@@ -26,10 +26,9 @@ import emporio_music_backend.api.app as api_app
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.application import ChatService
-from emporio_music_backend.contracts import (
-    ChatRequest,
-    CustomerIdentity,
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import ChatRequest
+from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
@@ -37,6 +36,7 @@ from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     ConfigurationError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
@@ -49,7 +49,8 @@ from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderReposi
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.ports import OrderRepository, ProductRepository
+from emporio_music_backend.ports.catalog import ProductRepository
+from emporio_music_backend.ports.orders import OrderRepository
 
 DATA = Path(__file__).parents[3] / "data"
 

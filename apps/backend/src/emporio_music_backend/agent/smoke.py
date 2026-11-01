@@ -12,7 +12,7 @@ from pydantic_ai.usage import UsageLimits
 
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ExecutionContext
+from emporio_music_backend.contracts.conversations import ExecutionContext
 
 
 async def probe() -> dict[str, object]:

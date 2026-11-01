@@ -7,11 +7,9 @@ from typing import cast
 
 import pytest
 
-from emporio_music_backend.application import ChatService
-from emporio_music_backend.contracts import (
-    AgentResponse,
-    ChatRequest,
-    CustomerIdentity,
+from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.contracts.chat import AgentResponse, ChatRequest
+from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
@@ -23,6 +21,7 @@ from emporio_music_backend.contracts.errors import (
     SessionAccessError,
     SessionConflictError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )

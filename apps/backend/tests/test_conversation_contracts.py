@@ -6,16 +6,16 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from emporio_music_backend.contracts import (
+from emporio_music_backend.contracts.conversations import (
     ConversationMessage,
     ConversationSession,
-    CustomerIdentity,
     ExecutionContext,
 )
 from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     SessionAccessError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 
 
 def test_history_requires_an_owned_session_and_complete_turns() -> None:
@@ -87,7 +87,7 @@ def test_credentials_and_provider_roles_do_not_belong_in_contracts() -> None:
 
 
 if TYPE_CHECKING:
-    from emporio_music_backend.ports import CustomerIdentityResolver
+    from emporio_music_backend.ports.identity import CustomerIdentityResolver
 
     class FakeIdentityResolver:
         def resolve(self, credential: str | None) -> CustomerIdentity:

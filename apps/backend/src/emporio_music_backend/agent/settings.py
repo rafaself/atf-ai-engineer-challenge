@@ -5,7 +5,7 @@ from collections.abc import Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from emporio_music_backend.contracts import NonblankText
+from emporio_music_backend.contracts.base import NonblankText
 from emporio_music_backend.contracts.errors import ConfigurationError
 
 

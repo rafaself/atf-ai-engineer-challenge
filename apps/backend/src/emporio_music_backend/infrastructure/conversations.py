@@ -8,12 +8,11 @@ from uuid import UUID
 
 from pydantic import ValidationError
 
-from emporio_music_backend.contracts import (
-    ChatRequest,
+from emporio_music_backend.contracts.chat import ChatRequest
+from emporio_music_backend.contracts.conversations import (
     ConversationMessage,
     ConversationSession,
     ConversationSnapshot,
-    CustomerIdentity,
     ExecutionContext,
     HistoryLimits,
 )
@@ -21,6 +20,7 @@ from emporio_music_backend.contracts.errors import (
     ConversationPersistenceError,
     SessionAccessError,
 )
+from emporio_music_backend.contracts.identity import CustomerIdentity
 
 _APPLICATION_ID = 0x454D434F
 _SCHEMA_VERSION = 1

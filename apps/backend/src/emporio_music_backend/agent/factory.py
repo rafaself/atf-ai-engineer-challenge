@@ -29,7 +29,8 @@ from pydantic_ai.usage import UsageLimits
 from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.agent.persona import STORE_INSTRUCTIONS
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import AgentResponse, ChatRequest, ExecutionContext
+from emporio_music_backend.contracts.chat import AgentResponse, ChatRequest
+from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
