@@ -15,6 +15,12 @@ _INTERNAL_MARKUP = re.compile(
     re.IGNORECASE,
 )
 _BRL_PRICE = re.compile(r"R\$\s*([+-]?\d+(?:[.,]\d+)*)")
+_POLICY_CITATION = re.compile(
+    r"\[pol[ií]tica\s+(?P<section>capa|\d+(?:\.\d+)?),\s*"
+    r"p{1,2}\.\s*(?P<pages>\d+(?:\s*,\s*\d+)*)\]",
+    re.IGNORECASE,
+)
+_POLICY_CITATION_MARKER = re.compile(r"\[pol[ií]tica\b", re.IGNORECASE)
 
 
 def _brl_amount(text: str) -> Decimal:
@@ -30,6 +36,9 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     invalid_answer = not answer.strip() or bool(_INTERNAL_MARKUP.search(answer))
     has_discount = False
     current_amount_values: list[object] = []
+    policy_sources: set[tuple[str, int]] = set()
+    policy_amount_sources: dict[Decimal, set[tuple[str, int]]] = {}
+    has_policy_evidence = False
     totals: set[int] = set()
     order_totals: set[int] = set()
     item_totals: set[int] = set()
@@ -40,6 +49,39 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             if ctx.run_id is None or message.run_id != ctx.run_id:
                 continue
             if isinstance(part, ToolReturnPart) and isinstance(part.content, dict):
+                if part.tool_name == "search_store_policies":
+                    policy_records = part.content.get("records")
+                    if part.content.get("status") == "evidence_found" and isinstance(
+                        policy_records, list
+                    ):
+                        for record in policy_records:
+                            if (
+                                not isinstance(record, dict)
+                                or record.get("source") != "store_policies.pdf"
+                                or not isinstance(record.get("section"), str)
+                                or not isinstance(record.get("pages"), list)
+                                or not isinstance(record.get("text"), str)
+                            ):
+                                continue
+                            section = record["section"]
+                            pages = [
+                                page
+                                for page in record["pages"]
+                                if type(page) is int and page > 0
+                            ]
+                            references = {(section, page) for page in pages}
+                            if references:
+                                has_policy_evidence = True
+                                policy_sources.update(references)
+                            for value in _BRL_PRICE.findall(record["text"]):
+                                try:
+                                    amount = _brl_amount(value)
+                                except InvalidOperation:
+                                    continue
+                                policy_amount_sources.setdefault(amount, set()).update(
+                                    references
+                                )
+                                current_amount_values.append(str(amount))
                 if part.tool_name in {
                     "search_available_products",
                     "get_product_details",
@@ -99,18 +141,46 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         if isinstance(value, (str, int, float)) and not isinstance(value, bool)
     }
     try:
-        unsupported_price = any(
-            _brl_amount(value) not in tool_amounts
-            for value in _BRL_PRICE.findall(answer)
-        )
+        answer_amounts = [_brl_amount(value) for value in _BRL_PRICE.findall(answer)]
+        unsupported_price = any(amount not in tool_amounts for amount in answer_amounts)
     except InvalidOperation:
         unsupported_price = True
-    if invalid_answer or unsupported_price:
+        answer_amounts = []
+    citations: set[tuple[str, int]] = set()
+    citation_matches = list(_POLICY_CITATION.finditer(answer))
+    for match in citation_matches:
+        section = (
+            "cover"
+            if match.group("section").lower() == "capa"
+            else match.group("section")
+        )
+        citations.update(
+            (section, int(page.strip())) for page in match.group("pages").split(",")
+        )
+    malformed_citation = len(citation_matches) != len(
+        _POLICY_CITATION_MARKER.findall(answer)
+    )
+    invalid_policy_citation = has_policy_evidence and (
+        not citations
+        or malformed_citation
+        or not citations <= policy_sources
+        or any(
+            amount in policy_amount_sources
+            and not citations.intersection(policy_amount_sources[amount])
+            for amount in answer_amounts
+        )
+    )
+    if invalid_answer or unsupported_price or invalid_policy_citation:
+        reason = (
+            "blank_or_internal_markup"
+            if invalid_answer
+            else "unsupported_price"
+            if unsupported_price
+            else "unsupported_policy_citation"
+        )
         trace(
             "output.rejected",
-            reason="blank_or_internal_markup"
-            if invalid_answer
-            else "unsupported_price",
+            reason=reason,
             retry=ctx.retry,
         )
         tool_amount_text = ", ".join(
@@ -126,6 +196,10 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "compare com 'seu orçamento' sem repetir a quantia. "
             "Se faltam os valores necessários, consulte a ferramenta adequada "
             "nesta rodada antes de responder. "
+            "Para fatos de política, cite a seção e página retornadas nesta rodada, "
+            "no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor "
+            "de política e explique a condição aplicável; a presença do valor no trecho "
+            "não prova que ele se aplica ao caso. "
             f"Preços/totais das ferramentas: {tool_amount_text or 'nenhum'}."
         )
     notices = [

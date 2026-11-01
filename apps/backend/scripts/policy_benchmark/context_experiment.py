@@ -9,11 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from emporio_music_backend.agent.output import _BRL_PRICE, _brl_amount
+from emporio_music_backend.infrastructure.policy_index import PolicyIndex
 from emporio_music_backend.paths import DATA_DIRECTORY
+from emporio_music_backend.policy_retrieval import expand
 from scripts.policy_benchmark.embeddings import Embedder
 from scripts.policy_benchmark.evaluation import query_families, score
-from scripts.policy_benchmark.expansion import expand
-from scripts.policy_benchmark.index import PolicyIndex
 from scripts.policy_benchmark.run import load_inputs
 
 DIRECTORY = DATA_DIRECTORY.parent / "docs" / "benchmarks" / "expansion"

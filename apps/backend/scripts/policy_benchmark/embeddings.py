@@ -1,13 +1,18 @@
 """Two explicit embedding configurations, with no import-time model loading."""
 
-import importlib
 import json
 import math
 from typing import Any
 
-E5_REVISION = "d128750597153bb5987e10b1c3493a34e5a4502a"
+from emporio_music_backend.infrastructure.policy_embeddings import (
+    E5_CONFIG,
+    E5_MODEL,
+    E5_REVISION,
+    E5Embedder,
+)
+
 MODELS = {
-    "e5": "intfloat/multilingual-e5-base",
+    "e5": E5_MODEL,
     "titan": "amazon.titan-embed-text-v2:0",
 }
 # USD / 1K input tokens, official AWS pricing checked 2026-11-01.
@@ -48,20 +53,10 @@ class Embedder:
         self.token_counts: list[int] = []
         self.calls = 0
         self.client: Any = None
-        self.model: Any = None
-        self.tokenizer: Any = None
+        self.local_e5: E5Embedder | None = None
         if name == "e5":
-            model_type = importlib.import_module(
-                "sentence_transformers"
-            ).SentenceTransformer
-            self.model = model_type(
-                MODELS[name],
-                revision=E5_REVISION,
-                device="cpu",
-                local_files_only=not allow_download,
-                trust_remote_code=False,
-            )
-            self.tokenizer = self.model.tokenizer
+            self.local_e5 = E5Embedder(allow_download=allow_download)
+            self.config = dict(E5_CONFIG)
         else:
             import boto3  # type: ignore[import-untyped]
             from botocore.config import Config  # type: ignore[import-untyped]
@@ -76,41 +71,27 @@ class Embedder:
             )
 
     def embed(self, texts: list[str], *, query: bool) -> list[list[float]]:
-        prepared = (
-            [("query: " if query else "passage: ") + t for t in texts]
-            if self.name == "e5"
-            else texts
-        )
-        counts = []
-        for text in prepared:
-            if not text.strip():
-                raise ValueError("Empty embedding input")
-            if self.tokenizer is not None:
-                count = len(
-                    self.tokenizer.encode(
-                        text, add_special_tokens=True, truncation=False
-                    )
-                )
-                if count > 512:
-                    raise ValueError(
-                        "Embedding input exceeds tokenizer limit; revise corpus explicitly"
-                    )
-            else:
+        if self.name == "e5":
+            if self.local_e5 is None:
+                raise ValueError("E5 embedder is unavailable")
+            vectors = self.local_e5.embed(texts, query=query)
+            counts = self.local_e5.last_token_counts
+            self.tokens += sum(counts)
+            self.token_counts.extend(counts)
+        else:
+            counts = []
+            for text in texts:
+                if not text.strip():
+                    raise ValueError("Empty embedding input")
                 # Titan tokenizer is not public: conservative byte bound before the
                 # non-truncating API; exact inputTextTokenCount is checked afterwards.
                 count = len(text.encode("utf-8"))
                 if count > 8192 or len(text) > 50000:
                     raise ValueError("Titan conservative input bound exceeded")
-            counts.append(count)
-        self.token_counts.extend(counts)
-        if self.name == "e5":
-            vectors = self.model.encode(
-                prepared, normalize_embeddings=True, show_progress_bar=False
-            ).tolist()
-            self.tokens += sum(counts)
-        else:
+                counts.append(count)
+            self.token_counts.extend(counts)
             vectors = []
-            for text in prepared:
+            for text in texts:
                 # Reserve worst-case accepted token use BEFORE the request, including
                 # failed calls; SDK retries are disabled. No inferred billing refunds.
                 upper = 8192

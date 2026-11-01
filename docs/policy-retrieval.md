@@ -1,8 +1,8 @@
-# Policy corpus and evaluation protocol (US-14)
+# Policy corpus, runtime retrieval and evaluation protocol
 
-Status: local corpus preparation only; no embeddings, index or agent integration.
-Related: #50, parent #49. US-14 delivers corpus preparation and the frozen
-evaluation protocol; retrieval and live answer quality remain later-story work.
+Status: US-14 corpus and US-15 benchmark are complete. US-16 adds the existing-agent
+policy tool on this branch; US-17 still owns reviewed answer-quality evidence.
+Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
 ## Reproduce offline
 
@@ -19,6 +19,54 @@ Poppler layout extraction and writes versionable `data/policies/corpus.json`.
 No credentials, model downloads, network, or new Python dependencies are needed.
 It is never invoked by application startup. Missing Poppler/extraction failure is
 an error, not an empty corpus. The source is never modified.
+
+## Runtime retrieval (US-16)
+
+Install the opt-in runtime libraries with:
+
+```bash
+uv sync --project apps/backend --locked --extra policy-rag
+```
+
+The default dependency set remains unchanged. Before answering policy questions,
+explicitly build the ignored E5 Chroma collection using the existing benchmark runner:
+
+```bash
+uv run --project apps/backend --extra policy-rag --locked \
+  python -m scripts.policy_benchmark.run --model e5 --index --allow-download \
+  --output-dir /tmp/policy-rag-bootstrap
+```
+
+This command may download the pinned `intfloat/multilingual-e5-base` weights after
+the explicit `--allow-download` flag, builds `data/policy-indexes/policy-e5`, and
+stores its development comparison report under `/tmp`. Generated weights and index
+data are ignored. The application never downloads weights or builds/rebuilds the index;
+on the first policy-tool use it opens the existing collection and loads only cached E5
+weights on CPU (`local_files_only`). A missing or stale corpus, model or index raises a
+retrieval error surfaced through the existing sanitized HTTP 503 contract. It is never
+reported to the customer as “no policy found.”
+
+The runtime verifies the PDF hash, canonical corpus hash, parser version, index
+fingerprint and exact indexable record IDs. It embeds only the current policy question
+with E5's `query:` prefix, uses the same frozen query-derived family filters as US-15,
+retrieves the three highest-ranked seeds, and adds only the authored one-hop
+relationships from the fixed manual, capped at eight records. Each excerpt includes
+the source, section hierarchy and physical page. Customer answers cite those references
+as `[política 5.1, p. 4]`; each policy amount must cite a
+returned section that contains it and explain the applicable condition. Retrieved text
+is data, not an instruction source. The product, pricing and customer-order tools remain
+separate and deterministic.
+
+The search has no calibrated similarity threshold. A non-empty nearest-neighbor result
+is a candidate, not proof that it answers the question. If the excerpts do not directly
+support a claim or leave an eligibility fact unresolved, the persona must state that the
+retrieved evidence is insufficient, ask for missing customer facts where useful, and
+avoid claims based on the manual's silence. An empty successful result is marked
+`insufficient_evidence`; model/index errors remain operational failures. US-15 found no
+configuration meeting every frozen target, so E5 with metadata filtering and this bounded
+expansion remain provisional. The prior full-policy-context comparison did not establish
+reliable answers either. US-17 must review real conversations; these controls and offline
+tests do not establish generated-answer quality.
 
 ## Preparation decisions
 
@@ -104,16 +152,13 @@ text, with the same rule across configurations, and cannot use gold labels.
 ## Permission and later work
 
 Source provenance and original checksums are in `data/README.md`. On 2026-11-01, the
-owner confirmed the manual is fictional and explicitly approved versioning the extracted
-corpus, superseding the former ignored-output/distribution gate. `corpus.json` is a
-reviewable repository artifact; the original PDF stays unchanged. Raw layout output is
-reproducible with `pdftotext -layout` and need not be tracked. Normalization removes PDF
-presentation noise and makes table relationships explicit for retrieval and lower-cost
-generators. No quality/token-cost improvement is claimed before US-15/US-17 measure it.
-Existing section IDs and gold labels are unchanged; the cover contact has its own ID.
-The parser version and frozen chunk hash are revised before benchmarking. External
-provider processing has not been performed or separately authorized. Paid runs
-additionally require explicit opt-in, confirmed region/access and a bounded cost
-estimate. US-15 implements comparisons; US-16 integrates the existing agent; US-17
-evaluates generated answers. Review this delivery before beginning those dependent
-stories.
+owner confirmed the manual is fictional and approved versioning the extracted corpus;
+the original PDF stays unchanged. Raw layout output is reproducible with
+`pdftotext -layout` and need not be tracked. Normalization removes PDF presentation
+noise and makes table relationships explicit for retrieval and lower-cost generators.
+No quality improvement is claimed from that choice. The owner separately approved the
+US-15 fictional-data Titan V2 benchmark in `us-east-1` with a total paid-run cap of US$1.
+US-16 runtime embeddings use local E5; this story makes no paid provider calls. Any new
+external processing or paid runs require their own explicit authorization and bounded
+scope. Existing section IDs and gold labels remain unchanged; the cover contact has its
+own ID.
