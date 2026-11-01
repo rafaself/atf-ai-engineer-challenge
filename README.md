@@ -73,7 +73,8 @@ selected after the bounded comparison reproduced invalid PIX answers with Nova
 Micro/Lite and Qwen passed the final conversations. Pydantic AI provides typed
 function calling; straightforward Python/SQL handles the small structured dataset.
 Existing `.env` files should set `BEDROCK_MODEL_ID=qwen.qwen3-32b-v1:0` to use this selection.
-The policy PDF will use a separate simple lookup. No vector store is needed here.
+Policy retrieval is planned in [Sprint 3](docs/sprint-3.md) using embedded
+ChromaDB. It is not implemented yet; SQLite remains the operational/history store.
 
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
 The small `paths.py` module derives `PROJECT_ROOT` from its source location and
@@ -116,3 +117,5 @@ OpenAI Codex assisted with analysis, implementation, tests, review and GitHub de
 Scoped commits and PRs record that workflow; controlled test answers are not claimed
 as live model-quality evidence. Preserve source bytes and reference the related issue
 in every commit body. See [working agreements](AGENTS.md).
+
+See [US-14 policy corpus preparation and evaluation protocol](docs/policy-retrieval.md) for offline preparation; policy answers remain unimplemented.
