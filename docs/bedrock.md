@@ -88,8 +88,15 @@ or answer quality; the separate reviewed live captures provide scenario evidence
 US-12 extends both product tools with `payment_method="standard"|"pix"` and
 search with `promotions_only`. Original prices remain in `price_centavos/price_brl`;
 typed `pricing` supplies the exact final price, applied percentage and offer source.
-Budget filters use payable prices. Current-run discounted products receive factual
-price disclosures. Re-import the generated catalog with `--promotions` before use;
+Budget filters use payable prices. The model presents returned price details once;
+the application adds a concise snapshot notice for current-run discounted products.
+An explicit `R$` amount absent from current-run quotes/totals, search bounds and
+customer messages triggers the existing output retry; exhaustion fails safely.
+Customer amounts can be echoed as context, not used as confirmed tool prices.
+This is a numeric
+check, not proof of correct price labels or complete answer grounding. Its current
+verification is offline; see the [simplification review](examples/simplification-review.md).
+Re-import the generated catalog with `--promotions` before use;
 see [pricing rules and source limits](catalog.md). The Sprint 2 evidence includes
 a real non-stacking PIX follow-up and preserves its earlier failed attempt.
 Further provider evaluation remains opt-in.
@@ -118,9 +125,10 @@ and response-loss limits are in [architecture](architecture.md).
 Guests use empty identity context and can persist catalog conversations. Non-null
 HTTP customer selection is registry-validated before session/model access; it is
 local fictional selection, not authentication. SDK dependencies carry selected
-scope separately from model messages. The existing smoke/examples modules remain
-independent catalog probes. US-13's reviewed conversations used the full HTTP
-composition and persisted sessions; see [the evidence index](examples/sprint-2/README.md)
+scope separately from model messages. The smoke module remains an independent
+provider probe; the historical catalog-only recorder is retired. US-13's reviewed
+conversations used the full HTTP composition and persisted sessions; see
+[the evidence index](examples/sprint-2/README.md)
 and [API setup](api.md). Store-policy retrieval/evaluation belongs to the later
 retrieval sprint and is not part of Sprint 2 acceptance.
 

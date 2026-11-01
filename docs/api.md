@@ -1,7 +1,7 @@
 # Local chat API
 
 Use the [README](../README.md) for the two preparation/run commands. Run one uvicorn
-process on loopback. Setup reads the same environment paths as the API and never
+process on loopback. Setup uses the same fixed storage paths as the API and never
 opens the conversation database. The application does not load `.env` automatically;
 `uv --env-file .env` does. Existing shell variables take precedence.
 
@@ -37,7 +37,7 @@ customer selection to continue, for example:
 {"message":"Detalhe o primeiro pedido","customer_id":1,"session_id":"<returned-id>"}
 ```
 
-Omit `session_id` to start another chat. Explicit null/invalid session IDs are
+Omit `session_id` or send null to start another chat. Invalid non-null IDs are
 rejected. Guest/customer switching and customer changes require a new session;
 unknown or differently scoped session IDs return the same 404 without model execution.
 Guest sessions are distinguished only by their IDs: anyone with a guest session ID
@@ -63,9 +63,9 @@ Docs/OpenAPI require no provider setup.
 | `PIPELINE_LOGS` | 0; set 1 for metadata diagnostics |
 
 Storage paths are fixed in `emporio_music_backend.paths`, beneath the project root's
-`data/` directory: `catalog.sqlite3`, `operations.sqlite3`, `conversations.sqlite3`
-and `chroma/` (reserved; no ChromaDB adapter yet). PROJECT_ROOT derives from the
-package's source location; the launch directory and environment do not redirect storage.
+`data/` directory: `catalog.sqlite3`, `operations.sqlite3` and `conversations.sqlite3`.
+PROJECT_ROOT derives from the package's source location; the launch directory and
+environment do not redirect storage.
 Conversation files are private; preparation refreshes only source snapshots. Before
 using this version with a v1 conversation database, stop the server and move that
 file aside, preserving it. Startup then creates a fresh database at the fixed path.

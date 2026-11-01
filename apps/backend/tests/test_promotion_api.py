@@ -123,6 +123,13 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                             f"{index}. {p['name']}"
                             for index, p in enumerate(payload["products"], 1)
                         )
+                        + "\n\n"
+                        + "\n".join(
+                            f"R$ {p['price_brl'].replace('.', ',')}; "
+                            f"{p['pricing']['discount_percent']}%; "
+                            f"final R$ {p['pricing']['final_price_brl'].replace('.', ',')}"
+                            for p in payload["products"]
+                        )
                     )
                 ]
             )
@@ -131,6 +138,11 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                 TextPart(
                     "Consulta atual: "
                     + payload["products"][0]["pricing"]["final_price_brl"]
+                    + (
+                        f"; desconto: {payload['products'][0]['pricing']['discount_percent']}%"
+                        if payload["products"][0]["pricing"]["discount_percent"]
+                        else ""
+                    )
                 )
             ]
         )
@@ -150,6 +162,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
         answer = first.json()["answer"]
         assert "359,00" in answer and "323,10" in answer and "10%" in answer
         assert "549,00" in answer and "439,20" in answer and "20%" in answer
+        assert answer.count("323,10") == answer.count("439,20") == 1
         assert "seleção" in answer and "4" in answer and "fotografia" in answer
         session = first.json()["session_id"]
         followup = client.post(

@@ -78,8 +78,7 @@ arguments. Prior answers preserve references but are not current factual evidenc
 
 `paths.py` defines PROJECT_ROOT from the package's source location and the fixed
 `data/catalog.sqlite3`, `data/operations.sqlite3`, `data/conversations.sqlite3`
-and `data/chroma/` locations. ChromaDB itself is not integrated yet. Preparation,
-HTTP composition, individual import commands and the live recorder share these
+locations. Preparation, HTTP composition and individual import commands share these
 constants; environment storage paths, CLI database overrides, repeated resolution
 and collision checks are removed. Low-level repositories/import functions accept
 explicit absolute paths so tests can use temporary storage. No path factory or
@@ -105,8 +104,15 @@ and missing orders have the same result. Contacts, notes and payment methods are
 excluded. Copied product references and historical totals survive catalog changes.
 See [catalog](catalog.md) and [orders](orders.md).
 
-The output validator rejects blank/internal markup and adds current-run truncation
-and price disclosures. Discounted products share one concise snapshot notice.
+Tools own exact price calculations; the model presents the original price,
+discount and final price once. The output validator rejects blank/internal markup
+and adds current-run truncation disclosures and one concise discount snapshot notice.
+It rejects explicit `R$` amounts absent from current-run quotes/totals, search
+price bounds and customer messages, using the existing single retry. Customer
+amounts are tracked separately so budget references need no extra search; they
+are context, not confirmed prices. Assistant history and old tool results do not
+establish current prices. The check does not prove correct price associations,
+labels, percentages or every factual claim.
 Diagnostics allow metadata only. This is not a universal semantic grounding check.
 
 ## Evidence and limits
@@ -117,6 +123,10 @@ language understanding or tool selection. [US-13 live evidence](examples/sprint-
 records observed catalog/context, promotion/PIX and order behavior, including two
 failed attempts and focused instruction corrections. Policy lookup/evaluation
 remains in the later retrieval sprint, outside Sprint 2 acceptance.
+
+The [simplification review](examples/simplification-review.md) records later live
+failures and the resulting price check. That check is verified offline; the owner
+declined further paid evaluation after it was added.
 
 [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
 approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation

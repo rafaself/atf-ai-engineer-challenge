@@ -1,3 +1,33 @@
+# Latest simplification verification
+
+The local cleanup accepts omitted/null session IDs as new conversations, retires
+only the catalog recorder and its dedicated tests, removes the unused ChromaDB
+placeholder, and removes repeated price recaps. Individual importer commands,
+provider smoke probe and core SQLite/pricing/isolation mechanisms remain.
+
+Two focused regressions failed before implementation: null sessions returned 422,
+and price output repeated each product. Later, a real response quoted R$405.28
+against a R$439.20 tool result. Both new retry/failure cases were observed failing
+before the approved numeric check was added. Tests now protect those boundaries
+without relying on the removed per-product footer to supply model answer content.
+
+Seven opted-in Bedrock conversations (21 turns) produced mixed results; the
+[simplification review](examples/simplification-review.md) preserves actual failures
+and explains prompt revisions. The owner declined further paid calls after the
+price check was implemented, so its verification is offline only. Earlier passing
+examples are historical evidence, not final-code live acceptance.
+
+Review follow-up: valid budget comparisons and clarification questions returned
+HTTP 500 because their customer-stated amounts were absent from tool results.
+Both regressions failed before the fix. Customer amounts now remain a separate
+context source, including earlier user turns; old assistant/tool values do not
+become current prices. Existing invented-price retry/failure checks still pass
+when a customer budget is present. Malformed customer amounts are ignored safely.
+
+Final offline checks: 257 tests, Ruff lint/format, strict mypy (69 files), and
+source/wheel builds pass. All 14 supplied CSV/PDF files and earlier capture contents
+remain unchanged. No dependencies were added. These checks precede PR publication.
+
 # Current Sprint 2 functional validation (US-13)
 
 The owner explicitly opted into bounded paid Bedrock evaluation. Five conversations

@@ -131,6 +131,50 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
         assert products[0]["available"] == (stock > 0)
 
 
+@pytest.mark.parametrize("lookup_product", [True, False])
+def test_customer_budget_can_be_repeated_without_a_search_call(
+    operational_database: Path,
+    conversations: SQLiteConversationRepository,
+    lookup_product: bool,
+) -> None:
+    answer = (
+        "O GD20 custa R$ 2.199,00, acima do seu orçamento de R$ 1.000."
+        if lookup_product
+        else "Que tipo de instrumento você procura com o orçamento de R$ 1.000?"
+    )
+    calls = 0
+
+    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal calls
+        calls += 1
+        returned = [
+            part
+            for message in messages
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        ]
+        if lookup_product and not returned:
+            return ModelResponse(
+                parts=[ToolCallPart("get_product_details", {"product_name": "GD20"})]
+            )
+        return ModelResponse(parts=[TextPart(answer)])
+
+    executor = create_catalog_agent(
+        AgentSettings(),
+        SQLiteProductRepository(
+            operational_database.parent / "operational-catalog.sqlite3"
+        ),
+        model=FunctionModel(model),
+    )
+    with TestClient(create_app(ChatService(executor, conversations))) as client:
+        response = client.post(
+            "/api/chat", json={"message": "Tenho R$ 1.000. Pode me ajudar?"}
+        )
+    assert response.status_code == 200
+    assert response.json()["answer"] == answer
+    assert calls == (2 if lookup_product else 1)
+
+
 def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices(
     tmp_path: Path,
     conversations: SQLiteConversationRepository,
