@@ -7,8 +7,12 @@ across restarts. Run one local server process; this is a challenge demonstration
 
 Store-policy search is now wired into the existing agent through a local E5/Chroma
 index. The index and model are prepared explicitly; the assistant reports uncertainty
-when retrieved excerpts do not support an answer. End-to-end model answer quality is
-still pending the reviewed scenarios in US-17. [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
+when retrieved excerpts do not support an answer. US-17 reviewed four paired
+Portuguese conversations on 2026-11-01 using RAG and full-policy context. The
+review preserved a RAG HTTP 500, missed policy-tool calls, a wrong citation and
+unsupported claims; it does not establish that either context strategy is reliable
+or that retrieval meets the frozen US-15 targets. See the [paired results](docs/examples/us-17/results.md)
+and [captures](docs/examples/us-17/captures.json). Earlier [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
 cover budget/context, promotions/PIX and scoped orders at their recorded revision.
 They predate the current source-only monetary guard: budget comparisons now say
 “seu orçamento” without repeating customer amounts. This guard change is verified
@@ -126,8 +130,10 @@ Contracts and protocols are grouped by responsibility. Import definitions direct
 `application.chat.ChatService`); package initializers hold no implementation.
 
 Start here; use the [documentation index](docs/README.md) for implementation details
-and historical decisions. Three representative live conversations are reviewed;
-US-17 reviews policy grounding, uncertainty, tool selection and full-context trade-offs.
+and historical decisions. Three Sprint 2 conversations and four US-17 paired
+policy scenarios are descriptive evidence, not a guarantee of future answers. See
+the [US-17 results](docs/examples/us-17/results.md) for grounding, uncertainty,
+tool-selection and full-context findings.
 Frontend, deployment and production authentication are outside the current demo. The recruiting email determines the submission cutoff.
 
 OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.

@@ -1,0 +1,2504 @@
+{
+  "description": "Sanitized ordered evidence from the eight approved POST /api/chat invocations. Session/provider response identifiers and timestamps inside SDK messages are omitted; prompts, model text, retry feedback, tool calls, tool results, usage, and elapsed measurements are preserved.",
+  "authorization": "Four paired cases, Qwen3 32B in us-east-1, no more than five model requests/tool calls and 1024 output tokens per request, total accounted estimate capped at USD 0.50.",
+  "source_freeze": {
+    "version": 1,
+    "parser_version": "poppler-normalized-sections-v3",
+    "extractor_version": "pdftotext version 25.07.0",
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c",
+    "chunks_sha256": "6426725ac6f20628474ea4175814726ff968a08127491b239515ba6b8219303d"
+  },
+  "cost_assumption_usd_per_million_tokens": {
+    "input": 0.2,
+    "output": 0.8,
+    "source_note": "Conservative prior benchmark estimate, not an invoice rate"
+  },
+  "runs": [
+    {
+      "case_id": "hours",
+      "mode": "full",
+      "captured_at_utc": "2026-11-01T22:13:24.341004+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "A loja atende em feriados pelo WhatsApp? E o horário pode mudar no Natal?",
+      "http_status": 200,
+      "http_elapsed_seconds": 3.2946672059988487,
+      "http_response": {
+        "answer": "O atendimento via WhatsApp da Empório da Música segue os mesmos horários de funcionamento da loja, com respostas automáticas fora do expediente. Em dias normais, o atendimento é de segunda a sexta-feira das 09:00 às 18:00, e aos sábados das 09:00 às 13:00. No Natal, o horário pode ser estendido, e as alterações são comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp [política 2, p. 2]."
+      },
+      "usage_totals": {
+        "requests": 3,
+        "input_tokens": 19272,
+        "output_tokens": 281
+      },
+      "estimated_cost_usd": 0.0040792,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": null,
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 3,
+            "input_tokens": 19272,
+            "output_tokens": 281
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "A loja atende em feriados pelo WhatsApp? E o horário pode mudar no Natal?"
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "search_store_policies",
+                  "arguments": {
+                    "query": "atendimento em feriados pelo WhatsApp"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "search_store_policies",
+                  "result": {
+                    "status": "evidence_found",
+                    "records": [
+                      {
+                        "id": "policy-v2.1-cover",
+                        "source": "store_policies.pdf",
+                        "section": "cover",
+                        "hierarchy": [
+                          "Capa — contato"
+                        ],
+                        "pages": [
+                          1
+                        ],
+                        "text": "Capa — contato\n(67) 3341-4444 — contato@emporiodamusica.com.br"
+                      },
+                      {
+                        "id": "policy-v2.1-s1",
+                        "source": "store_policies.pdf",
+                        "section": "1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1. Sobre a Empório da Música\nA Empório da Música é uma loja especializada em instrumentos musicais, fundada em 2008 em Campo Grande, Mato Grosso do Sul. Com mais de 15 anos de atuação no mercado, somos referência regional na venda de instrumentos para músicos iniciantes, intermediários e profissionais. Nosso catálogo abrange mais de 300 instrumentos de marcas nacionais e internacionais, incluindo guitarras, baixos, violões, baterias, teclados, instrumentos de sopro, cordas orquestrais e ukuleles. Trabalhamos exclusivamente com instrumentos musicais — não comercializamos acessórios como cordas, palhetas, cabos, cases, pedais ou amplificadores."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.1",
+                        "source": "store_policies.pdf",
+                        "section": "1.1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.1 Missão"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.1 Missão\nDemocratizar o acesso a instrumentos musicais de qualidade na região Centro-Oeste, oferecendo atendimento especializado e preços competitivos, contribuindo para o desenvolvimento cultural e musical da comunidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.2",
+                        "source": "store_policies.pdf",
+                        "section": "1.2",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.2 Dados da Empresa"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.2 Dados da Empresa\nCampo: Razão Social | Informação: Empório da Música Instrumentos Musicais Ltda.\nCampo: Nome Fantasia | Informação: Empório da Música\nCampo: CNPJ | Informação: 12.345.678/0001-90\nCampo: Endereço | Informação: Rua 14 de Maio, 3200 — Centro, Campo Grande - MS, 79202-333\nCampo: Telefone / WhatsApp | Informação: (67) 3341-4444\nCampo: E-mail | Informação: contato@empóriodamusica.com.br\nCampo: Fundação | Informação: 2008"
+                      },
+                      {
+                        "id": "policy-v2.1-s2",
+                        "source": "store_policies.pdf",
+                        "section": "2",
+                        "hierarchy": [
+                          "2 Horário de Funcionamento"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+                      },
+                      {
+                        "id": "policy-v2.1-s3",
+                        "source": "store_policies.pdf",
+                        "section": "3",
+                        "hierarchy": [
+                          "3 Formas de Pagamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3. Formas de Pagamento\nAceitamos as seguintes formas de pagamento para compras presenciais e online:\nForma: PIX | Condições: Pagamento à vista | Observações: 5% de desconto sobre o preço de tabela\nForma: Cartão de Débito | Condições: Pagamento à vista | Observações: Todas as bandeiras aceitas\nForma: Cartão de Crédito | Condições: Até 12x sem juros | Observações: Parcela mínima de R$ 100,00\nForma: Boleto Bancário | Condições: Pagamento à vista | Observações: Compensação em até 3 dias úteis"
+                      },
+                      {
+                        "id": "policy-v2.1-s3.1",
+                        "source": "store_policies.pdf",
+                        "section": "3.1",
+                        "hierarchy": [
+                          "3 Formas de Pagamento",
+                          "3.1 Regras de Parcelamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3.1 Regras de Parcelamento\n• Parcelamento em até 3x: sem juros, sem valor mínimo de parcela (exceto abaixo de R$ 50,00).\n• Parcelamento de 4x a 6x: sem juros, parcela mínima de R$ 80,00.\n• Parcelamento de 7x a 12x: sem juros, parcela mínima de R$ 100,00.\n• Combinação de formas de pagamento: permitida (ex.: PIX + cartão) para compras acima de R$ 2.000,00."
+                      },
+                      {
+                        "id": "policy-v2.1-s4",
+                        "source": "store_policies.pdf",
+                        "section": "4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4. Política de Trocas e Devoluções\nA Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.1",
+                        "source": "store_policies.pdf",
+                        "section": "4.1",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.1 Direito de Arrependimento (Compras Online)"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.1 Direito de Arrependimento (Compras Online)\n• O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.\n• O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n• O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.\n• O frete de devolução é por conta da loja em caso de arrependimento."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.2",
+                        "source": "store_policies.pdf",
+                        "section": "4.2",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.2 Trocas por Defeito"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.3",
+                        "source": "store_policies.pdf",
+                        "section": "4.3",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.3 Trocas por Preferência"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.3 Trocas por Preferência\n• Trocas por preferência (cor, modelo, tamanho) são permitidas em até 7 dias, mediante disponibilidade do produto desejado.\n• O produto deve estar em perfeito estado e na embalagem original.\n• Diferenças de valor serão cobradas ou reembolsadas conforme o caso."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.4",
+                        "source": "store_policies.pdf",
+                        "section": "4.4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.4 Itens Não Elegíveis para Troca"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene."
+                      },
+                      {
+                        "id": "policy-v2.1-s5",
+                        "source": "store_policies.pdf",
+                        "section": "5",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5. Política de Frete e Entregas"
+                      },
+                      {
+                        "id": "policy-v2.1-s5.1",
+                        "source": "store_policies.pdf",
+                        "section": "5.1",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.1 Entregas na Região Metropolitana de Campo Grande"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5.1 Entregas na Região Metropolitana de Campo Grande\n• Frete grátis para pedidos acima de R$ 500,00.\n• Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.\n• Prazo de entrega: 1 a 3 dias úteis.\n• Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.2",
+                        "source": "store_policies.pdf",
+                        "section": "5.2",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.2 Entregas para Outras Cidades"
+                        ],
+                        "pages": [
+                          4,
+                          5
+                        ],
+                        "text": "5.2 Entregas para Outras Cidades\nUtilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.\nModalidade: PAC (Correios) | Prazo Estimado: 5 a 12 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: SEDEX (Correios) | Prazo Estimado: 2 a 5 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: Jadlog (.package) | Prazo Estimado: 3 a 8 dias úteis | Rastreamento: Sim | Seguro: Incluído\nO valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.3",
+                        "source": "store_policies.pdf",
+                        "section": "5.3",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.3 Código de Rastreamento"
+                        ],
+                        "pages": [
+                          5
+                        ],
+                        "text": "5.3 Código de Rastreamento\nO código de rastreamento é enviado automaticamente por e-mail e WhatsApp assim que o pedido é despachado. O formato padrão é BR seguido de 9 caracteres alfanuméricos e BR (exemplo: BR4K7M2X9P1BR). O rastreamento pode ser consultado diretamente no site dos Correios ou da Jadlog."
+                      },
+                      {
+                        "id": "policy-v2.1-s6",
+                        "source": "store_policies.pdf",
+                        "section": "6",
+                        "hierarchy": [
+                          "6 Promoções e Descontos"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6. Promoções e Descontos"
+                      },
+                      {
+                        "id": "policy-v2.1-s6.1",
+                        "source": "store_policies.pdf",
+                        "section": "6.1",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.1 Tipos de Promoção"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.1 Tipos de Promoção\nA Empório da Música realiza promoções periódicas ao longo do ano. As principais campanhas incluem:\n• Aniversário da Loja (Agosto): descontos de 10% a 25% em itens selecionados.\n• Black Friday (Novembro): descontos de 15% a 30% em todo o catálogo.\n• Volta às Aulas (Fevereiro): descontos especiais em instrumentos para estudantes.\n• Queima de Estoque: promoções pontuais para renovação de catálogo.\n• Semana do Músico: promoções na semana do Dia do Músico (22 de novembro)."
+                      },
+                      {
+                        "id": "policy-v2.1-s6.2",
+                        "source": "store_policies.pdf",
+                        "section": "6.2",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.2 Regras de Promoções"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.2 Regras de Promoções\nCumulatividade: promoções não são cumulativas. O desconto de PIX (5%) não se aplica sobre preços já promocionais.\nEstoque: promoções estão sujeitas à disponibilidade de estoque. Produtos esgotados durante a promoção não geram direito a rain check (reserva de preço).\nComunicação: preços promocionais devem sempre ser apresentados junto ao preço original e o percentual de desconto, para total transparência ao cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s7",
+                        "source": "store_policies.pdf",
+                        "section": "7",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7. Atendimento via WhatsApp\nO canal de WhatsApp (67) 3321-4500 é o principal meio de atendimento remoto da Empório da Música. O atendimento pode ser realizado por atendentes humanos ou pelo assistente virtual."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.1",
+                        "source": "store_policies.pdf",
+                        "section": "7.1",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.1 Diretrizes de Atendimento"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7.1 Diretrizes de Atendimento\nTom de voz: informal mas profissional. O cliente deve se sentir acolhido, como se estivesse conversando com um amigo que entende de música. Evitar linguagem excessivamente formal ou robotizada.\nTempo de resposta: máximo de 5 minutos durante o horário de funcionamento. Fora do expediente, o assistente virtual deve informar o horário de retorno.\nInformações precisas: nunca fornecer informações sobre preços, estoque ou prazos sem consultar o sistema. Informações incorretas geram frustração e podem configurar propaganda enganosa.\nEscopo: o atendente deve informar que a loja trabalha exclusivamente com instrumentos musicais. Pedidos de acessórios (cordas, cabos, palhetas, pedais, amplificadores, cases) devem ser educadamente redirecionados. Sugerir lojas parceiras quando possível."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.2",
+                        "source": "store_policies.pdf",
+                        "section": "7.2",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.2 Fluxo de Atendimento Padrão"
+                        ],
+                        "pages": [
+                          6,
+                          7
+                        ],
+                        "text": "7.2 Fluxo de Atendimento Padrão\n1. Saudação: cumprimentar o cliente pelo nome (se disponível) e perguntar como pode ajudar.\n2. Entendimento: identificar a necessidade do cliente (busca de produto, dúvida, rastreamento, reclamação).\n3. Consulta: buscar no sistema as informações relevantes (produto, estoque, promoção, pedido).\n4. Resposta: apresentar as opções de forma clara e objetiva, com preços e condições.\n5. Fechamento: confirmar se o cliente precisa de mais alguma coisa e encerrar com cordialidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.3",
+                        "source": "store_policies.pdf",
+                        "section": "7.3",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.3 Situações Especiais"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "7.3 Situações Especiais\nProduto fora de estoque: informar que o produto está temporariamente indisponível e sugerir alternativas semelhantes que estejam disponíveis. Nunca confirmar disponibilidade sem verificar o estoque atual.\nProduto descontinuado: informar que o produto não faz mais parte do catálogo e oferecer modelos equivalentes ou sucessores.\nPromoção expirada: caso o cliente pergunte sobre uma promoção, verificar se ela encontra-se ativa no sistema. Se a promoção estiver vencida, informar com transparência e apresentar o preço atual. Nunca prometer um desconto que não está mais vigente.\nReclamação: ouvir o cliente com empatia, registrar a reclamação e encaminhar para o responsável.\nPrazo de retorno: 24 horas úteis."
+                      },
+                      {
+                        "id": "policy-v2.1-s8",
+                        "source": "store_policies.pdf",
+                        "section": "8",
+                        "hierarchy": [
+                          "8 Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8. Garantia"
+                      },
+                      {
+                        "id": "policy-v2.1-s8.1",
+                        "source": "store_policies.pdf",
+                        "section": "8.1",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.1 Garantia Legal"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.1 Garantia Legal\nConforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.2",
+                        "source": "store_policies.pdf",
+                        "section": "8.2",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.2 Garantia do Fabricante"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.2 Garantia do Fabricante\nAlém da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.3",
+                        "source": "store_policies.pdf",
+                        "section": "8.3",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.3 O que Não Cobre a Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.3 O que Não Cobre a Garantia\n• Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).\n• Danos por mau uso, queda, exposição a condições climáticas extremas.\n• Modificações ou reparos realizados por terceiros não autorizados.\n• Danos estéticos que não afetem a funcionalidade do instrumento."
+                      },
+                      {
+                        "id": "policy-v2.1-s9",
+                        "source": "store_policies.pdf",
+                        "section": "9",
+                        "hierarchy": [
+                          "9 Privacidade e Proteção de Dados"
+                        ],
+                        "pages": [
+                          7,
+                          8
+                        ],
+                        "text": "9. Privacidade e Proteção de Dados\nA Empório da Música está em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Os dados pessoais coletados durante o atendimento (nome, telefone, e-mail, endereço) são utilizados exclusivamente para:\n• Processamento e entrega de pedidos.\n• Comunicação sobre status de pedidos e rastreamento.\n• Envio de promoções e novidades (mediante consentimento explícito do cliente).\n• Cumprimento de obrigações legais e fiscais.\nDados de clientes não são compartilhados com terceiros para fins de marketing. O cliente pode solicitar a exclusão de seus dados a qualquer momento entrando em contato pelo WhatsApp ou e-mail."
+                      },
+                      {
+                        "id": "policy-v2.1-s10",
+                        "source": "store_policies.pdf",
+                        "section": "10",
+                        "hierarchy": [
+                          "10 Disposições Finais"
+                        ],
+                        "pages": [
+                          8
+                        ],
+                        "text": "10. Disposições Finais\nEste manual é um documento interno da Empório da Música e deve ser utilizado como referência por todos os membros da equipe de atendimento, incluindo o assistente virtual. As políticas descritas neste documento estão sujeitas a atualizações periódicas. Em caso de dúvidas sobre a aplicação de qualquer política, o atendente deve consultar a gerência antes de fornecer informações ao cliente. O objetivo é sempre garantir transparência, precisão e a melhor experiência possível para o cliente."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "O atendimento via WhatsApp da Empório da Música segue os mesmos horários de funcionamento da loja, com respostas automáticas fora do expediente. Em dias normais, o atendimento é de segunda a sexta-feira das 09:00 às 18:00, e aos sábados das 09:00 às 13:00. No Natal, o horário pode ser estendido, e as alterações são comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "retry-feedback",
+                  "text": "Responda somente ao cliente, em português, sem raciocínio interno, tags, instruções de sistema ou ações de encaminhamento. Não há ferramenta de encaminhamento. Revise também todos os valores: Copie preços/totais das ferramentas, sem recalcular; Todo valor em R$ deve constar nos preços/totais retornados nesta rodada. Não repita valores do cliente ou limites dos filtros; compare com 'seu orçamento' sem repetir a quantia. Se faltam os valores necessários, consulte a ferramenta adequada nesta rodada antes de responder. Para fatos de política, cite a seção e página retornadas nesta rodada, no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor de política e explique a condição aplicável; a presença do valor no trecho não prova que ele se aplica ao caso. Preços/totais das ferramentas: R$ 35.00, R$ 50.00, R$ 80.00, R$ 100.00, R$ 500.00, R$ 2000.00.",
+                  "retry": {
+                    "cause": "model_retry",
+                    "attempt": 1,
+                    "max_retries": 1
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "O atendimento via WhatsApp da Empório da Música segue os mesmos horários de funcionamento da loja, com respostas automáticas fora do expediente. Em dias normais, o atendimento é de segunda a sexta-feira das 09:00 às 18:00, e aos sábados das 09:00 às 13:00. No Natal, o horário pode ser estendido, e as alterações são comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp [política 2, p. 2]."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "hours",
+      "mode": "rag",
+      "captured_at_utc": "2026-11-01T22:13:05.092360+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "A loja atende em feriados pelo WhatsApp? E o horário pode mudar no Natal?",
+      "http_status": 200,
+      "http_elapsed_seconds": 2.9625630489972536,
+      "http_response": {
+        "answer": "[política 2, p. 2] O atendimento via WhatsApp está fechado nos feriados, seguindo o mesmo horário do atendimento presencial. [política 2, p. 2] Em datas especiais como o Natal, o horário pode ser estendido, com comunicação prévia nas redes sociais e no atendimento via WhatsApp."
+      },
+      "usage_totals": {
+        "requests": 3,
+        "input_tokens": 11241,
+        "output_tokens": 249
+      },
+      "estimated_cost_usd": 0.0024474,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": {
+        "elapsed_seconds": 10.936507410006016,
+        "status": "evidence_found",
+        "records": 3
+      },
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 3,
+            "input_tokens": 11241,
+            "output_tokens": 249
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "A loja atende em feriados pelo WhatsApp? E o horário pode mudar no Natal?"
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "search_store_policies",
+                  "arguments": {
+                    "query": "atendimento em feriados pelo WhatsApp e horário no Natal"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "search_store_policies",
+                  "result": {
+                    "status": "evidence_found",
+                    "records": [
+                      {
+                        "id": "policy-v2.1-s2",
+                        "source": "store_policies.pdf",
+                        "section": "2",
+                        "hierarchy": [
+                          "2 Horário de Funcionamento"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.3",
+                        "source": "store_policies.pdf",
+                        "section": "7.3",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.3 Situações Especiais"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "7.3 Situações Especiais\nProduto fora de estoque: informar que o produto está temporariamente indisponível e sugerir alternativas semelhantes que estejam disponíveis. Nunca confirmar disponibilidade sem verificar o estoque atual.\nProduto descontinuado: informar que o produto não faz mais parte do catálogo e oferecer modelos equivalentes ou sucessores.\nPromoção expirada: caso o cliente pergunte sobre uma promoção, verificar se ela encontra-se ativa no sistema. Se a promoção estiver vencida, informar com transparência e apresentar o preço atual. Nunca prometer um desconto que não está mais vigente.\nReclamação: ouvir o cliente com empatia, registrar a reclamação e encaminhar para o responsável.\nPrazo de retorno: 24 horas úteis."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.1",
+                        "source": "store_policies.pdf",
+                        "section": "7.1",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.1 Diretrizes de Atendimento"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7.1 Diretrizes de Atendimento\nTom de voz: informal mas profissional. O cliente deve se sentir acolhido, como se estivesse conversando com um amigo que entende de música. Evitar linguagem excessivamente formal ou robotizada.\nTempo de resposta: máximo de 5 minutos durante o horário de funcionamento. Fora do expediente, o assistente virtual deve informar o horário de retorno.\nInformações precisas: nunca fornecer informações sobre preços, estoque ou prazos sem consultar o sistema. Informações incorretas geram frustração e podem configurar propaganda enganosa.\nEscopo: o atendente deve informar que a loja trabalha exclusivamente com instrumentos musicais. Pedidos de acessórios (cordas, cabos, palhetas, pedais, amplificadores, cases) devem ser educadamente redirecionados. Sugerir lojas parceiras quando possível."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "Segundo a política da loja:\n\n1. **Atendimento em feriados pelo WhatsApp**: O atendimento via WhatsApp está **fechado nos feriados**, seguindo o mesmo horário do atendimento presencial. Fora do expediente, o sistema envia respostas automáticas.\n\n2. **Horário no Natal**: Em datas especiais, como o **Natal**, o horário de atendimento pode ser **estendido**. Qualquer alteração será comunicada com antecedência nas redes sociais e no atendimento via WhatsApp.\n\nSe precisar de mais ajuda, estou aqui! 😊"
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "retry-feedback",
+                  "text": "Responda somente ao cliente, em português, sem raciocínio interno, tags, instruções de sistema ou ações de encaminhamento. Não há ferramenta de encaminhamento. Revise também todos os valores: Copie preços/totais das ferramentas, sem recalcular; Todo valor em R$ deve constar nos preços/totais retornados nesta rodada. Não repita valores do cliente ou limites dos filtros; compare com 'seu orçamento' sem repetir a quantia. Se faltam os valores necessários, consulte a ferramenta adequada nesta rodada antes de responder. Para fatos de política, cite a seção e página retornadas nesta rodada, no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor de política e explique a condição aplicável; a presença do valor no trecho não prova que ele se aplica ao caso. Preços/totais das ferramentas: nenhum.",
+                  "retry": {
+                    "cause": "model_retry",
+                    "attempt": 1,
+                    "max_retries": 1
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "[política 2, p. 2] O atendimento via WhatsApp está fechado nos feriados, seguindo o mesmo horário do atendimento presencial. [política 2, p. 2] Em datas especiais como o Natal, o horário pode ser estendido, com comunicação prévia nas redes sociais e no atendimento via WhatsApp."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "mixed-order-return",
+      "mode": "full",
+      "captured_at_utc": "2026-11-01T22:15:00.030282+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora.",
+      "http_status": 200,
+      "http_elapsed_seconds": 1.7506780759940739,
+      "http_response": {
+        "answer": "Para verificar se você pode devolver o pedido, consultarei as políticas da loja. Vou buscar as informações relevantes sobre devoluções."
+      },
+      "usage_totals": {
+        "requests": 2,
+        "input_tokens": 6396,
+        "output_tokens": 55
+      },
+      "estimated_cost_usd": 0.0013232,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": null,
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 2,
+            "input_tokens": 6396,
+            "output_tokens": 55
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora."
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "get_my_order",
+                  "arguments": {
+                    "order_id": 4
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "get_my_order",
+                  "result": {
+                    "order": {
+                      "order_id": 4,
+                      "order_date": "2025-12-10",
+                      "status": "delivered",
+                      "total_centavos": 79990,
+                      "tracking_code": "BRQM7890123BR",
+                      "estimated_delivery": "2025-12-22",
+                      "items": [
+                        {
+                          "product_id": 96,
+                          "product_name": "Giannini GF-3D Dreadnought Sunburst",
+                          "quantity": 1
+                        }
+                      ],
+                      "total_items": 1,
+                      "total_brl": "799.90",
+                      "items_truncated": false
+                    },
+                    "message": null,
+                    "data_basis": "imported_snapshot"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "Para verificar se você pode devolver o pedido, consultarei as políticas da loja. Vou buscar as informações relevantes sobre devoluções."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "mixed-order-return",
+      "mode": "rag",
+      "captured_at_utc": "2026-11-01T22:15:20.019130+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora.",
+      "http_status": 200,
+      "http_elapsed_seconds": 2.292459543001314,
+      "http_response": {
+        "answer": "Para verificar se você pode devolver o pedido, consultei a política da loja:\n\nDe acordo com a política de devoluções [política 5.1, p. 4], você tem até 7 dias corridos, a partir da data de recebimento do produto, para solicitar a devolução. O pedido 4 foi entregue em 22/12/2025, e hoje é 10/01/2026. Portanto, o prazo de 7 dias já foi ultrapassado, e a devolução não pode ser feita.\n\nSe precisar de mais informações ou tiver outra dúvida, estou à disposição!"
+      },
+      "usage_totals": {
+        "requests": 2,
+        "input_tokens": 6396,
+        "output_tokens": 172
+      },
+      "estimated_cost_usd": 0.0014168,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": {
+        "elapsed_seconds": 11.17258255800698,
+        "status": "evidence_found",
+        "records": 4
+      },
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 2,
+            "input_tokens": 6396,
+            "output_tokens": 172
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora."
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "get_my_order",
+                  "arguments": {
+                    "order_id": 4
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "get_my_order",
+                  "result": {
+                    "order": {
+                      "order_id": 4,
+                      "order_date": "2025-12-10",
+                      "status": "delivered",
+                      "total_centavos": 79990,
+                      "tracking_code": "BRQM7890123BR",
+                      "estimated_delivery": "2025-12-22",
+                      "items": [
+                        {
+                          "product_id": 96,
+                          "product_name": "Giannini GF-3D Dreadnought Sunburst",
+                          "quantity": 1
+                        }
+                      ],
+                      "total_items": 1,
+                      "total_brl": "799.90",
+                      "items_truncated": false
+                    },
+                    "message": null,
+                    "data_basis": "imported_snapshot"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "Para verificar se você pode devolver o pedido, consultei a política da loja:\n\nDe acordo com a política de devoluções [política 5.1, p. 4], você tem até 7 dias corridos, a partir da data de recebimento do produto, para solicitar a devolução. O pedido 4 foi entregue em 22/12/2025, e hoje é 10/01/2026. Portanto, o prazo de 7 dias já foi ultrapassado, e a devolução não pode ser feita.\n\nSe precisar de mais informações ou tiver outra dúvida, estou à disposição!"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "money-unknown",
+      "mode": "full",
+      "captured_at_utc": "2026-11-01T22:14:49.439284+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "Para uma entrega na Região Metropolitana, um pedido de R$ 500,00 tem frete grátis? E a loja empresta instrumentos durante a garantia?",
+      "http_status": 200,
+      "http_elapsed_seconds": 3.8541318720017443,
+      "http_response": {
+        "answer": "Sim, para a Região Metropolitana de Campo Grande, pedidos acima de R$ 500,00 têm frete grátis, conforme a política de frete da loja [política 5.1, p. 4]. Para pedidos abaixo desse valor, a taxa fixa é de R$ 35,00. No entanto, a loja **não oferece empréstimo de instrumentos durante a garantia** — não há menção a esse serviço nas políticas consultadas. Se precisar de mais detalhes, estou à disposição!"
+      },
+      "usage_totals": {
+        "requests": 3,
+        "input_tokens": 28829,
+        "output_tokens": 312
+      },
+      "estimated_cost_usd": 0.006015400000000001,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": null,
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 3,
+            "input_tokens": 28829,
+            "output_tokens": 312
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "Para uma entrega na Região Metropolitana, um pedido de R$ 500,00 tem frete grátis? E a loja empresta instrumentos durante a garantia?"
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "search_store_policies",
+                  "arguments": {
+                    "query": "frete grátis para pedidos de R$ 500,00 na Região Metropolitana"
+                  }
+                },
+                {
+                  "kind": "tool-call",
+                  "tool": "search_store_policies",
+                  "arguments": {
+                    "query": "empresta instrumentos durante a garantia"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "search_store_policies",
+                  "result": {
+                    "status": "evidence_found",
+                    "records": [
+                      {
+                        "id": "policy-v2.1-cover",
+                        "source": "store_policies.pdf",
+                        "section": "cover",
+                        "hierarchy": [
+                          "Capa — contato"
+                        ],
+                        "pages": [
+                          1
+                        ],
+                        "text": "Capa — contato\n(67) 3341-4444 — contato@emporiodamusica.com.br"
+                      },
+                      {
+                        "id": "policy-v2.1-s1",
+                        "source": "store_policies.pdf",
+                        "section": "1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1. Sobre a Empório da Música\nA Empório da Música é uma loja especializada em instrumentos musicais, fundada em 2008 em Campo Grande, Mato Grosso do Sul. Com mais de 15 anos de atuação no mercado, somos referência regional na venda de instrumentos para músicos iniciantes, intermediários e profissionais. Nosso catálogo abrange mais de 300 instrumentos de marcas nacionais e internacionais, incluindo guitarras, baixos, violões, baterias, teclados, instrumentos de sopro, cordas orquestrais e ukuleles. Trabalhamos exclusivamente com instrumentos musicais — não comercializamos acessórios como cordas, palhetas, cabos, cases, pedais ou amplificadores."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.1",
+                        "source": "store_policies.pdf",
+                        "section": "1.1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.1 Missão"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.1 Missão\nDemocratizar o acesso a instrumentos musicais de qualidade na região Centro-Oeste, oferecendo atendimento especializado e preços competitivos, contribuindo para o desenvolvimento cultural e musical da comunidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.2",
+                        "source": "store_policies.pdf",
+                        "section": "1.2",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.2 Dados da Empresa"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.2 Dados da Empresa\nCampo: Razão Social | Informação: Empório da Música Instrumentos Musicais Ltda.\nCampo: Nome Fantasia | Informação: Empório da Música\nCampo: CNPJ | Informação: 12.345.678/0001-90\nCampo: Endereço | Informação: Rua 14 de Maio, 3200 — Centro, Campo Grande - MS, 79202-333\nCampo: Telefone / WhatsApp | Informação: (67) 3341-4444\nCampo: E-mail | Informação: contato@empóriodamusica.com.br\nCampo: Fundação | Informação: 2008"
+                      },
+                      {
+                        "id": "policy-v2.1-s2",
+                        "source": "store_policies.pdf",
+                        "section": "2",
+                        "hierarchy": [
+                          "2 Horário de Funcionamento"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+                      },
+                      {
+                        "id": "policy-v2.1-s3",
+                        "source": "store_policies.pdf",
+                        "section": "3",
+                        "hierarchy": [
+                          "3 Formas de Pagamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3. Formas de Pagamento\nAceitamos as seguintes formas de pagamento para compras presenciais e online:\nForma: PIX | Condições: Pagamento à vista | Observações: 5% de desconto sobre o preço de tabela\nForma: Cartão de Débito | Condições: Pagamento à vista | Observações: Todas as bandeiras aceitas\nForma: Cartão de Crédito | Condições: Até 12x sem juros | Observações: Parcela mínima de R$ 100,00\nForma: Boleto Bancário | Condições: Pagamento à vista | Observações: Compensação em até 3 dias úteis"
+                      },
+                      {
+                        "id": "policy-v2.1-s3.1",
+                        "source": "store_policies.pdf",
+                        "section": "3.1",
+                        "hierarchy": [
+                          "3 Formas de Pagamento",
+                          "3.1 Regras de Parcelamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3.1 Regras de Parcelamento\n• Parcelamento em até 3x: sem juros, sem valor mínimo de parcela (exceto abaixo de R$ 50,00).\n• Parcelamento de 4x a 6x: sem juros, parcela mínima de R$ 80,00.\n• Parcelamento de 7x a 12x: sem juros, parcela mínima de R$ 100,00.\n• Combinação de formas de pagamento: permitida (ex.: PIX + cartão) para compras acima de R$ 2.000,00."
+                      },
+                      {
+                        "id": "policy-v2.1-s4",
+                        "source": "store_policies.pdf",
+                        "section": "4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4. Política de Trocas e Devoluções\nA Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.1",
+                        "source": "store_policies.pdf",
+                        "section": "4.1",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.1 Direito de Arrependimento (Compras Online)"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.1 Direito de Arrependimento (Compras Online)\n• O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.\n• O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n• O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.\n• O frete de devolução é por conta da loja em caso de arrependimento."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.2",
+                        "source": "store_policies.pdf",
+                        "section": "4.2",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.2 Trocas por Defeito"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.3",
+                        "source": "store_policies.pdf",
+                        "section": "4.3",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.3 Trocas por Preferência"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.3 Trocas por Preferência\n• Trocas por preferência (cor, modelo, tamanho) são permitidas em até 7 dias, mediante disponibilidade do produto desejado.\n• O produto deve estar em perfeito estado e na embalagem original.\n• Diferenças de valor serão cobradas ou reembolsadas conforme o caso."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.4",
+                        "source": "store_policies.pdf",
+                        "section": "4.4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.4 Itens Não Elegíveis para Troca"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene."
+                      },
+                      {
+                        "id": "policy-v2.1-s5",
+                        "source": "store_policies.pdf",
+                        "section": "5",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5. Política de Frete e Entregas"
+                      },
+                      {
+                        "id": "policy-v2.1-s5.1",
+                        "source": "store_policies.pdf",
+                        "section": "5.1",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.1 Entregas na Região Metropolitana de Campo Grande"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5.1 Entregas na Região Metropolitana de Campo Grande\n• Frete grátis para pedidos acima de R$ 500,00.\n• Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.\n• Prazo de entrega: 1 a 3 dias úteis.\n• Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.2",
+                        "source": "store_policies.pdf",
+                        "section": "5.2",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.2 Entregas para Outras Cidades"
+                        ],
+                        "pages": [
+                          4,
+                          5
+                        ],
+                        "text": "5.2 Entregas para Outras Cidades\nUtilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.\nModalidade: PAC (Correios) | Prazo Estimado: 5 a 12 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: SEDEX (Correios) | Prazo Estimado: 2 a 5 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: Jadlog (.package) | Prazo Estimado: 3 a 8 dias úteis | Rastreamento: Sim | Seguro: Incluído\nO valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.3",
+                        "source": "store_policies.pdf",
+                        "section": "5.3",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.3 Código de Rastreamento"
+                        ],
+                        "pages": [
+                          5
+                        ],
+                        "text": "5.3 Código de Rastreamento\nO código de rastreamento é enviado automaticamente por e-mail e WhatsApp assim que o pedido é despachado. O formato padrão é BR seguido de 9 caracteres alfanuméricos e BR (exemplo: BR4K7M2X9P1BR). O rastreamento pode ser consultado diretamente no site dos Correios ou da Jadlog."
+                      },
+                      {
+                        "id": "policy-v2.1-s6",
+                        "source": "store_policies.pdf",
+                        "section": "6",
+                        "hierarchy": [
+                          "6 Promoções e Descontos"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6. Promoções e Descontos"
+                      },
+                      {
+                        "id": "policy-v2.1-s6.1",
+                        "source": "store_policies.pdf",
+                        "section": "6.1",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.1 Tipos de Promoção"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.1 Tipos de Promoção\nA Empório da Música realiza promoções periódicas ao longo do ano. As principais campanhas incluem:\n• Aniversário da Loja (Agosto): descontos de 10% a 25% em itens selecionados.\n• Black Friday (Novembro): descontos de 15% a 30% em todo o catálogo.\n• Volta às Aulas (Fevereiro): descontos especiais em instrumentos para estudantes.\n• Queima de Estoque: promoções pontuais para renovação de catálogo.\n• Semana do Músico: promoções na semana do Dia do Músico (22 de novembro)."
+                      },
+                      {
+                        "id": "policy-v2.1-s6.2",
+                        "source": "store_policies.pdf",
+                        "section": "6.2",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.2 Regras de Promoções"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.2 Regras de Promoções\nCumulatividade: promoções não são cumulativas. O desconto de PIX (5%) não se aplica sobre preços já promocionais.\nEstoque: promoções estão sujeitas à disponibilidade de estoque. Produtos esgotados durante a promoção não geram direito a rain check (reserva de preço).\nComunicação: preços promocionais devem sempre ser apresentados junto ao preço original e o percentual de desconto, para total transparência ao cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s7",
+                        "source": "store_policies.pdf",
+                        "section": "7",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7. Atendimento via WhatsApp\nO canal de WhatsApp (67) 3321-4500 é o principal meio de atendimento remoto da Empório da Música. O atendimento pode ser realizado por atendentes humanos ou pelo assistente virtual."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.1",
+                        "source": "store_policies.pdf",
+                        "section": "7.1",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.1 Diretrizes de Atendimento"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7.1 Diretrizes de Atendimento\nTom de voz: informal mas profissional. O cliente deve se sentir acolhido, como se estivesse conversando com um amigo que entende de música. Evitar linguagem excessivamente formal ou robotizada.\nTempo de resposta: máximo de 5 minutos durante o horário de funcionamento. Fora do expediente, o assistente virtual deve informar o horário de retorno.\nInformações precisas: nunca fornecer informações sobre preços, estoque ou prazos sem consultar o sistema. Informações incorretas geram frustração e podem configurar propaganda enganosa.\nEscopo: o atendente deve informar que a loja trabalha exclusivamente com instrumentos musicais. Pedidos de acessórios (cordas, cabos, palhetas, pedais, amplificadores, cases) devem ser educadamente redirecionados. Sugerir lojas parceiras quando possível."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.2",
+                        "source": "store_policies.pdf",
+                        "section": "7.2",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.2 Fluxo de Atendimento Padrão"
+                        ],
+                        "pages": [
+                          6,
+                          7
+                        ],
+                        "text": "7.2 Fluxo de Atendimento Padrão\n1. Saudação: cumprimentar o cliente pelo nome (se disponível) e perguntar como pode ajudar.\n2. Entendimento: identificar a necessidade do cliente (busca de produto, dúvida, rastreamento, reclamação).\n3. Consulta: buscar no sistema as informações relevantes (produto, estoque, promoção, pedido).\n4. Resposta: apresentar as opções de forma clara e objetiva, com preços e condições.\n5. Fechamento: confirmar se o cliente precisa de mais alguma coisa e encerrar com cordialidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.3",
+                        "source": "store_policies.pdf",
+                        "section": "7.3",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.3 Situações Especiais"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "7.3 Situações Especiais\nProduto fora de estoque: informar que o produto está temporariamente indisponível e sugerir alternativas semelhantes que estejam disponíveis. Nunca confirmar disponibilidade sem verificar o estoque atual.\nProduto descontinuado: informar que o produto não faz mais parte do catálogo e oferecer modelos equivalentes ou sucessores.\nPromoção expirada: caso o cliente pergunte sobre uma promoção, verificar se ela encontra-se ativa no sistema. Se a promoção estiver vencida, informar com transparência e apresentar o preço atual. Nunca prometer um desconto que não está mais vigente.\nReclamação: ouvir o cliente com empatia, registrar a reclamação e encaminhar para o responsável.\nPrazo de retorno: 24 horas úteis."
+                      },
+                      {
+                        "id": "policy-v2.1-s8",
+                        "source": "store_policies.pdf",
+                        "section": "8",
+                        "hierarchy": [
+                          "8 Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8. Garantia"
+                      },
+                      {
+                        "id": "policy-v2.1-s8.1",
+                        "source": "store_policies.pdf",
+                        "section": "8.1",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.1 Garantia Legal"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.1 Garantia Legal\nConforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.2",
+                        "source": "store_policies.pdf",
+                        "section": "8.2",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.2 Garantia do Fabricante"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.2 Garantia do Fabricante\nAlém da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.3",
+                        "source": "store_policies.pdf",
+                        "section": "8.3",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.3 O que Não Cobre a Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.3 O que Não Cobre a Garantia\n• Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).\n• Danos por mau uso, queda, exposição a condições climáticas extremas.\n• Modificações ou reparos realizados por terceiros não autorizados.\n• Danos estéticos que não afetem a funcionalidade do instrumento."
+                      },
+                      {
+                        "id": "policy-v2.1-s9",
+                        "source": "store_policies.pdf",
+                        "section": "9",
+                        "hierarchy": [
+                          "9 Privacidade e Proteção de Dados"
+                        ],
+                        "pages": [
+                          7,
+                          8
+                        ],
+                        "text": "9. Privacidade e Proteção de Dados\nA Empório da Música está em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Os dados pessoais coletados durante o atendimento (nome, telefone, e-mail, endereço) são utilizados exclusivamente para:\n• Processamento e entrega de pedidos.\n• Comunicação sobre status de pedidos e rastreamento.\n• Envio de promoções e novidades (mediante consentimento explícito do cliente).\n• Cumprimento de obrigações legais e fiscais.\nDados de clientes não são compartilhados com terceiros para fins de marketing. O cliente pode solicitar a exclusão de seus dados a qualquer momento entrando em contato pelo WhatsApp ou e-mail."
+                      },
+                      {
+                        "id": "policy-v2.1-s10",
+                        "source": "store_policies.pdf",
+                        "section": "10",
+                        "hierarchy": [
+                          "10 Disposições Finais"
+                        ],
+                        "pages": [
+                          8
+                        ],
+                        "text": "10. Disposições Finais\nEste manual é um documento interno da Empório da Música e deve ser utilizado como referência por todos os membros da equipe de atendimento, incluindo o assistente virtual. As políticas descritas neste documento estão sujeitas a atualizações periódicas. Em caso de dúvidas sobre a aplicação de qualquer política, o atendente deve consultar a gerência antes de fornecer informações ao cliente. O objetivo é sempre garantir transparência, precisão e a melhor experiência possível para o cliente."
+                      }
+                    ]
+                  }
+                },
+                {
+                  "kind": "tool-return",
+                  "tool": "search_store_policies",
+                  "result": {
+                    "status": "evidence_found",
+                    "records": [
+                      {
+                        "id": "policy-v2.1-cover",
+                        "source": "store_policies.pdf",
+                        "section": "cover",
+                        "hierarchy": [
+                          "Capa — contato"
+                        ],
+                        "pages": [
+                          1
+                        ],
+                        "text": "Capa — contato\n(67) 3341-4444 — contato@emporiodamusica.com.br"
+                      },
+                      {
+                        "id": "policy-v2.1-s1",
+                        "source": "store_policies.pdf",
+                        "section": "1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1. Sobre a Empório da Música\nA Empório da Música é uma loja especializada em instrumentos musicais, fundada em 2008 em Campo Grande, Mato Grosso do Sul. Com mais de 15 anos de atuação no mercado, somos referência regional na venda de instrumentos para músicos iniciantes, intermediários e profissionais. Nosso catálogo abrange mais de 300 instrumentos de marcas nacionais e internacionais, incluindo guitarras, baixos, violões, baterias, teclados, instrumentos de sopro, cordas orquestrais e ukuleles. Trabalhamos exclusivamente com instrumentos musicais — não comercializamos acessórios como cordas, palhetas, cabos, cases, pedais ou amplificadores."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.1",
+                        "source": "store_policies.pdf",
+                        "section": "1.1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.1 Missão"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.1 Missão\nDemocratizar o acesso a instrumentos musicais de qualidade na região Centro-Oeste, oferecendo atendimento especializado e preços competitivos, contribuindo para o desenvolvimento cultural e musical da comunidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.2",
+                        "source": "store_policies.pdf",
+                        "section": "1.2",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.2 Dados da Empresa"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.2 Dados da Empresa\nCampo: Razão Social | Informação: Empório da Música Instrumentos Musicais Ltda.\nCampo: Nome Fantasia | Informação: Empório da Música\nCampo: CNPJ | Informação: 12.345.678/0001-90\nCampo: Endereço | Informação: Rua 14 de Maio, 3200 — Centro, Campo Grande - MS, 79202-333\nCampo: Telefone / WhatsApp | Informação: (67) 3341-4444\nCampo: E-mail | Informação: contato@empóriodamusica.com.br\nCampo: Fundação | Informação: 2008"
+                      },
+                      {
+                        "id": "policy-v2.1-s2",
+                        "source": "store_policies.pdf",
+                        "section": "2",
+                        "hierarchy": [
+                          "2 Horário de Funcionamento"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+                      },
+                      {
+                        "id": "policy-v2.1-s3",
+                        "source": "store_policies.pdf",
+                        "section": "3",
+                        "hierarchy": [
+                          "3 Formas de Pagamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3. Formas de Pagamento\nAceitamos as seguintes formas de pagamento para compras presenciais e online:\nForma: PIX | Condições: Pagamento à vista | Observações: 5% de desconto sobre o preço de tabela\nForma: Cartão de Débito | Condições: Pagamento à vista | Observações: Todas as bandeiras aceitas\nForma: Cartão de Crédito | Condições: Até 12x sem juros | Observações: Parcela mínima de R$ 100,00\nForma: Boleto Bancário | Condições: Pagamento à vista | Observações: Compensação em até 3 dias úteis"
+                      },
+                      {
+                        "id": "policy-v2.1-s3.1",
+                        "source": "store_policies.pdf",
+                        "section": "3.1",
+                        "hierarchy": [
+                          "3 Formas de Pagamento",
+                          "3.1 Regras de Parcelamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3.1 Regras de Parcelamento\n• Parcelamento em até 3x: sem juros, sem valor mínimo de parcela (exceto abaixo de R$ 50,00).\n• Parcelamento de 4x a 6x: sem juros, parcela mínima de R$ 80,00.\n• Parcelamento de 7x a 12x: sem juros, parcela mínima de R$ 100,00.\n• Combinação de formas de pagamento: permitida (ex.: PIX + cartão) para compras acima de R$ 2.000,00."
+                      },
+                      {
+                        "id": "policy-v2.1-s4",
+                        "source": "store_policies.pdf",
+                        "section": "4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4. Política de Trocas e Devoluções\nA Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.1",
+                        "source": "store_policies.pdf",
+                        "section": "4.1",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.1 Direito de Arrependimento (Compras Online)"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.1 Direito de Arrependimento (Compras Online)\n• O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.\n• O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n• O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.\n• O frete de devolução é por conta da loja em caso de arrependimento."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.2",
+                        "source": "store_policies.pdf",
+                        "section": "4.2",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.2 Trocas por Defeito"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.3",
+                        "source": "store_policies.pdf",
+                        "section": "4.3",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.3 Trocas por Preferência"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.3 Trocas por Preferência\n• Trocas por preferência (cor, modelo, tamanho) são permitidas em até 7 dias, mediante disponibilidade do produto desejado.\n• O produto deve estar em perfeito estado e na embalagem original.\n• Diferenças de valor serão cobradas ou reembolsadas conforme o caso."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.4",
+                        "source": "store_policies.pdf",
+                        "section": "4.4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.4 Itens Não Elegíveis para Troca"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene."
+                      },
+                      {
+                        "id": "policy-v2.1-s5",
+                        "source": "store_policies.pdf",
+                        "section": "5",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5. Política de Frete e Entregas"
+                      },
+                      {
+                        "id": "policy-v2.1-s5.1",
+                        "source": "store_policies.pdf",
+                        "section": "5.1",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.1 Entregas na Região Metropolitana de Campo Grande"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5.1 Entregas na Região Metropolitana de Campo Grande\n• Frete grátis para pedidos acima de R$ 500,00.\n• Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.\n• Prazo de entrega: 1 a 3 dias úteis.\n• Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.2",
+                        "source": "store_policies.pdf",
+                        "section": "5.2",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.2 Entregas para Outras Cidades"
+                        ],
+                        "pages": [
+                          4,
+                          5
+                        ],
+                        "text": "5.2 Entregas para Outras Cidades\nUtilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.\nModalidade: PAC (Correios) | Prazo Estimado: 5 a 12 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: SEDEX (Correios) | Prazo Estimado: 2 a 5 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: Jadlog (.package) | Prazo Estimado: 3 a 8 dias úteis | Rastreamento: Sim | Seguro: Incluído\nO valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.3",
+                        "source": "store_policies.pdf",
+                        "section": "5.3",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.3 Código de Rastreamento"
+                        ],
+                        "pages": [
+                          5
+                        ],
+                        "text": "5.3 Código de Rastreamento\nO código de rastreamento é enviado automaticamente por e-mail e WhatsApp assim que o pedido é despachado. O formato padrão é BR seguido de 9 caracteres alfanuméricos e BR (exemplo: BR4K7M2X9P1BR). O rastreamento pode ser consultado diretamente no site dos Correios ou da Jadlog."
+                      },
+                      {
+                        "id": "policy-v2.1-s6",
+                        "source": "store_policies.pdf",
+                        "section": "6",
+                        "hierarchy": [
+                          "6 Promoções e Descontos"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6. Promoções e Descontos"
+                      },
+                      {
+                        "id": "policy-v2.1-s6.1",
+                        "source": "store_policies.pdf",
+                        "section": "6.1",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.1 Tipos de Promoção"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.1 Tipos de Promoção\nA Empório da Música realiza promoções periódicas ao longo do ano. As principais campanhas incluem:\n• Aniversário da Loja (Agosto): descontos de 10% a 25% em itens selecionados.\n• Black Friday (Novembro): descontos de 15% a 30% em todo o catálogo.\n• Volta às Aulas (Fevereiro): descontos especiais em instrumentos para estudantes.\n• Queima de Estoque: promoções pontuais para renovação de catálogo.\n• Semana do Músico: promoções na semana do Dia do Músico (22 de novembro)."
+                      },
+                      {
+                        "id": "policy-v2.1-s6.2",
+                        "source": "store_policies.pdf",
+                        "section": "6.2",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.2 Regras de Promoções"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.2 Regras de Promoções\nCumulatividade: promoções não são cumulativas. O desconto de PIX (5%) não se aplica sobre preços já promocionais.\nEstoque: promoções estão sujeitas à disponibilidade de estoque. Produtos esgotados durante a promoção não geram direito a rain check (reserva de preço).\nComunicação: preços promocionais devem sempre ser apresentados junto ao preço original e o percentual de desconto, para total transparência ao cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s7",
+                        "source": "store_policies.pdf",
+                        "section": "7",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7. Atendimento via WhatsApp\nO canal de WhatsApp (67) 3321-4500 é o principal meio de atendimento remoto da Empório da Música. O atendimento pode ser realizado por atendentes humanos ou pelo assistente virtual."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.1",
+                        "source": "store_policies.pdf",
+                        "section": "7.1",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.1 Diretrizes de Atendimento"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7.1 Diretrizes de Atendimento\nTom de voz: informal mas profissional. O cliente deve se sentir acolhido, como se estivesse conversando com um amigo que entende de música. Evitar linguagem excessivamente formal ou robotizada.\nTempo de resposta: máximo de 5 minutos durante o horário de funcionamento. Fora do expediente, o assistente virtual deve informar o horário de retorno.\nInformações precisas: nunca fornecer informações sobre preços, estoque ou prazos sem consultar o sistema. Informações incorretas geram frustração e podem configurar propaganda enganosa.\nEscopo: o atendente deve informar que a loja trabalha exclusivamente com instrumentos musicais. Pedidos de acessórios (cordas, cabos, palhetas, pedais, amplificadores, cases) devem ser educadamente redirecionados. Sugerir lojas parceiras quando possível."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.2",
+                        "source": "store_policies.pdf",
+                        "section": "7.2",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.2 Fluxo de Atendimento Padrão"
+                        ],
+                        "pages": [
+                          6,
+                          7
+                        ],
+                        "text": "7.2 Fluxo de Atendimento Padrão\n1. Saudação: cumprimentar o cliente pelo nome (se disponível) e perguntar como pode ajudar.\n2. Entendimento: identificar a necessidade do cliente (busca de produto, dúvida, rastreamento, reclamação).\n3. Consulta: buscar no sistema as informações relevantes (produto, estoque, promoção, pedido).\n4. Resposta: apresentar as opções de forma clara e objetiva, com preços e condições.\n5. Fechamento: confirmar se o cliente precisa de mais alguma coisa e encerrar com cordialidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.3",
+                        "source": "store_policies.pdf",
+                        "section": "7.3",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.3 Situações Especiais"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "7.3 Situações Especiais\nProduto fora de estoque: informar que o produto está temporariamente indisponível e sugerir alternativas semelhantes que estejam disponíveis. Nunca confirmar disponibilidade sem verificar o estoque atual.\nProduto descontinuado: informar que o produto não faz mais parte do catálogo e oferecer modelos equivalentes ou sucessores.\nPromoção expirada: caso o cliente pergunte sobre uma promoção, verificar se ela encontra-se ativa no sistema. Se a promoção estiver vencida, informar com transparência e apresentar o preço atual. Nunca prometer um desconto que não está mais vigente.\nReclamação: ouvir o cliente com empatia, registrar a reclamação e encaminhar para o responsável.\nPrazo de retorno: 24 horas úteis."
+                      },
+                      {
+                        "id": "policy-v2.1-s8",
+                        "source": "store_policies.pdf",
+                        "section": "8",
+                        "hierarchy": [
+                          "8 Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8. Garantia"
+                      },
+                      {
+                        "id": "policy-v2.1-s8.1",
+                        "source": "store_policies.pdf",
+                        "section": "8.1",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.1 Garantia Legal"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.1 Garantia Legal\nConforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.2",
+                        "source": "store_policies.pdf",
+                        "section": "8.2",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.2 Garantia do Fabricante"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.2 Garantia do Fabricante\nAlém da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.3",
+                        "source": "store_policies.pdf",
+                        "section": "8.3",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.3 O que Não Cobre a Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.3 O que Não Cobre a Garantia\n• Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).\n• Danos por mau uso, queda, exposição a condições climáticas extremas.\n• Modificações ou reparos realizados por terceiros não autorizados.\n• Danos estéticos que não afetem a funcionalidade do instrumento."
+                      },
+                      {
+                        "id": "policy-v2.1-s9",
+                        "source": "store_policies.pdf",
+                        "section": "9",
+                        "hierarchy": [
+                          "9 Privacidade e Proteção de Dados"
+                        ],
+                        "pages": [
+                          7,
+                          8
+                        ],
+                        "text": "9. Privacidade e Proteção de Dados\nA Empório da Música está em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Os dados pessoais coletados durante o atendimento (nome, telefone, e-mail, endereço) são utilizados exclusivamente para:\n• Processamento e entrega de pedidos.\n• Comunicação sobre status de pedidos e rastreamento.\n• Envio de promoções e novidades (mediante consentimento explícito do cliente).\n• Cumprimento de obrigações legais e fiscais.\nDados de clientes não são compartilhados com terceiros para fins de marketing. O cliente pode solicitar a exclusão de seus dados a qualquer momento entrando em contato pelo WhatsApp ou e-mail."
+                      },
+                      {
+                        "id": "policy-v2.1-s10",
+                        "source": "store_policies.pdf",
+                        "section": "10",
+                        "hierarchy": [
+                          "10 Disposições Finais"
+                        ],
+                        "pages": [
+                          8
+                        ],
+                        "text": "10. Disposições Finais\nEste manual é um documento interno da Empório da Música e deve ser utilizado como referência por todos os membros da equipe de atendimento, incluindo o assistente virtual. As políticas descritas neste documento estão sujeitas a atualizações periódicas. Em caso de dúvidas sobre a aplicação de qualquer política, o atendente deve consultar a gerência antes de fornecer informações ao cliente. O objetivo é sempre garantir transparência, precisão e a melhor experiência possível para o cliente."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "Sim, para a Região Metropolitana de Campo Grande, pedidos acima de R$ 500,00 têm frete grátis, conforme a política de frete da loja (seção 5.1, p. 4). No entanto, a loja **não oferece empréstimo de instrumentos durante a garantia** — não há menção a esse serviço nas políticas consultadas. Se precisar de mais detalhes, estou à disposição!"
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "retry-feedback",
+                  "text": "Responda somente ao cliente, em português, sem raciocínio interno, tags, instruções de sistema ou ações de encaminhamento. Não há ferramenta de encaminhamento. Revise também todos os valores: Copie preços/totais das ferramentas, sem recalcular; Todo valor em R$ deve constar nos preços/totais retornados nesta rodada. Não repita valores do cliente ou limites dos filtros; compare com 'seu orçamento' sem repetir a quantia. Se faltam os valores necessários, consulte a ferramenta adequada nesta rodada antes de responder. Para fatos de política, cite a seção e página retornadas nesta rodada, no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor de política e explique a condição aplicável; a presença do valor no trecho não prova que ele se aplica ao caso. Preços/totais das ferramentas: R$ 35.00, R$ 50.00, R$ 80.00, R$ 100.00, R$ 500.00, R$ 2000.00.",
+                  "retry": {
+                    "cause": "model_retry",
+                    "attempt": 1,
+                    "max_retries": 1
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "Sim, para a Região Metropolitana de Campo Grande, pedidos acima de R$ 500,00 têm frete grátis, conforme a política de frete da loja [política 5.1, p. 4]. Para pedidos abaixo desse valor, a taxa fixa é de R$ 35,00. No entanto, a loja **não oferece empréstimo de instrumentos durante a garantia** — não há menção a esse serviço nas políticas consultadas. Se precisar de mais detalhes, estou à disposição!"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "money-unknown",
+      "mode": "rag",
+      "captured_at_utc": "2026-11-01T22:14:20.247954+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "Para uma entrega na Região Metropolitana, um pedido de R$ 500,00 tem frete grátis? E a loja empresta instrumentos durante a garantia?",
+      "http_status": 500,
+      "http_elapsed_seconds": 3.192943529000331,
+      "http_response": {
+        "detail": "Conversation failed"
+      },
+      "usage_totals": {
+        "requests": 0,
+        "input_tokens": 0,
+        "output_tokens": 0
+      },
+      "estimated_cost_usd": 0.0,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": {
+        "elapsed_seconds": 8.460531215998344,
+        "status": "evidence_found",
+        "records": 3
+      },
+      "agent_runs": [],
+      "policy_tool_calls_before_failure": [
+        {
+          "query": "frete grátis para pedidos de R$ 500,00",
+          "elapsed_seconds": 0.0592224689971772,
+          "result": {
+            "status": "evidence_found",
+            "records": [
+              {
+                "id": "policy-v2.1-s5.1",
+                "source": "store_policies.pdf",
+                "section": "5.1",
+                "hierarchy": [
+                  "5 Política de Frete e Entregas",
+                  "5.1 Entregas na Região Metropolitana de Campo Grande"
+                ],
+                "pages": [
+                  4
+                ],
+                "text": "5.1 Entregas na Região Metropolitana de Campo Grande\n• Frete grátis para pedidos acima de R$ 500,00.\n• Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.\n• Prazo de entrega: 1 a 3 dias úteis.\n• Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega."
+              },
+              {
+                "id": "policy-v2.1-s5.2",
+                "source": "store_policies.pdf",
+                "section": "5.2",
+                "hierarchy": [
+                  "5 Política de Frete e Entregas",
+                  "5.2 Entregas para Outras Cidades"
+                ],
+                "pages": [
+                  4,
+                  5
+                ],
+                "text": "5.2 Entregas para Outras Cidades\nUtilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.\nModalidade: PAC (Correios) | Prazo Estimado: 5 a 12 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: SEDEX (Correios) | Prazo Estimado: 2 a 5 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: Jadlog (.package) | Prazo Estimado: 3 a 8 dias úteis | Rastreamento: Sim | Seguro: Incluído\nO valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja."
+              },
+              {
+                "id": "policy-v2.1-s5.3",
+                "source": "store_policies.pdf",
+                "section": "5.3",
+                "hierarchy": [
+                  "5 Política de Frete e Entregas",
+                  "5.3 Código de Rastreamento"
+                ],
+                "pages": [
+                  5
+                ],
+                "text": "5.3 Código de Rastreamento\nO código de rastreamento é enviado automaticamente por e-mail e WhatsApp assim que o pedido é despachado. O formato padrão é BR seguido de 9 caracteres alfanuméricos e BR (exemplo: BR4K7M2X9P1BR). O rastreamento pode ser consultado diretamente no site dos Correios ou da Jadlog."
+              }
+            ]
+          }
+        },
+        {
+          "query": "empresta instrumentos durante a garantia",
+          "elapsed_seconds": 0.11686744200414978,
+          "result": {
+            "status": "evidence_found",
+            "records": [
+              {
+                "id": "policy-v2.1-s8.3",
+                "source": "store_policies.pdf",
+                "section": "8.3",
+                "hierarchy": [
+                  "8 Garantia",
+                  "8.3 O que Não Cobre a Garantia"
+                ],
+                "pages": [
+                  7
+                ],
+                "text": "8.3 O que Não Cobre a Garantia\n• Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).\n• Danos por mau uso, queda, exposição a condições climáticas extremas.\n• Modificações ou reparos realizados por terceiros não autorizados.\n• Danos estéticos que não afetem a funcionalidade do instrumento."
+              },
+              {
+                "id": "policy-v2.1-s4.4",
+                "source": "store_policies.pdf",
+                "section": "4.4",
+                "hierarchy": [
+                  "4 Política de Trocas e Devoluções",
+                  "4.4 Itens Não Elegíveis para Troca"
+                ],
+                "pages": [
+                  4
+                ],
+                "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene."
+              },
+              {
+                "id": "policy-v2.1-s4",
+                "source": "store_policies.pdf",
+                "section": "4",
+                "hierarchy": [
+                  "4 Política de Trocas e Devoluções"
+                ],
+                "pages": [
+                  4
+                ],
+                "text": "4. Política de Trocas e Devoluções\nA Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções."
+              },
+              {
+                "id": "policy-v2.1-s4.2",
+                "source": "store_policies.pdf",
+                "section": "4.2",
+                "hierarchy": [
+                  "4 Política de Trocas e Devoluções",
+                  "4.2 Trocas por Defeito"
+                ],
+                "pages": [
+                  4
+                ],
+                "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos."
+              },
+              {
+                "id": "policy-v2.1-s8.1",
+                "source": "store_policies.pdf",
+                "section": "8.1",
+                "hierarchy": [
+                  "8 Garantia",
+                  "8.1 Garantia Legal"
+                ],
+                "pages": [
+                  7
+                ],
+                "text": "8.1 Garantia Legal\nConforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente."
+              },
+              {
+                "id": "policy-v2.1-s8.2",
+                "source": "store_policies.pdf",
+                "section": "8.2",
+                "hierarchy": [
+                  "8 Garantia",
+                  "8.2 Garantia do Fabricante"
+                ],
+                "pages": [
+                  7
+                ],
+                "text": "8.2 Garantia do Fabricante\nAlém da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto."
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "return",
+      "mode": "full",
+      "captured_at_utc": "2026-11-01T22:13:38.074998+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "Comprei online, recebi há cinco dias e usei o instrumento. Posso desistir e receber reembolso?",
+      "http_status": 200,
+      "http_elapsed_seconds": 2.9848601760022575,
+      "http_response": {
+        "answer": "De acordo com nossa política de trocas e devoluções, o direito de arrependimento para compras online permite que você solicite a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa. No entanto, para que a devolução seja aceita, o produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n\nComo você já utilizou o instrumento há cinco dias, ele não atende ao requisito de estar sem uso. Portanto, infelizmente, não será possível realizar a devolução nesse caso. Se houver algum defeito no instrumento, você poderá solicitar a troca ou a garantia, desde que esteja dentro do prazo de 30 dias corridos após a compra.\n\nPara mais informações, você pode consultar nossa política completa de trocas e devoluções [política 4.1, p. 4]. Se precisar de ajuda, entre em contato conosco pelo telefone (67) 3341-4444 ou e-mail contato@emporiodamusica.com.br."
+      },
+      "usage_totals": {
+        "requests": 2,
+        "input_tokens": 10989,
+        "output_tokens": 293
+      },
+      "estimated_cost_usd": 0.0024322000000000002,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": null,
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 2,
+            "input_tokens": 10989,
+            "output_tokens": 293
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "Comprei online, recebi há cinco dias e usei o instrumento. Posso desistir e receber reembolso?"
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "search_store_policies",
+                  "arguments": {
+                    "query": "desistência e reembolso após uso do instrumento"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "search_store_policies",
+                  "result": {
+                    "status": "evidence_found",
+                    "records": [
+                      {
+                        "id": "policy-v2.1-cover",
+                        "source": "store_policies.pdf",
+                        "section": "cover",
+                        "hierarchy": [
+                          "Capa — contato"
+                        ],
+                        "pages": [
+                          1
+                        ],
+                        "text": "Capa — contato\n(67) 3341-4444 — contato@emporiodamusica.com.br"
+                      },
+                      {
+                        "id": "policy-v2.1-s1",
+                        "source": "store_policies.pdf",
+                        "section": "1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1. Sobre a Empório da Música\nA Empório da Música é uma loja especializada em instrumentos musicais, fundada em 2008 em Campo Grande, Mato Grosso do Sul. Com mais de 15 anos de atuação no mercado, somos referência regional na venda de instrumentos para músicos iniciantes, intermediários e profissionais. Nosso catálogo abrange mais de 300 instrumentos de marcas nacionais e internacionais, incluindo guitarras, baixos, violões, baterias, teclados, instrumentos de sopro, cordas orquestrais e ukuleles. Trabalhamos exclusivamente com instrumentos musicais — não comercializamos acessórios como cordas, palhetas, cabos, cases, pedais ou amplificadores."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.1",
+                        "source": "store_policies.pdf",
+                        "section": "1.1",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.1 Missão"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.1 Missão\nDemocratizar o acesso a instrumentos musicais de qualidade na região Centro-Oeste, oferecendo atendimento especializado e preços competitivos, contribuindo para o desenvolvimento cultural e musical da comunidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s1.2",
+                        "source": "store_policies.pdf",
+                        "section": "1.2",
+                        "hierarchy": [
+                          "1 Sobre a Empório da Música",
+                          "1.2 Dados da Empresa"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "1.2 Dados da Empresa\nCampo: Razão Social | Informação: Empório da Música Instrumentos Musicais Ltda.\nCampo: Nome Fantasia | Informação: Empório da Música\nCampo: CNPJ | Informação: 12.345.678/0001-90\nCampo: Endereço | Informação: Rua 14 de Maio, 3200 — Centro, Campo Grande - MS, 79202-333\nCampo: Telefone / WhatsApp | Informação: (67) 3341-4444\nCampo: E-mail | Informação: contato@empóriodamusica.com.br\nCampo: Fundação | Informação: 2008"
+                      },
+                      {
+                        "id": "policy-v2.1-s2",
+                        "source": "store_policies.pdf",
+                        "section": "2",
+                        "hierarchy": [
+                          "2 Horário de Funcionamento"
+                        ],
+                        "pages": [
+                          2
+                        ],
+                        "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+                      },
+                      {
+                        "id": "policy-v2.1-s3",
+                        "source": "store_policies.pdf",
+                        "section": "3",
+                        "hierarchy": [
+                          "3 Formas de Pagamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3. Formas de Pagamento\nAceitamos as seguintes formas de pagamento para compras presenciais e online:\nForma: PIX | Condições: Pagamento à vista | Observações: 5% de desconto sobre o preço de tabela\nForma: Cartão de Débito | Condições: Pagamento à vista | Observações: Todas as bandeiras aceitas\nForma: Cartão de Crédito | Condições: Até 12x sem juros | Observações: Parcela mínima de R$ 100,00\nForma: Boleto Bancário | Condições: Pagamento à vista | Observações: Compensação em até 3 dias úteis"
+                      },
+                      {
+                        "id": "policy-v2.1-s3.1",
+                        "source": "store_policies.pdf",
+                        "section": "3.1",
+                        "hierarchy": [
+                          "3 Formas de Pagamento",
+                          "3.1 Regras de Parcelamento"
+                        ],
+                        "pages": [
+                          3
+                        ],
+                        "text": "3.1 Regras de Parcelamento\n• Parcelamento em até 3x: sem juros, sem valor mínimo de parcela (exceto abaixo de R$ 50,00).\n• Parcelamento de 4x a 6x: sem juros, parcela mínima de R$ 80,00.\n• Parcelamento de 7x a 12x: sem juros, parcela mínima de R$ 100,00.\n• Combinação de formas de pagamento: permitida (ex.: PIX + cartão) para compras acima de R$ 2.000,00."
+                      },
+                      {
+                        "id": "policy-v2.1-s4",
+                        "source": "store_policies.pdf",
+                        "section": "4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4. Política de Trocas e Devoluções\nA Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.1",
+                        "source": "store_policies.pdf",
+                        "section": "4.1",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.1 Direito de Arrependimento (Compras Online)"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.1 Direito de Arrependimento (Compras Online)\n• O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.\n• O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n• O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.\n• O frete de devolução é por conta da loja em caso de arrependimento."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.2",
+                        "source": "store_policies.pdf",
+                        "section": "4.2",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.2 Trocas por Defeito"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.3",
+                        "source": "store_policies.pdf",
+                        "section": "4.3",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.3 Trocas por Preferência"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.3 Trocas por Preferência\n• Trocas por preferência (cor, modelo, tamanho) são permitidas em até 7 dias, mediante disponibilidade do produto desejado.\n• O produto deve estar em perfeito estado e na embalagem original.\n• Diferenças de valor serão cobradas ou reembolsadas conforme o caso."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.4",
+                        "source": "store_policies.pdf",
+                        "section": "4.4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.4 Itens Não Elegíveis para Troca"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene."
+                      },
+                      {
+                        "id": "policy-v2.1-s5",
+                        "source": "store_policies.pdf",
+                        "section": "5",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5. Política de Frete e Entregas"
+                      },
+                      {
+                        "id": "policy-v2.1-s5.1",
+                        "source": "store_policies.pdf",
+                        "section": "5.1",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.1 Entregas na Região Metropolitana de Campo Grande"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "5.1 Entregas na Região Metropolitana de Campo Grande\n• Frete grátis para pedidos acima de R$ 500,00.\n• Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.\n• Prazo de entrega: 1 a 3 dias úteis.\n• Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.2",
+                        "source": "store_policies.pdf",
+                        "section": "5.2",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.2 Entregas para Outras Cidades"
+                        ],
+                        "pages": [
+                          4,
+                          5
+                        ],
+                        "text": "5.2 Entregas para Outras Cidades\nUtilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.\nModalidade: PAC (Correios) | Prazo Estimado: 5 a 12 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: SEDEX (Correios) | Prazo Estimado: 2 a 5 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: Jadlog (.package) | Prazo Estimado: 3 a 8 dias úteis | Rastreamento: Sim | Seguro: Incluído\nO valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja."
+                      },
+                      {
+                        "id": "policy-v2.1-s5.3",
+                        "source": "store_policies.pdf",
+                        "section": "5.3",
+                        "hierarchy": [
+                          "5 Política de Frete e Entregas",
+                          "5.3 Código de Rastreamento"
+                        ],
+                        "pages": [
+                          5
+                        ],
+                        "text": "5.3 Código de Rastreamento\nO código de rastreamento é enviado automaticamente por e-mail e WhatsApp assim que o pedido é despachado. O formato padrão é BR seguido de 9 caracteres alfanuméricos e BR (exemplo: BR4K7M2X9P1BR). O rastreamento pode ser consultado diretamente no site dos Correios ou da Jadlog."
+                      },
+                      {
+                        "id": "policy-v2.1-s6",
+                        "source": "store_policies.pdf",
+                        "section": "6",
+                        "hierarchy": [
+                          "6 Promoções e Descontos"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6. Promoções e Descontos"
+                      },
+                      {
+                        "id": "policy-v2.1-s6.1",
+                        "source": "store_policies.pdf",
+                        "section": "6.1",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.1 Tipos de Promoção"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.1 Tipos de Promoção\nA Empório da Música realiza promoções periódicas ao longo do ano. As principais campanhas incluem:\n• Aniversário da Loja (Agosto): descontos de 10% a 25% em itens selecionados.\n• Black Friday (Novembro): descontos de 15% a 30% em todo o catálogo.\n• Volta às Aulas (Fevereiro): descontos especiais em instrumentos para estudantes.\n• Queima de Estoque: promoções pontuais para renovação de catálogo.\n• Semana do Músico: promoções na semana do Dia do Músico (22 de novembro)."
+                      },
+                      {
+                        "id": "policy-v2.1-s6.2",
+                        "source": "store_policies.pdf",
+                        "section": "6.2",
+                        "hierarchy": [
+                          "6 Promoções e Descontos",
+                          "6.2 Regras de Promoções"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "6.2 Regras de Promoções\nCumulatividade: promoções não são cumulativas. O desconto de PIX (5%) não se aplica sobre preços já promocionais.\nEstoque: promoções estão sujeitas à disponibilidade de estoque. Produtos esgotados durante a promoção não geram direito a rain check (reserva de preço).\nComunicação: preços promocionais devem sempre ser apresentados junto ao preço original e o percentual de desconto, para total transparência ao cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s7",
+                        "source": "store_policies.pdf",
+                        "section": "7",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7. Atendimento via WhatsApp\nO canal de WhatsApp (67) 3321-4500 é o principal meio de atendimento remoto da Empório da Música. O atendimento pode ser realizado por atendentes humanos ou pelo assistente virtual."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.1",
+                        "source": "store_policies.pdf",
+                        "section": "7.1",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.1 Diretrizes de Atendimento"
+                        ],
+                        "pages": [
+                          6
+                        ],
+                        "text": "7.1 Diretrizes de Atendimento\nTom de voz: informal mas profissional. O cliente deve se sentir acolhido, como se estivesse conversando com um amigo que entende de música. Evitar linguagem excessivamente formal ou robotizada.\nTempo de resposta: máximo de 5 minutos durante o horário de funcionamento. Fora do expediente, o assistente virtual deve informar o horário de retorno.\nInformações precisas: nunca fornecer informações sobre preços, estoque ou prazos sem consultar o sistema. Informações incorretas geram frustração e podem configurar propaganda enganosa.\nEscopo: o atendente deve informar que a loja trabalha exclusivamente com instrumentos musicais. Pedidos de acessórios (cordas, cabos, palhetas, pedais, amplificadores, cases) devem ser educadamente redirecionados. Sugerir lojas parceiras quando possível."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.2",
+                        "source": "store_policies.pdf",
+                        "section": "7.2",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.2 Fluxo de Atendimento Padrão"
+                        ],
+                        "pages": [
+                          6,
+                          7
+                        ],
+                        "text": "7.2 Fluxo de Atendimento Padrão\n1. Saudação: cumprimentar o cliente pelo nome (se disponível) e perguntar como pode ajudar.\n2. Entendimento: identificar a necessidade do cliente (busca de produto, dúvida, rastreamento, reclamação).\n3. Consulta: buscar no sistema as informações relevantes (produto, estoque, promoção, pedido).\n4. Resposta: apresentar as opções de forma clara e objetiva, com preços e condições.\n5. Fechamento: confirmar se o cliente precisa de mais alguma coisa e encerrar com cordialidade."
+                      },
+                      {
+                        "id": "policy-v2.1-s7.3",
+                        "source": "store_policies.pdf",
+                        "section": "7.3",
+                        "hierarchy": [
+                          "7 Atendimento via WhatsApp",
+                          "7.3 Situações Especiais"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "7.3 Situações Especiais\nProduto fora de estoque: informar que o produto está temporariamente indisponível e sugerir alternativas semelhantes que estejam disponíveis. Nunca confirmar disponibilidade sem verificar o estoque atual.\nProduto descontinuado: informar que o produto não faz mais parte do catálogo e oferecer modelos equivalentes ou sucessores.\nPromoção expirada: caso o cliente pergunte sobre uma promoção, verificar se ela encontra-se ativa no sistema. Se a promoção estiver vencida, informar com transparência e apresentar o preço atual. Nunca prometer um desconto que não está mais vigente.\nReclamação: ouvir o cliente com empatia, registrar a reclamação e encaminhar para o responsável.\nPrazo de retorno: 24 horas úteis."
+                      },
+                      {
+                        "id": "policy-v2.1-s8",
+                        "source": "store_policies.pdf",
+                        "section": "8",
+                        "hierarchy": [
+                          "8 Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8. Garantia"
+                      },
+                      {
+                        "id": "policy-v2.1-s8.1",
+                        "source": "store_policies.pdf",
+                        "section": "8.1",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.1 Garantia Legal"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.1 Garantia Legal\nConforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.2",
+                        "source": "store_policies.pdf",
+                        "section": "8.2",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.2 Garantia do Fabricante"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.2 Garantia do Fabricante\nAlém da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.3",
+                        "source": "store_policies.pdf",
+                        "section": "8.3",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.3 O que Não Cobre a Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.3 O que Não Cobre a Garantia\n• Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).\n• Danos por mau uso, queda, exposição a condições climáticas extremas.\n• Modificações ou reparos realizados por terceiros não autorizados.\n• Danos estéticos que não afetem a funcionalidade do instrumento."
+                      },
+                      {
+                        "id": "policy-v2.1-s9",
+                        "source": "store_policies.pdf",
+                        "section": "9",
+                        "hierarchy": [
+                          "9 Privacidade e Proteção de Dados"
+                        ],
+                        "pages": [
+                          7,
+                          8
+                        ],
+                        "text": "9. Privacidade e Proteção de Dados\nA Empório da Música está em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Os dados pessoais coletados durante o atendimento (nome, telefone, e-mail, endereço) são utilizados exclusivamente para:\n• Processamento e entrega de pedidos.\n• Comunicação sobre status de pedidos e rastreamento.\n• Envio de promoções e novidades (mediante consentimento explícito do cliente).\n• Cumprimento de obrigações legais e fiscais.\nDados de clientes não são compartilhados com terceiros para fins de marketing. O cliente pode solicitar a exclusão de seus dados a qualquer momento entrando em contato pelo WhatsApp ou e-mail."
+                      },
+                      {
+                        "id": "policy-v2.1-s10",
+                        "source": "store_policies.pdf",
+                        "section": "10",
+                        "hierarchy": [
+                          "10 Disposições Finais"
+                        ],
+                        "pages": [
+                          8
+                        ],
+                        "text": "10. Disposições Finais\nEste manual é um documento interno da Empório da Música e deve ser utilizado como referência por todos os membros da equipe de atendimento, incluindo o assistente virtual. As políticas descritas neste documento estão sujeitas a atualizações periódicas. Em caso de dúvidas sobre a aplicação de qualquer política, o atendente deve consultar a gerência antes de fornecer informações ao cliente. O objetivo é sempre garantir transparência, precisão e a melhor experiência possível para o cliente."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "De acordo com nossa política de trocas e devoluções, o direito de arrependimento para compras online permite que você solicite a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa. No entanto, para que a devolução seja aceita, o produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n\nComo você já utilizou o instrumento há cinco dias, ele não atende ao requisito de estar sem uso. Portanto, infelizmente, não será possível realizar a devolução nesse caso. Se houver algum defeito no instrumento, você poderá solicitar a troca ou a garantia, desde que esteja dentro do prazo de 30 dias corridos após a compra.\n\nPara mais informações, você pode consultar nossa política completa de trocas e devoluções [política 4.1, p. 4]. Se precisar de ajuda, entre em contato conosco pelo telefone (67) 3341-4444 ou e-mail contato@emporiodamusica.com.br."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "return",
+      "mode": "rag",
+      "captured_at_utc": "2026-11-01T22:13:59.975055+00:00",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "region": "us-east-1",
+      "temperature": 0,
+      "max_output_tokens_per_request": 1024,
+      "max_requests_per_conversation": 5,
+      "max_tool_calls_per_conversation": 5,
+      "prompt": "Comprei online, recebi há cinco dias e usei o instrumento. Posso desistir e receber reembolso?",
+      "http_status": 200,
+      "http_elapsed_seconds": 3.491603763999592,
+      "http_response": {
+        "answer": "De acordo com a política da Empório da Música, você tem até 7 dias corridos após o recebimento do produto para exercer o direito de arrependimento, desde que o instrumento esteja em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais [política 4.1, p. 4]. Como você já utilizou o instrumento, ele não atende a essas condições, e a devolução por arrependimento não será possível nesse caso.\n\nSe o instrumento estiver com algum defeito de fabricação, você pode solicitar uma troca em até 30 dias corridos após a compra [política 4.2, p. 4]. Caso contrário, danos causados por uso, quedas ou condições climáticas não são cobertos pela garantia [política 8.3, p. 7].\n\nSe quiser mais informações ou for possível descrever a situação do instrumento, posso ajudar a orientar melhor."
+      },
+      "usage_totals": {
+        "requests": 3,
+        "input_tokens": 11854,
+        "output_tokens": 452
+      },
+      "estimated_cost_usd": 0.0027324000000000003,
+      "reserved_worst_case_usd": 0.036864,
+      "local_rag_warmup": {
+        "elapsed_seconds": 11.90498383600061,
+        "status": "evidence_found",
+        "records": 7
+      },
+      "agent_runs": [
+        {
+          "usage": {
+            "requests": 3,
+            "input_tokens": 11854,
+            "output_tokens": 452
+          },
+          "messages": [
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "user-prompt",
+                  "text": "Comprei online, recebi há cinco dias e usei o instrumento. Posso desistir e receber reembolso?"
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "tool-call",
+                  "tool": "search_store_policies",
+                  "arguments": {
+                    "query": "desistência e reembolso após uso do instrumento"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "tool-return",
+                  "tool": "search_store_policies",
+                  "result": {
+                    "status": "evidence_found",
+                    "records": [
+                      {
+                        "id": "policy-v2.1-s4.1",
+                        "source": "store_policies.pdf",
+                        "section": "4.1",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.1 Direito de Arrependimento (Compras Online)"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.1 Direito de Arrependimento (Compras Online)\n• O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.\n• O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n• O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.\n• O frete de devolução é por conta da loja em caso de arrependimento."
+                      },
+                      {
+                        "id": "policy-v2.1-s4",
+                        "source": "store_policies.pdf",
+                        "section": "4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4. Política de Trocas e Devoluções\nA Empório da Música segue as diretrizes do Código de Defesa do Consumidor (Lei nº 8.078/90) e oferece condições claras para trocas e devoluções."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.2",
+                        "source": "store_policies.pdf",
+                        "section": "4.2",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.2 Trocas por Defeito"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos."
+                      },
+                      {
+                        "id": "policy-v2.1-s4.4",
+                        "source": "store_policies.pdf",
+                        "section": "4.4",
+                        "hierarchy": [
+                          "4 Política de Trocas e Devoluções",
+                          "4.4 Itens Não Elegíveis para Troca"
+                        ],
+                        "pages": [
+                          4
+                        ],
+                        "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.1",
+                        "source": "store_policies.pdf",
+                        "section": "8.1",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.1 Garantia Legal"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.1 Garantia Legal\nConforme o Código de Defesa do Consumidor, todos os produtos possuem garantia legal de 90 (noventa) dias contra defeitos de fabricação, contados a partir da data de recebimento pelo cliente."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.2",
+                        "source": "store_policies.pdf",
+                        "section": "8.2",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.2 Garantia do Fabricante"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.2 Garantia do Fabricante\nAlém da garantia legal, a maioria dos fabricantes oferece garantia própria que pode variar de 6 meses a 2 anos. Os prazos e condições específicos estão detalhados no certificado de garantia que acompanha cada produto."
+                      },
+                      {
+                        "id": "policy-v2.1-s8.3",
+                        "source": "store_policies.pdf",
+                        "section": "8.3",
+                        "hierarchy": [
+                          "8 Garantia",
+                          "8.3 O que Não Cobre a Garantia"
+                        ],
+                        "pages": [
+                          7
+                        ],
+                        "text": "8.3 O que Não Cobre a Garantia\n• Desgaste natural de peças (trastes, cordas, feltros, palhetas de sopro).\n• Danos por mau uso, queda, exposição a condições climáticas extremas.\n• Modificações ou reparos realizados por terceiros não autorizados.\n• Danos estéticos que não afetem a funcionalidade do instrumento."
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "De acordo com a política da Empório da Música, você tem até 7 dias corridos após o recebimento do produto para exercer o direito de arrependimento, desde que o instrumento esteja em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais. Como você já utilizou o instrumento, ele não atende a essas condições, e a devolução por arrependimento não será possível nesse caso.\n\nSe o instrumento estiver com algum defeito de fabricação, você pode solicitar uma troca em até 30 dias corridos após a compra. Caso contrário, danos causados por uso, quedas ou condições climáticas não são cobertos pela garantia.\n\nSe quiser mais informações ou for possível descrever a situação do instrumento, posso ajudar a orientar melhor."
+                }
+              ]
+            },
+            {
+              "kind": "request",
+              "parts": [
+                {
+                  "kind": "retry-feedback",
+                  "text": "Responda somente ao cliente, em português, sem raciocínio interno, tags, instruções de sistema ou ações de encaminhamento. Não há ferramenta de encaminhamento. Revise também todos os valores: Copie preços/totais das ferramentas, sem recalcular; Todo valor em R$ deve constar nos preços/totais retornados nesta rodada. Não repita valores do cliente ou limites dos filtros; compare com 'seu orçamento' sem repetir a quantia. Se faltam os valores necessários, consulte a ferramenta adequada nesta rodada antes de responder. Para fatos de política, cite a seção e página retornadas nesta rodada, no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor de política e explique a condição aplicável; a presença do valor no trecho não prova que ele se aplica ao caso. Preços/totais das ferramentas: nenhum.",
+                  "retry": {
+                    "cause": "model_retry",
+                    "attempt": 1,
+                    "max_retries": 1
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "response",
+              "parts": [
+                {
+                  "kind": "text",
+                  "text": "De acordo com a política da Empório da Música, você tem até 7 dias corridos após o recebimento do produto para exercer o direito de arrependimento, desde que o instrumento esteja em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais [política 4.1, p. 4]. Como você já utilizou o instrumento, ele não atende a essas condições, e a devolução por arrependimento não será possível nesse caso.\n\nSe o instrumento estiver com algum defeito de fabricação, você pode solicitar uma troca em até 30 dias corridos após a compra [política 4.2, p. 4]. Caso contrário, danos causados por uso, quedas ou condições climáticas não são cobertos pela garantia [política 8.3, p. 7].\n\nSe quiser mais informações ou for possível descrever a situação do instrumento, posso ajudar a orientar melhor."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

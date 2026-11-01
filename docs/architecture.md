@@ -130,8 +130,11 @@ persistence, bounded policy retrieval wiring and failures. They do not establish
 language understanding, tool selection or policy-answer quality. [US-13 live evidence](examples/sprint-2/README.md)
 records catalog/context, promotion/PIX and order behavior, including two failed
 attempts and focused instruction corrections; those Sprint 2 runs did not cover
-policy lookup. US-16 integrates policy search, and US-17 owns reviewed policy-answer
-evaluation.
+policy lookup. US-16 integrates policy search. US-17 reviewed four paired real
+Portuguese conversations; the [results](examples/us-17/results.md) preserve one RAG
+HTTP 500, failures in both arms on tool selection for a mixed order/return question,
+and unsupported claims. This evidence does not establish general model quality or
+that provisional retrieval is adequate.
 
 The [simplification review](examples/simplification-review.md) preserves an earlier
 offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)
