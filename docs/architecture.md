@@ -107,10 +107,11 @@ See [catalog](catalog.md) and [orders](orders.md).
 Tools own exact price calculations; the model presents the original price,
 discount and final price once. The output validator rejects blank/internal markup
 and adds current-run truncation disclosures and one concise discount snapshot notice.
-It rejects explicit `R$` amounts absent from current-run quotes/totals, search
-price bounds and customer messages, using the existing single retry. Customer
-amounts are tracked separately so budget references need no extra search; they
-are context, not confirmed prices. Assistant history and old tool results do not
+It rejects explicit `R$` amounts absent from current-run product prices/quotes or
+order totals, using the existing single retry. Customer amounts and search bounds
+do not authorize output amounts. Budget comparisons and clarifications use wording
+such as “seu orçamento” without repeating the amount; they need no extra search
+unless source facts are required. Assistant history and old tool results do not
 establish current prices. The check does not prove correct price associations,
 labels, percentages or every factual claim.
 Diagnostics allow metadata only. This is not a universal semantic grounding check.
@@ -129,6 +130,8 @@ offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/R
 records the final Qwen conversations, failed Nova comparisons and a combined
 correction message that preserves the same single-retry limit. Order snapshot
 limits were explicit when asked, but not repeated in every answer.
+These captures precede the source-only monetary-output rule; their budget echoes
+are historical behavior. The updated rule has offline validation, not a new live run.
 
 [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
 approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation

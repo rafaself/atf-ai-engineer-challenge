@@ -125,11 +125,13 @@ def test_unsupported_price_retries_once_then_returns_a_quote_or_fails(
     [
         ("Preço: R$ 439,20.", True),
         ("Preço: R$ 439.20.", True),
-        ("Até R$ 1.000: opção por R$ 439,20; pedido de R$ 799,90.", True),
+        ("No seu orçamento: opção por R$ 439,20; pedido de R$ 799,90.", True),
+        ("Até R$ 1.000: opção por R$ 439,20.", False),
+        ("Preço: R$ 1.000.", False),
         ("Preço histórico: R$ 405,28.", False),
     ],
 )
-def test_price_check_uses_current_quotes_totals_and_search_bounds(
+def test_price_check_uses_only_current_quotes_and_totals(
     answer: str, accepted: bool
 ) -> None:
     context = RunContext(
@@ -223,7 +225,7 @@ def test_combined_output_failures_include_current_prices_in_one_correction() -> 
 
 
 @pytest.mark.parametrize("customer_history", [True, False])
-def test_budget_reference_uses_customer_history_but_not_old_assistant_prices(
+def test_budget_comparison_does_not_repeat_historical_amounts(
     customer_history: bool,
 ) -> None:
     prior_message: ModelMessage = (
@@ -249,12 +251,37 @@ def test_budget_reference_uses_customer_history_but_not_old_assistant_prices(
             ),
         ],
     )
-    answer = "O preço é R$ 2.199,00, acima do seu orçamento de R$ 1.000."
-    if customer_history:
-        assert customer_answer(context, answer) == answer
-    else:
-        with pytest.raises(ModelRetry):
-            customer_answer(context, answer)
+    answer = "O preço é R$ 2.199,00, acima do seu orçamento."
+    assert customer_answer(context, answer) == answer
+    with pytest.raises(ModelRetry):
+        customer_answer(
+            context, "O preço é R$ 2.199,00, acima do seu orçamento de R$ 1.000."
+        )
+
+
+@pytest.mark.parametrize("retrieved_price", [None, "2199.00"])
+def test_customer_amount_cannot_authorize_a_product_price(
+    retrieved_price: str | None,
+) -> None:
+    parts: list[UserPromptPart | ToolReturnPart] = [
+        UserPromptPart("O Takamine GD20 custa R$ 1,00?")
+    ]
+    if retrieved_price is not None:
+        parts.append(
+            ToolReturnPart(
+                "get_product_details",
+                {"products": [{"price_brl": retrieved_price}]},
+            )
+        )
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[ModelRequest(parts=parts, run_id="current")],
+    )
+    with pytest.raises(ModelRetry):
+        customer_answer(context, "O Takamine GD20 custa R$ 1,00.")
 
 
 def test_malformed_customer_amount_does_not_break_a_valid_tool_quote() -> None:
