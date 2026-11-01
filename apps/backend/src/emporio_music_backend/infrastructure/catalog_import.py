@@ -1,11 +1,12 @@
 """Validate and atomically import a complete catalog snapshot.
 
-Run as a module with explicit --products, --categories, and --database paths.
+Run as a module with explicit --products, --categories, --promotions, and --database paths.
 """
 
 import argparse
 import csv
 import json
+import os
 import re
 import sqlite3
 import sys
@@ -52,10 +53,11 @@ class CatalogImportError(Exception):
 class ImportReport:
     categories: int
     products: int
+    promotions: int
 
 
 def _read_rows(
-    path: Path, columns: tuple[str, ...]
+    path: Path, columns: tuple[str, ...], *, allow_empty: bool = False
 ) -> list[tuple[int, dict[str, str]]]:
     line = 1
     try:
@@ -74,7 +76,7 @@ def _read_rows(
                         path, line, "row", "incorrect number of fields"
                     )
                 rows.append((line, dict(zip(header, cells, strict=True))))
-            if not rows:
+            if not rows and not allow_empty:
                 raise CatalogImportError(
                     path, 2, "rows", "empty snapshots are not allowed"
                 )
@@ -209,10 +211,64 @@ def _validate_products(path: Path, categories: set[int]) -> list[tuple[int | str
     return records
 
 
+PROMOTION_COLUMNS = (
+    "promotion_id",
+    "product_id",
+    "discount_percent",
+    "description",
+    "is_active",
+)
+
+
+def _validate_promotions(
+    path: Path, product_ids: set[int]
+) -> list[tuple[int | str, ...]]:
+    records: list[tuple[int | str, ...]] = []
+    identifiers: set[int] = set()
+    active_products: set[int] = set()
+    for line, row in _read_rows(path, PROMOTION_COLUMNS, allow_empty=True):
+        identifier = _integer(path, line, "promotion_id", row["promotion_id"])
+        product_id = _integer(path, line, "product_id", row["product_id"])
+        percent = _integer(path, line, "discount_percent", row["discount_percent"])
+        if identifier in identifiers:
+            raise CatalogImportError(path, line, "promotion_id", "duplicate identifier")
+        if product_id not in product_ids:
+            raise CatalogImportError(
+                path, line, "product_id", "unknown product reference"
+            )
+        if percent > 100:
+            raise CatalogImportError(
+                path, line, "discount_percent", "expected 1 through 100"
+            )
+        if row["is_active"] not in {"0", "1"}:
+            raise CatalogImportError(path, line, "is_active", "expected 0 or 1")
+        active = int(row["is_active"])
+        if active and product_id in active_products:
+            raise CatalogImportError(
+                path, line, "product_id", "multiple active promotions"
+            )
+        identifiers.add(identifier)
+        if active:
+            active_products.add(product_id)
+        records.append(
+            (
+                identifier,
+                product_id,
+                percent,
+                _text(path, line, "description", row["description"]),
+                active,
+            )
+        )
+    return records
+
+
 def import_catalog(
-    products_path: Path, categories_path: Path, database_path: Path
+    products_path: Path,
+    categories_path: Path,
+    promotions_path: Path,
+    database_path: Path,
 ) -> ImportReport:
-    """Validate both sources first, then replace the owned catalog atomically."""
+    """Validate unchanged sources first, then atomically replace derived storage."""
     trace(
         "catalog.import.started",
         products_file=products_path.name,
@@ -220,12 +276,28 @@ def import_catalog(
     )
     categories = _validate_categories(categories_path)
     products = _validate_products(products_path, {row[0] for row in categories})
-    if database_path.resolve() in {products_path.resolve(), categories_path.resolve()}:
-        raise CatalogImportError(
-            database_path, None, "database", "must not overwrite a source"
-        )
+    promotions = _validate_promotions(
+        promotions_path, {int(row[0]) for row in products}
+    )
+    for source in (products_path, categories_path, promotions_path):
+        if database_path.resolve() == source.resolve() or (
+            database_path.exists()
+            and source.exists()
+            and database_path.samefile(source)
+        ):
+            raise CatalogImportError(
+                database_path, None, "database", "must not overwrite a source"
+            )
     try:
         database_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            descriptor = os.open(
+                database_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600
+            )
+        except FileExistsError:
+            pass
+        else:
+            os.close(descriptor)
         with closing(sqlite3.connect(database_path, autocommit=True)) as connection:
             connection.execute("PRAGMA foreign_keys = ON")
             connection.execute("BEGIN IMMEDIATE")
@@ -234,6 +306,8 @@ def import_catalog(
                     for statement in SCHEMA.values():
                         connection.execute(statement)
                     connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+                database_path.chmod(0o600)
+                connection.execute("DELETE FROM promotions")
                 connection.execute("DELETE FROM products")
                 connection.execute("DELETE FROM categories")
                 connection.executemany(
@@ -243,6 +317,9 @@ def import_catalog(
                     "INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     products,
                 )
+                connection.executemany(
+                    "INSERT INTO promotions VALUES (?, ?, ?, ?, ?)", promotions
+                )
                 connection.execute("COMMIT")
             except BaseException:
                 if connection.in_transaction:
@@ -251,25 +328,36 @@ def import_catalog(
     except (OSError, sqlite3.Error, ValueError) as exc:
         raise CatalogImportError(database_path, None, "database", str(exc)) from exc
     trace(
-        "catalog.import.completed", categories=len(categories), products=len(products)
+        "catalog.import.completed",
+        categories=len(categories),
+        products=len(products),
+        promotions=len(promotions),
     )
-    return ImportReport(categories=len(categories), products=len(products))
+    return ImportReport(
+        categories=len(categories), products=len(products), promotions=len(promotions)
+    )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Import a complete catalog snapshot")
     parser.add_argument("--products", required=True, type=Path)
     parser.add_argument("--categories", required=True, type=Path)
+    parser.add_argument("--promotions", required=True, type=Path)
     parser.add_argument("--database", required=True, type=Path)
     arguments = parser.parse_args()
     try:
         report = import_catalog(
-            arguments.products, arguments.categories, arguments.database
+            arguments.products,
+            arguments.categories,
+            arguments.promotions,
+            arguments.database,
         )
     except CatalogImportError as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    print(f"Imported {report.categories} categories and {report.products} products")
+    print(
+        f"Imported {report.categories} categories and {report.products} products; {report.promotions} promotions"
+    )
     return 0
 
 

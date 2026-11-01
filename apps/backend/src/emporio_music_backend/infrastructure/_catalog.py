@@ -3,7 +3,7 @@
 import sqlite3
 import unicodedata
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 MAX_INTEGER = 2**63 - 1
 SCHEMA = {
     "categories": """CREATE TABLE categories (
@@ -23,6 +23,13 @@ SCHEMA = {
         specs TEXT NOT NULL,
         created_at TEXT NOT NULL,
         normalized_name TEXT NOT NULL CHECK(length(normalized_name) > 0)
+    )""",
+    "promotions": """CREATE TABLE promotions (
+        promotion_id INTEGER PRIMARY KEY CHECK(promotion_id > 0),
+        product_id INTEGER NOT NULL REFERENCES products(product_id),
+        discount_percent INTEGER NOT NULL CHECK(typeof(discount_percent) = 'integer' AND discount_percent BETWEEN 1 AND 100),
+        description TEXT NOT NULL CHECK(length(trim(description)) > 0),
+        is_active INTEGER NOT NULL CHECK(typeof(is_active) = 'integer' AND is_active IN (0, 1))
     )""",
 }
 
@@ -49,5 +56,5 @@ def validate_schema(
     if allow_empty and version == 0 and not objects:
         return True
     if version != SCHEMA_VERSION or objects != SCHEMA:
-        raise ValueError("database is not a compatible schema-version-1 catalog")
+        raise ValueError("database is not a compatible schema-version-2 catalog")
     return False

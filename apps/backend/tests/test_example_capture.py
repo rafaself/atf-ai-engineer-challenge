@@ -27,7 +27,12 @@ def test_recorder_saves_actual_tool_trace_without_claiming_acceptance(
 ) -> None:
     data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", database)
+    import_catalog(
+        data / "products.csv",
+        data / "categories.csv",
+        data / "promotions.csv",
+        database,
+    )
     monkeypatch.setattr(examples, "SCENARIOS", (("named", "Consulte GD20"),))
 
     def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:

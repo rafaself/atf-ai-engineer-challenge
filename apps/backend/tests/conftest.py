@@ -34,7 +34,9 @@ def operational_database(tmp_path: Path) -> Path:
     data = Path(__file__).parents[3] / "data"
     catalog = tmp_path / "operational-catalog.sqlite3"
     database = tmp_path / "operations.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", catalog)
+    import_catalog(
+        data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
+    )
     import_operations(
         data / "customers.csv",
         data / "orders.csv",

@@ -14,6 +14,7 @@ from emporio_music_backend.contracts.errors import ProductRetrievalError
 from emporio_music_backend.infrastructure.catalog_import import (
     CATEGORY_COLUMNS,
     PRODUCT_COLUMNS,
+    PROMOTION_COLUMNS,
     CatalogImportError,
     import_catalog,
 )
@@ -61,6 +62,7 @@ def sources(
         ],
     )
     write_csv(products, PRODUCT_COLUMNS, rows if rows is not None else [item()])
+    write_csv(tmp_path / "promotions.csv", PROMOTION_COLUMNS, [])
     return products, categories, database
 
 
@@ -71,7 +73,7 @@ def test_supplied_snapshot_and_grounded_searches(tmp_path: Path) -> None:
         hashlib.sha256(path.read_bytes()).digest() for path in (products, categories)
     ]
     database = tmp_path / "catalog.sqlite3"
-    report = import_catalog(products, categories, database)
+    report = import_catalog(products, categories, data / "promotions.csv", database)
     assert (report.products, report.categories) == (65, 9)
     repository: ProductRepository = SQLiteProductRepository(database)
     budget = repository.search(
@@ -106,10 +108,10 @@ def test_reimport_replaces_snapshot_and_removes_absent_categories(
     products, categories, database = sources(
         tmp_path, [item(), item(2, category_id="2")]
     )
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     before = database.read_bytes()
     expected = SQLiteProductRepository(database).search(ProductSearchQuery())
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     repository = SQLiteProductRepository(database)
     assert repository.search(ProductSearchQuery()) == expected
     write_csv(products, PRODUCT_COLUMNS, [item(price_brl="11.99", stock_quantity="0")])
@@ -118,7 +120,7 @@ def test_reimport_replaces_snapshot_and_removes_absent_categories(
         CATEGORY_COLUMNS,
         [{"category_id": "1", "name": "Violões", "description": "Guitars"}],
     )
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     result = repository.search(ProductSearchQuery(available_only=False))
     assert result.total_matches == 1 and result.products[0].price_centavos == 1199
     assert result.products[0].stock_quantity == 0
@@ -163,11 +165,11 @@ def test_invalid_product_preserves_last_snapshot(
     tmp_path: Path, field: str, value: str
 ) -> None:
     products, categories, database = sources(tmp_path)
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     before = database.read_bytes()
     write_csv(products, PRODUCT_COLUMNS, [item(**{field: value})])
     with pytest.raises(CatalogImportError) as error:
-        import_catalog(products, categories, database)
+        import_catalog(products, categories, tmp_path / "promotions.csv", database)
     assert f"products.csv:2: {field}:" in str(error.value)
     assert "Private description" not in str(error.value)
     assert database.read_bytes() == before
@@ -188,14 +190,14 @@ def test_bad_csv_does_not_create_database(tmp_path: Path, content: str) -> None:
     products, categories, database = sources(tmp_path)
     products.write_text(content)
     with pytest.raises(CatalogImportError):
-        import_catalog(products, categories, database)
+        import_catalog(products, categories, tmp_path / "promotions.csv", database)
     assert not database.exists()
 
 
 def test_duplicate_products_and_invalid_category_inputs(tmp_path: Path) -> None:
     products, categories, database = sources(tmp_path, [item(), item()])
     with pytest.raises(CatalogImportError, match="product_id: duplicate"):
-        import_catalog(products, categories, database)
+        import_catalog(products, categories, tmp_path / "promotions.csv", database)
     write_csv(products, PRODUCT_COLUMNS, [item()])
     for duplicate in (
         {"category_id": "1", "name": "Other", "description": "Other"},
@@ -212,20 +214,20 @@ def test_duplicate_products_and_invalid_category_inputs(tmp_path: Path) -> None:
             ],
         )
         with pytest.raises(CatalogImportError):
-            import_catalog(products, categories, database)
+            import_catalog(products, categories, tmp_path / "promotions.csv", database)
     assert not database.exists()
 
 
 def test_database_write_failure_rolls_back_deletions(tmp_path: Path) -> None:
     products, categories, database = sources(tmp_path)
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     with sqlite3.connect(database) as connection:
         connection.execute(
             "CREATE TRIGGER fail_insert BEFORE INSERT ON products BEGIN SELECT RAISE(ABORT, 'blocked write'); END"
         )
     write_csv(products, PRODUCT_COLUMNS, [item(2)])
     with pytest.raises(CatalogImportError, match="blocked write") as error:
-        import_catalog(products, categories, database)
+        import_catalog(products, categories, tmp_path / "promotions.csv", database)
     assert isinstance(error.value.__cause__, sqlite3.Error)
     result = SQLiteProductRepository(database).search(ProductSearchQuery())
     assert result.products[0].product_id == 1 and result.total_matches == 1
@@ -233,7 +235,7 @@ def test_database_write_failure_rolls_back_deletions(tmp_path: Path) -> None:
 
 def test_schema_constraints_enforce_catalog_integrity(tmp_path: Path) -> None:
     products, categories, database = sources(tmp_path)
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA foreign_keys = ON")
         for statement in (
@@ -263,7 +265,7 @@ def test_incompatible_database_is_unchanged(tmp_path: Path, setup: str) -> None:
         connection.executescript(setup)
     before = database.read_bytes()
     with pytest.raises(CatalogImportError, match="compatible"):
-        import_catalog(products, categories, database)
+        import_catalog(products, categories, tmp_path / "promotions.csv", database)
     with pytest.raises(ProductRetrievalError):
         SQLiteProductRepository(database).search(ProductSearchQuery())
     assert database.read_bytes() == before
@@ -280,7 +282,7 @@ def test_filters_literals_order_bounds_and_unavailable_statuses(tmp_path: Path) 
         item(7, stock_quantity="0"),
     ]
     products, categories, database = sources(tmp_path, rows)
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     repository = SQLiteProductRepository(database)
     limited = repository.search(
         ProductSearchQuery(
@@ -325,7 +327,7 @@ def test_money_is_exact_and_missing_database_is_not_created(tmp_path: Path) -> N
     with pytest.raises(ProductRetrievalError) as error:
         SQLiteProductRepository(database).search(ProductSearchQuery())
     assert isinstance(error.value.__cause__, sqlite3.Error) and not database.exists()
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     assert (
         SQLiteProductRepository(database)
         .search(ProductSearchQuery())
@@ -362,6 +364,8 @@ def test_import_module_command_paths_and_exits(
         products.name,
         "--categories",
         categories.name,
+        "--promotions",
+        "promotions.csv",
         "--database",
         database.name,
     ]
@@ -407,7 +411,7 @@ def test_import_module_command_paths_and_exits(
 )
 def test_exact_price_edges(tmp_path: Path, price: str, cents: int) -> None:
     products, categories, database = sources(tmp_path, [item(price_brl=price)])
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     assert (
         SQLiteProductRepository(database)
         .search(ProductSearchQuery())
@@ -419,7 +423,7 @@ def test_exact_price_edges(tmp_path: Path, price: str, cents: int) -> None:
 
 def test_count_and_rows_share_snapshot_during_concurrent_import(tmp_path: Path) -> None:
     products, categories, database = sources(tmp_path, [item(), item(2)])
-    import_catalog(products, categories, database)
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA journal_mode=WAL")
     reader = sqlite3.connect(
@@ -440,7 +444,9 @@ def test_count_and_rows_share_snapshot_during_concurrent_import(tmp_path: Path) 
             if statement.startswith("SELECT p.product_id") and not changed:
                 changed = True
                 mocked.side_effect = original_connect
-                import_catalog(products, categories, database)
+                import_catalog(
+                    products, categories, tmp_path / "promotions.csv", database
+                )
 
         reader.set_trace_callback(replace_after_count)
         snapshot = SQLiteProductRepository(database).search(ProductSearchQuery())

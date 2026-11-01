@@ -40,7 +40,9 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     data = Path(__file__).parents[3] / "data"
     catalog = tmp_path / "catalog.sqlite3"
     conversations = tmp_path / "conversations.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", catalog)
+    import_catalog(
+        data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
+    )
     monkeypatch.setenv("DATABASE_PATH", str(catalog))
     monkeypatch.setenv("CONVERSATION_DATABASE_PATH", str(conversations))
     monkeypatch.setenv("PIPELINE_LOGS", "1")
@@ -107,7 +109,9 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     assert "seleção" in first.json()["answer"] and "12" in first.json()["answer"]
     second_name = first.json()["answer"].splitlines()[1].removeprefix("2. ")
     # Re-import replaces the catalog, not the independently stored conversation.
-    import_catalog(data / "products.csv", data / "categories.csv", catalog)
+    import_catalog(
+        data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
+    )
     with sqlite3.connect(catalog) as connection:
         connection.execute(
             "UPDATE products SET price_centavos = 123456 WHERE name = ?", (second_name,)
