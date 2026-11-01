@@ -1,10 +1,12 @@
 """Default tests never contact a real model, even if credentials are present."""
 
+import shutil
 from pathlib import Path
 
 import pytest
 from pydantic_ai import models
 
+from emporio_music_backend import paths
 from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
@@ -51,10 +53,27 @@ def operational_database(tmp_path: Path) -> Path:
 def demo_customer(
     monkeypatch: pytest.MonkeyPatch, operational_database: Path
 ) -> dict[str, int]:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
     return {"customer_id": 1}
 
 
 @pytest.fixture
 def other_customer(demo_customer: dict[str, int]) -> dict[str, int]:
     return {"customer_id": 2}
+
+
+@pytest.fixture
+def project_copy(tmp_path: Path) -> Path:
+    """Run path-sensitive module commands without touching the checkout's data."""
+    project = tmp_path / "project"
+    source = project / "apps/backend/src"
+    shutil.copytree(
+        Path(__file__).parents[1] / "src",
+        source,
+        ignore=shutil.ignore_patterns("__pycache__", "*.egg-info"),
+    )
+    data = project / "data"
+    data.mkdir()
+    for path in (Path(__file__).parents[3] / "data").glob("*.csv"):
+        shutil.copyfile(path, data / path.name)
+    return project

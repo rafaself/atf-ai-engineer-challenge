@@ -16,7 +16,7 @@ five independent conversations from the repository root:
 
 ```bash
 uv run --env-file .env --project apps/backend --locked python -m emporio_music_backend.agent.examples \
-  --live --database data/catalog.sqlite3 --output-dir docs/examples/live-next
+  --live --output-dir docs/examples/live-next
 ```
 
 This incurs real model calls (up to five requests and five tool calls per scenario

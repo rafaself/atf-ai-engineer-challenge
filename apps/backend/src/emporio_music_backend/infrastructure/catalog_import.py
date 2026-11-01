@@ -1,6 +1,6 @@
 """Validate and atomically import a complete catalog snapshot.
 
-Run as a module with explicit --products, --categories, --promotions, and --database paths.
+Run as a module with explicit CSV sources; storage uses the fixed project path.
 """
 
 import argparse
@@ -17,6 +17,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Never
 
+from emporio_music_backend import paths
 from emporio_music_backend.diagnostics import trace
 from emporio_music_backend.infrastructure._catalog import (
     MAX_INTEGER,
@@ -279,15 +280,6 @@ def import_catalog(
     promotions = _validate_promotions(
         promotions_path, {int(row[0]) for row in products}
     )
-    for source in (products_path, categories_path, promotions_path):
-        if database_path.resolve() == source.resolve() or (
-            database_path.exists()
-            and source.exists()
-            and database_path.samefile(source)
-        ):
-            raise CatalogImportError(
-                database_path, None, "database", "must not overwrite a source"
-            )
     try:
         database_path.parent.mkdir(parents=True, exist_ok=True)
         try:
@@ -345,14 +337,13 @@ def main() -> int:
     parser.add_argument("--products", required=True, type=Path)
     parser.add_argument("--categories", required=True, type=Path)
     parser.add_argument("--promotions", required=True, type=Path)
-    parser.add_argument("--database", required=True, type=Path)
     arguments = parser.parse_args()
     try:
         report = import_catalog(
             arguments.products,
             arguments.categories,
             arguments.promotions,
-            arguments.database,
+            paths.CATALOG_DATABASE_PATH,
         )
     except CatalogImportError as exc:
         print(str(exc), file=sys.stderr)

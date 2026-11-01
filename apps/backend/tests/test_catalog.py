@@ -353,25 +353,24 @@ def test_money_is_exact_and_missing_database_is_not_created(tmp_path: Path) -> N
     ],
 )
 def test_import_module_command_paths_and_exits(
-    tmp_path: Path, invalid_specs: str | None, diagnostic: str
+    tmp_path: Path, project_copy: Path, invalid_specs: str | None, diagnostic: str
 ) -> None:
-    products, categories, database = sources(tmp_path)
+    products, categories, database = sources(project_copy / "data")
     command = [
         sys.executable,
         "-m",
         "emporio_music_backend.infrastructure.catalog_import",
         "--products",
-        products.name,
+        str(products),
         "--categories",
-        categories.name,
+        str(categories),
         "--promotions",
-        "promotions.csv",
-        "--database",
-        database.name,
+        str(products.parent / "promotions.csv"),
     ]
     environment = {
         key: value for key, value in os.environ.items() if not key.startswith("AWS_")
     }
+    environment["PYTHONPATH"] = str(project_copy / "apps/backend/src")
     success = subprocess.run(
         command,
         cwd=tmp_path,

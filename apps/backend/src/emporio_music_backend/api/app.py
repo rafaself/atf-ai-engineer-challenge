@@ -3,7 +3,6 @@
 import os
 from collections.abc import Callable
 from functools import lru_cache
-from pathlib import Path
 from threading import Lock
 from time import perf_counter
 from typing import Annotated, cast
@@ -14,6 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from emporio_music_backend import paths
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.api.schemas import DemoChatRequest
@@ -51,33 +51,13 @@ def get_chat_service_factory(request: Request) -> ChatServiceFactory:
     return cast(ChatServiceFactory, request.app.state.chat_service_factory)
 
 
-def _database_paths() -> tuple[Path, Path, Path]:
-    paths = tuple(
-        Path(os.environ.get(key, default)).resolve()
-        for key, default in (
-            ("DATABASE_PATH", "data/catalog.sqlite3"),
-            ("OPERATIONS_DATABASE_PATH", "data/operations.sqlite3"),
-            ("CONVERSATION_DATABASE_PATH", "data/conversations.sqlite3"),
-        )
-    )
-    for index, path in enumerate(paths):
-        for other in paths[index + 1 :]:
-            if path == other or (
-                path.exists() and other.exists() and path.samefile(other)
-            ):
-                raise ConfigurationError(
-                    "Catalog, operations and conversation storage must be separate"
-                )
-    return paths[0], paths[1], paths[2]
-
-
 def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
     """Create the local fictional demo; provider setup waits for a valid request."""
     app = FastAPI(title="Empório da Música", version="0.1.0")
 
     @lru_cache(maxsize=1)
     def customer_repository() -> SQLiteOrderRepository:
-        return SQLiteOrderRepository(_database_paths()[1])
+        return SQLiteOrderRepository(paths.OPERATIONS_DATABASE_PATH)
 
     def select_demo_customer(customer_id: int | None) -> CustomerIdentity | None:
         if customer_id is None:
@@ -87,17 +67,12 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
             raise CustomerSelectionError("Unknown demo customer")
         return identity
 
-    chat_service_initialization_lock = Lock()
-
     @lru_cache(maxsize=1)
     def build_chat_service() -> ChatServicePort:
         if chat_service is not None:
             return chat_service
         trace("composition.started")
         agent_settings = AgentSettings.from_environment()
-        catalog_database_path, operations_database_path, conversation_database_path = (
-            _database_paths()
-        )
         try:
             chat_timeout_seconds = float(os.environ.get("CHAT_TIMEOUT_SECONDS", "60"))
             history_limits = HistoryLimits(
@@ -109,13 +84,15 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         return ChatService(
             create_store_agent(
                 agent_settings,
-                SQLiteProductRepository(catalog_database_path),
-                SQLiteOrderRepository(operations_database_path),
+                SQLiteProductRepository(paths.CATALOG_DATABASE_PATH),
+                SQLiteOrderRepository(paths.OPERATIONS_DATABASE_PATH),
             ),
-            SQLiteConversationRepository(conversation_database_path),
+            SQLiteConversationRepository(paths.CONVERSATION_DATABASE_PATH),
             timeout_seconds=chat_timeout_seconds,
             history_limits=history_limits,
         )
+
+    chat_service_initialization_lock = Lock()
 
     def chat_service_factory() -> ChatServicePort:
         # lru_cache alone can invoke initialization concurrently on cache misses.

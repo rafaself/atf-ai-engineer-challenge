@@ -20,6 +20,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
+from emporio_music_backend import paths
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
@@ -41,11 +42,11 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
     catalog = operational_database.parent / "operational-catalog.sqlite3"
     conversations = tmp_path / "conversations.sqlite3"
-    monkeypatch.setenv("DATABASE_PATH", str(catalog))
-    monkeypatch.setenv("CONVERSATION_DATABASE_PATH", str(conversations))
+    monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)
+    monkeypatch.setattr(paths, "CONVERSATION_DATABASE_PATH", conversations)
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
     observed: list[dict[str, Any]] = []

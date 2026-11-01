@@ -22,6 +22,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
+from emporio_music_backend import paths
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
@@ -62,8 +63,8 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
 ) -> None:
     catalog = operational_database.parent / "operational-catalog.sqlite3"
     conversation_path = tmp_path / "conversations.sqlite3"
-    monkeypatch.setenv("DATABASE_PATH", str(catalog))
-    monkeypatch.setenv("CONVERSATION_DATABASE_PATH", str(conversation_path))
+    monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)
+    monkeypatch.setattr(paths, "CONVERSATION_DATABASE_PATH", conversation_path)
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
     observed: list[dict[str, Any]] = []
@@ -298,7 +299,7 @@ def test_selected_customer_is_rechecked_after_snapshot_removal(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
 
     class Service:
         async def chat(
@@ -315,7 +316,7 @@ def test_selected_customer_is_rechecked_after_snapshot_removal(
             ).status_code
             == 200
         )
-    paths = []
+    snapshot_paths = []
     for filename, field, removed in (
         ("customers.csv", "customer_id", "1"),
         ("orders.csv", "order_id", "4"),
@@ -331,11 +332,11 @@ def test_selected_customer_is_rechecked_after_snapshot_removal(
             writer = csv.DictWriter(stream, columns)
             writer.writeheader()
             writer.writerows(rows)
-        paths.append(path)
+        snapshot_paths.append(path)
     import_operations(
-        paths[0],
-        paths[1],
-        paths[2],
+        snapshot_paths[0],
+        snapshot_paths[1],
+        snapshot_paths[2],
         operational_database.parent / "operational-catalog.sqlite3",
         operational_database,
     )
@@ -365,7 +366,7 @@ def test_forged_or_invalid_tool_arguments_do_not_complete_turns(
     selection: dict[str, int],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
 
     def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(parts=[ToolCallPart(tool, arguments)])
@@ -447,7 +448,7 @@ def test_known_empty_account_receives_successful_empty_list(
     conversations: SQLiteConversationRepository,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
 
     def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
@@ -486,18 +487,3 @@ def test_known_empty_account_receives_successful_empty_list(
         response.json()["answer"]
         == "Sua conta não tem pedidos nesta fotografia importada."
     )
-
-
-@pytest.mark.parametrize("setting", ["DATABASE_PATH", "CONVERSATION_DATABASE_PATH"])
-def test_operations_path_collision_fails_before_model_setup(
-    setting: str,
-    operational_database: Path,
-    demo_customer: dict[str, int],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    before = operational_database.read_bytes()
-    monkeypatch.setenv(setting, str(operational_database))
-    with TestClient(api_app.create_app()) as client:
-        response = client.post("/api/chat", json={**demo_customer, "message": "listar"})
-    assert response.status_code == 503
-    assert operational_database.read_bytes() == before

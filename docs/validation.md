@@ -1,4 +1,25 @@
-# Current guest/demo-selection verification
+# Current fixed-path verification
+
+Storage now uses `emporio_music_backend.paths`: PROJECT_ROOT derives from the
+package's source location; catalog, orders, history and the reserved ChromaDB
+storage directory live under its data directory. Environment/CLI database path
+overrides, repeated resolution and collision checks are removed. No ChromaDB
+adapter or dependency was added.
+
+The preparation regression failed before implementation because launching from
+outside the project used the current directory's data path. The updated command
+now imports twice from a disposable project copy, ignores obsolete environment
+paths, preserves all source bytes and leaves history untouched. Tests replace the
+shared constants with temporary paths instead of configuring environment storage.
+Three environment-collision cases and preparation's collision assertions were
+retired because fixed paths supersede that configurable behavior; data validation,
+atomic replacement, ownership, history, failure and pricing checks remain.
+
+Ruff lint/format, strict mypy (70 files), 246 offline tests and source/wheel builds
+pass from the repository root. All supplied CSV/PDF bytes remain unchanged. No
+live model calls were made. Earlier records describe superseded path configuration.
+
+# Earlier guest/demo-selection verification
 
 Issue #33 removes demo bearer mapping, token parsing/digests/comparison, the
 resolver and its unused protocols. Guests and selected fictional customers share

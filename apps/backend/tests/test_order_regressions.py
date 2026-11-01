@@ -10,6 +10,7 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from emporio_music_backend import paths
 from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.api.app import create_app
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
@@ -19,7 +20,7 @@ from emporio_music_backend.contracts.conversations import ExecutionContext
 def test_missing_operations_cannot_validate_customer_selection(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(tmp_path / "missing.sqlite3"))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", tmp_path / "missing.sqlite3")
     called = []
 
     class Service:

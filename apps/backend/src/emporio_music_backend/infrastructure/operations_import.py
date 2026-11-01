@@ -14,6 +14,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from emporio_music_backend import paths
 from emporio_music_backend.contracts.orders import OrderSummary
 from emporio_music_backend.diagnostics import trace
 from emporio_music_backend.infrastructure._catalog import (
@@ -115,14 +116,7 @@ def import_operations(
     catalog_path: Path,
     database_path: Path,
 ) -> OperationsImportReport:
-    destination = database_path.resolve()
-    for source in (customers_path, orders_path, items_path, catalog_path):
-        if destination == source.resolve() or (
-            destination.exists() and source.exists() and destination.samefile(source)
-        ):
-            raise OperationsImportError(
-                "database", None, "path", "must not overwrite an input"
-            )
+    destination = database_path
     customers = _read_rows(customers_path, "customers", CUSTOMER_COLUMNS)
     orders = _read_rows(orders_path, "orders", ORDER_COLUMNS)
     items = _read_rows(items_path, "order_items", ITEM_COLUMNS)
@@ -187,7 +181,7 @@ def import_operations(
         )
     try:
         with closing(
-            sqlite3.connect(catalog_path.resolve().as_uri() + "?mode=ro", uri=True)
+            sqlite3.connect(catalog_path.as_uri() + "?mode=ro", uri=True)
         ) as connection:
             connection.execute("BEGIN")
             validate_catalog(connection)
@@ -290,12 +284,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Import the fictional customer/order snapshot"
     )
-    for flag in ("customers", "orders", "order-items", "catalog", "database"):
+    for flag in ("customers", "orders", "order-items"):
         parser.add_argument("--" + flag, required=True, type=Path)
     args = parser.parse_args()
     try:
         report = import_operations(
-            args.customers, args.orders, args.order_items, args.catalog, args.database
+            args.customers,
+            args.orders,
+            args.order_items,
+            paths.CATALOG_DATABASE_PATH,
+            paths.OPERATIONS_DATABASE_PATH,
         )
     except OperationsImportError as exc:
         print(str(exc), file=sys.stderr)

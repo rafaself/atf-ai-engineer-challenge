@@ -31,7 +31,7 @@ _HEADER = "order_id, order_date, status, total_centavos"
 
 class SQLiteOrderRepository:
     def __init__(self, database_path: Path) -> None:
-        self.database_path = database_path.resolve()
+        self.database_path = database_path
         try:
             with self._snapshot():
                 pass

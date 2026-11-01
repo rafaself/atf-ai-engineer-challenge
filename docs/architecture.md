@@ -61,7 +61,8 @@ A short SQLite transaction appends a complete pair under the next sequence numbe
 revision, compare-and-swap or coordination between separate service instances.
 
 Conversation schema v2 permits null owners. Older v1 files are rejected untouched;
-use a fresh configured path, without migration or automatic history deletion.
+stop the server and move the old file aside before starting a fresh history
+store at the fixed path. There is no migration or automatic history deletion.
 
 Cancellation and the deadline are checked before saving. Failed execution/append
 returns an error and saves no completed turn; a failed first call may leave an empty
@@ -72,6 +73,17 @@ network, so automatic retries are not deduplicated. These are documented demo li
 The adapter sends fresh user/assistant text messages each run. Trusted identity and
 session metadata travel separately as SDK dependencies, never model-controlled
 arguments. Prior answers preserve references but are not current factual evidence.
+
+## Storage paths
+
+`paths.py` defines PROJECT_ROOT from the package's source location and the fixed
+`data/catalog.sqlite3`, `data/operations.sqlite3`, `data/conversations.sqlite3`
+and `data/chroma/` locations. ChromaDB itself is not integrated yet. Preparation,
+HTTP composition, individual import commands and the live recorder share these
+constants; environment storage paths, CLI database overrides, repeated resolution
+and collision checks are removed. Low-level repositories/import functions accept
+explicit absolute paths so tests can use temporary storage. No path factory or
+configuration framework is needed.
 
 ## Data and tools
 

@@ -11,6 +11,7 @@ from pathlib import Path
 from pydantic_ai.messages import ToolCallPart, ToolReturnPart
 from pydantic_ai.usage import UsageLimits
 
+from emporio_music_backend import paths
 from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts.catalog import ProductSearchQuery
@@ -113,13 +114,12 @@ def main() -> None:
         description="Opt-in paid live conversation recorder"
     )
     parser.add_argument("--live", action="store_true")
-    parser.add_argument("--database", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
     if not args.live:
         parser.error("--live is required; this command incurs real Bedrock requests")
-    if not args.database.is_file():
-        parser.error("Import the catalog first; --database must be an existing file")
+    if not paths.CATALOG_DATABASE_PATH.is_file():
+        parser.error("Import the project catalog first")
     if args.output_dir.exists() and not args.output_dir.is_dir():
         parser.error("--output-dir must be a directory")
     if args.output_dir.exists() and any(args.output_dir.iterdir()):
@@ -127,7 +127,7 @@ def main() -> None:
             "--output-dir must be empty or absent; existing evidence is preserved"
         )
     try:
-        asyncio.run(record(args.database, args.output_dir))
+        asyncio.run(record(paths.CATALOG_DATABASE_PATH, args.output_dir))
     except Exception as exc:
         parser.exit(
             1, f"Live capture failed ({type(exc).__name__}); no acceptance claimed\n"

@@ -57,20 +57,19 @@ Docs/OpenAPI require no provider setup.
 
 | Setting | Default |
 | --- | --- |
-| `DATABASE_PATH` | `data/catalog.sqlite3` |
-| `OPERATIONS_DATABASE_PATH` | `data/operations.sqlite3` |
-| `CONVERSATION_DATABASE_PATH` | `data/conversations.sqlite3` |
 | `CHAT_TIMEOUT_SECONDS` | 60 seconds |
 | `HISTORY_MAX_TURNS` | 6; supported 1–20 |
 | `HISTORY_MAX_CHARACTERS` | 24000; supported 1–64000 |
 | `PIPELINE_LOGS` | 0; set 1 for metadata diagnostics |
 
-Paths are relative to the working directory and must be separate. Conversation
-files are created privately; their parent directory must exist. Preparation refreshes
-only source snapshots. A leftover pre-US-12 catalog needs a fresh configured path
-or recreation of that generated file. Source files and chat history must remain intact. Conversation schema v2 supports
-nullable guest owners. An earlier v1 database is rejected unchanged; keep it and
-configure a fresh conversation path. There is no automatic reset or migration.
+Storage paths are fixed in `emporio_music_backend.paths`, beneath the project root's
+`data/` directory: `catalog.sqlite3`, `operations.sqlite3`, `conversations.sqlite3`
+and `chroma/` (reserved; no ChromaDB adapter yet). PROJECT_ROOT derives from the
+package's source location; the launch directory and environment do not redirect storage.
+Conversation files are private; preparation refreshes only source snapshots. Before
+using this version with a v1 conversation database, stop the server and move that
+file aside, preserving it. Startup then creates a fresh database at the fixed path.
+There is no automatic reset or migration. Source CSV/PDF files remain unchanged.
 
 ## Errors and persistence
 

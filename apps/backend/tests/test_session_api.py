@@ -19,6 +19,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
+from emporio_music_backend import paths
 from emporio_music_backend.agent.catalog import ProductSearchTool
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
@@ -44,8 +45,8 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     import_catalog(
         data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
     )
-    monkeypatch.setenv("DATABASE_PATH", str(catalog))
-    monkeypatch.setenv("CONVERSATION_DATABASE_PATH", str(conversations))
+    monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)
+    monkeypatch.setattr(paths, "CONVERSATION_DATABASE_PATH", conversations)
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
     calls = []
@@ -182,7 +183,6 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     [
         ("HISTORY_MAX_TURNS", "0"),
         ("HISTORY_MAX_CHARACTERS", "invalid"),
-        ("CONVERSATION_DATABASE_PATH", "data/catalog.sqlite3"),
     ],
 )
 def test_invalid_session_configuration_fails_before_provider_setup(

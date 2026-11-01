@@ -12,6 +12,7 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from emporio_music_backend import paths
 from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.contracts.catalog import ProductSearchQuery
 from emporio_music_backend.contracts.conversations import ExecutionContext
@@ -26,6 +27,7 @@ from emporio_music_backend.prepare import prepare_data
 
 def test_readers_accept_additional_columns_without_exact_ddl_auditing(
     operational_database: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     catalog = operational_database.parent / "operational-catalog.sqlite3"
     products = SQLiteProductRepository(catalog)
@@ -39,13 +41,9 @@ def test_readers_accept_additional_columns_without_exact_ddl_auditing(
             connection.execute("ALTER TABLE products ADD COLUMN demo_label TEXT")
     assert products.search(query) == before_product
     assert orders.list_orders(identity, OrderListQuery()) == before_orders
-    data = Path(__file__).parents[3] / "data"
-    prepare_data(
-        data,
-        catalog,
-        operational_database,
-        conversation_database_path=operational_database.parent / "untouched.sqlite3",
-    )
+    monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
+    prepare_data()
     assert products.search(query) == before_product
     assert orders.list_orders(identity, OrderListQuery()) == before_orders
 
@@ -87,21 +85,23 @@ def test_multiple_discounted_products_share_one_snapshot_notice() -> None:
 
 def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
     tmp_path: Path,
+    project_copy: Path,
 ) -> None:
-    data = Path(__file__).parents[3] / "data"
+    data = project_copy / "data"
     catalog, operations, conversations = (
-        tmp_path / (name + ".sqlite3")
+        data / (name + ".sqlite3")
         for name in ("catalog", "operations", "conversations")
     )
-    # Setup has no reason to open the existing history file at all.
     conversations.write_bytes(b"untouched history sentinel")
     environment = {
         key: value for key, value in os.environ.items() if not key.startswith("AWS_")
     }
+    environment["PYTHONPATH"] = str(project_copy / "apps/backend/src")
+    # Superseded environment settings must not redirect writes, even outside the project.
     environment.update(
-        DATABASE_PATH=str(catalog),
-        OPERATIONS_DATABASE_PATH=str(operations),
-        CONVERSATION_DATABASE_PATH=str(conversations),
+        DATABASE_PATH=str(tmp_path / "wrong-catalog.sqlite3"),
+        OPERATIONS_DATABASE_PATH=str(tmp_path / "wrong-operations.sqlite3"),
+        CONVERSATION_DATABASE_PATH=str(tmp_path / "wrong-conversations.sqlite3"),
     )
     original = {path: path.read_bytes() for path in data.glob("*.csv")}
     for _ in range(2):
@@ -110,8 +110,6 @@ def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
                 sys.executable,
                 "-m",
                 "emporio_music_backend.prepare",
-                "--data-dir",
-                str(data),
             ],
             env=environment,
             cwd=tmp_path,
@@ -133,13 +131,5 @@ def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
             ).fetchone()
             is None
         )
-    with pytest.raises(ValueError, match="separate"):
-        prepare_data(data, catalog, catalog, conversation_database_path=conversations)
-    with pytest.raises(ValueError, match="separate"):
-        prepare_data(
-            data,
-            data / "orders.csv",
-            operations,
-            conversation_database_path=conversations,
-        )
-    assert all(path.read_bytes() == raw for path, raw in original.items())
+    assert not list(tmp_path.glob("wrong-*.sqlite3"))
+    assert not (tmp_path / "data").exists()

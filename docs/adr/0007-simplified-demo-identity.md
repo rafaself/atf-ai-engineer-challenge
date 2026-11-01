@@ -1,5 +1,9 @@
 # ADR-0007: Simplified demo identity for local evaluation
 
+> Storage update: paths are now fixed under PROJECT_ROOT/data. Stop the server
+> and move an older history database aside before creating its replacement;
+> earlier configurable-path guidance below is historical.
+
 Status: Accepted — reviewed and verified offline on 2026-11-01.
 
 Related: [#33](https://github.com/rafaself/atf-ai-engineer-challenge/issues/33).

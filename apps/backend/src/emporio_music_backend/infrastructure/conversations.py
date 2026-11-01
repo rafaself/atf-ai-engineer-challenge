@@ -30,7 +30,7 @@ class SQLiteConversationRepository:
     """Fail-fast SQLite operations; no connection or transaction spans model work."""
 
     def __init__(self, database_path: Path) -> None:
-        self.database_path = database_path.resolve()
+        self.database_path = database_path
         try:
             try:
                 descriptor = os.open(

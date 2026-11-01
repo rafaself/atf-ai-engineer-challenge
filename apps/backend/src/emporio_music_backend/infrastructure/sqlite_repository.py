@@ -21,7 +21,7 @@ from emporio_music_backend.infrastructure._catalog import (
 
 class SQLiteProductRepository:
     def __init__(self, database_path: Path) -> None:
-        self.database_path = database_path.resolve()
+        self.database_path = database_path
 
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
         query = ProductSearchQuery.model_validate(query)

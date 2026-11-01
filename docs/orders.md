@@ -15,17 +15,15 @@ uv run --project apps/backend --locked python -m \
   emporio_music_backend.infrastructure.operations_import \
   --customers data/customers.csv \
   --orders data/orders.csv \
-  --order-items data/order_items.csv \
-  --catalog data/catalog.sqlite3 \
-  --database data/operations.sqlite3
+  --order-items data/order_items.csv
 ```
 
 Expected output: `Imported 50 customers, 20 orders and 22 items`.
-`OPERATIONS_DATABASE_PATH` defaults to `data/operations.sqlite3` at runtime; the
-importer always requires explicit paths. Keep this database separate from both
-`DATABASE_PATH` and `CONVERSATION_DATABASE_PATH`. The HTTP composition rejects
-resolved-path and existing hard-link collisions among all three. The importer
-rejects destination collisions with any CSV or the catalog, including aliases.
+Catalog and operational destinations use the fixed project paths in `paths.py`:
+`PROJECT_ROOT / "data/catalog.sqlite3"` and `PROJECT_ROOT / "data/operations.sqlite3"`.
+They are separate from `data/conversations.sqlite3`; environment/CLI path overrides
+and runtime collision checks are unnecessary. The importer accepts explicit CSV
+sources for focused experiments and validates data before replacing its owned snapshot.
 Generated files are Git-ignored and owned operational snapshots have mode 0600.
 Do not edit the generated schema or use an unrelated SQLite database.
 

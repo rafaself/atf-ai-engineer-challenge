@@ -34,7 +34,7 @@ uv run --env-file .env --project apps/backend --locked uvicorn emporio_music_bac
 Preparation imports 65 products, 25 promotions, 50 customers, 20 orders and 22 item
 rows. Re-running it refreshes the source snapshots and leaves chat history alone.
 It never rewrites supplied CSVs/PDFs. A leftover pre-US-12 generated catalog must
-be recreated or replaced with a fresh configured path; no migration system is included.
+be moved aside before preparing a fresh catalog; no migration system is included.
 
 Open [Swagger UI](http://127.0.0.1:8000/docs) and send
 `{"message":"Quais são as promoções?"}` as a guest. Reuse the returned `session_id`
@@ -42,9 +42,9 @@ with `{"message":"E o segundo no PIX?","session_id":"<returned-id>"}`.
 For orders, start a new chat with `{"message":"Meus pedidos","customer_id":1}`;
 repeat the same customer selection on each follow-up. Omit `session_id` when
 switching customer or mode. Generated databases and AWS credentials stay Git-ignored.
-If upgrading from token-based sessions, keep the old database and set
-`CONVERSATION_DATABASE_PATH` to a fresh file such as `data/guest-conversations.sqlite3`.
-Old conversation schemas are rejected without migration or deletion.
+If upgrading from token-based sessions, stop the server and move the old
+`data/conversations.sqlite3` aside before starting. Keep that history file; old
+schemas are rejected without migration or deletion.
 See [API details](docs/api.md) for curl, configuration and errors.
 
 ## How it works
@@ -68,9 +68,12 @@ function calling; straightforward Python/SQL handles the small structured datase
 The policy PDF will use a separate simple lookup. No vector store is needed here.
 
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
-Preparation and the API use the same `.env` paths: `DATABASE_PATH`,
-`OPERATIONS_DATABASE_PATH`, and `CONVERSATION_DATABASE_PATH`. Guests cannot retrieve
-orders. Session IDs let guests resume a chat; they do not distinguish individual
+The small `paths.py` module derives `PROJECT_ROOT` from its source location and
+defines all storage under `PROJECT_ROOT / "data"`: `catalog.sqlite3`,
+`operations.sqlite3`, `conversations.sqlite3`, and `chroma/` for future ChromaDB
+storage. Paths are fixed, independent of the launch directory; no storage-path
+environment variables or CLI overrides are needed. ChromaDB is not integrated yet.
+Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not distinguish individual
 guests. Keep the demo on loopback with fictional data; it has no authentication. Facts reflect imported snapshots, not live stock
 or carrier status. Only `is_active` establishes promotion validity; the source has
 no dates. The demo has no cross-process turn coordination or retry deduplication.

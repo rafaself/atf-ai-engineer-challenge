@@ -14,6 +14,7 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from emporio_music_backend import paths
 from emporio_music_backend.agent import examples
 from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
@@ -67,14 +68,13 @@ def test_cli_requires_opt_in_and_preserves_existing_evidence(
 ) -> None:
     database = tmp_path / "not-opened.sqlite3"
     database.touch()
+    monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", database)
     output = tmp_path / "evidence"
     output.mkdir()
     existing = output / "previous.md"
     existing.write_text("Keep the actual earlier evidence")
     arguments = [
         "recorder",
-        "--database",
-        str(database),
         "--output-dir",
         str(output),
     ]

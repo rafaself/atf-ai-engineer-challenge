@@ -16,6 +16,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
+from emporio_music_backend import paths
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
@@ -34,12 +35,15 @@ def test_guest_history_survives_restart_and_mode_switches_fail_before_execution(
     operational_database: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv(
-        "DATABASE_PATH",
-        str(operational_database.parent / "operational-catalog.sqlite3"),
+    monkeypatch.setattr(
+        paths,
+        "CATALOG_DATABASE_PATH",
+        operational_database.parent / "operational-catalog.sqlite3",
     )
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
-    monkeypatch.setenv("CONVERSATION_DATABASE_PATH", str(tmp_path / "history.sqlite3"))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
+    monkeypatch.setattr(
+        paths, "CONVERSATION_DATABASE_PATH", tmp_path / "history.sqlite3"
+    )
     histories: list[list[str]] = []
 
     def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
@@ -99,12 +103,15 @@ def test_guest_order_tools_explain_selection_without_reading_orders(
     operational_database: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv(
-        "DATABASE_PATH",
-        str(operational_database.parent / "operational-catalog.sqlite3"),
+    monkeypatch.setattr(
+        paths,
+        "CATALOG_DATABASE_PATH",
+        operational_database.parent / "operational-catalog.sqlite3",
     )
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
-    monkeypatch.setenv("CONVERSATION_DATABASE_PATH", str(tmp_path / "history.sqlite3"))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
+    monkeypatch.setattr(
+        paths, "CONVERSATION_DATABASE_PATH", tmp_path / "history.sqlite3"
+    )
 
     def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
@@ -145,7 +152,7 @@ def test_unknown_customer_rejected_before_service_execution(
     operational_database: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
 
     class Service:
         async def chat(
