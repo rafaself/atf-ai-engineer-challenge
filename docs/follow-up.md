@@ -15,11 +15,12 @@ see [examples](examples/README.md). Broader model evaluation remains ongoing.
 - Evaluate Portuguese tool selection, scope/accessory redirection, ambiguous
   requests, no matches, unavailable products, and grounded prices/stock against
   the chosen live model. Capture failures and adjust prompts/tools from evidence.
-- Orders/customer data require an explicit access/privacy decision before any
-  integration. US-09 establishes trusted identity/session/history contracts and
+- The owner confirmed the customer/order fixtures are fictional and approved
+  committing their original bytes. US-09 establishes trusted identity/session/history contracts and
   direct history execution. US-10 implements the approved server-side demo
   token mapping, bounded persistent sessions, and concurrent-turn handling;
-  US-11 will validate customer mappings and enforce order access. US-12 promotion
+  US-11 validates customer mappings and enforces read-only order access using
+  per-run dependencies and customer-scoped SQL. US-12 promotion
   pricing is explicitly deferred to tracked issue #26. Frontend/CLI and deployment
   remain separate work; the current implementation calculates no discounts.
 

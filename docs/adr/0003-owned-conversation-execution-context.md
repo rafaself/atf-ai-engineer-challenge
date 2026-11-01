@@ -92,3 +92,8 @@ A controlled-model/real-SQLite integration verifies fresh catalog results and no
 old selection notice replay; that integration was added after implementation, so
 its failing baseline was not observed. No live multi-turn Bedrock evidence is
 claimed; that remains the explicitly opted-in US-13 evaluation.
+
+US-11 handoff completed: [ADR-0005](0005-authorized-operational-snapshots.md)
+records the required operational snapshot, customer-registry validation and
+read-only customer-scoped tools. Earlier future-tense US-11 references above
+record the decision context at the time of this ADR.

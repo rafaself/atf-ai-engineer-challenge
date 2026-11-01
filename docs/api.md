@@ -23,8 +23,10 @@ Multiple tokens/customers can be configured. Tokens must contain 32–256 ASCII
 letters, digits, underscores, or hyphens. IDs must be positive integers, with no
 boolean/string coercion or duplicate JSON keys. Missing or invalid configuration
 fails closed. The resolver retains token digests, not plaintext tokens, and does
-not expose credentials to the application context or model. Customer existence
-is not yet verified against datasets; US-11 owns that validation and order access.
+not expose credentials to the application context or model. Every configured ID
+must exist in the imported customer registry. Initialization validates all mappings;
+each resolution rechecks the matched customer. Removed customers fail safely.
+See [operational setup](orders.md) before configuring tokens.
 
 The server reads environment configuration explicitly; it does not load `.env`.
 The `uv --env-file` option below loads your local file. Restart after changing
@@ -33,7 +35,7 @@ customer's session ownership. Never commit tokens or publish their headers.
 
 ## Startup and requests
 
-Import the catalog using README instructions and configure Bedrock as documented
+Import the catalog **and operational snapshot** using README instructions, then configure Bedrock as documented
 in [agent setup](bedrock.md). Start from the repository root:
 
 ```bash
@@ -80,6 +82,7 @@ an unauthenticated fallback in the running API.
 | Setting | Default / supported range |
 | --- | --- |
 | `DATABASE_PATH` | `data/catalog.sqlite3`, imported read-only catalog |
+| `OPERATIONS_DATABASE_PATH` | `data/operations.sqlite3`, required imported read-only customers/orders |
 | `CONVERSATION_DATABASE_PATH` | `data/conversations.sqlite3`, separate writable storage |
 | `CHAT_TIMEOUT_SECONDS` | 60, positive finite deadline |
 | `HISTORY_MAX_TURNS` | 6, integer 1–20 |
@@ -89,7 +92,9 @@ an unauthenticated fallback in the running API.
 Paths are relative to the server's working directory. The storage parent directory
 must exist. Conversation files are created automatically with owner-only access;
 owned existing files are reset to mode 0600. The repository rejects a foreign
-SQLite schema, and configuration rejects a catalog/conversation path collision.
+SQLite schema, and configuration rejects path/alias collisions among catalog,
+operations and conversation storage. The operational database must be imported
+explicitly; missing/incompatible initial storage or invalid customer mappings fail 503.
 Catalog import remains separate and cannot replace the conversation file.
 
 All completed turns remain on disk until reset. The model receives only the newest
@@ -98,9 +103,10 @@ The character budget counts saved conversational text, not instructions, the
 current message (maximum 4000 characters), output, or token usage. No message is
 partially truncated. If the newest saved turn alone exceeds the budget, history
 is empty; the assistant must clarify references it cannot resolve. References in
-retained answers preserve displayed product ordering. Historical prices/stock
-are not current evidence: prompts require fresh tool retrieval. The adapter sends
-text only, without identity/session metadata or old tool returns; output notices
+retained answers preserve displayed product/order ordering. Historical prices,
+stock and order answers are not current evidence: prompts require fresh tool retrieval. The adapter sends
+conversation text without identity/session metadata or old tool returns. Trusted
+ExecutionContext travels as per-run SDK dependencies for order tools; output notices
 use messages stamped with the current SDK run ID, including corrective retries.
 
 ## Failures and completed turns
@@ -135,6 +141,19 @@ recover/reconcile before retrying; no exactly-once delivery or retry deduplicati
 is implemented. There is no transcript-list API in this story. Storage, model,
 and network failures are never disguised as empty retrieval or successful turns.
 For AWS profile diagnosis see [agent configuration](bedrock.md).
+
+## Authorized order questions
+
+With a valid imported customer mapping, send `{"message":"Quais são meus pedidos?"}`
+and continue with `{"message":"Qual o status do primeiro?","session_id":"<returned-uuid>"}`.
+The public shape is unchanged; never supply customer scope/history. Both order
+tools derive scope from trusted execution context, and repository SQL independently
+enforces it. Lists show up to 5 orders by default (maximum 20); details show up to
+20 item rows with truncation metadata/notices. Unknown and foreign order IDs share
+the same normal not-found-in-your-account result, rather than disclosing existence.
+Known accounts without orders receive an empty result. Current lookup is required
+for order facts; data is an imported snapshot, not live tracking or return eligibility.
+Storage/tool failures are failures, with no completed turn. See [order contracts](orders.md).
 
 ## Direct application calls
 

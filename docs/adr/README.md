@@ -18,3 +18,6 @@ choices. Keep numbering stable. Link decisions from the corresponding story.
 - [ADR-0004: Persistent conversation turns](0004-persistent-conversation-turns.md)
   records demo identity, SQLite ownership, bounded history, commit/cancellation,
   concurrency, diagnostics, and API behavior.
+- [ADR-0005: Authorized operational snapshots](0005-authorized-operational-snapshots.md)
+  records minimal operational import, trusted per-run scope, token validation,
+  bounded order tools, snapshot limitations and safe diagnostics.

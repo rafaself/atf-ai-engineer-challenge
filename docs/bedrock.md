@@ -55,6 +55,10 @@ still enabled. No network/model request is needed for those checks.
 `agent.catalog.create_catalog_agent(settings, repository, model=...)` registers
 `search_available_products` and `get_product_details` against any ProductRepository. The optional model argument is
 for alternate providers or controlled tests; omit it for the configured Bedrock model.
+This factory remains an isolated catalog probe. HTTP uses
+`agent.orders.create_store_agent(settings, products, orders)`, sharing those same
+product tools and adding `list_my_orders`/`get_my_order`; it requires operational
+storage and validated customer mapping. See [orders](orders.md).
 
 Recommendation filters are category, partial product_name, inclusive min_price_brl
 and max_price_brl (reais, not centavos), and limit (1–20). Recommendations always
@@ -89,7 +93,9 @@ ChatServicePort; HTTP and provider objects do not enter the application layer.
 AgentExecutor.run also requires context, but returns AgentResponse without a
 persistence claim. The adapter translates application-owned user/assistant text
 into fresh SDK messages. Identity/session metadata and old tool returns are not
-sent. Current-run message IDs select the output validator's tool evidence, so
+sent as messages. ExecutionContext is passed as per-run SDK dependencies; order
+tools derive customer scope there. SDK direct calls require `deps=ExecutionContext()`
+for stateless probes, or a trusted owned context for order execution. Current-run message IDs select the output validator's tool evidence, so
 historical results cannot add new selection notices; corrective retries are still
 included. The service preserves typed errors, timeout, and caller cancellation.
 No persistence write runs in a background worker after cancellation. The short
