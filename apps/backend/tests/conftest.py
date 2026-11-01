@@ -1,6 +1,5 @@
 """Default tests never contact a real model, even if credentials are present."""
 
-import json
 from pathlib import Path
 
 import pytest
@@ -49,19 +48,13 @@ def operational_database(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def api_headers(
+def demo_customer(
     monkeypatch: pytest.MonkeyPatch, operational_database: Path
-) -> dict[str, str]:
+) -> dict[str, int]:
     monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
-    # Synthetic test credentials only; the production adapter must still resolve them.
-    token = "synthetic-api-customer-" + "a" * 32
-    monkeypatch.setenv(
-        "DEMO_CUSTOMER_TOKENS_JSON",
-        json.dumps({token: 1, "synthetic-api-other-" + "b" * 32: 2}),
-    )
-    return {"Authorization": "Bearer " + token}
+    return {"customer_id": 1}
 
 
 @pytest.fixture
-def other_headers(api_headers: dict[str, str]) -> dict[str, str]:
-    return {"Authorization": "Bearer synthetic-api-other-" + "b" * 32}
+def other_customer(demo_customer: dict[str, int]) -> dict[str, int]:
+    return {"customer_id": 2}

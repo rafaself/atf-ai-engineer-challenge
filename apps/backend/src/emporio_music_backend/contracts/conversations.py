@@ -7,17 +7,16 @@ from pydantic import UUID4, Field, model_validator
 
 from emporio_music_backend.contracts.base import ContractModel, NonblankText
 from emporio_music_backend.contracts.errors import (
-    AuthenticationError,
     SessionAccessError,
 )
 from emporio_music_backend.contracts.identity import CustomerIdentity
 
 
 class ConversationSession(ContractModel):
-    """Server-created session metadata; its identifier does not grant access."""
+    """Server-created session metadata; None owner denotes a guest session."""
 
     session_id: UUID4 = Field(default_factory=uuid4)
-    owner: CustomerIdentity
+    owner: CustomerIdentity | None = None
 
 
 class ConversationMessage(ContractModel):
@@ -37,8 +36,6 @@ class ExecutionContext(ContractModel):
     @model_validator(mode="after")
     def validate_owned_history(self) -> Self:
         if self.session is not None:
-            if self.identity is None:
-                raise AuthenticationError("Trusted customer identity is required")
             if self.session.owner != self.identity:
                 raise SessionAccessError("Conversation session is inaccessible")
         elif self.history:

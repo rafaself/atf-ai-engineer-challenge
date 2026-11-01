@@ -17,7 +17,7 @@ from emporio_music_backend.contracts.errors import ConfigurationError
 def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    api_headers: dict[str, str],
+    demo_customer: dict[str, int],
 ) -> None:
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret-for-test-only")
@@ -33,11 +33,10 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
             )
 
     with TestClient(create_app(Service())) as client:
-        client.headers.update(api_headers)
         monkeypatch.setenv("PIPELINE_LOGS", "0")
         assert (
             client.post(
-                "/api/chat", json={"message": "secret-for-test-only"}
+                "/api/chat", json={**demo_customer, "message": "secret-for-test-only"}
             ).status_code
             == 200
         )
@@ -47,7 +46,10 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
         def send(index: int) -> int:
             return client.post(
                 "/api/chat",
-                json={"message": f"{index} secret-for-test-only\nnext line"},
+                json={
+                    **demo_customer,
+                    "message": f"{index} secret-for-test-only\nnext line",
+                },
             ).status_code
 
         with ThreadPoolExecutor(max_workers=2) as pool:
@@ -68,7 +70,7 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
 def test_failure_logs_show_cause_type_without_raw_exception_body(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    api_headers: dict[str, str],
+    demo_customer: dict[str, int],
 ) -> None:
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
@@ -83,8 +85,12 @@ def test_failure_logs_show_cause_type_without_raw_exception_body(
                 raise ConfigurationError("private settings") from exc
 
     with TestClient(create_app(Service()), raise_server_exceptions=False) as client:
-        client.headers.update(api_headers)
-        assert client.post("/api/chat", json={"message": "Olá"}).status_code == 503
+        assert (
+            client.post(
+                "/api/chat", json={**demo_customer, "message": "Olá"}
+            ).status_code
+            == 503
+        )
     entries = [
         json.loads(r.getMessage())
         for r in caplog.records

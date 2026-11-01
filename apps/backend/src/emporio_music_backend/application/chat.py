@@ -17,7 +17,6 @@ from emporio_music_backend.contracts.errors import (
     AgentExecutionError,
     AgentTimeoutError,
     ApplicationError,
-    AuthenticationError,
     ConfigurationError,
     SessionConflictError,
 )
@@ -53,8 +52,6 @@ class ChatService:
     ) -> ChatResponse:
         validated = ChatRequest.model_validate(request)
         trusted = ExecutionContext.model_validate(context)
-        if trusted.identity is None:
-            raise AuthenticationError("Customer identity required")
         if trusted.session is not None or trusted.history:
             raise ValueError("ChatService loads session history from its repository")
         identity = trusted.identity

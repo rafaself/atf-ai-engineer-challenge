@@ -12,11 +12,11 @@ from uuid import uuid4
 from fastapi import Body, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.concurrency import run_in_threadpool
 
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.api.schemas import DemoChatRequest
 from emporio_music_backend.application.chat import ChatService
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import (
@@ -26,8 +26,8 @@ from emporio_music_backend.contracts.conversations import (
 from emporio_music_backend.contracts.errors import (
     AgentTimeoutError,
     ApplicationError,
-    AuthenticationError,
     ConfigurationError,
+    CustomerSelectionError,
     ProviderUnavailableError,
     SessionAccessError,
     SessionConflictError,
@@ -37,37 +37,18 @@ from emporio_music_backend.diagnostics import failure, request_id, trace
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
-from emporio_music_backend.infrastructure.demo_identity import DemoIdentityResolver
 from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
 from emporio_music_backend.ports.chat import ChatServicePort
-from emporio_music_backend.ports.identity import CustomerIdentityResolver
 
 ChatServiceFactory = Callable[[], ChatServicePort]
-IdentityResolverFactory = Callable[[], CustomerIdentityResolver]
-_bearer = HTTPBearer(auto_error=False)
 
 
 def get_chat_service_factory(request: Request) -> ChatServiceFactory:
     """Return the callable that lazily supplies the chat service."""
     return cast(ChatServiceFactory, request.app.state.chat_service_factory)
-
-
-def get_identity_resolver_factory(request: Request) -> IdentityResolverFactory:
-    return cast(IdentityResolverFactory, request.app.state.identity_resolver_factory)
-
-
-def resolve_identity(
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
-    identity_resolver_factory: Annotated[
-        IdentityResolverFactory, Depends(get_identity_resolver_factory)
-    ],
-) -> CustomerIdentity:
-    if credentials is None:
-        raise AuthenticationError("Customer identity required")
-    return identity_resolver_factory().resolve(credentials.credentials)
 
 
 def _database_paths() -> tuple[Path, Path, Path]:
@@ -90,25 +71,22 @@ def _database_paths() -> tuple[Path, Path, Path]:
     return paths[0], paths[1], paths[2]
 
 
-def create_app(
-    chat_service: ChatServicePort | None = None,
-    *,
-    identity_resolver: CustomerIdentityResolver | None = None,
-) -> FastAPI:
-    """Create a local API; provider/database setup is deferred until a valid chat."""
+def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
+    """Create the local fictional demo; provider setup waits for a valid request."""
     app = FastAPI(title="Empório da Música", version="0.1.0")
 
     @lru_cache(maxsize=1)
-    def identity_resolver_factory() -> CustomerIdentityResolver:
-        return (
-            identity_resolver
-            if identity_resolver is not None
-            else DemoIdentityResolver.from_environment(
-                SQLiteOrderRepository(_database_paths()[1])
-            )
-        )
+    def customer_repository() -> SQLiteOrderRepository:
+        return SQLiteOrderRepository(_database_paths()[1])
 
-    app.state.identity_resolver_factory = identity_resolver_factory
+    def select_demo_customer(customer_id: int | None) -> CustomerIdentity | None:
+        if customer_id is None:
+            return None
+        identity = CustomerIdentity(customer_id=customer_id)
+        if not customer_repository().exists(identity):
+            raise CustomerSelectionError("Unknown demo customer")
+        return identity
+
     chat_service_initialization_lock = Lock()
 
     @lru_cache(maxsize=1)
@@ -156,11 +134,10 @@ def create_app(
     async def application_failure(
         request: Request, exc: ApplicationError
     ) -> JSONResponse:
-        if isinstance(exc, AuthenticationError):
+        if isinstance(exc, CustomerSelectionError):
             return JSONResponse(
-                status_code=401,
-                content={"detail": "Customer identity required"},
-                headers={"WWW-Authenticate": "Bearer"},
+                status_code=422,
+                content={"detail": "Unknown demo customer"},
             )
         if isinstance(exc, SessionAccessError):
             return JSONResponse(
@@ -190,7 +167,7 @@ def create_app(
         "/api/chat",
         response_model=ChatResponse,
         responses={
-            401: {"description": "Customer identity required"},
+            422: {"description": "Invalid request or unknown demo customer"},
             404: {"description": "Conversation session unavailable"},
             409: {"description": "Conversation turn conflicts"},
             503: {"description": "Agent service unavailable"},
@@ -201,7 +178,7 @@ def create_app(
     async def chat(
         request: Request,
         chat_request: Annotated[
-            ChatRequest,
+            DemoChatRequest,
             Body(
                 openapi_examples={
                     "catalog": {
@@ -213,7 +190,6 @@ def create_app(
                 }
             ),
         ],
-        identity: Annotated[CustomerIdentity, Depends(resolve_identity)],
         chat_service_factory: Annotated[
             ChatServiceFactory, Depends(get_chat_service_factory)
         ],
@@ -222,11 +198,17 @@ def create_app(
         started = perf_counter()
         try:
             trace("http.request")
-            # SDK credential resolution may do I/O; keep it off the event loop.
+            identity = await run_in_threadpool(
+                select_demo_customer, chat_request.customer_id
+            )
+            # SQLite and SDK setup may do I/O; keep it off the event loop.
             chat_service = await run_in_threadpool(chat_service_factory)
             trace("chat.started")
             response = await chat_service.chat(
-                chat_request, context=ExecutionContext(identity=identity)
+                ChatRequest.model_validate(
+                    chat_request.model_dump(exclude={"customer_id"}, exclude_none=True)
+                ),
+                context=ExecutionContext(identity=identity),
             )
             trace(
                 "http.response",

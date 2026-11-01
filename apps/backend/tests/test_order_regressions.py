@@ -1,6 +1,5 @@
 """Operational identity and bounded-result regressions for US-11."""
 
-import json
 from pathlib import Path
 from uuid import uuid4
 
@@ -17,11 +16,9 @@ from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import ExecutionContext
 
 
-def test_missing_operations_cannot_establish_identity(
+def test_missing_operations_cannot_validate_customer_selection(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    token = "synthetic-order-regression-" + "a" * 32
-    monkeypatch.setenv("DEMO_CUSTOMER_TOKENS_JSON", json.dumps({token: 999}))
     monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(tmp_path / "missing.sqlite3"))
     called = []
 
@@ -35,12 +32,11 @@ def test_missing_operations_cannot_establish_identity(
     with TestClient(create_app(Service())) as client:
         response = client.post(
             "/api/chat",
-            json={"message": "My orders"},
-            headers={"Authorization": "Bearer " + token},
+            json={"message": "My orders", "customer_id": 999},
         )
     assert response.status_code == 503
     assert not called
-    assert token not in response.text
+    assert "sqlite3" not in response.text
 
 
 def test_order_notices_use_only_current_evidence() -> None:

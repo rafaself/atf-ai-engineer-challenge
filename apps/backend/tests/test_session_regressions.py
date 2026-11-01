@@ -1,4 +1,4 @@
-"""US-10 regressions: authenticate before execution and ignore historical evidence."""
+"""US-10 regressions: guest context at the boundary and ignore historical evidence."""
 
 from uuid import UUID
 
@@ -14,7 +14,7 @@ from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import ExecutionContext
 
 
-def test_missing_identity_rejected_before_chat_service() -> None:
+def test_guest_reaches_chat_service_without_customer_metadata() -> None:
     called = False
 
     class Service:
@@ -23,15 +23,19 @@ def test_missing_identity_rejected_before_chat_service() -> None:
         ) -> ChatResponse:
             nonlocal called
             called = True
+            assert context.identity is None
+            assert request.model_dump(exclude_none=True) == {"message": "Olá"}
             return ChatResponse(
-                answer="Should not execute",
+                answer="Resposta",
                 session_id=UUID("00000000-0000-4000-8000-000000000001"),
             )
 
     with TestClient(create_app(Service())) as client:
-        response = client.post("/api/chat", json={"message": "Private message"})
-    assert response.status_code == 401
-    assert not called
+        response = client.post(
+            "/api/chat", json={"message": "Olá", "customer_id": None}
+        )
+    assert response.status_code == 200
+    assert called
 
 
 def test_output_notices_use_current_run_even_if_sdk_history_has_old_tools() -> None:

@@ -14,10 +14,14 @@ from emporio_music_backend.contracts.identity import CustomerIdentity
 class ConversationRepository(Protocol):
     """Short, synchronous local operations; append commits one complete turn."""
 
-    def create(self, identity: CustomerIdentity) -> ConversationSession: ...
+    def create(self, identity: CustomerIdentity | None) -> ConversationSession: ...
 
     def load(
-        self, session_id: UUID, identity: CustomerIdentity, *, limits: HistoryLimits
+        self,
+        session_id: UUID,
+        identity: CustomerIdentity | None,
+        *,
+        limits: HistoryLimits,
     ) -> ConversationSnapshot: ...
 
     def append(

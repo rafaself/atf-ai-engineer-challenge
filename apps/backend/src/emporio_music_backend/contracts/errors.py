@@ -29,8 +29,8 @@ class AgentExecutionError(ApplicationError):
     """Agent execution failed for another reason."""
 
 
-class AuthenticationError(ApplicationError):
-    """A session/customer operation requires a valid trusted identity."""
+class CustomerSelectionError(ApplicationError):
+    """The selected demo customer is missing or unknown."""
 
 
 class SessionAccessError(ApplicationError):

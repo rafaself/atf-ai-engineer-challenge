@@ -10,8 +10,8 @@ import pytest
 from pydantic import ValidationError
 
 from emporio_music_backend.contracts.errors import (
-    AuthenticationError,
     ConfigurationError,
+    CustomerSelectionError,
     OperationalRetrievalError,
 )
 from emporio_music_backend.contracts.identity import CustomerIdentity
@@ -145,7 +145,7 @@ def test_scoped_reads_limits_ordering_and_full_replacement(
         lambda: repository.list_orders(unknown, OrderListQuery()),
         lambda: repository.get_order(unknown, OrderLookupQuery(order_id=1)),
     ):
-        with pytest.raises(AuthenticationError):
+        with pytest.raises(CustomerSelectionError):
             query()
     detail = repository.get_order(alice, OrderLookupQuery(order_id=1))
     assert detail is not None
