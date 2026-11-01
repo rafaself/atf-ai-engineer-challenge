@@ -5,18 +5,25 @@ boundaries. There is no distributed service, ORM, vector store, or custom DI lay
 
 ```mermaid
 flowchart LR
-    HTTP[FastAPI factory] --> Service[ChatService]
+    HTTP[FastAPI factory] --> Identity[Demo identity resolver]
+    Identity --> Customers[CustomerRepository]
+    Customers --> Operations[Read-only operational SQLite]
+    HTTP --> Service[ChatService]
     Service --> Executor[AgentExecutor port]
     Service --> History[ConversationRepository port]
     History --> Sessions[Writable conversation SQLite]
     Executor --> Adapter[Pydantic AI / Bedrock adapter]
     Adapter --> Tool[Typed product-search tool]
+    Adapter --> Orders[Order tools / per-run ExecutionContext]
+    Orders --> OrderPort[Customer-scoped OrderRepository]
+    OrderPort --> Operations
+    OperationalCSV[Validated operational import + catalog references] --> Operations
     Tool --> Port[ProductRepository port]
     Port --> SQLite[Read-only SQLite repository]
     CSV[Validated CSV snapshot import] --> SQLite
 ```
 
-`contracts` owns immutable Pydantic chat/catalog values and transport-neutral
+`contracts` owns immutable Pydantic chat/catalog/order values and transport-neutral
 errors. `ports` owns agent/repository interfaces. `application` owns ChatService
 and ChatServicePort, with no HTTP/AWS/SDK imports. `agent` owns settings, Portuguese
 instructions, tool schemas, exact BRL-to-centavo conversion, provider construction
@@ -27,7 +34,8 @@ FastAPI dependencies expose a lazy service factory so payload validation and doc
 do not resolve AWS credentials. Provider setup runs in a worker thread. The SDK
 executes the synchronous catalog tool in a worker thread; the repository opens
 and closes a fresh read-only connection per search. HTTP resolves a server-configured
-demo token into trusted identity before constructing the service or accessing data.
+demo token into trusted identity by validating imported customer existence before
+constructing the service or accessing sessions/model.
 ChatService requires identity-only context, creates or loads an owned session, loads
 bounded completed turns, invokes AgentExecutor, and commits before returning a
 ChatResponse with its session ID. UUID possession never establishes ownership.
@@ -49,8 +57,9 @@ ChatService supplies the durable session ID only after successful append.
 
 [ADR-0003](adr/0003-owned-conversation-execution-context.md) records the original
 trust contracts; [ADR-0004](adr/0004-persistent-conversation-turns.md) records their
-persistent implementation and response-loss limits. Customer-dataset validation
-and order authorization remain US-11. No compatibility shim, generic repository
+persistent implementation and response-loss limits. [ADR-0005](adr/0005-authorized-operational-snapshots.md)
+records the US-11 operational snapshot, customer validation and read-only order
+authorization. No compatibility shim, generic repository
 framework, distributed coordination, or new production dependency is introduced.
 
 ## Retrieval and prompting rationale
@@ -64,9 +73,9 @@ the repository. Full-snapshot replacement is documented in [catalog.md](catalog.
 
 The Portuguese prompt sets tone and behavioral constraints, requiring retrieval
 before catalog claims, disclosure of limited results and snapshot freshness, and
-honest redirection for accessories, unsupported policies/orders and other topics.
+honest redirection for accessories, unsupported policies and other topics.
 Prior answers supply conversational references rather than authoritative mutable
-facts; the instructions require a fresh tool lookup for price/stock follow-ups.
+facts; the instructions require a fresh tool lookup for price/stock/order follow-ups.
 No product names/prices/stock fixtures are embedded in instructions. A prompt is
 not proof that a model follows these rules; live evaluations remain necessary.
 
@@ -79,6 +88,31 @@ request work without promising a monetary cap. See [bedrock.md](bedrock.md).
 [ADR-0002](adr/0002-llm-provider-boundary.md) record accepted offline-validated
 boundaries. ADR-0002 now links the recorded live compatibility checks and the
 customer-output policy revision; those checks remain specific to the evaluated model/scenarios.
+
+## Customer-order boundary
+
+The full HTTP composition shares product tools with isolated catalog probes and
+adds two read-only order tools. Catalog-only probes are never a runtime fallback.
+Three distinct storage paths are required: catalog, operations and conversations.
+The explicit operational importer validates complete sources before an atomic full
+replacement, retaining customer IDs only, minimal orders, quantities and copied
+catalog product IDs/names. It records source hashes plus a logical reference hash.
+Contacts, customer names/cities, notes and payment fields are excluded. Historical
+totals remain exact supplied centavos; current prices never reconstruct unit prices.
+See [operational data and tools](orders.md).
+
+The token resolver validates every mapped customer initially and rechecks the
+matched one after re-import. Each repository read separately checks trusted customer
+existence and scopes order/item/count SQL using parameters inside one read transaction.
+Unknown/foreign order IDs are indistinguishable; known empty accounts succeed while
+storage faults fail explicitly. SDK per-run dependencies carry ExecutionContext;
+model messages do not contain trusted identity/session metadata. Cached tools retain
+repositories, without mutable per-customer state. Results include snapshot basis,
+counts and bounded ordering, with current-run truncation notices for lists/items.
+
+No component claims production authentication, live carrier status, actual receipt,
+payment confirmation or return eligibility. Prompts require fresh order retrieval;
+controlled models prove data flow and SQL isolation, not semantic adherence.
 
 ## Validation strategy
 

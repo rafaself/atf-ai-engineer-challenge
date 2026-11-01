@@ -13,7 +13,7 @@ from pydantic_ai.usage import UsageLimits
 
 from emporio_music_backend.agent.catalog import create_catalog_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import ProductSearchQuery
+from emporio_music_backend.contracts import ExecutionContext, ProductSearchQuery
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
@@ -47,6 +47,7 @@ async def record(database: Path, output: Path) -> None:
         async with asyncio.timeout(60):
             result = await executor.agent.run(
                 prompt,
+                deps=ExecutionContext(),
                 usage_limits=UsageLimits(
                     request_limit=settings.max_requests,
                     tool_calls_limit=settings.max_tool_calls,

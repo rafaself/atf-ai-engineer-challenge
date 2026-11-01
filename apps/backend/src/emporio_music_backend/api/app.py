@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette.concurrency import run_in_threadpool
 
-from emporio_music_backend.agent.catalog import create_catalog_agent
+from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.application import ChatService, ChatServicePort
 from emporio_music_backend.contracts import (
@@ -39,6 +39,7 @@ from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
 from emporio_music_backend.infrastructure.demo_identity import DemoIdentityResolver
+from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
@@ -67,6 +68,26 @@ def resolve_identity(
     return factory().resolve(credentials.credentials)
 
 
+def _database_paths() -> tuple[Path, Path, Path]:
+    paths = tuple(
+        Path(os.environ.get(key, default)).resolve()
+        for key, default in (
+            ("DATABASE_PATH", "data/catalog.sqlite3"),
+            ("OPERATIONS_DATABASE_PATH", "data/operations.sqlite3"),
+            ("CONVERSATION_DATABASE_PATH", "data/conversations.sqlite3"),
+        )
+    )
+    for index, path in enumerate(paths):
+        for other in paths[index + 1 :]:
+            if path == other or (
+                path.exists() and other.exists() and path.samefile(other)
+            ):
+                raise ConfigurationError(
+                    "Catalog, operations and conversation storage must be separate"
+                )
+    return paths[0], paths[1], paths[2]
+
+
 def create_app(
     service: ChatServicePort | None = None,
     *,
@@ -80,7 +101,9 @@ def create_app(
         return (
             identity_resolver
             if identity_resolver is not None
-            else DemoIdentityResolver.from_environment()
+            else DemoIdentityResolver.from_environment(
+                SQLiteOrderRepository(_database_paths()[1])
+            )
         )
 
     app.state.identity_resolver_factory = identity_resolver_factory
@@ -92,14 +115,7 @@ def create_app(
             return service
         trace("composition.started")
         settings = AgentSettings.from_environment()
-        database = Path(os.environ.get("DATABASE_PATH", "data/catalog.sqlite3"))
-        conversations = Path(
-            os.environ.get("CONVERSATION_DATABASE_PATH", "data/conversations.sqlite3")
-        )
-        if database.resolve() == conversations.resolve():
-            raise ConfigurationError(
-                "Conversation storage must be separate from the catalog"
-            )
+        database, operations, conversations = _database_paths()
         try:
             timeout = float(os.environ.get("CHAT_TIMEOUT_SECONDS", "60"))
             limits = HistoryLimits(
@@ -109,7 +125,11 @@ def create_app(
         except ValueError as exc:
             raise ConfigurationError("Invalid conversation limits") from exc
         return ChatService(
-            create_catalog_agent(settings, SQLiteProductRepository(database)),
+            create_store_agent(
+                settings,
+                SQLiteProductRepository(database),
+                SQLiteOrderRepository(operations),
+            ),
             SQLiteConversationRepository(conversations),
             timeout_seconds=timeout,
             history_limits=limits,

@@ -19,14 +19,15 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
-from emporio_music_backend.agent.catalog import ProductSearchTool, create_catalog_agent
+from emporio_music_backend.agent.catalog import ProductSearchTool
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
+from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.ports import ProductRepository
+from emporio_music_backend.ports import OrderRepository, ProductRepository
 
 
 def test_restart_followup_refresh_isolation_and_safe_diagnostics(
@@ -89,12 +90,14 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     built = []
 
     def factory(
-        settings: AgentSettings, repository: ProductRepository
+        settings: AgentSettings, repository: ProductRepository, orders: OrderRepository
     ) -> PydanticAgentExecutor:
         built.append(True)
-        return create_catalog_agent(settings, repository, model=FunctionModel(model))
+        return create_store_agent(
+            settings, repository, orders, model=FunctionModel(model)
+        )
 
-    monkeypatch.setattr(api_app, "create_catalog_agent", factory)
+    monkeypatch.setattr(api_app, "create_store_agent", factory)
     marker = "customer@example.invalid private-phone-sentinel"
     with TestClient(api_app.create_app()) as client:
         first = client.post("/api/chat", json={"message": marker}, headers=api_headers)
@@ -196,7 +199,7 @@ def test_invalid_session_configuration_fails_before_provider_setup(
             "Invalid session configuration must not initialize a provider"
         )
 
-    monkeypatch.setattr(api_app, "create_catalog_agent", forbidden)
+    monkeypatch.setattr(api_app, "create_store_agent", forbidden)
     with TestClient(api_app.create_app(), raise_server_exceptions=False) as client:
         response = client.post(
             "/api/chat", json={"message": "Hello"}, headers=api_headers

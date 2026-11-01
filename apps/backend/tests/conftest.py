@@ -7,9 +7,11 @@ import pytest
 from pydantic_ai import models
 
 from emporio_music_backend.contracts import CustomerIdentity, ExecutionContext
+from emporio_music_backend.infrastructure.catalog_import import import_catalog
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
+from emporio_music_backend.infrastructure.operations_import import import_operations
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +30,26 @@ def trusted_context() -> "ExecutionContext":
 
 
 @pytest.fixture
-def api_headers(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
+def operational_database(tmp_path: Path) -> Path:
+    data = Path(__file__).parents[3] / "data"
+    catalog = tmp_path / "operational-catalog.sqlite3"
+    database = tmp_path / "operations.sqlite3"
+    import_catalog(data / "products.csv", data / "categories.csv", catalog)
+    import_operations(
+        data / "customers.csv",
+        data / "orders.csv",
+        data / "order_items.csv",
+        catalog,
+        database,
+    )
+    return database
+
+
+@pytest.fixture
+def api_headers(
+    monkeypatch: pytest.MonkeyPatch, operational_database: Path
+) -> dict[str, str]:
+    monkeypatch.setenv("OPERATIONS_DATABASE_PATH", str(operational_database))
     # Synthetic test credentials only; the production adapter must still resolve them.
     token = "synthetic-api-customer-" + "a" * 32
     monkeypatch.setenv(

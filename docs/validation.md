@@ -172,3 +172,54 @@ No new clean-environment/runtime-only wheel installation or live multi-turn
 Bedrock evaluation was performed. Existing package/import tests passed; fresh
 provider conversations remain US-13. The short synchronous SQLite commit and
 commit-before-response loss boundary are documented in ADR-0004 and the API guide.
+
+## US-11 authorized orders validation — 2026-10-31
+
+The README root commands passed: Ruff lint and format checks, strict mypy for
+52 source/test files, **208 offline tests**, and `uv build --project apps/backend`
+(source distribution and wheel). A final full pytest run removed AWS access-key,
+secret, session-token, profile and region variables; the autouse live-model guard
+remained enabled. All five `data/SHA256SUMS` entries matched. Each of the three new
+fictional CSVs also matched its original ZIP entry byte-for-byte. Existing catalog
+CSV bytes, dependency declarations and the uv lockfile remain unchanged.
+
+Two regressions were observed failing before their fixes: configured identity
+was accepted without operational storage, and truncated order results produced no
+output notice. Other new tests were added after implementation; no failing baseline
+is claimed for them. Initial test fixture corrections used source evidence: product
+IDs start at 81, and exact money comparisons must allow source totals written
+without decimal places. No domain assertions were weakened to obtain a green suite.
+
+Real temporary SQLite tests verify repeatable imports, full replacement/removal,
+write rollback, malformed headers/duplicates, positive 64-bit IDs/quantities, exact
+centavo totals, supported dates/statuses and all references. They cover optional
+tracking/estimates, known customers with no orders, consistent empty snapshots,
+minimal stored projections, source hashes, logical catalog-reference fingerprints,
+and copied product references surviving later catalog removal/renaming. Scoped
+reads enforce customer ownership directly, independently of transport/model behavior;
+foreign and unknown orders are indistinguishable. Read failures remain errors.
+
+Authenticated HTTP → ChatService → controlled SDK → order tools → SQLite checks
+cover list/detail follow-ups across application reconstruction and refreshed snapshots,
+concurrent customers sharing a cached executor, invalid/forged tool arguments,
+forged payload/message scope, missing/unknown identities, foreign sessions/orders,
+empty accounts, removed configured customers after re-import, path collisions, and
+storage failures without completed turns. Tool schemas expose no customer scope;
+trusted identity/session metadata stays outside model messages. Diagnostics exclude
+credentials, contacts, identifiers, tracking payloads and result rows. Existing
+catalog/session, timeout, cancellation, output and import-boundary regressions pass.
+
+The documented catalog and operational importer CLIs were run against temporary
+paths: 9 categories/65 products, then 50 customers/20 orders/22 items. An actual
+uvicorn factory on an ephemeral loopback port returned docs 200, missing identity
+401, invalid authenticated input 422 and safe 503 with a deliberately nonexistent
+AWS profile. The temporary server was stopped and its captured output contained
+no synthetic token. No provider invocation occurred.
+
+The final diff was reviewed locally for SQL ownership, source/derived projections,
+atomic import, per-run dependency/state isolation, error propagation and docs.
+No independent review, new clean-environment/runtime-only wheel install or live
+Bedrock evaluation is claimed. Controlled models prove wiring/data boundaries,
+not natural-language interpretation, adversarial prompt resistance, Portuguese
+answer quality or universal semantic grounding. Real multi-turn evaluation remains
+explicitly opted in under US-13; US-12 promotions stay deferred.

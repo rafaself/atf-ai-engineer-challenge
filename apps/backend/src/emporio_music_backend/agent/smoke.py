@@ -12,6 +12,7 @@ from pydantic_ai.usage import UsageLimits
 
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
+from emporio_music_backend.contracts import ExecutionContext
 
 
 async def probe() -> dict[str, object]:
@@ -26,6 +27,7 @@ async def probe() -> dict[str, object]:
     result = await executor.agent.run(
         "Teste técnico autorizado da integração da loja: consulte verify_store_integration "
         "e responda com o código exato retornado pela ferramenta.",
+        deps=ExecutionContext(),
         usage_limits=UsageLimits(request_limit=3, tool_calls_limit=1),
     )
     parts = [part for message in result.all_messages() for part in message.parts]

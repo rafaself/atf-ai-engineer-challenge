@@ -41,7 +41,9 @@ from emporio_music_backend.diagnostics import failure, trace
 
 
 class PydanticAgentExecutor:
-    def __init__(self, agent: Agent[None, str], settings: AgentSettings) -> None:
+    def __init__(
+        self, agent: Agent[ExecutionContext, str], settings: AgentSettings
+    ) -> None:
         self.agent = agent
         self.settings = settings
 
@@ -64,6 +66,7 @@ class PydanticAgentExecutor:
         try:
             result = await self.agent.run(
                 validated.message,
+                deps=validated_context,
                 message_history=history,
                 usage_limits=UsageLimits(
                     request_limit=self.settings.max_requests,
@@ -99,7 +102,7 @@ def create_agent(
     settings: AgentSettings,
     *,
     model: Model | None = None,
-    tools: Sequence[Tool[None]] = (),
+    tools: Sequence[Tool[ExecutionContext]] = (),
 ) -> PydanticAgentExecutor:
     """Construct explicitly, using a supplied test/alternative model without AWS setup."""
     injected_model = model is not None
@@ -136,8 +139,9 @@ def create_agent(
         region=settings.region,
         injected_model=injected_model,
     )
-    agent = Agent[None, str](
+    agent = Agent[ExecutionContext, str](
         model,
+        deps_type=ExecutionContext,
         instructions=STORE_INSTRUCTIONS,
         tools=tools,
         retries={"tools": 0, "output": 1},

@@ -33,6 +33,9 @@ _SAFE_FIELDS = {
     "tool.result": {"total_matches", "returned"},
     "catalog.result": {"total_matches", "returned"},
     "catalog.failure": _FAILURE_FIELDS,
+    "operations.result": {"total_matches", "returned"},
+    "operations.failure": _FAILURE_FIELDS,
+    "operations.import.completed": {"customers", "orders", "items"},
     "catalog.import.completed": {"categories", "products"},
 }
 

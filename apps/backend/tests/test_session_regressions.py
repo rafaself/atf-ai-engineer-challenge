@@ -35,7 +35,7 @@ def test_missing_identity_rejected_before_chat_service() -> None:
 
 def test_output_notices_use_current_run_even_if_sdk_history_has_old_tools() -> None:
     ctx = RunContext(
-        deps=None,
+        deps=ExecutionContext(),
         model=TestModel(),
         usage=RunUsage(),
         run_id="current-run",

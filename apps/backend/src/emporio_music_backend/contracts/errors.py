@@ -21,6 +21,10 @@ class ProductRetrievalError(ApplicationError):
     """Catalog retrieval failed; an empty result is not this error."""
 
 
+class OperationalRetrievalError(ApplicationError):
+    """Customer/order retrieval failed; never substitute an empty result."""
+
+
 class AgentExecutionError(ApplicationError):
     """Agent execution failed for another reason."""
 

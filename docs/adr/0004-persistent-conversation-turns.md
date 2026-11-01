@@ -104,3 +104,8 @@ price, rejects foreign/unknown sessions, and inspects diagnostics for private da
 Most new storage/service scenarios were added after their implementation; only the
 three identified regressions have observed failing baselines. No live multi-turn
 Bedrock evaluation is claimed; that remains explicitly opted in under US-13.
+
+US-11 handoff completed: [ADR-0005](0005-authorized-operational-snapshots.md)
+records the required operational snapshot, customer-registry validation and
+read-only customer-scoped tools. Earlier future-tense US-11 references above
+record the decision context at the time of this ADR.

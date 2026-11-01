@@ -1,7 +1,7 @@
 # Empório da Música — AI Engineer Challenge
 
 Python customer-support agent project for the Artefact technical challenge.
-This checkout implements **US-01 through US-10**: an installable backend,
+This checkout implements **US-01 through US-11**: an installable backend,
 development checks, validated values/interfaces, and atomic catalog import with
 read-only SQLite retrieval, an isolated Pydantic AI/Bedrock adapter, and typed
 product-search tools connected to the catalog repository.
@@ -10,7 +10,10 @@ see [reviewed captures](docs/examples/README.md) for evidence and limitations.
 US-10 adds persistent owned sessions behind `POST /api/chat`, using server-configured
 demo bearer identities and a separate writable SQLite database. Complete turns are
 committed before responses; bounded text history survives application restarts.
-See
+US-11 adds a minimal customer/order snapshot, validated demo-customer mappings,
+and read-only order tools scoped by trusted per-run identity. The original
+customer/order fixtures are fictional and committed with the owner's confirmation.
+See [operational import and authorization](docs/orders.md),
 [local API startup](docs/api.md) and [agent setup](docs/bedrock.md).
 
 ## Setup
@@ -74,7 +77,7 @@ The disposable directory can be removed after verification.
 | --- | --- |
 | `apps/backend/` | Installable Python package, tests, and development tooling. |
 | `apps/frontend/` | Placeholder for a later sprint; no JavaScript toolchain. |
-| `data/` | Unmodified product/category CSVs, provenance, and checksums. |
+| `data/` | Unmodified fictional catalog/customer/order CSVs, provenance, and checksums. |
 | `docs/` | Architecture decisions, setup guides, and validation evidence. |
 
 ## Configuration and data
@@ -84,7 +87,8 @@ The API requires `DEMO_CUSTOMER_TOKENS_JSON`, a private token-to-customer mappin
 follow [demo identity setup](docs/api.md#demo-identity-setup). Keep generated tokens
 in the ignored local environment. This is a local demonstration of identity and
 isolation, not production authentication. Conversation data defaults to
-`data/conversations.sqlite3`; catalog re-import never replaces it.
+`data/conversations.sqlite3`; catalog and operational re-import never replace it.
+Operational data defaults to `data/operations.sqlite3`, independent of the catalog.
 The provider preference is Bedrock in `us-east-1`, initially
 `amazon.nova-micro-v1:0`, or another validated low-cost feasible model. Model access
 and tool calling were live-validated with Nova Micro in us-east-1 on 2026-10-31. The integration uses
@@ -94,10 +98,11 @@ the standard AWS credential chain; no credentials are required for setup or test
 that path explicitly to the importer below. The environment example is not loaded
 automatically. See [local API startup](docs/api.md) for uvicorn and curl commands.
 
-Only products and categories have been copied. See [data provenance](data/README.md)
-for SHA-256 verification. These files are an imported-source snapshot, not a live
-inventory service. Import and retrieval now implement availability and catalog-price
-filtering. Promotion calculations and customer/order access remain outside scope.
+Products, categories, customers, orders and order items are copied byte-for-byte.
+See [data provenance](data/README.md) for fictional origin and SHA-256 verification.
+These files are an imported-source snapshot, not a live inventory service. Import and retrieval now implement availability and catalog-price
+filtering. Promotion calculations remain deferred; order access is scoped to the
+authenticated account.
 
 ### Import the catalog
 
@@ -128,6 +133,25 @@ uv run --project apps/backend --locked python -c \
 The budget search has 12 matches in the supplied snapshot; the default limit is
 10, so truncation is reported. Use limit 20 to retrieve all 12.
 
+### Import operational data
+
+After importing the catalog, run from the repository root:
+
+```bash
+uv run --project apps/backend --locked python -m \
+  emporio_music_backend.infrastructure.operations_import \
+  --customers data/customers.csv --orders data/orders.csv \
+  --order-items data/order_items.csv --catalog data/catalog.sqlite3 \
+  --database data/operations.sqlite3
+```
+
+Expected: `Imported 50 customers, 20 orders and 22 items`. This required import
+validates references and replaces the minimal operational snapshot atomically.
+All configured demo-token customer IDs must exist in this snapshot; the resolver
+rechecks the matched customer on every request. Missing/incompatible storage or
+invalid mappings fail safely; HTTP has no catalog-only fallback. Generated files
+are private and Git-ignored. See [order import, fields and failures](docs/orders.md).
+
 ## Decisions and follow-up
 
 The project uses one Python package with `uv_build` and no root uv workspace.
@@ -151,6 +175,9 @@ module responsibilities, dependency direction, and tradeoffs.
 | `HistoryLimits` | Last 6 complete turns within 24,000 characters by default; configurable up to 20 turns / 64,000 characters. |
 | `AgentExecutor.run` | Async execution with required keyword-only `context: ExecutionContext`, returning AgentResponse. |
 | `ProductRepository.search` | Synchronous typed catalog search port. |
+| `CustomerRepository.exists` | Current imported customer existence for trusted identity validation. |
+| `OrderRepository.list_orders` / `get_order` | Required trusted identity; scoped SQL, bounded typed results, indistinguishable foreign/unknown order IDs. |
+| `OrderSummary` / `OrderDetail` / `OrderListResult` | Exact supplied totals, optional tracking/estimate, bounded product references/quantities and truncation metadata. |
 | `ChatService.chat` / `ChatServicePort` | Requires resolved identity in context; loads owned history, executes, and saves a completed turn under the default 60-second deadline. |
 
 Contracts and errors live in `emporio_music_backend.contracts`; ports and the
@@ -172,8 +199,10 @@ validation retains Pydantic ValidationError.
 ChatService accepts only resolved identity in its execution context and loads all
 session/history data from its repository. A UUID alone never grants access;
 unknown and foreign sessions return the same safe error. The lower-level agent
-adapter still accepts explicit owned text history, but does not persist it. Only
-text reaches the provider; current-run tool evidence drives output notices.
+adapter still accepts explicit owned text history, but does not persist it.
+Identity/session metadata stays outside model messages; current tool results
+provide minimal scoped facts to the provider. Current-run tool evidence drives
+output notices.
 See [direct application calls](docs/api.md#direct-application-calls) and
 [ADR-0004](docs/adr/0004-persistent-conversation-turns.md) for the implemented
 storage, concurrency, timeout, and response-loss boundaries. No new production
@@ -186,7 +215,7 @@ Policy-aware answers and operational-data-versus-policy routing remain follow-up
 Five reviewed real conversations and a separate live tool probe are recorded;
 passing scenarios do not guarantee every future generated answer. Those live
 captures predate persistent sessions; new multi-turn Bedrock evaluation remains
-US-13. Policy answers, order access, promotion calculations, frontend delivery,
+US-13. Policy answers, promotion calculations, frontend delivery,
 and deployment packaging remain follow-up work.
 
 ## Development workflow and coding assistants

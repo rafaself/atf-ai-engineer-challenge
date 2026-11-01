@@ -9,7 +9,11 @@ from pydantic_ai.models import Model
 
 from emporio_music_backend.agent.factory import PydanticAgentExecutor, create_agent
 from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.contracts import NonblankText, ProductSearchQuery
+from emporio_music_backend.contracts import (
+    ExecutionContext,
+    NonblankText,
+    ProductSearchQuery,
+)
 from emporio_music_backend.diagnostics import trace
 from emporio_music_backend.ports import ProductRepository
 
@@ -124,9 +128,13 @@ def create_catalog_agent(
     *,
     model: Model | None = None,
 ) -> PydanticAgentExecutor:
-    tools = ProductSearchTool(repository)
     return create_agent(
         settings,
         model=model,
-        tools=[Tool(tools.search_available_products), Tool(tools.get_product_details)],
+        tools=product_tools(repository),
     )
+
+
+def product_tools(repository: ProductRepository) -> list[Tool[ExecutionContext]]:
+    tools = ProductSearchTool(repository)
+    return [Tool(tools.search_available_products), Tool(tools.get_product_details)]
