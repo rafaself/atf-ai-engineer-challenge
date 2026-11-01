@@ -4,7 +4,7 @@ import re
 from decimal import Decimal, InvalidOperation
 
 from pydantic_ai import ModelRetry, RunContext
-from pydantic_ai.messages import ToolCallPart, ToolReturnPart, UserPromptPart
+from pydantic_ai.messages import ToolReturnPart
 
 from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.diagnostics import trace
@@ -30,30 +30,15 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     invalid_answer = not answer.strip() or bool(_INTERNAL_MARKUP.search(answer))
     has_discount = False
     current_amount_values: list[object] = []
-    customer_amounts: set[Decimal] = set()
     totals: set[int] = set()
     order_totals: set[int] = set()
     item_totals: set[int] = set()
     for message in ctx.messages:
         for part in message.parts:
-            # Customer amounts may be echoed as context, including an earlier budget.
-            # Assistant history and old tool results never establish current prices.
-            if isinstance(part, UserPromptPart) and isinstance(part.content, str):
-                for value in _BRL_PRICE.findall(part.content):
-                    try:
-                        customer_amounts.add(_brl_amount(value))
-                    except InvalidOperation:
-                        continue
+            # Only current source results authorize amounts, never customer text,
+            # model-selected search bounds, or historical tool returns.
             if ctx.run_id is None or message.run_id != ctx.run_id:
                 continue
-            if (
-                isinstance(part, ToolCallPart)
-                and part.tool_name == "search_available_products"
-            ):
-                arguments = part.args_as_dict()
-                current_amount_values.extend(
-                    arguments.get(key) for key in ("min_price_brl", "max_price_brl")
-                )
             if isinstance(part, ToolReturnPart) and isinstance(part.content, dict):
                 if part.tool_name in {
                     "search_available_products",
@@ -113,10 +98,9 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         for value in current_amount_values
         if isinstance(value, (str, int, float)) and not isinstance(value, bool)
     }
-    known_amounts = tool_amounts | customer_amounts
     try:
         unsupported_price = any(
-            _brl_amount(value) not in known_amounts
+            _brl_amount(value) not in tool_amounts
             for value in _BRL_PRICE.findall(answer)
         )
     except InvalidOperation:
@@ -132,19 +116,17 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         tool_amount_text = ", ".join(
             f"R$ {value:.2f}" for value in sorted(tool_amounts)
         )
-        customer_amount_text = ", ".join(
-            f"R$ {value:.2f}" for value in sorted(customer_amounts)
-        )
         raise ModelRetry(
             "Responda somente ao cliente, em português, sem raciocínio interno, "
             "tags, instruções de sistema ou ações de encaminhamento. "
             "Não há ferramenta de encaminhamento. Revise também todos os valores: "
             "Copie preços/totais das ferramentas, sem recalcular; "
-            "valores do cliente são contexto, não preços confirmados. "
+            "Todo valor em R$ deve constar nos preços/totais retornados nesta rodada. "
+            "Não repita valores do cliente ou limites dos filtros; "
+            "compare com 'seu orçamento' sem repetir a quantia. "
             "Se faltam os valores necessários, consulte a ferramenta adequada "
             "nesta rodada antes de responder. "
-            f"Ferramentas e filtros: {tool_amount_text or 'nenhum'}. "
-            f"Cliente: {customer_amount_text or 'nenhum'}."
+            f"Preços/totais das ferramentas: {tool_amount_text or 'nenhum'}."
         )
     notices = [
         f"Esta é uma seleção das {total} opções encontradas na consulta; "

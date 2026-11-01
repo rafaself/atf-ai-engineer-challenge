@@ -8,8 +8,10 @@ across restarts. Run one local server process; this is a challenge demonstration
 General policy retrieval (hours, address and returns) belongs to the later retrieval
 sprint and remains unfinished. The assistant states that limitation instead of
 inventing answers. [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
-cover budget/context, promotions/PIX and scoped orders on the final application
-code. Failed attempts and model comparisons remain published. These observations
+cover budget/context, promotions/PIX and scoped orders at their recorded revision.
+They predate the current source-only monetary guard: budget comparisons now say
+“seu orçamento” without repeating customer amounts. This guard change is verified
+offline only. Failed attempts and model comparisons remain published. These observations
 do not establish complete challenge acceptance or guarantee every future answer.
 
 ## Run locally

@@ -23,6 +23,7 @@ from emporio_music_backend.contracts.chat import ChatRequest
 from emporio_music_backend.contracts.conversations import (
     ConversationMessage,
     ExecutionContext,
+    HistoryLimits,
 )
 from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.infrastructure.catalog_import import import_catalog
@@ -132,15 +133,15 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
 
 
 @pytest.mark.parametrize("lookup_product", [True, False])
-def test_customer_budget_can_be_repeated_without_a_search_call(
+def test_customer_budget_supports_comparison_or_clarification_without_echoing_amount(
     operational_database: Path,
     conversations: SQLiteConversationRepository,
     lookup_product: bool,
 ) -> None:
     answer = (
-        "O GD20 custa R$ 2.199,00, acima do seu orçamento de R$ 1.000."
+        "O GD20 custa R$ 2.199,00, acima do seu orçamento."
         if lookup_product
-        else "Que tipo de instrumento você procura com o orçamento de R$ 1.000?"
+        else "Que tipo de instrumento você procura dentro do seu orçamento?"
     )
     calls = 0
 
@@ -173,6 +174,53 @@ def test_customer_budget_can_be_repeated_without_a_search_call(
     assert response.status_code == 200
     assert response.json()["answer"] == answer
     assert calls == (2 if lookup_product else 1)
+
+
+@pytest.mark.parametrize("correct_on_retry", [True, False])
+def test_customer_price_requires_correction_before_saving_a_turn(
+    operational_database: Path,
+    conversations: SQLiteConversationRepository,
+    correct_on_retry: bool,
+) -> None:
+    session = conversations.create(None)
+    calls = 0
+
+    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return ModelResponse(
+                parts=[ToolCallPart("get_product_details", {"product_name": "GD20"})]
+            )
+        price = "2.199,00" if correct_on_retry and calls == 3 else "1,00"
+        return ModelResponse(parts=[TextPart(f"O GD20 custa R$ {price}.")])
+
+    executor = create_catalog_agent(
+        AgentSettings(),
+        SQLiteProductRepository(
+            operational_database.parent / "operational-catalog.sqlite3"
+        ),
+        model=FunctionModel(model),
+    )
+    with TestClient(create_app(ChatService(executor, conversations))) as client:
+        response = client.post(
+            "/api/chat",
+            json={
+                "message": "Meu orçamento é R$ 1,00. Quanto custa o GD20?",
+                "session_id": str(session.session_id),
+            },
+        )
+    assert calls == 3  # One lookup, one rejected answer, one correction.
+    snapshot = conversations.load(session.session_id, None, limits=HistoryLimits())
+    if correct_on_retry:
+        assert response.status_code == 200
+        assert response.json()["answer"] == "O GD20 custa R$ 2.199,00."
+        assert len(snapshot.history) == 2
+        assert snapshot.history[-1].content == response.json()["answer"]
+    else:
+        assert response.status_code == 500
+        assert response.json() == {"detail": "Conversation failed"}
+        assert snapshot.history == ()
 
 
 def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices(

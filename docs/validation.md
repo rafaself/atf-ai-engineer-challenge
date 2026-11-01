@@ -1,3 +1,26 @@
+# Source-only monetary output — issue #41
+
+Only current-run product original/final prices and order totals authorize explicit
+`R$` amounts in supported formats. Customer text and search bounds no longer do.
+Budget comparisons and clarifications say “seu orçamento” without repeating the
+amount. Existing budget-echo tests were updated for this owner-approved behavior;
+the input context and source-grounded comparisons remain covered.
+
+Seven focused cases failed before implementation: customer amounts with/without
+retrieval, search bounds used in output, historical budget echoes, and the HTTP
+correction/safe-failure paths. After the fix, 28 focused tests and all 278 offline
+tests passed, as did Ruff lint, strict mypy (69 files), and source/wheel builds.
+The shared checkout's format check found an unrelated whitespace edit in catalog.py;
+it is preserved and excluded from this delivery. A separate formatting check of
+the exact staged source snapshot passed for all 69 Python files.
+
+Controlled HTTP → agent → real SQLite checks verify one correction before saving
+the supported quote, or a sanitized 500 with no completed turn when correction
+fails. The single retry and request/tool budgets are unchanged. This is numeric
+provenance, not proof of correct product/price associations, percentages, or amounts
+without `R$`. No live model calls were made. Earlier captures below retain their
+original behavior and evidence; they do not validate this prompt/guard revision.
+
 # Final Sprint 2 verification
 
 Three [closing conversations](examples/sprint-2/closure/README.md) on application
