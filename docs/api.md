@@ -142,6 +142,17 @@ is implemented. There is no transcript-list API in this story. Storage, model,
 and network failures are never disguised as empty retrieval or successful turns.
 For AWS profile diagnosis see [agent configuration](bedrock.md).
 
+## Promotion and PIX questions
+
+The HTTP schema remains message plus optional session ID. Ask `Quais são as
+promoções?` and continue with `E o segundo no PIX?`. The product tools select
+payment/pricing; do not add payment fields to the HTTP payload. Catalog import now
+requires the original promotions CSV. Prices use eligible active offers or PIX,
+never both; source validity is an imported active flag with no dates. The application
+adds original/percentage/final-price disclosures for discounted results. See
+[catalog and pricing](catalog.md). Fresh live language/tool-choice evidence remains
+US-13; controlled tests establish the implemented data flow.
+
 ## Authorized order questions
 
 With a valid imported customer mapping, send `{"message":"Quais são meus pedidos?"}`

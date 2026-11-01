@@ -8,6 +8,7 @@ These files were copied byte-for-byte from the supplied
 - `customers.csv` (source: `desafio_tecnico_ai_eng - customers.csv`)
 - `orders.csv` (source: `desafio_tecnico_ai_eng - orders.csv`)
 - `order_items.csv` (source: `desafio_tecnico_ai_eng - order_items.csv`)
+- `promotions.csv` (source: `desafio_tecnico_ai_eng - promotions.csv`)
 
 Filenames are translated to English; original encoding, line endings, and contents
 are preserved. Git attributes
@@ -19,7 +20,11 @@ The project owner confirmed on 2026-10-31 that this data is **fictitious** and
 approved committing these three original CSVs. Customer names/contact fields and
 order notes are fictional source fixtures, not real customer records. No cleaning,
 re-encoding, or newline conversion is applied. The snapshot has 50 customers,
-20 orders, and 22 order-item rows. Promotions and policies remain separate work.
+20 orders, and 22 order-item rows. US-12 copies all 25 original promotion records
+from the same ZIP, with four marked active. Its bytes match both the archive entry
+and extracted supplied file. No dates/columns are added and no values, inactive
+records, line endings or encodings are changed. Policy PDFs remain in the supplied
+resources; general policy retrieval is separate work.
 
 The operational importer retains customer IDs, minimal order headers and item
 references only; contacts, customer names/cities, notes and payment methods never
@@ -32,7 +37,10 @@ From this directory, verify the checked-in snapshot with:
 sha256sum --check SHA256SUMS
 ```
 
-This checks the supplied snapshot's identity, not live prices or availability.
+The existing manifest covers the five earlier CSV copies. The new promotions
+copy is verified directly against its supplied original; no new checksum
+subsystem is introduced. These checks establish source identity, not live prices
+or availability.
 US-03 ingestion preserves these source files. It converts prices exactly to
 integer centavos, validates references/types/statuses/dates/specs, and stores
 additional normalized name columns for lookup. Original descriptive fields are

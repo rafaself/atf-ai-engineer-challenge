@@ -10,6 +10,7 @@ from emporio_music_backend.contracts import (
     ChatRequest,
     ChatResponse,
     ExecutionContext,
+    ProductPricing,
     ProductSearchQuery,
     ProductSearchResult,
     ProductSummary,
@@ -30,6 +31,12 @@ def product(
         price_centavos=219900,
         stock_quantity=stock,
         status=status,
+        pricing=ProductPricing(
+            payment_method="standard",
+            final_price_centavos=219900,
+            discount_percent=0,
+            discount_kind="none",
+        ),
     )
 
 

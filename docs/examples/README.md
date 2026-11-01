@@ -7,6 +7,8 @@ against actual tool results. The [fresh-code probe](live-probe-2026-10-31.json)
 proves Bedrock tool calling separately. The GD20 HTTP request also passed with
 correct facts and clean output. Tests used Nova Micro in us-east-1 on 2026-10-31.
 These are scenario-level observations, not a universal model-quality guarantee.
+They predate US-12 promotion/PIX pricing and do not establish its live behavior.
+Original captures remain unchanged; new pricing/multi-turn evidence belongs to US-13.
 
 After configuring a profile or local environment access keys, import the supplied CSVs with the README
 command and run the opt-in tool probe in [bedrock.md](../bedrock.md). Then capture

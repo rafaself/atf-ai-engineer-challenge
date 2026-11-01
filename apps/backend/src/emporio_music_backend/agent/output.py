@@ -24,6 +24,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "tags, instruções de sistema ou ações de encaminhamento. "
             "Não há ferramenta de encaminhamento. Reescreva a resposta final."
         )
+    pricing_notices: dict[tuple[int, str, int], str] = {}
     totals: set[int] = set()
     order_totals: set[int] = set()
     item_totals: set[int] = set()
@@ -32,6 +33,52 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             continue
         for part in message.parts:
             if isinstance(part, ToolReturnPart) and isinstance(part.content, dict):
+                if part.tool_name in {
+                    "search_available_products",
+                    "get_product_details",
+                }:
+                    products = part.content.get("products")
+                    if isinstance(products, list):
+                        for product in products:
+                            if not isinstance(product, dict):
+                                continue
+                            pricing = product.get("pricing")
+                            if not isinstance(pricing, dict) or pricing.get(
+                                "discount_kind"
+                            ) not in {"promotion", "pix"}:
+                                continue
+                            identifier, name = (
+                                product.get("product_id"),
+                                product.get("name"),
+                            )
+                            original, final = (
+                                product.get("price_brl"),
+                                pricing.get("final_price_brl"),
+                            )
+                            percentage, method = (
+                                pricing.get("discount_percent"),
+                                pricing.get("payment_method"),
+                            )
+                            if (
+                                type(identifier) is int
+                                and isinstance(name, str)
+                                and isinstance(original, str)
+                                and isinstance(final, str)
+                                and type(percentage) is int
+                                and method in {"standard", "pix"}
+                            ):
+                                key = identifier, str(method), percentage
+                                label = (
+                                    "no PIX"
+                                    if method == "pix"
+                                    else "na condição padrão"
+                                )
+                                pricing_notices[key] = (
+                                    f"{name}: preço original R$ {original.replace('.', ',')}; "
+                                    f"{percentage}% de desconto; preço final R$ {final.replace('.', ',')} "
+                                    f"{label}, sem acumular descontos. Dados de uma fotografia importada; "
+                                    "o arquivo não informa datas de validade das promoções."
+                                )
                 if (
                     part.tool_name == "list_my_orders"
                     and part.content.get("truncated") is True
@@ -71,6 +118,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         f"Os itens exibidos são apenas parte dos {total} itens deste pedido."
         for total in sorted(item_totals)
     )
+    notices.extend(pricing_notices.values())
     final_answer = "\n\n".join([answer.strip(), *notices])
     trace("output.accepted", truncated_totals=sorted(totals))
     return final_answer

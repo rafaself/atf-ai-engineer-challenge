@@ -74,7 +74,12 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
 ) -> None:
     data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", database)
+    import_catalog(
+        data / "products.csv",
+        data / "categories.csv",
+        data / "promotions.csv",
+        database,
+    )
     observed: list[dict[str, Any]] = []
     answer = "Resposta de controle; não é avaliação LLM."
 
@@ -131,7 +136,12 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
 ) -> None:
     data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", database)
+    import_catalog(
+        data / "products.csv",
+        data / "categories.csv",
+        data / "promotions.csv",
+        database,
+    )
     identity = CustomerIdentity(customer_id=1)
     context = ExecutionContext(
         identity=identity,

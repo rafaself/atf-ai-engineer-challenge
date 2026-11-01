@@ -20,9 +20,8 @@ see [examples](examples/README.md). Broader model evaluation remains ongoing.
   direct history execution. US-10 implements the approved server-side demo
   token mapping, bounded persistent sessions, and concurrent-turn handling;
   US-11 validates customer mappings and enforces read-only order access using
-  per-run dependencies and customer-scoped SQL. US-12 promotion
-  pricing is explicitly deferred to tracked issue #26. Frontend/CLI and deployment
-  remain separate work; the current implementation calculates no discounts.
+  per-run dependencies and customer-scoped SQL. US-12 #26 was subsequently scheduled by the user and implements promotions/PIX
+  pricing from unchanged sources. Frontend/CLI and deployment remain separate work.
 
 Live multi-turn Bedrock evaluation remains US-13. Other pending capabilities above
 are follow-up requirements, not implemented or accepted behaviors. Reuse

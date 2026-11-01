@@ -36,7 +36,7 @@ _SAFE_FIELDS = {
     "operations.result": {"total_matches", "returned"},
     "operations.failure": _FAILURE_FIELDS,
     "operations.import.completed": {"customers", "orders", "items"},
-    "catalog.import.completed": {"categories", "products"},
+    "catalog.import.completed": {"categories", "products", "promotions"},
 }
 
 

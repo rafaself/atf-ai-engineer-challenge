@@ -126,12 +126,56 @@ class ConversationSnapshot(ContractModel):
         return self
 
 
+PaymentMethod = Literal["standard", "pix"]
+
+
+class PromotionOffer(ContractModel):
+    promotion_id: Annotated[PositiveInt, Field(le=2**63 - 1)]
+    discount_percent: Annotated[int, Field(strict=True, ge=1, le=100)]
+    description: NonblankText
+
+
+class ProductPricing(ContractModel):
+    payment_method: PaymentMethod
+    final_price_centavos: Annotated[NonnegativeInt, Field(le=2**63 - 1)]
+    discount_percent: Annotated[int, Field(strict=True, ge=0, le=100)]
+    discount_kind: Literal["none", "promotion", "pix"]
+    promotion_id: Annotated[PositiveInt, Field(le=2**63 - 1)] | None = None
+    promotion_description: NonblankText | None = None
+
+    @model_validator(mode="after")
+    def validate_discount(self) -> Self:
+        if self.discount_kind == "promotion":
+            if (
+                self.promotion_id is None
+                or self.promotion_description is None
+                or self.discount_percent == 0
+            ):
+                raise ValueError("Promotion pricing requires its source offer")
+        elif self.promotion_id is not None or self.promotion_description is not None:
+            raise ValueError("Only promotion pricing carries a promotion")
+        if self.discount_kind == "none" and self.discount_percent != 0:
+            raise ValueError("Undiscounted pricing has no percentage")
+        if self.discount_kind == "pix" and (
+            self.payment_method != "pix" or self.discount_percent != 5
+        ):
+            raise ValueError("PIX pricing requires its non-cumulative percentage")
+        return self
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def final_price_brl(self) -> str:
+        return (
+            f"{self.final_price_centavos // 100}.{self.final_price_centavos % 100:02d}"
+        )
+
+
 class ProductSearchQuery(ContractModel):
     """Inclusive centavo bounds; textual filters combine with AND.
 
     Repositories normalize case/accents and match names by literal substring.
     Unknown filters yield no matches, never an unrestricted search. Results are
-    ordered by price ascending, then product ID. Named queries can explicitly
+    ordered by payable price ascending, then product ID. Named queries can explicitly
     disable available_only to inspect unavailable catalog entries.
     """
 
@@ -140,6 +184,8 @@ class ProductSearchQuery(ContractModel):
     min_price_centavos: NonnegativeInt | None = None
     max_price_centavos: NonnegativeInt | None = None
     available_only: StrictBool = True
+    payment_method: PaymentMethod = "standard"
+    promotions_only: StrictBool = False
     limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10
 
     @model_validator(mode="after")
@@ -161,6 +207,7 @@ class ProductSummary(ContractModel):
     price_centavos: PositiveInt
     stock_quantity: NonnegativeInt
     status: ProductStatus
+    pricing: ProductPricing
 
     @computed_field  # type: ignore[prop-decorator]  # mypy cannot type decorated properties.
     @property

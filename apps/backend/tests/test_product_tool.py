@@ -84,7 +84,12 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
 ) -> None:
     data = Path(__file__).parents[3] / "data"
     database = tmp_path / "catalog.sqlite3"
-    import_catalog(data / "products.csv", data / "categories.csv", database)
+    import_catalog(
+        data / "products.csv",
+        data / "categories.csv",
+        data / "promotions.csv",
+        database,
+    )
     repository = SQLiteProductRepository(database)
     observed: list[object] = []
 
@@ -180,12 +185,22 @@ def test_money_conversion_does_not_inherit_ambient_decimal_rounding() -> None:
     assert repository.query.max_price_centavos == 99999
 
 
-def test_sdk_tool_validation_rejects_boolean_limit_before_repository() -> None:
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"limit": True},
+        {"promotions_only": "true"},
+        {"payment_method": "credit"},
+    ],
+)
+def test_sdk_tool_validation_rejects_invalid_arguments_before_repository(
+    arguments: dict[str, object],
+) -> None:
     repository = RecordingRepository()
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(
-            parts=[ToolCallPart("search_available_products", {"limit": True})]
+            parts=[ToolCallPart("search_available_products", arguments)]
         )
 
     executor = create_catalog_agent(

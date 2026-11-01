@@ -88,7 +88,7 @@ class ProductRepository(Protocol):
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
         """Return bounded ordered matches and the total before limiting.
 
-        Apply category and name filters together, inclusive price bounds, and
+        Apply category/name filters together, inclusive payable-price bounds, and
         active/positive-stock availability when requested. Unknown categories
         and unmatched names return an empty result; multiple matches are kept.
         Raise ProductRetrievalError for operational failures rather than

@@ -71,7 +71,7 @@ tool rather than exposed as a model-controlled flag.
 The tool delegates filtering and ordering to the repository and returns product
 IDs, names, category information, status, stock, availability, integer-centavo
 prices and exact two-decimal price_brl strings, total_matches and truncated. It
-also identifies catalog pricing and imported-snapshot inventory. Operational
+also identifies computed snapshot pricing and imported-snapshot inventory. Operational
 retrieval errors propagate; they do not become zero results or invented answers.
 The persona requires retrieval before facts. Output validation appends a selection
 notice from actual per-run truncated results, independent of model wording. Known
@@ -80,6 +80,14 @@ internal/control markup is rejected with one corrective retry, never silently st
 Controlled-model tests verify registration, arguments, results and failures against
 the real temporary SQLite catalog. They do not establish live Nova tool selection
 or answer quality; the separate reviewed live captures provide scenario evidence.
+
+US-12 extends both product tools with `payment_method="standard"|"pix"` and
+search with `promotions_only`. Original prices remain in `price_centavos/price_brl`;
+typed `pricing` supplies the exact final price, applied percentage and offer source.
+Budget filters use payable prices. Current-run discounted products receive factual
+price disclosures. Re-import the generated catalog with `--promotions` before use;
+see [pricing rules and source limits](catalog.md). Existing live captures predate
+this behavior; new promotion/PIX interpretation evaluations remain opt-in US-13.
 
 ## Conversation orchestration (US-06–US-10)
 
