@@ -4,11 +4,18 @@ import json
 
 import pytest
 
+from emporio_music_backend.contracts import CustomerIdentity
 from emporio_music_backend.contracts.errors import (
     AuthenticationError,
     ConfigurationError,
 )
 from emporio_music_backend.infrastructure.demo_identity import DemoIdentityResolver
+
+
+class Customers:
+    def exists(self, identity: CustomerIdentity) -> bool:
+        return identity.customer_id in {1, 2}
+
 
 TOKEN_A = "synthetic-alice-" + "a" * 32
 TOKEN_B = "synthetic-bob-" + "b" * 32
@@ -16,7 +23,7 @@ TOKEN_B = "synthetic-bob-" + "b" * 32
 
 def test_identity_resolution_rejects_forgery_and_does_not_retain_plain_tokens() -> None:
     mapping = {TOKEN_A: 1, TOKEN_B: 2}
-    resolver = DemoIdentityResolver(mapping)
+    resolver = DemoIdentityResolver(mapping, Customers())
     mapping[TOKEN_A] = 2
     assert resolver.resolve(TOKEN_A).customer_id == 1
     assert resolver.resolve(TOKEN_B).customer_id == 2
@@ -42,7 +49,10 @@ def test_configuration_is_strict_and_errors_do_not_reveal_tokens(
     ):
         monkeypatch.setenv("DEMO_CUSTOMER_TOKENS_JSON", raw)
         with pytest.raises(ConfigurationError) as error:
-            DemoIdentityResolver.from_environment()
+            DemoIdentityResolver.from_environment(Customers())
         assert TOKEN_A not in str(error.value)
     monkeypatch.setenv("DEMO_CUSTOMER_TOKENS_JSON", valid)
-    assert DemoIdentityResolver.from_environment().resolve(TOKEN_B).customer_id == 2
+    assert (
+        DemoIdentityResolver.from_environment(Customers()).resolve(TOKEN_B).customer_id
+        == 2
+    )
