@@ -48,7 +48,6 @@ def test_http_contract_docs_and_dependency_override(
             {"message": "a" * 4001},
             {"message": 1},
             {"message": "Olá", "session_id": "unused"},
-            {"message": "Olá", "session_id": None},
             {"message": "Olá", "customer_id": "2"},
             {"message": "Olá", "customer_id": True},
             {"message": "Olá", "customer_id": 0},
@@ -69,7 +68,10 @@ def test_http_contract_docs_and_dependency_override(
             "session_id",
         }
         request_schema = schema["components"]["schemas"]["DemoChatRequest"]
-        assert request_schema["properties"]["session_id"]["type"] == "string"
+        assert request_schema["properties"]["session_id"]["anyOf"] == [
+            {"format": "uuid4", "type": "string"},
+            {"type": "null"},
+        ]
         assert "session_id" not in request_schema["required"]
         assert "securitySchemes" not in schema["components"]
 

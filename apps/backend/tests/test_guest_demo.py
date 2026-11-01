@@ -63,9 +63,14 @@ def test_guest_history_survives_restart_and_mode_switches_fail_before_execution(
     with TestClient(api_app.create_app()) as client:
         guest = client.post("/api/chat", json={"message": "Olá"})
         assert guest.status_code == 200
+        another_guest = client.post(
+            "/api/chat", json={"message": "Olá", "session_id": None}
+        )
+        assert another_guest.status_code == 200
+        assert another_guest.json()["session_id"] != guest.json()["session_id"]
         customer = client.post("/api/chat", json={"message": "Olá", "customer_id": 1})
         assert customer.status_code == 200
-    assert histories == [[], []]
+    assert histories == [[], [], []]
     with TestClient(api_app.create_app()) as client:
         followup = client.post(
             "/api/chat",

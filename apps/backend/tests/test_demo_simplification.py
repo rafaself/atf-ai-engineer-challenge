@@ -77,8 +77,13 @@ def test_multiple_discounted_products_share_one_snapshot_notice() -> None:
             )
         ],
     )
-    answer = customer_answer(context, "Veja as opções.")
-    assert "Instrument 1" in answer and "Instrument 2" in answer
+    model_answer = (
+        "Instrument 1: R$ 10,00, desconto de 10%, final R$ 9,00.\n"
+        "Instrument 2: R$ 10,00, desconto de 10%, final R$ 9,00."
+    )
+    answer = customer_answer(context, model_answer)
+    assert answer.startswith(model_answer)
+    assert answer.count("Instrument 1") == answer.count("Instrument 2") == 1
     assert answer.count("10%") == 2
     assert answer.count("fotografia importada") == 1
 

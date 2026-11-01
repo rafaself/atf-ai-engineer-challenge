@@ -3,10 +3,22 @@
 import asyncio
 
 import pytest
-from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
+from pydantic_ai import ModelRetry, RunContext, Tool
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    ToolCallPart,
+    ToolReturnPart,
+    UserPromptPart,
+)
 from pydantic_ai.models.function import AgentInfo, FunctionModel
+from pydantic_ai.models.test import TestModel
+from pydantic_ai.usage import RunUsage
 
 from emporio_music_backend.agent.factory import create_agent
+from emporio_music_backend.agent.output import customer_answer
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts.chat import ChatRequest
 from emporio_music_backend.contracts.conversations import ExecutionContext
@@ -48,3 +60,189 @@ def test_uncorrectable_output_fails_safely_within_both_budgets(
         asyncio.run(agent.run(ChatRequest(message="Olá"), context=ExecutionContext()))
     assert calls == expected_calls
     assert "fake routing" not in str(failure.value)
+
+
+@pytest.mark.parametrize("correct_on_retry", [True, False])
+def test_unsupported_price_retries_once_then_returns_a_quote_or_fails(
+    correct_on_retry: bool,
+) -> None:
+    def get_product_details(product_name: str) -> dict[str, object]:
+        return {
+            "products": [
+                {
+                    "price_brl": "549.00",
+                    "pricing": {
+                        "final_price_brl": "439.20",
+                        "discount_kind": "promotion",
+                    },
+                }
+            ]
+        }
+
+    calls = 0
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal calls
+        calls += 1
+        if not any(
+            isinstance(part, ToolReturnPart)
+            for message in messages
+            for part in message.parts
+        ):
+            return ModelResponse(
+                parts=[ToolCallPart("get_product_details", {"product_name": "Ohana"})]
+            )
+        price = "439,20" if correct_on_retry and calls == 3 else "405,28"
+        return ModelResponse(parts=[TextPart(f"Preço final: R$ {price}.")])
+
+    agent = create_agent(
+        AgentSettings(),
+        model=FunctionModel(respond),
+        tools=[Tool(get_product_details)],
+    )
+    if correct_on_retry:
+        result = asyncio.run(
+            agent.run(
+                ChatRequest(message="Tenho R$ 1.000. E no PIX?"),
+                context=ExecutionContext(),
+            )
+        )
+        assert result.answer.count("439,20") == 1
+        assert "405,28" not in result.answer
+    else:
+        with pytest.raises(AgentExecutionError):
+            asyncio.run(
+                agent.run(
+                    ChatRequest(message="Tenho R$ 1.000. E no PIX?"),
+                    context=ExecutionContext(),
+                )
+            )
+    assert calls == 3
+
+
+@pytest.mark.parametrize(
+    "answer,accepted",
+    [
+        ("Preço: R$ 439,20.", True),
+        ("Preço: R$ 439.20.", True),
+        ("Até R$ 1.000: opção por R$ 439,20; pedido de R$ 799,90.", True),
+        ("Preço histórico: R$ 405,28.", False),
+    ],
+)
+def test_price_check_uses_current_quotes_totals_and_search_bounds(
+    answer: str, accepted: bool
+) -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "get_product_details",
+                        {"products": [{"price_brl": "405.28"}]},
+                    )
+                ],
+                run_id="old",
+            ),
+            ModelResponse(
+                parts=[
+                    ToolCallPart("search_available_products", {"max_price_brl": 1000})
+                ],
+                run_id="current",
+            ),
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_available_products",
+                        {
+                            "products": [
+                                {
+                                    "price_brl": "549.00",
+                                    "pricing": {"final_price_brl": "439.20"},
+                                }
+                            ]
+                        },
+                    ),
+                    ToolReturnPart("get_my_order", {"order": {"total_brl": "799.90"}}),
+                ],
+                run_id="current",
+            ),
+        ],
+    )
+    if accepted:
+        assert customer_answer(context, answer) == answer
+    else:
+        with pytest.raises(ModelRetry):
+            customer_answer(context, answer)
+
+
+def test_price_without_current_retrieval_requires_correction() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[],
+    )
+    with pytest.raises(ModelRetry):
+        customer_answer(context, "O preço é R$ 405,28.")
+
+
+@pytest.mark.parametrize("customer_history", [True, False])
+def test_budget_reference_uses_customer_history_but_not_old_assistant_prices(
+    customer_history: bool,
+) -> None:
+    prior_message: ModelMessage = (
+        ModelRequest(parts=[UserPromptPart("Tenho R$ 1.000.")], run_id="old")
+        if customer_history
+        else ModelResponse(parts=[TextPart("Preço: R$ 1.000.")], run_id="old")
+    )
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            prior_message,
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "get_product_details",
+                        {"products": [{"price_brl": "2199.00"}]},
+                    )
+                ],
+                run_id="current",
+            ),
+        ],
+    )
+    answer = "O preço é R$ 2.199,00, acima do seu orçamento de R$ 1.000."
+    if customer_history:
+        assert customer_answer(context, answer) == answer
+    else:
+        with pytest.raises(ModelRetry):
+            customer_answer(context, answer)
+
+
+def test_malformed_customer_amount_does_not_break_a_valid_tool_quote() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    UserPromptPart("Tenho R$ 1.000.00. Quanto custa o GD20?"),
+                    ToolReturnPart(
+                        "get_product_details",
+                        {"products": [{"price_brl": "2199.00"}]},
+                    ),
+                ],
+                run_id="current",
+            )
+        ],
+    )
+    assert customer_answer(context, "Preço: R$ 2.199,00.") == "Preço: R$ 2.199,00."

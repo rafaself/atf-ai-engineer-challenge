@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import pytest
 from pydantic_ai import RunContext
 from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
@@ -44,7 +45,10 @@ def test_supplied_active_offer_is_quoted_separately_from_original_price(
     }
 
 
-def test_discount_disclosure_uses_current_run_evidence_only() -> None:
+@pytest.mark.parametrize("discount_kind", ["promotion", "none"])
+def test_discount_disclosure_uses_current_run_evidence_only(
+    discount_kind: str,
+) -> None:
     product = {
         "product_id": 127,
         "name": "Kalani KAL-700T",
@@ -57,6 +61,8 @@ def test_discount_disclosure_uses_current_run_evidence_only() -> None:
         },
     }
     historical = {**product, "name": "Historical offer"}
+    if discount_kind == "none":
+        product = {**product, "pricing": {"discount_kind": "none"}}
     ctx = RunContext(
         deps=ExecutionContext(),
         model=TestModel(),
@@ -76,5 +82,6 @@ def test_discount_disclosure_uses_current_run_evidence_only() -> None:
         ],
     )
     answer = customer_answer(ctx, "Oferta consultada.")
-    assert "359,00" in answer and "323,10" in answer and "10%" in answer
-    assert "fotografia" in answer and "Historical offer" not in answer
+    assert answer.startswith("Oferta consultada.")
+    assert ("fotografia" in answer) == (discount_kind == "promotion")
+    assert "Historical offer" not in answer and "Kalani" not in answer
