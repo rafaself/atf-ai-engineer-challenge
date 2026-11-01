@@ -10,11 +10,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from emporio_music_backend.infrastructure.policy_index import PolicyIndex
 from emporio_music_backend.paths import DATA_DIRECTORY
 from emporio_music_backend.policy_corpus import PolicyCorpus
 from scripts.policy_benchmark.embeddings import MODELS, RATES, Embedder
 from scripts.policy_benchmark.evaluation import query_families, score, summarize
-from scripts.policy_benchmark.index import PolicyIndex
 
 
 def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
@@ -87,10 +87,7 @@ def run(args: argparse.Namespace, report: dict[str, Any]) -> None:
     index = PolicyIndex(args.index_dir, f"policy-{args.model}", config)
     try:
         if args.index:
-            if (
-                any(c.name == index.name for c in index.client.list_collections())
-                and not args.rebuild
-            ):
+            if index.exists() and not args.rebuild:
                 raise ValueError(
                     "Index exists; omit --index to reuse or pass --rebuild"
                 )

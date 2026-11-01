@@ -7,6 +7,7 @@ from emporio_music_backend.contracts.errors import (
     ApplicationError,
     ConfigurationError,
     CustomerSelectionError,
+    PolicyRetrievalError,
     ProviderUnavailableError,
     SessionAccessError,
     SessionConflictError,
@@ -31,7 +32,9 @@ def application_failure_handler(exc: ApplicationError) -> JSONResponse:
         return JSONResponse(
             status_code=504, content={"detail": "Conversation timed out"}
         )
-    if isinstance(exc, (ConfigurationError, ProviderUnavailableError)):
+    if isinstance(
+        exc, (ConfigurationError, PolicyRetrievalError, ProviderUnavailableError)
+    ):
         return JSONResponse(
             status_code=503, content={"detail": "Agent service unavailable"}
         )

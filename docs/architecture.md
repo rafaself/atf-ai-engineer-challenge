@@ -1,9 +1,10 @@
 # Demo architecture
 
-The project is one Python package. FastAPI supplies a local text API, Pydantic AI
-supplies typed tool calling, Bedrock supplies the model, and SQLite stores source
-snapshots and chat history. The small dataset does not need distributed services,
-a vector store, an ORM or a generic ingestion framework.
+The project is one Python package. FastAPI supplies a local text API, and Pydantic AI
+uses Bedrock with typed catalog, order and policy tools. SQLite stores operational
+snapshots and chat history; embedded Chroma indexes the fixed policy corpus using
+local E5 embeddings. This small dataset does not need distributed services, an ORM
+or a generic ingestion framework.
 
 ```mermaid
 flowchart LR
@@ -13,8 +14,14 @@ flowchart LR
     Chat --> Agent[Pydantic AI / Bedrock]
     Agent --> Products[Product tools and exact pricing]
     Agent --> Orders[Customer-scoped order tools]
+    Agent --> Policy[Bounded policy search]
     Products --> Catalog[Catalog SQLite]
     Orders --> Operations[Operational SQLite]
+    Corpus[Reviewed policy corpus] --> IndexBuild[Explicit index build]
+    IndexBuild --> E5[Local E5 embeddings]
+    Policy --> E5
+    E5 --> Chroma[Embedded Chroma index]
+    Chroma --> Policy
     Prepare[One preparation command] --> Catalog
     Prepare --> Operations
 ```
@@ -118,12 +125,13 @@ Diagnostics allow metadata only. This is not a universal semantic grounding chec
 
 ## Evidence and limits
 
-Real temporary SQLite and controlled models verify domain rules, ownership,
-persistence, concurrent independent chats and failures. They do not establish live
-language understanding or tool selection. [US-13 live evidence](examples/sprint-2/README.md)
-records observed catalog/context, promotion/PIX and order behavior, including two
-failed attempts and focused instruction corrections. Policy lookup/evaluation
-remains in the later retrieval sprint, outside Sprint 2 acceptance.
+Temporary SQLite/Chroma indexes and controlled models verify domain rules, ownership,
+persistence, bounded policy retrieval wiring and failures. They do not establish live
+language understanding, tool selection or policy-answer quality. [US-13 live evidence](examples/sprint-2/README.md)
+records catalog/context, promotion/PIX and order behavior, including two failed
+attempts and focused instruction corrections; those Sprint 2 runs did not cover
+policy lookup. US-16 integrates policy search, and US-17 owns reviewed policy-answer
+evaluation.
 
 The [simplification review](examples/simplification-review.md) preserves an earlier
 offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)

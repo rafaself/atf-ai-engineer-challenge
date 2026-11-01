@@ -1,6 +1,6 @@
 """Bounded direct evidence expansion preserves source identities and ranking seeds."""
 
-from scripts.policy_benchmark.expansion import expand
+from emporio_music_backend.policy_retrieval import expand
 
 
 def test_returns_include_exclusions_without_recursively_loading_manual() -> None:

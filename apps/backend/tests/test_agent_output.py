@@ -193,6 +193,143 @@ def test_price_without_current_retrieval_requires_correction() -> None:
         customer_answer(context, "O preço é R$ 405,28.")
 
 
+def test_policy_amount_requires_current_evidence_and_matching_source_citation() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "evidence_found",
+                            "records": [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "5.1",
+                                    "pages": [4],
+                                    "text": "Frete abaixo de R$ 500,00: taxa fixa de R$ 35,00.",
+                                }
+                            ],
+                        },
+                    )
+                ],
+                run_id="current",
+            )
+        ],
+    )
+
+    answer = (
+        "A taxa fixa é R$ 35,00 para pedidos abaixo do limite [política 5.1, p. 4]."
+    )
+    assert customer_answer(context, answer) == answer
+
+
+def test_policy_answer_requires_a_citation_from_this_turn() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "evidence_found",
+                            "records": [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "2",
+                                    "pages": [2],
+                                    "text": "Horário da loja.",
+                                }
+                            ],
+                        },
+                    )
+                ],
+                run_id="current",
+            )
+        ],
+    )
+
+    with pytest.raises(ModelRetry):
+        customer_answer(context, "A loja atende em horário comercial.")
+
+
+def test_policy_amount_must_cite_the_section_that_contains_it() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "evidence_found",
+                            "records": [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "5.1",
+                                    "pages": [4],
+                                    "text": "Frete abaixo de R$ 500,00: taxa fixa de R$ 35,00.",
+                                }
+                            ],
+                        },
+                    )
+                ],
+                run_id="current",
+            )
+        ],
+    )
+
+    with pytest.raises(ModelRetry):
+        customer_answer(
+            context,
+            "A taxa é R$ 35,00 [política 5.2, p. 4].",
+        )
+
+
+def test_historical_policy_amount_does_not_authorize_current_answer() -> None:
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "evidence_found",
+                            "records": [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "5.1",
+                                    "pages": [4],
+                                    "text": "Taxa de frete: R$ 35,00.",
+                                }
+                            ],
+                        },
+                    )
+                ],
+                run_id="previous",
+            )
+        ],
+    )
+
+    with pytest.raises(ModelRetry):
+        customer_answer(context, "A taxa é R$ 35,00 [política 5.1, p. 4].")
+
+
 def test_combined_output_failures_include_current_prices_in_one_correction() -> None:
     context = RunContext(
         deps=ExecutionContext(),
