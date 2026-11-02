@@ -153,7 +153,7 @@ and historical decisions. Three Sprint 2 conversations and four US-17 paired
 policy scenarios are descriptive evidence, not a guarantee of future answers. See
 the [US-17 results](docs/examples/us-17/results.md) for grounding, uncertainty,
 tool-selection and full-context findings.
-Frontend, deployment and production authentication are outside the current demo. The recruiting email determines the submission cutoff.
+The [React frontend](apps/frontend/README.md) now uses the existing chat API with a fixed fictional customer and session context. The demo remains local; packaging and public deployment are separate work. The recruiting email determines the submission cutoff.
 
 OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
 Scoped commits and PRs record that workflow; controlled test answers are not claimed
