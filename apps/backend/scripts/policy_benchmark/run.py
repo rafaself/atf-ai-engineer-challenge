@@ -24,7 +24,11 @@ def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
     directory = DATA_DIRECTORY / "policies"
     corpus = PolicyCorpus.model_validate_json((directory / "corpus.json").read_text())
     freeze = json.loads((directory / "freeze.json").read_text())
-    questions_bytes = (directory / "questions.json").read_bytes()
+    questions_path = directory / freeze["questions_source"]
+    questions_bytes = questions_path.read_bytes()
+    historical_questions_bytes = (
+        directory / freeze["historical_questions_source"]
+    ).read_bytes()
     chunks_hash = hashlib.sha256(
         json.dumps(
             [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
@@ -41,6 +45,8 @@ def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
     if (
         chunks_hash != freeze["chunks_sha256"]
         or hashlib.sha256(questions_bytes).hexdigest() != freeze["questions_sha256"]
+        or hashlib.sha256(historical_questions_bytes).hexdigest()
+        != freeze["historical_questions_sha256"]
         or pdf_hash != corpus.source_sha256
         or pdf_hash != freeze["source_sha256"]
         or freeze["freight_clarification_source"] != FREIGHT_CLARIFICATION_SOURCE
@@ -53,10 +59,14 @@ def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
         )
     dataset = json.loads(questions_bytes)
     ids = {c.id for c in corpus.chunks if c.indexable}
-    if dataset["source_sha256"] != pdf_hash or any(
-        not set(group) <= ids
-        for q in dataset["questions"]
-        for group in q["evidence_groups"]
+    if (
+        dataset["source_sha256"] != pdf_hash
+        or dataset["freight_clarification_sha256"] != freight_clarification_hash
+        or any(
+            not set(group) <= ids
+            for q in dataset["questions"]
+            for group in q["evidence_groups"]
+        )
     ):
         raise ValueError("Dataset references invalid evidence")
     return corpus, list(dataset["questions"]), freeze

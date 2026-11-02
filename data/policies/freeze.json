@@ -1,10 +1,13 @@
 {
-  "version": 2,
+  "version": 3,
   "parser_version": "poppler-normalized-sections-v4",
   "extractor_version": "pdftotext version 25.07.0",
   "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
   "freight_clarification_source": "policies/freight-clarification.json",
   "freight_clarification_sha256": "ac9a588b6aaf06269edfabb3f5af1b5171f978c341f328dd0ff2d25b27b8cc13",
-  "questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c",
-  "chunks_sha256": "e7247b740fcbd3fe9eabfa31bddb2135a6b61c33f8ca637db7837edf9c989e45"
+  "questions_sha256": "dd0e79ff18d23da48998c58e79ef039e7d1eda74ba23670dce9b1aaa4ad588db",
+  "chunks_sha256": "e7247b740fcbd3fe9eabfa31bddb2135a6b61c33f8ca637db7837edf9c989e45",
+  "questions_source": "questions-v2.json",
+  "historical_questions_source": "questions.json",
+  "historical_questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c"
 }

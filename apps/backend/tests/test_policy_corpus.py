@@ -103,8 +103,18 @@ def test_labels_reference_existing_evidence_and_preserve_frozen_dataset() -> Non
     corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
     ids = {chunk.id for chunk in corpus.chunks}
     directory = DATA_DIRECTORY / "policies"
-    raw = (directory / "questions.json").read_bytes()
     freeze = json.loads((directory / "freeze.json").read_text())
+    historical_raw = (directory / freeze["historical_questions_source"]).read_bytes()
+    assert (
+        hashlib.sha256(historical_raw).hexdigest()
+        == freeze["historical_questions_sha256"]
+    )
+    historical = json.loads(historical_raw)
+    historical_q13 = next(q for q in historical["questions"] if q["id"] == "q13")
+    assert historical_q13["evidence_groups"] == [["policy-v2.1-s5.1"]]
+    assert historical_q13["expectation"] == "qualify_gap"
+
+    raw = (directory / freeze["questions_source"]).read_bytes()
     assert hashlib.sha256(raw).hexdigest() == freeze["questions_sha256"]
     canonical = json.dumps(
         [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
@@ -122,14 +132,33 @@ def test_labels_reference_existing_evidence_and_preserve_frozen_dataset() -> Non
     assert freeze["freight_clarification_sha256"] == clarification_sha256
     dataset = json.loads(raw)
     assert dataset["source_sha256"] == corpus.source_sha256
+    assert dataset["freight_clarification_sha256"] == clarification_sha256
     questions = dataset["questions"]
     assert len(questions) == len({q["id"] for q in questions}) == 25
     assert {q["split"] for q in questions} == {"development", "validation"}
+    current_q13 = next(q for q in questions if q["id"] == "q13")
+    assert current_q13["evidence_groups"] == [
+        ["policy-v2.1-freight-clarification-v1"]
+    ]
+    assert current_q13["expectation"] == "state_conditions"
     for question in questions:
         for group in question["evidence_groups"]:
             assert group and set(group) <= ids
         if not question["evidence_groups"]:
             assert question["expectation"] == "unsupported"
+
+
+def test_benchmark_runner_loads_current_versioned_questions() -> None:
+    from scripts.policy_benchmark.run import load_inputs
+
+    _, questions, freeze = load_inputs()
+    q13 = next(question for question in questions if question["id"] == "q13")
+
+    assert freeze["questions_source"] == "questions-v2.json"
+    assert q13["evidence_groups"] == [
+        ["policy-v2.1-freight-clarification-v1"]
+    ]
+    assert q13["expectation"] == "state_conditions"
 
 
 def test_normalization_keeps_table_relationships_and_joins_wrapped_values() -> None:

@@ -149,6 +149,52 @@ def test_policy_sources_are_appended_without_judging_generated_citation_style(
     assert customer_answer(context, accepted) == accepted
 
 
+def test_policy_source_without_pdf_page_is_cited_separately() -> None:
+    answer = "Para pedidos de R$ 500,00, o frete é grátis."
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "evidence_found",
+                            "records": [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "5.1",
+                                    "pages": [4],
+                                    "text": "Regra original, sem igualdade.",
+                                },
+                                {
+                                    "source": "policies/freight-clarification.json",
+                                    "section": "5.1 (clarificação aprovada)",
+                                    "pages": [],
+                                    "text": "Clarificação aprovada da igualdade.",
+                                },
+                            ],
+                        },
+                    )
+                ],
+                run_id="current",
+            )
+        ],
+    )
+
+    accepted = customer_answer(context, answer)
+
+    assert accepted == (
+        answer
+        + "\n\nFontes consultadas: policies/freight-clarification.json — "
+        "seção 5.1 (clarificação aprovada), sem página física; "
+        "Manual de políticas da loja — seção 5.1, p. 4."
+    )
+
+
 @pytest.mark.parametrize(
     ("run_id", "status"),
     [("old", "evidence_found"), ("current", "insufficient_evidence")],

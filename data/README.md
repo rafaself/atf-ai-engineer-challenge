@@ -57,5 +57,8 @@ PDF's section 5.1 for deliveries within the Região Metropolitana de Campo Grand
 orders below R$ 500,00 have a fixed R$ 35,00 freight fee, and orders at or above
 R$ 500,00 receive free freight. This is new business evidence; the original PDF
 still leaves equality unspecified and has not been edited. The current policy
-freeze records the clarification source hash separately, and the historical
-evaluation questions and benchmark captures remain unchanged.
+freeze records the clarification source hash separately. The historical
+`policies/questions.json` and its benchmark captures remain unchanged. New benchmark
+runs use `policies/questions-v2.json`, which labels the exact-threshold question
+against the clarification and records its source hash; `policies/freeze.json` pins
+both datasets separately.

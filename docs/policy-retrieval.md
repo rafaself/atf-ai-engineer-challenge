@@ -42,9 +42,11 @@ uv run --directory apps/backend --locked pytest tests/test_policy_corpus.py
 The command verifies `data/store_policies.pdf` against `data/SHA256SUMS`, invokes
 Poppler layout extraction, applies the versioned freight clarification and writes
 `data/policies/corpus.json`. `freeze.json` keeps a separate hash for the clarification
-source and a canonical hash for the effective records. The unchanged question-file
-hash keeps the historical evaluation labels intact. No credentials, model downloads,
-network, or new Python dependencies are needed.
+source and a canonical hash for the effective records. The current benchmark reads the
+versioned `questions-v2.json`, whose clarification hash and q13 evidence label include
+the approved rule. The original `questions.json` and its hash remain frozen for earlier
+benchmark captures. No credentials, model downloads, network, or new Python dependencies
+are needed.
 It is never invoked by application startup. Missing Poppler/extraction failure is
 an error, not an empty corpus. The source is never modified.
 
@@ -177,11 +179,17 @@ hash requiring refresh for every edit.
 
 ## Frozen evaluation, before tuning
 
-`data/policies/questions.json` has 25 Portuguese questions: 16 development and
+`data/policies/questions-v2.json` has 25 Portuguese questions: 16 development and
 9 validation, with required evidence groups, topic, expected response behavior
 and critical flags. Each group contains acceptable alternative chunk IDs; current
 labels use one ID per group. Multiple groups require all evidence. Unsupported
 cases have zero groups. Labels derive from source rules, not retrieved rankings.
+Its q13 gold evidence points to the approved freight clarification and its expected
+behavior is to state the resolved conditions. The original `questions.json` remains
+the v1 dataset used by historical benchmark captures; its q13 still labels section
+5.1 as a gap, matching the unresolved source at that time. New runs use the version
+and source hash recorded in `freeze.json` and verify the clarification hash in the
+current dataset.
 Validation cases are authored/visible for review but must not be used to tune
 retrieval. Record any later inspection of their results before final evaluation
 as contamination; report exploratory results rather than claiming a blind test.
