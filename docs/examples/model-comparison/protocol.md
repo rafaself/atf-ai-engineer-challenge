@@ -1,100 +1,117 @@
 # Issue #40: Bedrock model comparison protocol
 
-Status: the three-model Runtime-only comparison and manual review are complete.
-The Bedrock availability API was denied by IAM, but the Qwen Runtime baseline
-succeeded. The reviewed report is in `capture-runtime-2026-11-02.json`.
+Status: the approved three-model Bedrock Runtime comparison is complete. The
+reviewed results are in `README.md`; the original model responses and tool traces
+remain in `capture-runtime-2026-11-02.json`. No additional Bedrock inference was
+used for the post-run review and erratum.
 
-## Frozen evaluation
+## Scope and candidates
 
-Use the exact prompts and source-derived expectations in `scenarios.json`. The
-nine conversations contain 16 planned HTTP turns per model. Run one pass per
-scenario, Qwen3 32B first as the reference, then Nova Micro and Nova Lite. Use one
-fresh session per scenario; reuse its session ID for follow-up turns. Only the
-selected-orders and mixed-order scenarios set fictional customer ID 1. A failed
-HTTP turn fails that scenario and leaves later turns in that conversation
-unexecuted. Do not retry it or fabricate answers. Continue with independent
-scenarios unless provider access fails or the cost guard stops the run. In the
-recorded run, one Qwen policy-search turn failed locally with HTTP 503 because
-the benchmark dependency group was not active; its two follow-up turns were
-left unexecuted and the failed turn was not retried. The other two models
-completed all 16 planned turns.
+The evaluated models were Qwen3 32B, Nova Micro, and Nova Lite, all using
+Bedrock Runtime Converse for model inference. Every agent tool ran in the
+application locally. Nemotron Nano 3 was excluded as an architectural scope
+decision: this comparison did not add a Mantle adapter solely to evaluate one
+candidate. Its Runtime Converse tool-calling compatibility was not verified.
+This exclusion does not claim that Bedrock Runtime generally lacks tool calling.
+No Mantle adapter or Mantle inference was used. GPT-6 Luna remained excluded
+because it was not enabled for this account.
 
-The application revision and fixture hashes are recorded in every capture before
-the first request. Catalog, order, CSV, PDF, policy-corpus, and index files are
-read-only inputs. Conversation history is written only to a temporary SQLite file.
-The evaluator uses the normal `/api/chat` → `ChatService` → Pydantic AI → local
-tools → SQLite path. Qwen3 32B, Nova Micro, and Nova Lite all use Bedrock Runtime
-Converse for model inference. Qwen follows the app's established default route;
-the reviewed Sprint 2 captures show actual Qwen tool calls through that path.
-Nemotron Nano 3 is excluded because its documented client-side tool-calling route
-uses Bedrock Mantle, outside the Runtime-only constraint for this comparison.
+The fixed set has nine Portuguese conversations and 16 planned HTTP turns per
+model. Run one pass per scenario, with a fresh session per conversation and the
+same session for follow-ups. Only the selected-orders and mixed-order scenarios
+set fictional customer ID 1. The normal `/api/chat` → `ChatService` → Pydantic AI
+→ local tools → SQLite path is used. Source data and the policy index are
+read-only; conversation state uses a temporary SQLite database.
 
-## Preflight and spending guard
+## Post-run errata and reviewed denominator
 
-The three candidate IDs, Runtime Converse routes, token ceilings, and rates are
-recorded in `pricing.json`. Standard rates were checked against AWS's current `us-east-1`
-Bedrock Price List offer on 2026-11-02 (version `20261030160456`); the offer prices
-tokens per 1K and the manifest converts them to per 1M. Qwen uses the existing
-Runtime Converse route, which has reviewed live tool-call evidence in
-`docs/examples/sprint-2/closure/README.md`. The benchmark uses Pydantic AI's
-existing Converse integration for all candidates. The recorded principal could
-not call Bedrock's availability API, but its approved Qwen baseline request
-confirmed Runtime inference access. A candidate without verified Runtime
-Converse/tool support is excluded, and an unavailable or incompatible Qwen
-baseline blocks the matrix. Do not substitute another model.
-GPT-6 Luna remains excluded.
+The live run used frozen scenario fixture v1. Its exact bytes are preserved as
+`scenarios-frozen-v1.json` (SHA-256
+`20b4210c198d3742a65ca7a9997bcd762626feac30b07aa9c4fe8872b8244b62`), matching
+the scenario hash recorded in the original capture. Current `scenarios.json` is
+v2: the `no-match` scenario's `required_tools` is corrected from nonexistent
+`search_products` to the registered `get_product_details` tool. That tool is
+appropriate for a literal product-name lookup. The recorded models used
+`get_product_details`; this expectation correction does not change their scores.
+The capture retains its v1 expectations and records this erratum separately.
 
-The approved cap for this run is **US$1.00**. The runner refuses a larger cap,
-requires explicit `--live`, and checks current-day pricing and runtime tool
-compatibility before evaluating. It checks the remaining budget before every
-HTTP turn. Its reservation assumes the maximum five model requests per turn, each at
-the full model input-context ceiling plus 1,024 output tokens. After a turn, it
-uses observed usage and reserves the full request ceiling for any request whose
-usage is missing. This is deliberately conservative; estimates are not invoices.
-The SDK's existing retry setting stays at one total attempt, and the app's
-existing one output correction remains inside the five-request limit.
+The Qwen policy-hours conversation stopped on a local policy-retrieval HTTP 503
+caused by `ModuleNotFoundError` because the benchmark dependency group was not
+active. Its two remaining turns are `not_executed`. This is a
+`local_infrastructure` execution failure, not a semantic model failure. It stays
+in the HTTP reliability count and cost accounting; it has no Pass/Partial/Fail
+verdict. Qwen therefore has eight evaluated conversations out of nine attempted
+and 14 attempted turns out of 16 planned. Nova Micro and Nova Lite each have
+nine evaluated/attempted conversations and 16/16 turns. The capture preserves
+the failed request, failure cause, and two unexecuted turns; none was retried.
 
-At the absolute limits, the three-model matrix could issue 240 provider requests,
-process up to 36,800,000 input-context tokens, and generate up to 245,760 output
-tokens. Full-context reservations exceed the approved cap at the issue's
-illustrative rates, so a complete matrix is not guaranteed; stop safely at US$1
-and mark all remaining work unexecuted. Never raise the cap in code or silently
-retry paid requests.
+Post-run manual review changed Qwen's `mixed-order-return-followup` from Pass to
+Partial. Its first answer presented the imported tracking status as delivery
+before qualifying that the estimated date did not prove receipt. The factual
+follow-up then answered without a fresh policy search. Conditions were still
+requested, so this is Partial rather than a critical eligibility error. The
+reviewed capture keeps the turn evidence intact and recomputes the aggregates
+over completed conversations only.
 
-## Review rubric and recommendation
+## Retrieval and account preflight
 
-Review every final customer-facing answer against that turn's actual tool
-arguments/results and the frozen policy text. Grade each conversation pass,
-partial, or fail. HTTP 200 alone does not pass. Record required facts/tool use,
-unsupported claims and omissions, critical errors, HTTP/provider failures,
-request counts, available token usage, estimated cost, and observed wall time.
-Report median and maximum latency; do not report p95 for this small sample.
+Before any paid model request, the runner calls the existing `LocalPolicySearch`
+against the local policy corpus and index. This loads the `sentence-transformers`
+dependency, verifies the corpus/index fingerprint and collection contents, and
+loads the cached E5 model with downloads disabled. A missing dependency, model,
+or index blocks the run with `blocked_retrieval_readiness`, records the cause,
+and exits before model inference. The explicit `--group benchmark` run command
+installs the local embedding dependencies; the repository README describes how
+to prepare the cached model and index.
 
-A cheaper candidate is recommendable only if it has at least as many passing
-conversations as Qwen, has zero observed critical errors, and human review finds
-no material UX weakness. Otherwise keep Qwen or report insufficient evidence.
-Use no LLM judge, exact-phrase tests, or statistical reliability claims.
+The no-inference account availability check was denied by IAM for
+`bedrock:GetFoundationModelAvailability`; the AWS Pricing API also denied
+`pricing:GetProducts`. These actions are separate from model inference. Rates
+were checked against the public AWS Price List. The approved Qwen Runtime
+baseline request confirmed inference access and served as the access probe for
+the recorded run.
 
-The reviewed capture includes the frozen expected facts and required tools,
-observed tool calls, full per-turn trace, and completed human-review fields for
-verdict, critical errors, missed tools, unsupported claims, and notes. Review
-each answer against its actual tool results and policy text. Missing token usage
-is counted separately and costed at the full request reservation.
+The approved cap for the recorded run was **US$1.00**. This approval does not
+carry forward to another live run. The runner requires `--live` and an explicit
+cap, refuses a value above US$1.00, and checks a conservative full-turn
+reservation before each HTTP request. The reservation covers up to five model
+requests at the full model context ceiling plus 1,024 output tokens. Missing
+token usage is charged at that ceiling. SDK retries remain disabled beyond one
+attempt. Estimates are not invoices.
 
-The final report belongs in `README.md` beside sanitized captures and must include
-one compact table with model, pass/partial/fail, critical errors, missed tools or
-unsupported claims, HTTP errors, model calls, tokens, total estimated cost,
-cost per successful conversation, and median/maximum latency. State every
-denominator and missing-usage field. Keep failures and not-executed turns visible.
+## Review and reporting
 
-## Current execution preflight
+Assign semantic verdicts only to conversations that completed all planned turns.
+Review final answers against the actual tool results, policy evidence, required
+facts and conditions, ambiguity handling, and multi-turn reference resolution.
+Record missed tools, unsupported claims, critical errors, and UX notes. A failed
+HTTP turn is an execution/reliability failure; classify its cause as provider or
+SDK, local infrastructure, local execution, or transport when supported by the
+trace. Keep HTTP errors and not-executed turns in the reliability report, and do
+not convert them into semantic failures or assume missing turns passed.
 
-The no-inference account availability check reached AWS and returned
-`AccessDeniedException` for `GetFoundationModelAvailability`. The AWS Pricing API
-also denied the account request, so rates were independently checked from the
-public AWS Price List file. AWS's sanitized error states that no identity-based
-policy allows `bedrock:GetFoundationModelAvailability` or `pricing:GetProducts`.
-These are separate from inference permissions. No inference calls were made by
-preflight. When the availability action is denied, the live runner uses the user-approved Qwen
-baseline request as its access probe, subject to the same US$1.00 cost guard; a
-provider denial stops the matrix. Credential values are not included in reports.
+Report Pass/Partial/Fail over evaluated conversations, alongside evaluated and
+attempted conversation counts and attempted/planned turn counts. Preserve
+critical-error and missed-tool counts, HTTP errors, model calls, token usage,
+total estimated cost, cost per passing conversation, and missing-usage counts.
+The capture's `execution_failure_categories` separates local infrastructure
+from provider/SDK and transport failures.
+
+The recorded latency is **end-to-end `/api/chat` request wall time**. It includes
+model inference, local tool execution, policy retrieval, and possible local
+initialization; it does not measure model-only inference speed. Report median and
+maximum. Do not infer stable tail latency or report p95 for this small sample.
+
+No cheaper candidate met the selection gate of at least Qwen's evaluated pass
+count and zero critical errors. Keep Qwen provisionally as the current default;
+this one-pass comparison does not establish reliability or justify automatic
+routing. Do not use an LLM judge, exact-phrase tests, or statistical claims.
+
+## Runner maintenance review
+
+The runner was reviewed for duplication and unnecessary abstractions. Existing
+cost reservations, input hashing, Runtime route checks, local policy copies,
+checkpoints, and resume handling each protect a concrete run constraint or the
+captured evidence, so they remain. Candidate metadata setup was consolidated;
+the runner was not rewritten as a generic benchmark framework, and no extra
+provider adapter or latency instrumentation was added.

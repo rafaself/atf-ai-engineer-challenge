@@ -10,6 +10,7 @@ import os
 import shutil
 import statistics
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -105,6 +106,7 @@ SOURCE_PATHS = (
     "docs/examples/model-comparison/scenarios.json",
     "docs/examples/model-comparison/pricing.json",
     "docs/examples/model-comparison/protocol.md",
+    "docs/examples/model-comparison/scenarios-frozen-v1.json",
 )
 
 
@@ -505,6 +507,38 @@ def _copy_policy_inputs(target: Path) -> Path:
     return target
 
 
+def _check_local_retrieval_readiness() -> dict[str, object]:
+    """Load the existing local index and cached E5 model without network access."""
+    try:
+        result = LocalPolicySearch(data_directory=paths.DATA_DIRECTORY).search(
+            "horário de funcionamento da loja"
+        )
+        if result["status"] != "evidence_found" or not result["records"]:
+            return {
+                "status": "blocked",
+                "failure_type": "NoPolicyEvidence",
+                "remediation": "Verify the existing local policy corpus and index.",
+            }
+    except Exception as exc:
+        cause = exc.__cause__
+        return {
+            "status": "blocked",
+            "failure_type": type(exc).__name__,
+            "cause_type": type(cause).__name__ if cause else None,
+            "missing_module": getattr(cause, "name", None),
+            "remediation": (
+                "Install local policy retrieval dependencies and prepare the cached "
+                "E5 model and policy index using the repository README."
+            ),
+        }
+    return {
+        "status": "ready",
+        "embedding_model": "intfloat/multilingual-e5-base",
+        "index_collection": "policy-e5",
+        "evidence_records": len(result["records"]),
+    }
+
+
 def _runtime_chat_settings() -> tuple[float, HistoryLimits]:
     """Match the production app's timeout and conversation history settings."""
     return (
@@ -572,57 +606,74 @@ def _summary(model_runs: list[dict[str, Any]]) -> list[dict[str, object]]:
     for model in model_runs:
         scenarios = model.get("scenarios", [])
         attempted = [item for item in scenarios if item.get("attempted_turns", 0) > 0]
+        evaluated = [item for item in attempted if item.get("status") == "completed"]
         latencies = [
-            float(turn["elapsed_seconds"])
+            float(turn["end_to_end_latency_seconds"])
             for item in scenarios
             for turn in item.get("turns", [])
-            if "elapsed_seconds" in turn
+            if "end_to_end_latency_seconds" in turn
         ]
         total_cost = sum(
             (Decimal(str(item.get("estimated_cost_usd", "0"))) for item in scenarios),
             Decimal(0),
         )
-        successful = sum(item.get("manual_verdict") == "pass" for item in scenarios)
-        reviews_complete = bool(attempted) and all(
-            item.get("manual_review") == "complete" for item in attempted
+        successful = sum(item.get("manual_verdict") == "pass" for item in evaluated)
+        reviews_complete = bool(evaluated) and all(
+            item.get("manual_review") == "complete" for item in evaluated
         )
         attempted_turns = sum(int(item.get("attempted_turns", 0)) for item in scenarios)
         reviewed_conversations = sum(
-            item.get("manual_review") == "complete" for item in attempted
+            item.get("manual_review") == "complete" for item in evaluated
         )
+        failure_categories: dict[str, int] = {}
+        for item in attempted:
+            failure = item.get("execution_failure")
+            if isinstance(failure, dict) and isinstance(failure.get("category"), str):
+                category = failure["category"]
+                failure_categories[category] = failure_categories.get(category, 0) + 1
         summary.append(
             {
                 "model": model.get("model_id"),
                 "scenario_verdicts": {
                     verdict: sum(
-                        item.get("manual_verdict") == verdict for item in scenarios
+                        item.get("manual_verdict") == verdict for item in evaluated
                     )
                     for verdict in ("pass", "partial", "fail")
                 },
                 "attempted_conversations": len(attempted),
+                "evaluated_conversations": len(evaluated),
                 "reviewed_conversations": reviewed_conversations,
+                "execution_failed_conversations": sum(
+                    item.get("status") == "failed" for item in attempted
+                ),
+                "execution_failure_categories": failure_categories,
                 "attempted_http_turns": attempted_turns,
-                "latency_samples": len(latencies),
+                "not_executed_turns": sum(
+                    turn.get("status") == "not_executed"
+                    for item in scenarios
+                    for turn in item.get("turns", [])
+                ),
+                "end_to_end_latency_samples": len(latencies),
                 "critical_errors": sum(
-                    len(item.get("critical_errors", [])) for item in attempted
+                    len(item.get("critical_errors", [])) for item in evaluated
                 )
                 if reviews_complete
                 else "pending_manual_review"
-                if attempted
+                if evaluated
                 else None,
                 "missed_tools": sum(
-                    len(item.get("missed_tools", [])) for item in attempted
+                    len(item.get("missed_tools", [])) for item in evaluated
                 )
                 if reviews_complete
                 else "pending_manual_review"
-                if attempted
+                if evaluated
                 else None,
                 "unsupported_claims": sum(
-                    len(item.get("unsupported_claims", [])) for item in attempted
+                    len(item.get("unsupported_claims", [])) for item in evaluated
                 )
                 if reviews_complete
                 else "pending_manual_review"
-                if attempted
+                if evaluated
                 else None,
                 "http_errors": sum(
                     isinstance(turn.get("http_status"), int)
@@ -657,10 +708,12 @@ def _summary(model_runs: list[dict[str, Any]]) -> list[dict[str, object]]:
                 )
                 if successful
                 else None,
-                "median_latency_seconds": round(statistics.median(latencies), 3)
+                "median_end_to_end_latency_seconds": round(
+                    statistics.median(latencies), 3
+                )
                 if latencies
                 else None,
-                "maximum_latency_seconds": round(max(latencies), 3)
+                "maximum_end_to_end_latency_seconds": round(max(latencies), 3)
                 if latencies
                 else None,
             }
@@ -676,6 +729,26 @@ def _provider_unavailable(status_code: int | None, evidence: dict[str, Any]) -> 
         return False
     causes = failure.get("causes", [])
     return "ProviderUnavailableError" in causes or bool(failure.get("aws_error_code"))
+
+
+def _execution_failure_category(
+    status_code: int | None,
+    evidence: dict[str, Any],
+    transport_failure_type: str | None,
+) -> str:
+    if transport_failure_type is not None:
+        return "transport"
+    failure = evidence.get("failure")
+    if not isinstance(failure, dict):
+        return "local_execution"
+    causes = failure.get("causes", [])
+    if failure.get("aws_error_code") or "ProviderUnavailableError" in causes:
+        return "provider_or_sdk"
+    if "PolicyRetrievalError" in causes or "ModuleNotFoundError" in causes:
+        return "local_infrastructure"
+    if status_code is None:
+        return "transport"
+    return "local_execution"
 
 
 def _scenario_was_attempted(case: dict[str, Any]) -> bool:
@@ -895,6 +968,14 @@ async def run_comparison(
                 Decimal(str(report.get("estimated_spend_usd", "0")))
             )
             _write_checkpoint(stream, report)
+        report["retrieval_readiness"] = _check_local_retrieval_readiness()
+        _write_checkpoint(stream, report)
+        if report["retrieval_readiness"]["status"] != "ready":
+            report["status"] = "blocked_retrieval_readiness"
+            report["phase"] = "preflight_blocked"
+            report["finished_at_utc"] = datetime.now(UTC).isoformat()
+            _write_checkpoint(stream, report)
+            return report
         try:
             if resume_from is not None:
                 access = report.get("account_preflight")
@@ -957,55 +1038,34 @@ async def run_comparison(
             }
             for model_key in RUN_ORDER:
                 candidate = price_by_key[model_key]
+                candidate_fields: dict[str, Any] = {
+                    "model_id": candidate.model_id,
+                    "inference_endpoint": candidate.inference_endpoint,
+                    "inference_model_id": candidate.inference_model_id,
+                    "inference_api": candidate.inference_api,
+                    "context_window_tokens": candidate.context_window_tokens,
+                    "input_usd_per_million": str(candidate.input_usd_per_million),
+                    "output_usd_per_million": str(candidate.output_usd_per_million),
+                }
                 model_report = existing_models.get(candidate.model_id)
                 if model_report is None:
-                    model_report = {
-                        "model_id": candidate.model_id,
-                        "inference_endpoint": candidate.inference_endpoint,
-                        "inference_model_id": candidate.inference_model_id,
-                        "inference_api": candidate.inference_api,
-                        "context_window_tokens": candidate.context_window_tokens,
-                        "input_usd_per_million": str(candidate.input_usd_per_million),
-                        "output_usd_per_million": str(candidate.output_usd_per_million),
-                        "status": "running",
-                        "scenarios": [],
-                        "model_calls": 0,
-                        "request_count_unknown_turns": 0,
-                        "input_tokens": None,
-                        "output_tokens": None,
-                        "requests_with_missing_usage": 0,
-                        "estimated_cost_usd": "0",
-                        "sdk_max_attempts_per_request": 1,
-                    }
+                    model_report = candidate_fields.copy()
                     report["model_runs"].append(model_report)
                     existing_models[candidate.model_id] = model_report
                 else:
-                    model_report.update(
-                        {
-                            "inference_endpoint": candidate.inference_endpoint,
-                            "inference_model_id": candidate.inference_model_id,
-                            "inference_api": candidate.inference_api,
-                            "context_window_tokens": candidate.context_window_tokens,
-                            "input_usd_per_million": str(
-                                candidate.input_usd_per_million
-                            ),
-                            "output_usd_per_million": str(
-                                candidate.output_usd_per_million
-                            ),
-                            "status": "running",
-                        }
-                    )
-                    for name, default in (
-                        ("scenarios", []),
-                        ("model_calls", 0),
-                        ("request_count_unknown_turns", 0),
-                        ("input_tokens", None),
-                        ("output_tokens", None),
-                        ("requests_with_missing_usage", 0),
-                        ("estimated_cost_usd", "0"),
-                        ("sdk_max_attempts_per_request", 1),
-                    ):
-                        model_report.setdefault(name, default)
+                    model_report.update(candidate_fields)
+                model_report["status"] = "running"
+                for name, default in (
+                    ("scenarios", []),
+                    ("model_calls", 0),
+                    ("request_count_unknown_turns", 0),
+                    ("input_tokens", None),
+                    ("output_tokens", None),
+                    ("requests_with_missing_usage", 0),
+                    ("estimated_cost_usd", "0"),
+                    ("sdk_max_attempts_per_request", 1),
+                ):
+                    model_report.setdefault(name, default)
                 if stop_all:
                     model_report["status"] = (
                         "not_executed_budget_cap"
@@ -1277,7 +1337,7 @@ async def run_comparison(
                                     "http_status": response.status_code
                                     if response is not None
                                     else None,
-                                    "elapsed_seconds": elapsed,
+                                    "end_to_end_latency_seconds": elapsed,
                                     "model_api_requests": api_requests,
                                     "provider_request_counter": observed_api_requests,
                                     "model_response_count": response_count,
@@ -1300,6 +1360,18 @@ async def run_comparison(
 
                                 if turn_status == "failed":
                                     scenario_failed = True
+                                    case["execution_failure"] = {
+                                        "category": _execution_failure_category(
+                                            response.status_code
+                                            if response is not None
+                                            else None,
+                                            evidence,
+                                            transport_failure_type,
+                                        ),
+                                        "http_status": response.status_code
+                                        if response is not None
+                                        else None,
+                                    }
                                     case["turns"].extend(
                                         {
                                             "turn_index": remaining,
@@ -1476,6 +1548,14 @@ def preflight_report(
             except (ValueError, KeyError, TypeError) as exc:
                 report["endpoint_tool_manifest_freshness"] = "stale_or_incomplete"
                 report["endpoint_tool_failure_type"] = type(exc).__name__
+            report["retrieval_readiness"] = _check_local_retrieval_readiness()
+            _write_checkpoint(stream, report)
+            if report["retrieval_readiness"]["status"] != "ready":
+                report["status"] = "blocked_retrieval_readiness"
+                report["phase"] = "preflight_blocked"
+                report["finished_at_utc"] = datetime.now(UTC).isoformat()
+                _write_checkpoint(stream, report)
+                return report
             report["account_preflight"] = probe_model_access(candidates, settings)
             report["endpoint_tool_compatibility"] = {
                 candidate.inference_model_id: {
@@ -1552,7 +1632,7 @@ def main() -> None:
         parser.error("--preflight-only does not accept a paid-run budget")
     load_project_aws_environment()
     if args.live:
-        asyncio.run(
+        report = asyncio.run(
             run_comparison(
                 output=args.output,
                 max_cost_usd=args.max_cost_usd,
@@ -1561,7 +1641,21 @@ def main() -> None:
             )
         )
     else:
-        preflight_report(output=args.output, pricing_path=args.pricing_file)
+        report = preflight_report(output=args.output, pricing_path=args.pricing_file)
+    if report.get("status") == "blocked_retrieval_readiness":
+        readiness = report["retrieval_readiness"]
+        failure_type = readiness.get("failure_type", "unknown local retrieval error")
+        missing_module = readiness.get("missing_module")
+        if isinstance(missing_module, str):
+            failure_type = f"{failure_type}; missing {missing_module}"
+        print(
+            f"Local policy retrieval is not ready ({failure_type}). "
+            "Check the local policy dependencies, cached E5 model and existing "
+            "index using the repository README. No new model inference request "
+            "was sent.",
+            file=sys.stderr,
+        )
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

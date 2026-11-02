@@ -12,7 +12,9 @@ from emporio_music_backend.agent.settings import AgentSettings
 from scripts.compare_models import (
     Candidate,
     RequestCounter,
+    _check_local_retrieval_readiness,
     _copy_policy_inputs,
+    _execution_failure_category,
     _model_executor,
     _provider_unavailable,
     _scenario_was_attempted,
@@ -34,6 +36,75 @@ def test_frozen_comparison_contains_nine_scenarios_and_sixteen_turns() -> None:
 
     assert len(scenarios) == 9
     assert sum(len(scenario["turns"]) for scenario in scenarios) == 16
+
+
+def test_local_retrieval_readiness_loads_the_existing_index_and_cached_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[Path, str]] = []
+
+    class ReadySearch:
+        def __init__(self, *, data_directory: Path) -> None:
+            self.data_directory = data_directory
+
+        def search(self, query: str) -> dict[str, object]:
+            calls.append((self.data_directory, query))
+            return {"status": "evidence_found", "records": [{"section": "2"}]}
+
+    monkeypatch.setattr("scripts.compare_models.LocalPolicySearch", ReadySearch)
+
+    result = _check_local_retrieval_readiness()
+
+    assert result["status"] == "ready"
+    assert result["embedding_model"] == "intfloat/multilingual-e5-base"
+    assert result["index_collection"] == "policy-e5"
+    assert calls == [(paths.DATA_DIRECTORY, "horário de funcionamento da loja")]
+
+
+def test_local_retrieval_readiness_reports_missing_local_dependency(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    missing_dependency = ModuleNotFoundError(
+        "missing local model package", name="sentence_transformers"
+    )
+
+    class MissingDependencySearch:
+        def __init__(self, *, data_directory: Path) -> None:
+            self.data_directory = data_directory
+
+        def search(self, _query: str) -> dict[str, object]:
+            raise RuntimeError("local retrieval failed") from missing_dependency
+
+    monkeypatch.setattr(
+        "scripts.compare_models.LocalPolicySearch", MissingDependencySearch
+    )
+
+    result = _check_local_retrieval_readiness()
+
+    assert result["status"] == "blocked"
+    assert result["failure_type"] == "RuntimeError"
+    assert result["cause_type"] == "ModuleNotFoundError"
+    assert result["missing_module"] == "sentence_transformers"
+
+
+def test_scenario_tool_expectations_match_the_registered_agent_tools() -> None:
+    scenarios = load_scenarios()
+    registered_tools = {
+        "search_available_products",
+        "get_product_details",
+        "list_my_orders",
+        "get_my_order",
+        "search_store_policies",
+    }
+    required_tools = {
+        tool
+        for scenario in scenarios
+        for tool in scenario["expected"]["required_tools"]
+    }
+
+    assert required_tools <= registered_tools
+    no_match = next(s for s in scenarios if s["id"] == "no-match")
+    assert no_match["expected"]["required_tools"] == ["get_product_details"]
 
 
 def test_turn_reservation_covers_each_allowed_request_at_context_ceiling() -> None:
@@ -184,6 +255,27 @@ def test_only_provider_503_stops_independent_scenarios() -> None:
     assert not _provider_unavailable(500, provider_failure)
 
 
+def test_execution_failures_keep_provider_and_local_causes_separate() -> None:
+    local_failure = {
+        "failure": {
+            "causes": ["PolicyRetrievalError", "ModuleNotFoundError"],
+            "aws_error_code": None,
+        }
+    }
+    provider_failure = {
+        "failure": {
+            "causes": ["ProviderUnavailableError", "ServiceUnavailableException"],
+            "aws_error_code": "ServiceUnavailableException",
+        }
+    }
+
+    assert (
+        _execution_failure_category(503, local_failure, None) == "local_infrastructure"
+    )
+    assert _execution_failure_category(503, provider_failure, None) == "provider_or_sdk"
+    assert _execution_failure_category(None, {}, "ConnectError") == "transport"
+
+
 def test_resume_skips_any_scenario_with_a_paid_or_failed_turn() -> None:
     assert _scenario_was_attempted({"attempted_turns": 1, "turns": []})
     assert _scenario_was_attempted(
@@ -248,6 +340,11 @@ def test_live_runner_uses_baseline_probe_when_availability_permission_is_denied(
         "scripts.compare_models.probe_model_access", blocked_provider_preflight
     )
     monkeypatch.setattr("scripts.compare_models._model_executor", fail_provider_setup)
+    monkeypatch.setattr(
+        "scripts.compare_models._check_local_retrieval_readiness",
+        lambda: {"status": "ready"},
+        raising=False,
+    )
     report = asyncio.run(
         run_comparison(output=tmp_path / "capture.json", max_cost_usd=Decimal("1.00"))
     )
@@ -267,6 +364,50 @@ def test_live_runner_uses_baseline_probe_when_availability_permission_is_denied(
     ]
 
 
+def test_live_runner_stops_before_provider_access_when_retrieval_is_unavailable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    provider_probes: list[str] = []
+    model_setups: list[str] = []
+
+    def retrieval_not_ready() -> dict[str, object]:
+        return {
+            "status": "blocked",
+            "failure_type": "PolicyRetrievalError",
+            "cause_type": "ModuleNotFoundError",
+        }
+
+    def record_provider_probe(*_args: object, **_kwargs: object) -> dict[str, object]:
+        provider_probes.append("called")
+        return {"status": "blocked", "paid_calls": 0, "models": []}
+
+    def record_model_setup(
+        candidate: Candidate, *_args: object, **_kwargs: object
+    ) -> None:
+        model_setups.append(candidate.key)
+        raise AssertionError("provider setup must not follow a failed readiness check")
+
+    monkeypatch.setattr(
+        "scripts.compare_models._check_local_retrieval_readiness",
+        retrieval_not_ready,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        "scripts.compare_models.probe_model_access", record_provider_probe
+    )
+    monkeypatch.setattr("scripts.compare_models._model_executor", record_model_setup)
+
+    report = asyncio.run(
+        run_comparison(output=tmp_path / "blocked.json", max_cost_usd=Decimal("1.00"))
+    )
+
+    assert report["status"] == "blocked_retrieval_readiness"
+    assert report["retrieval_readiness"]["status"] == "blocked"
+    assert report["paid_calls"] == 0
+    assert provider_probes == []
+    assert model_setups == []
+
+
 def test_summary_handles_transport_errors_without_http_status() -> None:
     result = _summary(
         [
@@ -279,7 +420,7 @@ def test_summary_handles_transport_errors_without_http_status() -> None:
                         "turns": [
                             {
                                 "http_status": None,
-                                "elapsed_seconds": 0.25,
+                                "end_to_end_latency_seconds": 0.25,
                                 "tool_calls": [{"name": "search_products"}],
                                 "usage": {"requests_with_missing_usage": 1},
                             }
@@ -293,4 +434,61 @@ def test_summary_handles_transport_errors_without_http_status() -> None:
     assert result["http_errors"] == 0
     assert result["tool_calls"] == 1
     assert result["requests_with_missing_usage"] == 1
-    assert result["median_latency_seconds"] == 0.25
+    assert result["median_end_to_end_latency_seconds"] == 0.25
+
+
+def test_summary_separates_execution_failures_from_semantic_verdicts() -> None:
+    result = _summary(
+        [
+            {
+                "model_id": "test.model",
+                "scenarios": [
+                    {
+                        "scenario_id": "complete",
+                        "status": "completed",
+                        "manual_review": "complete",
+                        "manual_verdict": "pass",
+                        "attempted_turns": 1,
+                        "estimated_cost_usd": "0.10",
+                        "turns": [
+                            {
+                                "status": "completed",
+                                "http_status": 200,
+                                "end_to_end_latency_seconds": 1.5,
+                            }
+                        ],
+                    },
+                    {
+                        "scenario_id": "local-retrieval-error",
+                        "status": "failed",
+                        "manual_review": "not_evaluated",
+                        "manual_verdict": None,
+                        "attempted_turns": 1,
+                        "estimated_cost_usd": "0.20",
+                        "execution_failure": {"category": "local_infrastructure"},
+                        "turns": [
+                            {
+                                "status": "failed",
+                                "http_status": 503,
+                                "end_to_end_latency_seconds": 2.5,
+                            },
+                            {"status": "not_executed"},
+                        ],
+                    },
+                ],
+            }
+        ]
+    )[0]
+
+    assert result["scenario_verdicts"] == {"pass": 1, "partial": 0, "fail": 0}
+    assert result["attempted_conversations"] == 2
+    assert result["evaluated_conversations"] == 1
+    assert result["reviewed_conversations"] == 1
+    assert result["execution_failed_conversations"] == 1
+    assert result["execution_failure_categories"] == {"local_infrastructure": 1}
+    assert result["not_executed_turns"] == 1
+    assert result["attempted_http_turns"] == 2
+    assert result["http_errors"] == 1
+    assert result["median_end_to_end_latency_seconds"] == 2.0
+    assert result["maximum_end_to_end_latency_seconds"] == 2.5
+    assert result["cost_per_fully_successful_conversation_usd"] == "0.30000000"
