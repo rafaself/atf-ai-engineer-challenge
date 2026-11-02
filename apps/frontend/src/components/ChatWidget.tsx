@@ -21,16 +21,19 @@ const quickReplies = [
 
 function describeFailure(error: unknown) {
   if (error instanceof ChatClientError) {
-    return error.message;
+    return error.state === "unknown"
+      ? `${error.message} Inicie uma nova conversa antes de continuar.`
+      : error.message;
   }
 
-  return "Ocorreu um erro inesperado. Não foi possível confirmar a conversa.";
+  return "Ocorreu um erro inesperado. Não foi possível confirmar a conversa. Inicie uma nova conversa antes de continuar.";
 }
 
 export function ChatWidget({ client }: ChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [requiresNewConversation, setRequiresNewConversation] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -65,7 +68,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
   async function sendMessage(prompt: string) {
     const message = prompt.trim();
 
-    if (!message || isSending) {
+    if (!message || isSending || requiresNewConversation) {
       return;
     }
 
@@ -80,6 +83,10 @@ export function ChatWidget({ client }: ChatWidgetProps) {
       appendMessage("assistant", response.answer);
     } catch (error) {
       setRequestError(describeFailure(error));
+      if (!(error instanceof ChatClientError) || error.state === "unknown") {
+        sessionIdRef.current = null;
+        setRequiresNewConversation(true);
+      }
     } finally {
       setIsSending(false);
     }
@@ -92,6 +99,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
 
     setMessages([]);
     sessionIdRef.current = null;
+    setRequiresNewConversation(false);
     setRequestError(null);
     setDraft("");
     messageInputRef.current?.focus({ preventScroll: true });
@@ -184,7 +192,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
           <label className="sr-only" htmlFor="chat-message">Sua mensagem</label>
           <input
             autoComplete="off"
-            disabled={isSending}
+            disabled={isSending || requiresNewConversation}
             id="chat-message"
             maxLength={300}
             onChange={(event) => setDraft(event.target.value)}
@@ -195,7 +203,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
           <button
             aria-label="Enviar mensagem"
             className="send-button"
-            disabled={!draft.trim() || isSending}
+            disabled={!draft.trim() || isSending || requiresNewConversation}
             type="submit"
           >
             <Icon name="send" size={18} />

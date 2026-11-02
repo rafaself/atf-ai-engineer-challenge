@@ -20,9 +20,14 @@ check: check-backend check-frontend
 check-backend:
 	uv sync --project apps/backend --locked --group dev --extra policy-rag
 	uv run --directory apps/backend --locked --extra policy-rag ruff check .
+	uv run --directory apps/backend --locked --extra policy-rag ruff check ../cli/src ../cli/tests
 	uv run --directory apps/backend --locked --extra policy-rag ruff format --check .
+	uv run --directory apps/backend --locked --extra policy-rag ruff format --check ../cli/src ../cli/tests
 	uv run --directory apps/backend --locked --extra policy-rag mypy src tests scripts
+	uv run --directory apps/backend --locked --extra policy-rag mypy ../cli/src ../cli/tests
 	uv run --directory apps/backend --locked --extra policy-rag pytest
+	PYTHONPATH=../cli/src uv run --directory apps/backend --locked --extra policy-rag pytest ../cli/tests
+	uv build --project apps/cli
 
 check-frontend:
 	npm --prefix apps/frontend ci
