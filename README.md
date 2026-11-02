@@ -38,53 +38,66 @@ optimization is deferred. Sprint completion does not require RAG to outperform F
 
 Sprint 3 closure scope, evidence and deferred work are recorded in [the sprint closeout](docs/sprint-3.md).
 
-## Run locally
+## Run the complete demo with Docker
 
-Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
-Run these commands from the repository root:
+Install Docker Engine or Docker Desktop with Compose, and GNU Make. From the
+repository root, configure Bedrock credentials for runtime use, then run:
+
+```bash
+test -f .env || cp .env.example .env
+# Edit .env with your local Bedrock configuration.
+make build
+make prepare-data
+make prepare-policy
+make up
+```
+
+`make prepare-policy` explicitly downloads the pinned CPU E5 model if it is not
+cached and builds the local Chroma index. Run it during first-time setup or when
+intentionally rebuilding that index. Image build and normal startup do not download
+weights, prepare SQLite snapshots, rebuild the index, or call a model provider.
+`make prepare-data` imports 65 products, 25 promotions, 50 customers, 20 orders and
+22 item rows from the supplied files; it never rewrites the CSV or PDF inputs.
+
+Open the chat at [http://127.0.0.1:8000](http://127.0.0.1:8000) or the API docs at
+[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). The UI, static assets and
+existing API share one FastAPI process and origin. The port is published on loopback
+only. The Compose data volume persists SQLite files, the Chroma index and the
+Hugging Face cache across container restarts; `make down` keeps that volume.
+
+For checks, install Python 3.12+, [uv](https://docs.astral.sh/uv/getting-started/installation/),
+and Node.js 20.19+ or 22.12+ with npm, then run `make check`. The Docker build also
+performs a packaging smoke check for the source-relative data path, an input CSV
+and write access to runtime data.
+
+If catalog/order requests fail because SQLite snapshots are missing, run
+`make prepare-data`. Policy retrieval requires both the E5 cache and index from
+`make prepare-policy`; missing resources are service errors, not “no policy found.”
+Chat requests require valid Bedrock credentials in `.env`; the UI and docs can start
+without them, but the agent cannot answer. The `.env` file and local AWS files are
+excluded from the Docker build context and image. The policy-RAG runtime includes
+CPU PyTorch and uses additional disk for model weights, cache and index data.
+
+Use `make down` to stop the app without deleting its data. Removing the named volume
+requires an explicit `docker compose down --volumes`.
+
+## Run without Docker for development
+
+Install Python 3.12+ and `uv`, then from the repository root run:
 
 ```bash
 uv sync --project apps/backend --locked --extra policy-rag
-cp .env.example .env
-```
-
-Edit `.env` to configure an AWS profile or access keys for Bedrock. Chat needs no
-login or demo tokens. Omit `customer_id` for guest mode, or select a fictional
-customer to demonstrate order retrieval. This is local demo selection, **not
-authentication**; anyone using the demo can select any fictional customer.
-
-Before starting the API, explicitly download E5 if needed and build the local Chroma
-index. This command also writes its development comparison report to `/tmp`; generated
-weights and the index remain outside Git:
-
-```bash
-uv run --project apps/backend --extra policy-rag --locked \
-  python -m scripts.policy_benchmark.run --model e5 --index --allow-download \
-  --output-dir /tmp/policy-rag-bootstrap
-```
-
-Then prepare all supplied data and start the API:
-
-```bash
+test -f .env || cp .env.example .env
 uv run --env-file .env --project apps/backend --extra policy-rag --locked python -m emporio_music_backend.prepare
 uv run --env-file .env --project apps/backend --extra policy-rag --locked uvicorn emporio_music_backend.api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Preparation imports 65 products, 25 promotions, 50 customers, 20 orders and 22 item
-rows. Re-running it refreshes the source snapshots and leaves chat history alone.
-It never rewrites supplied CSVs/PDFs. A leftover pre-US-12 generated catalog must
-be moved aside before preparing a fresh catalog; no migration system is included.
-
-Open [Swagger UI](http://127.0.0.1:8000/docs) and send
-`{"message":"Quais são as promoções?"}` as a guest. Reuse the returned `session_id`
-with `{"message":"E o segundo no PIX?","session_id":"<returned-id>"}`.
-For orders, start a new chat with `{"message":"Meus pedidos","customer_id":1}`;
-repeat the same customer selection on each follow-up. Omit `session_id` when
-switching customer or mode. Generated databases and AWS credentials stay Git-ignored.
-If upgrading from token-based sessions, stop the server and move the old
-`data/conversations.sqlite3` aside before starting. Keep that history file; old
-schemas are rejected without migration or deletion.
-See [API details](docs/api.md) for curl, configuration and errors.
+The frontend can run separately with the commands in
+[`apps/frontend/README.md`](apps/frontend/README.md). Vite proxies `/api` to the
+local FastAPI server. The frontend uses fictional customer ID `1`; this is demo
+context, not authentication or customer selection. For guest API requests, omit
+`customer_id`; for orders, repeat the same fictional customer ID on every follow-up.
+See [API details](docs/api.md) for request examples and errors.
 
 ## How it works
 
@@ -153,7 +166,10 @@ and historical decisions. Three Sprint 2 conversations and four US-17 paired
 policy scenarios are descriptive evidence, not a guarantee of future answers. See
 the [US-17 results](docs/examples/us-17/results.md) for grounding, uncertainty,
 tool-selection and full-context findings.
-The [React frontend](apps/frontend/README.md) now uses the existing chat API with a fixed fictional customer and session context. The demo remains local; packaging and public deployment are separate work. The recruiting email determines the submission cutoff.
+The [React frontend](apps/frontend/README.md) uses the existing chat API with a
+fixed fictional customer and session context. The Docker package remains limited
+to local loopback use; public deployment is out of scope. The recruiting email
+determines the submission cutoff.
 
 OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
 Scoped commits and PRs record that workflow; controlled test answers are not claimed

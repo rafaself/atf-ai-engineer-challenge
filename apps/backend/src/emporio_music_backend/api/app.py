@@ -10,7 +10,8 @@ from uuid import uuid4
 
 from fastapi import Body, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 from emporio_music_backend import paths
@@ -178,5 +179,20 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
             raise
         finally:
             request_id.reset(request_id_reset_token)
+
+    frontend_directory = paths.PROJECT_ROOT / "apps" / "frontend" / "dist"
+    frontend_index = frontend_directory / "index.html"
+    frontend_assets = frontend_directory / "assets"
+    if frontend_assets.is_dir():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=frontend_assets),
+            name="frontend-assets",
+        )
+    if frontend_index.is_file():
+
+        @app.get("/", include_in_schema=False)
+        async def frontend_index_page() -> FileResponse:
+            return FileResponse(frontend_index)
 
     return app
