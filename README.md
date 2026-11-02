@@ -1,42 +1,29 @@
 # Empório da Música — customer-support agent
 
-A Python prototype for the Artefact AI Engineer challenge. It answers product,
-price, availability, promotion and account-order questions in Portuguese using
-Pydantic AI tools and the supplied fictional data. SQLite keeps chat history
-across restarts. Run one local server process; this is a challenge demonstration.
+Evaluator path: follow the Docker quick start below, open the chat and `/docs`,
+then inspect [four representative Portuguese conversations](docs/examples/submission.md).
+These are historical real-model captures with explicit revision limits. Current
+offline checks verify application behavior, not current generated-answer quality.
 
-Store-policy search is now wired into the existing agent through a local E5/Chroma
-index. The index and model are prepared explicitly; the assistant reports uncertainty
-when retrieved excerpts do not support an answer. US-17 reviewed four paired
-Portuguese conversations on 2026-11-01 using RAG and full-policy context. The
-review preserved a RAG HTTP 500, missed policy-tool calls, a wrong citation and
-unsupported claims; it does not establish that either context strategy is reliable
-or that retrieval meets the frozen US-15 targets. See the [paired results](docs/examples/us-17/results.md)
-and [captures](docs/examples/us-17/captures.json). Earlier [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
-cover budget/context, promotions/PIX and scoped orders at their recorded revision.
-Failed attempts and model comparisons remain published; they do not establish complete
-challenge acceptance or guarantee future answers.
+A local Python customer-support agent for the Artefact AI Engineer challenge.
+React chat, FastAPI and a standalone Python CLI share the same application service,
+Bedrock agent and persistent SQLite history. It answers product, price,
+availability, promotion, order and policy questions in Portuguese using the
+supplied fictional data.
 
-[US-18](docs/examples/us-18/README.md) now appends a consistent “Fontes consultadas”
-list from policy records returned in the current run. It accepts readable generated
-references without requiring a citation grammar or corrective model call. The same
-simplification removes free-text amount matching and Portuguese intent checks:
-legitimate budget quotes and negated return requests previously triggered errors.
-Pricing calculations and customer isolation remain enforced by the tools. Tool use,
-generated prices and claim support are evaluated through conversations, rather than
-inferred from the wording of an answer. Blank/internal-control output still receives
-one corrective retry. Snapshot and partial-result notices remain automatic.
+The demo uses typed catalog/order tools and local E5/Chroma policy retrieval.
+Model weights and indexes require explicit preparation. It has no authentication:
+keep it on loopback and use fictional customer data. The frontend selects customer
+1; the API and CLI also support guests and other fictional customers.
 
-The last approved live batch stopped on its first mixed return turn with HTTP 500
-at the earlier revision because of citation-format retry exhaustion. Replaying its
-saved candidate through the current HTTP path now returns 200 with source metadata,
-without changing the generated text. This is a controlled regression, not a new live
-Qwen result; its policy-scope omissions remain documented in the [batch review](docs/examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
-The other five live turns remain untested. A bounded local E5 check also supports
-adding the previous user question to short contextual follow-ups; broader retrieval
-optimization is deferred. Sprint completion does not require RAG to outperform Full Context.
-
-Sprint 3 closure scope, evidence and deferred work are recorded in [the sprint closeout](docs/sprint-3.md).
+The [recorded conversations](docs/examples/submission.md) include successes and
+failures from earlier revisions. Generated prices, tool choices and policy claims
+still require review; a source footer records consulted material without certifying
+an answer. [Sprint 3 closure](docs/sprint-3.md) and the
+[US-18 report](docs/examples/us-18/README.md) explain the remaining grounding and
+retrieval limits, including failed mixed order/return cases. Controlled replays
+and offline tests do not establish current real-model quality. New paid Bedrock
+evaluations require separate explicit approval.
 
 ## Run the complete demo with Docker
 
@@ -122,6 +109,11 @@ resources are service errors, not “no policy found.”
 
 Use `make down` to stop the app without deleting its data. Removing the named volume
 requires an explicit `docker compose down --volumes`.
+
+If Docker starts but the published port times out on Linux, check host bridge
+networking. The [validation report](docs/sprint-4-validation.md#clean-docker-setup-and-runtime)
+records the observed limitation and a tested loopback-only host-network workaround.
+It also distinguishes controlled interface checks from historical model evidence.
 
 ## Run without Docker for development
 
