@@ -141,6 +141,10 @@ context, not authentication or customer selection. For guest API requests, omit
 `customer_id`; for orders, repeat the same fictional customer ID on every follow-up.
 See [API details](docs/api.md) for request examples and errors.
 
+For direct terminal conversations without the HTTP server, prepare and run the
+standalone Python CLI using [these commands](docs/cli.md). Its `--live` flag is
+required before it constructs the Bedrock-backed agent.
+
 ## How it works
 
 FastAPI calls a small chat service, which loads owned history, runs the agent and
@@ -191,6 +195,7 @@ uv run --directory apps/backend --locked ruff format --check .
 uv run --directory apps/backend --locked mypy src tests scripts
 uv run --directory apps/backend --locked pytest
 uv build --project apps/backend
+uv build --project apps/cli
 ```
 
 Default tests use temporary SQLite and controlled models; real model requests are
