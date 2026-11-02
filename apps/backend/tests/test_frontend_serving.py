@@ -10,7 +10,7 @@ from emporio_music_backend import paths
 from emporio_music_backend.api.app import create_app
 
 
-def test_frontend_routes_leave_api_and_docs_available(
+def test_frontend_content_serves_without_hiding_api_or_docs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     frontend_directory = tmp_path / "apps" / "frontend" / "dist"
@@ -23,14 +23,19 @@ def test_frontend_routes_leave_api_and_docs_available(
     monkeypatch.setattr(paths, "PROJECT_ROOT", tmp_path)
 
     app = create_app()
-    route_paths = {getattr(route, "path", None) for route in app.routes}
-    assert "/" in route_paths
-    assert "/assets" in route_paths
 
     async def check_routes() -> None:
         async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
         ) as client:
+            frontend = await client.get("/")
+            assert frontend.status_code == 200
+            assert frontend.text == "<html><body>frontend smoke</body></html>"
+
+            asset = await client.get("/assets/app.js")
+            assert asset.status_code == 200
+            assert asset.text == "frontend asset"
+
             assert (await client.get("/docs")).status_code == 200
             missing_api_route = await client.get("/api/not-a-route")
             assert missing_api_route.status_code == 404
