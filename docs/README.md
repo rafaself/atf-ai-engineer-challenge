@@ -11,6 +11,7 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [Orders](orders.md): required import, fictional provenance, customer scoping and snapshot limits.
 - [Bedrock](bedrock.md): explicit configuration, limits and opt-in live probe.
 - [Local API](api.md): startup, curl, dependency injection and HTTP failures.
+- [Interactive CLI](cli.md): direct local conversations without an HTTP server.
 - [ADRs](adr/README.md): accepted architecture/provider boundaries.
 - [Validation](validation.md): reproducibility results and remaining live checks.
 - [Examples](examples/README.md): reviewed real conversations, failures and replay guidance.
