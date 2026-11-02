@@ -54,3 +54,16 @@ Afterward distinguish observed recoveries, persistent failures, regressions and
 inconclusive differences. One sample per conversation cannot prove causality or
 reliability. Use provider-backed response records for inference counts; synthetic
 zero-token history entries in `RecordingAgent` are not additional provider calls.
+
+## Evidence-led reduction after batch 1
+
+Batch 1 tested all proposed edits at `8cbf8db`. Inventory disclosure was present
+and freight cited the clarification, but policy follow-ups still omitted fresh
+lookups; the holiday follow-up additionally asserted unsupported Christmas closure.
+The capability rewording also did not stop future-stock offers. No causal claim
+is made from one sample. Rather than layering on more instructions, restore the
+original tool description and capability paragraph and retain only the deterministic
+notice and neutral citation examples. The candidate commit and raw capture remain
+reviewable. A second fixed batch validates that final reduced implementation.
+Its additional full reservation is US$0.324864, so the two-batch total reservation
+is US$0.649728, below the approved goal-wide US$1. No unchanged batch is rerun.

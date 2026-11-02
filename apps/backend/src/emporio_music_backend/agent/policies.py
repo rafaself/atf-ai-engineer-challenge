@@ -159,11 +159,10 @@ class PolicyTools:
     def search_store_policies(
         self, ctx: RunContext[ExecutionContext]
     ) -> PolicySearchResult:
-        """Consult store hours, contacts, payments, returns, warranty and delivery policies.
+        """Search policy excerpts with the current and latest prior user question.
 
-        Use for every policy question, including follow-ups even when history
-        already contains a policy answer or source notice. The application builds
-        the query from customer questions; this tool takes no query arguments.
+        Keep assistant responses, tool results, identity, and evaluation labels
+        out of the retrieval query. Long question pairs use the current question only.
 
         Returned records are candidate evidence, not a confidence score. If they
         do not directly support the answer or leave a condition unresolved, report
