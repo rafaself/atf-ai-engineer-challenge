@@ -393,6 +393,10 @@ SSO profile succeeded, so the evidence does not identify an expired profile sess
 as the cause; model-request token retrieval remains unexplained. The single
 approved run was consumed; no retry was made.
 
+The sanitized capture preserves the exception class but omits Botocore's raw token
+provider and error text. Future diagnostics now add a fixed, non-sensitive hint for
+`TokenRetrievalError`; that hint does not claim to identify the underlying cause.
+
 The capture is [mixed-postchange-qwen.json](mixed-postchange-qwen.json). The probe
 initially marked any completed HTTP exchange as a completed case; after reviewing the
 503/zero-usage evidence, the capture labels the probe `completed_with_failures` and
