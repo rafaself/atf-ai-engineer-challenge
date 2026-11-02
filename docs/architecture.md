@@ -1,6 +1,7 @@
 # Demo architecture
 
-The project is one Python package. FastAPI supplies a local text API, and Pydantic AI
+The backend is one Python package; a separate package in `apps/cli` consumes it
+directly. React calls FastAPI's local text API, and Pydantic AI
 uses Bedrock with typed catalog, order and policy tools. SQLite stores operational
 snapshots and chat history; embedded Chroma indexes the fixed policy corpus using
 local E5 embeddings. This small dataset does not need distributed services, an ORM
@@ -8,6 +9,9 @@ or a generic ingestion framework.
 
 ```mermaid
 flowchart LR
+    React[React chat] --> HTTP
+    CLI[Python CLI] --> Selection
+    CLI --> Chat
     HTTP[FastAPI] --> Selection[Optional fictional customer selection]
     HTTP --> Chat[ChatService]
     Chat --> History[Conversation SQLite]
@@ -39,7 +43,10 @@ Package initializers contain docstrings only; callers import each symbol directl
 from its defining module, without compatibility re-exports.
 
 `infrastructure` loads CSVs and performs parameterized SQL. `agent` owns provider
-construction, persona, tool schemas and output checks. `api` composes those pieces.
+construction, persona, tool schemas and output checks. `composition` supplies the
+shared dependency construction and customer validation used by HTTP and CLI.
+FastAPI retains lazy initialization; the CLI requires `--live` for default agent
+construction. Neither adapter duplicates application orchestration.
 Core modules do not import FastAPI, AWS, SQLite or Pydantic AI. Boundary tests import
 all core modules so minimal initializers cannot hide an accidental dependency.
 
