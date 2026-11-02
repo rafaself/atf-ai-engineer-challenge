@@ -1,0 +1,106 @@
+{
+  "issue": 43,
+  "purpose": "Single-model Nova 2 Lite holiday follow-up smoke evaluation",
+  "status": "ready_no_paid_calls",
+  "region": "us-east-1",
+  "paid_calls": 0,
+  "previous_attempt": {
+    "capture": "docs/examples/grounding-followups/nova2-capture-2026-11-02.json",
+    "paid_calls_observed": 1,
+    "reserve_usd": "0.17864704"
+  },
+  "model_id": "amazon.nova-2-lite-v1:0",
+  "inference_model_id": "us.amazon.nova-2-lite-v1:0",
+  "pricing_file": "docs/examples/grounding-followups/nova2-pricing.json",
+  "maximum_provider_requests": 4,
+  "request_body_max_bytes": 65536,
+  "input_tokens_reserved_per_request": 262144,
+  "price_reserve_multiplier": "2",
+  "max_output_tokens": 1024,
+  "approved_budget_usd": "1.00",
+  "worst_case_reserve_usd": "0.71458816",
+  "aggregate_worst_case_reserve_usd": "0.89323520",
+  "source_freeze": {
+    "application": {
+      "commit": "d8a80173c730aaf72653e230bfc4cc98bce5f56c",
+      "working_tree_dirty": true,
+      "source_files_sha256": "1f7f8becbd850d43e916801d2878cb21202133efb3f41515981ded777506183a",
+      "source_file_count": 60
+    },
+    "source_files_sha256": {
+      "data/SHA256SUMS": "13a78e201aa07ba689e4235eee8446a1f77b043b3e165aff3d478dc4da02252a",
+      "data/products.csv": "78d911d96ee891abb163b6c858e895025aa530ab27d0290540f05d5098377c12",
+      "data/categories.csv": "7a7901e16c8c6357a956031ada45a6fd6a4cc9bd7bc1edc05448cc55b01b0a9e",
+      "data/promotions.csv": "cbe08c7e91b00437c0c00a7ef1486deba73de52d23e3f97f51a7dbd557d759e0",
+      "data/customers.csv": "1cd724dc86eac6258913cc890abf23d3893c57a99c9325ebfb91dfad3c7b0f37",
+      "data/orders.csv": "deb9c2480605d8d22117d569f0045fd156c5e9a58ffeebb847ff61b3b9512fd5",
+      "data/order_items.csv": "7656eb681821d48e0c932f61d3188309b955c25446578235f2d8e69604b0f0bc",
+      "data/store_policies.pdf": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+      "data/policies/corpus.json": "c6597daef8541ea2e2429023792613d9201f78e7702f59d2bc26a9cb5c9086e5",
+      "data/policies/freeze.json": "7e5c6a52fe81553dbf0718efb07965fade5b857667a6fb840295e795776f09af",
+      "data/catalog.sqlite3": "ac119875ebb2265ac98e29953abd10cb407c5b295946e6d666598e5f4e691926",
+      "data/operations.sqlite3": "ff9af766ddce62b4743acc64188eb5ccf29a58d19a752fc5dcba3c319714467a",
+      "apps/backend/pyproject.toml": "88b7ed21289ca94affaef01b1578604beb28c0ba17cd63c00761ac9f58eaa975",
+      "apps/backend/uv.lock": "339190061df6532db89266874cc4acab32937ec63e857b9d0fc3a3a30f6d46e0",
+      "docs/examples/model-comparison/scenarios.json": "70f9528afc7a1d7cb40ecbeeb926acf65a21b7ac09778b898d16d0f3f55dd8f7",
+      "docs/examples/model-comparison/pricing.json": "0fdb349453bb166f8b2342b465321088e694887cbf78f4e4924194a6661f94ee",
+      "docs/examples/model-comparison/protocol.md": "620e5f7703b4d006ba37bfbd70ea60f2e6b371b0020c0ac301d45de6b25dce6c",
+      "docs/examples/model-comparison/scenarios-frozen-v1.json": "20b4210c198d3742a65ca7a9997bcd762626feac30b07aa9c4fe8872b8244b62"
+    },
+    "policy_index_sha256": "441c8df67e2342a5368c1a1586217846f28cf864ef6f8df43f79cebcf2b5b685",
+    "scenario_sha256": "70f9528afc7a1d7cb40ecbeeb926acf65a21b7ac09778b898d16d0f3f55dd8f7",
+    "scenario": {
+      "id": "holiday-hours-two-turn",
+      "turns": [
+        "Qual é o horário normal de funcionamento da loja?",
+        "E nos feriados e no Natal, há atendimento?"
+      ],
+      "sha256": "b9dadec3096867a5dc6d42bc669fa78eb38fbb1b9ea8dfa668b199944331a021"
+    },
+    "pricing_sha256": "843be3945a5e0e9baf49957dae414d41cb48ba227203864da38128ba228e3094"
+  },
+  "retrieval_preflight": {
+    "status": "ready",
+    "results": {
+      "turn_1": {
+        "status": "evidence_found",
+        "records": [
+          {
+            "id": "policy-v2.1-s2",
+            "source": "store_policies.pdf",
+            "section": "2",
+            "hierarchy": [
+              "2 Horário de Funcionamento"
+            ],
+            "pages": [
+              2
+            ],
+            "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+          }
+        ]
+      },
+      "turn_2_with_context": {
+        "status": "evidence_found",
+        "records": [
+          {
+            "id": "policy-v2.1-s2",
+            "source": "store_policies.pdf",
+            "section": "2",
+            "hierarchy": [
+              "2 Horário de Funcionamento"
+            ],
+            "pages": [
+              2
+            ],
+            "text": "2. Horário de Funcionamento\nO atendimento presencial na loja segue os horários abaixo. O atendimento via WhatsApp segue o mesmo horário, com respostas automáticas fora do expediente.\nDia: Segunda a Sexta-feira | Horário: 09:00 às 18:00\nDia: Sábado | Horário: 09:00 às 13:00\nDia: Domingo e Feriados | Horário: Fechado\nEm datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp."
+          }
+        ]
+      }
+    }
+  },
+  "turns": [
+    "Qual é o horário normal de funcionamento da loja?",
+    "E nos feriados e no Natal, há atendimento?"
+  ],
+  "finished_at_utc": "2026-11-02T20:25:07.190759+00:00"
+}

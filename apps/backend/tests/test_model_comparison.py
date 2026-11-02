@@ -107,6 +107,26 @@ def test_scenario_tool_expectations_match_the_registered_agent_tools() -> None:
     assert no_match["expected"]["required_tools"] == ["get_product_details"]
 
 
+def test_current_benchmark_fixture_uses_approved_freight_and_updated_expectations() -> (
+    None
+):
+    scenarios = load_scenarios(
+        paths.PROJECT_ROOT / "docs/examples/model-comparison/scenarios-current-v3.json"
+    )
+
+    freight = next(s for s in scenarios if s["id"] == "freight-exact-threshold")
+    assert any("R$ 500.00 or more" in fact for fact in freight["expected"]["facts"])
+
+    holidays = next(
+        s for s in scenarios if s["id"] == "policy-hours-context-topic-change"
+    )
+    assert any("do not assert either" in fact for fact in holidays["expected"]["facts"])
+    assert any(
+        "deterministic snapshot notice" in fact
+        for fact in holidays["expected"]["facts"]
+    )
+
+
 def test_turn_reservation_covers_each_allowed_request_at_context_ceiling() -> None:
     candidate = Candidate(
         key="test",
@@ -163,6 +183,17 @@ def test_verified_rates_and_routes_load_from_the_current_manifest() -> None:
     assert candidates[0].inference_api == "converse"
     assert candidates[0].input_usd_per_million == Decimal("0.15")
     assert candidates[0].output_usd_per_million == Decimal("0.6")
+
+
+def test_verified_candidates_can_select_only_qwen_and_nova_lite() -> None:
+    candidates = load_verified_candidates(
+        today=date(2026, 11, 2), model_keys=("qwen3_32b", "nova_lite")
+    )
+
+    assert [candidate.key for candidate in candidates] == [
+        "qwen3_32b",
+        "nova_lite",
+    ]
 
 
 def test_project_aws_environment_load_is_silent_and_limited_to_aws_keys(

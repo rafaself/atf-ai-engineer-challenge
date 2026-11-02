@@ -31,9 +31,16 @@ local E5 retrieval were used; each conversation started fresh.
    This second batch is a changed-source experiment, not an automatic repeat of
    the same failed answers. It does not prove the restored text caused a recovery.
 
-No further inference is planned. Retaining extra unproven instructions or spending
-up to the budget ceiling would not establish reliability. The candidate commit,
-protocol and both raw captures remain available for review.
+No further inference was planned for that Qwen instruction experiment. A separately
+approved, focused Nemotron comparison was later run on the same holiday follow-up;
+its [report and captures](nemotron-benchmark-2026-11-02.md) are a distinct smoke
+evaluation and do not change the earlier Qwen captures or verdicts. Neither sample
+establishes reliability.
+
+A separately approved Nova 2 Lite smoke evaluation followed. Its first attempt was
+denied by IAM; after the owner updated permissions, one bounded retry completed.
+The [report and captures](nova2-benchmark-2026-11-02.md) preserve both attempts
+without changing the earlier Qwen or Nemotron evidence.
 
 ## Source-based results
 

@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "issue": 43,
+  "scenario_count": 1,
+  "planned_turns_per_model": 4,
+  "description": "Focused Qwen policy prompt experiment with a post-answer evidence-summary probe; separate from frozen issue #40 captures.",
+  "scenarios": [
+    {
+      "id": "policy-hours-natal-rationale-topic-change",
+      "turns": [
+        {
+          "message": "Qual é o horário normal de funcionamento da loja?"
+        },
+        {
+          "message": "E nos feriados e no Natal, há atendimento?"
+        },
+        {
+          "message": "Como você chegou à sua resposta sobre feriados e Natal? Resuma brevemente quais informações da política utilizou."
+        },
+        {
+          "message": "O Takamine GD20 está disponível? Qual é o preço e o estoque?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies",
+          "get_product_details"
+        ],
+        "facts": [
+          "The first answer should retrieve policy section 2 and state the normal weekday, Saturday, Sunday and holiday hours.",
+          "The Natal follow-up should preserve the source's named qualification that hours may be extended on special dates, including Natal, without asserting a definite opening or closure for a specific Natal.",
+          "The rationale probe asks for a brief evidence summary, not private step-by-step reasoning. Review it against the captured retrieval result; it is a generated self-report and cannot establish the model's internal reasoning.",
+          "The rationale probe has sufficient conversational evidence and should not require a redundant policy search.",
+          "After the topic switch, get_product_details should be called for Takamine GD20 and return the current catalog snapshot details."
+        ],
+        "critical_errors": [
+          "claiming a definite Natal schedule contrary to the possible-extension qualification",
+          "claiming the rationale summary is proof of internal model reasoning",
+          "inventing price or stock"
+        ]
+      }
+    }
+  ]
+}
