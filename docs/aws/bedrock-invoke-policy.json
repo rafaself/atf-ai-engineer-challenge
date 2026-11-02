@@ -11,7 +11,6 @@
       "Resource": [
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-micro-v1:0",
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-lite-v1:0",
-        "arn:aws:bedrock:us-east-1::foundation-model/openai.gpt-6-luna",
         "arn:aws:bedrock:us-east-1::foundation-model/nvidia.nemotron-nano-3-30b",
         "arn:aws:bedrock:us-east-1::foundation-model/qwen.qwen3-32b-v1:0",
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"

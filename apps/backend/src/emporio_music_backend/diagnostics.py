@@ -95,6 +95,8 @@ def failure(error: BaseException) -> dict[str, Any]:
     hint = None
     if "ProfileNotFound" in causes:
         hint = "Configure the selected AWS profile, or remove AWS_PROFILE for key authentication."
+    elif "TokenRetrievalError" in causes:
+        hint = "Check the configured AWS token provider and its authentication state."
     elif code in (
         "UnrecognizedClientException",
         "ExpiredTokenException",

@@ -8,6 +8,11 @@ from pydantic_ai.models import Model
 
 from emporio_music_backend.agent.catalog import product_tools
 from emporio_music_backend.agent.factory import PydanticAgentExecutor, create_agent
+from emporio_music_backend.agent.policies import (
+    LocalPolicySearch,
+    PolicySearchPort,
+    policy_tools,
+)
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.orders import (
@@ -68,6 +73,17 @@ class OrderTools:
             if order is not None
             else "Pedido não encontrado na sua conta.",
             "data_basis": "imported_snapshot",
+            **(
+                {
+                    "answer_guidance": [
+                        "Os dados são uma fotografia importada. A previsão de entrega "
+                        "não confirma o recebimento real. Se a pergunta também envolve "
+                        "políticas, consulte search_store_policies antes de responder."
+                    ]
+                }
+                if order is not None
+                else {}
+            ),
         }
 
 
@@ -77,8 +93,11 @@ def create_store_agent(
     orders: OrderRepository,
     *,
     model: Model | None = None,
+    policy_search: PolicySearchPort | None = None,
 ) -> PydanticAgentExecutor:
     tools = OrderTools(orders)
+    if policy_search is None:
+        policy_search = LocalPolicySearch()
     return create_agent(
         settings,
         model=model,
@@ -86,5 +105,6 @@ def create_store_agent(
             *product_tools(products),
             Tool(tools.list_my_orders),
             Tool(tools.get_my_order),
+            *policy_tools(policy_search),
         ],
     )

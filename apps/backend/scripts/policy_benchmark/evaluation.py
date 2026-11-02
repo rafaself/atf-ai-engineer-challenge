@@ -1,8 +1,9 @@
-"""Frozen evidence-group retrieval metrics and query-only metadata rules."""
+"""Frozen evidence-group metrics; query-only filters are shared with runtime."""
 
-import unicodedata
 from statistics import mean
 from typing import Any
+
+from emporio_music_backend.policy_retrieval import query_families as query_families
 
 
 def score(ranked: list[str], groups: list[list[str]]) -> dict[str, float] | None:
@@ -23,39 +24,6 @@ def score(ranked: list[str], groups: list[list[str]]) -> dict[str, float] | None
         "mrr5": rr,
         "coverage5": float(recall(5) == 1),
     }
-
-
-# Frozen before any retrieval runs. Broad unions preserve related eligibility rules.
-_FILTER_RULES = [
-    (("horario", "abrem", "sabado", "domingo", "feriado"), {"2"}),
-    (("endereco", "contato", "whatsapp", "email", "e-mail"), {"cover", "1", "7"}),
-    (
-        ("pagamento", "pix", "cartao", "dividir", "parcela", "vezes", "boleto"),
-        {"3", "6"},
-    ),
-    (("promoc", "campanha", "desconto"), {"3", "6"}),
-    (("devol", "troca", "arrepend", "reembolso", "personalizado"), {"4"}),
-    (("defeito", "garantia", "queda"), {"4", "8"}),
-    (("frete", "entreg", "envia", "rastreio"), {"5"}),
-    (("dados", "privacidade", "marketing"), {"9"}),
-]
-
-
-def query_families(query: str) -> list[str]:
-    text = "".join(
-        c
-        for c in unicodedata.normalize("NFD", query.lower())
-        if not unicodedata.combining(c)
-    )
-    return sorted(
-        set().union(
-            *(
-                families
-                for words, families in _FILTER_RULES
-                if any(word in text for word in words)
-            )
-        )
-    )
 
 
 def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:

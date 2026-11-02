@@ -1,3 +1,14 @@
+# Current output-delivery simplification
+
+The former prose-based monetary, citation and mixed-intent gates described below
+have been retired under the owner's simplification request. Current output handling
+adds source/snapshot/partial-result notices and protects blank/internal-control output.
+Three regressions reproduced the old citation, budget-quote and negated-return failures
+before the change. The recorded Qwen candidate now passes through HTTP with no citation
+retry. Pricing arithmetic, scoped data access, persistence and execution-limit tests
+remain. See [US-18](examples/us-18/README.md) for the current contract and limitations.
+Earlier validation counts and guarantees below describe their recorded revisions.
+
 # Source-only monetary output — issue #41
 
 Only current-run product original/final prices and order totals authorize explicit

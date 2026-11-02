@@ -26,6 +26,9 @@ retrieval, and user experience. Keep that integration reliable and simple.
   files, or generated databases. Explain any necessary security risk before proceeding.
 - Ask before adding a production dependency unless it is well-established and
   trustworthy. Keep development tools in the dev dependency group.
+- Agents may use a temporary file as durable working memory during implementation
+  when they consider it useful for workflow continuity. Keep it task-scoped and
+  outside version control.
 
 ## Validation
 

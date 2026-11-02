@@ -1,0 +1,10 @@
+{
+  "stage": "local setup before agent run",
+  "provider_requests": 0,
+  "failure_causes": [
+    "ConfigurationError",
+    "OperationalRetrievalError",
+    "OperationalError"
+  ],
+  "explanation": "Missing operational snapshot and pre-US-12 incompatible generated catalog. Preserved the old catalog as data/catalog.pre-us18.sqlite3 and ran the README prepare command. An additional launch refused the existing empty output file before provider setup. No prompts or tool results were sent to Bedrock."
+}

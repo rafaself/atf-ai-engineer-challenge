@@ -31,8 +31,8 @@ def test_real_persistent_index_rejects_mismatch_and_preserves_scoping(
 ) -> None:
     import pytest
 
+    from emporio_music_backend.infrastructure.policy_index import PolicyIndex
     from emporio_music_backend.policy_corpus import PolicyChunk
-    from scripts.policy_benchmark.index import PolicyIndex
 
     chunks = [
         PolicyChunk(
@@ -48,11 +48,15 @@ def test_real_persistent_index_rejects_mismatch_and_preserves_scoping(
     index = PolicyIndex(
         tmp_path, "test-policy", {"model": "controlled", "dimensions": 2}
     )
+    assert not index.exists()
     with pytest.raises(ValueError, match="Missing"):
         index.open(["c1", "c2"])
     index.build(chunks, [[1.0, 0.0], [0.0, 1.0]], rebuild=False)
+    assert index.exists()
     assert index.search([1.0, 0.0], []) == ["c1", "c2"]
     assert index.search([1.0, 0.0], ["2"]) == ["c2"]
+    with pytest.raises(ValueError, match="Search limit"):
+        index.search([1.0, 0.0], [], limit=6)
     index.open(["c1", "c2"])
     wrong = PolicyIndex(tmp_path, "test-policy", {"model": "different"})
     with pytest.raises(ValueError, match="Stale"):
@@ -105,7 +109,6 @@ def test_budget_and_input_limits_reject_before_provider_call() -> None:
 
     adapter = object.__new__(Embedder)
     adapter.name = "titan"
-    adapter.tokenizer = None
     adapter.token_counts = []
     adapter.budget = 0.000001
     adapter.reserved_usd = 0

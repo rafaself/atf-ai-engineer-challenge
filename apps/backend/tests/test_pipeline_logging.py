@@ -12,6 +12,24 @@ from emporio_music_backend.api.app import create_app
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import ConfigurationError
+from emporio_music_backend.diagnostics import failure
+
+
+def test_token_retrieval_failure_has_a_safe_provider_hint() -> None:
+    class TokenRetrievalError(Exception):
+        def __init__(self) -> None:
+            self.provider = "private-profile-name"
+            self.error_msg = "private token detail"
+
+    error = TokenRetrievalError()
+
+    summary = failure(error)
+
+    assert summary["hint"] == (
+        "Check the configured AWS token provider and its authentication state."
+    )
+    assert "private-profile-name" not in json.dumps(summary)
+    assert "private token detail" not in json.dumps(summary)
 
 
 def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(

@@ -5,14 +5,38 @@ price, availability, promotion and account-order questions in Portuguese using
 Pydantic AI tools and the supplied fictional data. SQLite keeps chat history
 across restarts. Run one local server process; this is a challenge demonstration.
 
-General policy retrieval (hours, address and returns) belongs to the later retrieval
-sprint and remains unfinished. The assistant states that limitation instead of
-inventing answers. [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
+Store-policy search is now wired into the existing agent through a local E5/Chroma
+index. The index and model are prepared explicitly; the assistant reports uncertainty
+when retrieved excerpts do not support an answer. US-17 reviewed four paired
+Portuguese conversations on 2026-11-01 using RAG and full-policy context. The
+review preserved a RAG HTTP 500, missed policy-tool calls, a wrong citation and
+unsupported claims; it does not establish that either context strategy is reliable
+or that retrieval meets the frozen US-15 targets. See the [paired results](docs/examples/us-17/results.md)
+and [captures](docs/examples/us-17/captures.json). Earlier [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
 cover budget/context, promotions/PIX and scoped orders at their recorded revision.
-They predate the current source-only monetary guard: budget comparisons now say
-“seu orçamento” without repeating customer amounts. This guard change is verified
-offline only. Failed attempts and model comparisons remain published. These observations
-do not establish complete challenge acceptance or guarantee every future answer.
+Failed attempts and model comparisons remain published; they do not establish complete
+challenge acceptance or guarantee future answers.
+
+[US-18](docs/examples/us-18/README.md) now appends a consistent “Fontes consultadas”
+list from policy records returned in the current run. It accepts readable generated
+references without requiring a citation grammar or corrective model call. The same
+simplification removes free-text amount matching and Portuguese intent checks:
+legitimate budget quotes and negated return requests previously triggered errors.
+Pricing calculations and customer isolation remain enforced by the tools. Tool use,
+generated prices and claim support are evaluated through conversations, rather than
+inferred from the wording of an answer. Blank/internal-control output still receives
+one corrective retry. Snapshot and partial-result notices remain automatic.
+
+The last approved live batch stopped on its first mixed return turn with HTTP 500
+at the earlier revision because of citation-format retry exhaustion. Replaying its
+saved candidate through the current HTTP path now returns 200 with source metadata,
+without changing the generated text. This is a controlled regression, not a new live
+Qwen result; its policy-scope omissions remain documented in the [batch review](docs/examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
+The other five live turns remain untested. A bounded local E5 check also supports
+adding the previous user question to short contextual follow-ups; broader retrieval
+optimization is deferred. Sprint completion does not require RAG to outperform Full Context.
+
+Sprint 3 closure scope, evidence and deferred work are recorded in [the sprint closeout](docs/sprint-3.md).
 
 ## Run locally
 
@@ -20,7 +44,7 @@ Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installa
 Run these commands from the repository root:
 
 ```bash
-uv sync --project apps/backend --locked
+uv sync --project apps/backend --locked --extra policy-rag
 cp .env.example .env
 ```
 
@@ -29,11 +53,21 @@ login or demo tokens. Omit `customer_id` for guest mode, or select a fictional
 customer to demonstrate order retrieval. This is local demo selection, **not
 authentication**; anyone using the demo can select any fictional customer.
 
-Then prepare all supplied data with one command and start the API:
+Before starting the API, explicitly download E5 if needed and build the local Chroma
+index. This command also writes its development comparison report to `/tmp`; generated
+weights and the index remain outside Git:
 
 ```bash
-uv run --env-file .env --project apps/backend --locked python -m emporio_music_backend.prepare
-uv run --env-file .env --project apps/backend --locked uvicorn emporio_music_backend.api.app:create_app --factory --host 127.0.0.1 --port 8000
+uv run --project apps/backend --extra policy-rag --locked \
+  python -m scripts.policy_benchmark.run --model e5 --index --allow-download \
+  --output-dir /tmp/policy-rag-bootstrap
+```
+
+Then prepare all supplied data and start the API:
+
+```bash
+uv run --env-file .env --project apps/backend --extra policy-rag --locked python -m emporio_music_backend.prepare
+uv run --env-file .env --project apps/backend --extra policy-rag --locked uvicorn emporio_music_backend.api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 Preparation imports 65 products, 25 promotions, 50 customers, 20 orders and 22 item
@@ -62,8 +96,11 @@ snapshots; the model never builds SQL or chooses the selected customer.
 - **Pricing:** integer-centavo half-up arithmetic; an eligible active promotion
   takes priority, otherwise explicitly requested PIX receives 5%. Discounts never
   stack. Budget filters use final prices, while original prices remain intact.
-- **Orders:** validated fictional customer selection and parameterized scope checks. Historical
-  totals stay unchanged; current catalog prices never reconstruct purchase prices.
+- **Orders:** validated fictional customer selection and parameterized scope checks.
+  Historical totals stay unchanged; current catalog prices never reconstruct purchase prices.
+- **Policies:** the existing agent retrieves three E5 ranking seeds plus direct
+  related conditions, capped at eight excerpts. Answers include section/page citations;
+  missing or stale local search resources fail as service errors instead of policy no-matches.
 - **History:** persisted text pairs, bounded to six turns/24,000 characters by
   default. One service rejects overlapping turns on the same session. Independent
   chats can run concurrently. Failed/cancelled calls save no completed turn.
@@ -73,17 +110,20 @@ selected after the bounded comparison reproduced invalid PIX answers with Nova
 Micro/Lite and Qwen passed the final conversations. Pydantic AI provides typed
 function calling; straightforward Python/SQL handles the small structured dataset.
 Existing `.env` files should set `BEDROCK_MODEL_ID=qwen.qwen3-32b-v1:0` to use this selection.
-Policy retrieval is planned in [Sprint 3](docs/sprint-3.md) using embedded
-ChromaDB. It is not implemented yet; SQLite remains the operational/history store.
+Policy retrieval uses embedded ChromaDB and locally cached multilingual E5; SQLite
+remains the operational/history store. The optional `policy-rag` extra provides the
+runtime libraries. Startup and default tests do not download weights, build indexes,
+or call an embedding provider. See [policy retrieval setup and limitations](docs/policy-retrieval.md).
 
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
 The small `paths.py` module derives `PROJECT_ROOT` from its source location and
 defines all storage under `PROJECT_ROOT / "data"`: `catalog.sqlite3`,
 `operations.sqlite3` and `conversations.sqlite3`. Paths are fixed, independent of
 the launch directory; no storage-path environment variables or CLI overrides are needed.
-Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not distinguish individual
-guests. Keep the demo on loopback with fictional data; it has no authentication. Facts reflect imported snapshots, not live stock
-or carrier status. Only `is_active` establishes promotion validity; the source has
+Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not
+distinguish individual guests. Keep the demo on loopback with fictional data; it
+has no authentication. Facts reflect imported snapshots, not live stock or carrier
+status. Only `is_active` establishes promotion validity; the source has
 no dates. The demo has no cross-process turn coordination or retry deduplication.
 
 ## Development checks
@@ -109,8 +149,10 @@ Contracts and protocols are grouped by responsibility. Import definitions direct
 `application.chat.ChatService`); package initializers hold no implementation.
 
 Start here; use the [documentation index](docs/README.md) for implementation details
-and historical decisions. Three representative live conversations are reviewed;
-next comes policy retrieval and its evaluation in the later retrieval sprint.
+and historical decisions. Three Sprint 2 conversations and four US-17 paired
+policy scenarios are descriptive evidence, not a guarantee of future answers. See
+the [US-17 results](docs/examples/us-17/results.md) for grounding, uncertainty,
+tool-selection and full-context findings.
 Frontend, deployment and production authentication are outside the current demo. The recruiting email determines the submission cutoff.
 
 OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
@@ -118,4 +160,4 @@ Scoped commits and PRs record that workflow; controlled test answers are not cla
 as live model-quality evidence. Preserve source bytes and reference the related issue
 in every commit body. See [working agreements](AGENTS.md).
 
-See [US-14 policy corpus preparation and evaluation protocol](docs/policy-retrieval.md) for offline preparation; policy answers remain unimplemented.
+See [policy corpus, runtime retrieval and evaluation protocol](docs/policy-retrieval.md) for setup, provenance and measured limitations.

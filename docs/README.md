@@ -16,7 +16,8 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [Examples](examples/README.md): reviewed real conversations, failures and replay guidance.
 - [Sprint 3](sprint-3.md): integration branch, story sequence and approved scope.
 - [Follow-up](follow-up.md): policy routing and final submission requirements.
+- [Policy corpus and retrieval](policy-retrieval.md): provenance, runtime setup,
+  evaluation and measured limitations.
 
-See [US-14 policy corpus preparation and evaluation protocol](policy-retrieval.md) for offline preparation; policy answers remain unimplemented.
 - [US-15 benchmark](benchmarks/README.md): opt-in setup, methodology, local hardware and provider access.
 - [Retrieval results](benchmarks/results.md): frozen-metric comparison and observed failures.

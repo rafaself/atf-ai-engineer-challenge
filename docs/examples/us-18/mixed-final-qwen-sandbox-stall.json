@@ -1,0 +1,68 @@
+{
+  "recorded_at_utc": "2026-11-02T01:04:33.567855+00:00",
+  "status": "interrupted",
+  "phase": "interrupted",
+  "purpose": "US-18 functional RAG validation, manual source-based review required",
+  "model": "qwen.qwen3-32b-v1:0",
+  "region": "us-east-1",
+  "temperature": 0,
+  "temperature_note": null,
+  "reasoning_effort": "provider default",
+  "max_requests": 5,
+  "max_tool_calls": 5,
+  "max_output_tokens": 1024,
+  "max_cost_usd": 0.05,
+  "cost_assumption": "Historical USD/M input 0.20, output 0.80; not invoice pricing",
+  "source_freeze": {
+    "version": 1,
+    "parser_version": "poppler-normalized-sections-v3",
+    "extractor_version": "pdftotext version 25.07.0",
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c",
+    "chunks_sha256": "6426725ac6f20628474ea4175814726ff968a08127491b239515ba6b8219303d"
+  },
+  "runs": [
+    {
+      "case_id": "mixed-order-return",
+      "prompt": "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora.",
+      "status": "interrupted",
+      "started_at_utc": "2026-11-02T01:04:33.800306+00:00",
+      "reserved_upper_usd": 0.036864,
+      "failure": {
+        "causes": [
+          "KeyboardInterrupt"
+        ],
+        "aws_error_code": null,
+        "hint": null
+      },
+      "diagnostic": {
+        "process_exit_code": 130,
+        "last_observed_event": "http.request.started",
+        "application_http_request_event_observed": false,
+        "agent_started_event_observed": false,
+        "model_invocation_observed": false,
+        "usage_trace_available": false
+      }
+    }
+  ],
+  "current_case_id": "mixed-order-return",
+  "failed_phase": "http_request",
+  "finished_at_utc": "2026-11-02T01:08:35.629106+00:00",
+  "failure": {
+    "causes": [
+      "KeyboardInterrupt"
+    ],
+    "aws_error_code": null,
+    "hint": null
+  },
+  "diagnostic_events": [
+    "probe.started",
+    "agent_setup.started",
+    "provider.initializing",
+    "provider.ready",
+    "agent_setup.completed",
+    "http_client_setup.started",
+    "http_client_setup.completed",
+    "http.request.started"
+  ]
+}

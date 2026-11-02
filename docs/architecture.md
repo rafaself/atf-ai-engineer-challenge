@@ -1,9 +1,10 @@
 # Demo architecture
 
-The project is one Python package. FastAPI supplies a local text API, Pydantic AI
-supplies typed tool calling, Bedrock supplies the model, and SQLite stores source
-snapshots and chat history. The small dataset does not need distributed services,
-a vector store, an ORM or a generic ingestion framework.
+The project is one Python package. FastAPI supplies a local text API, and Pydantic AI
+uses Bedrock with typed catalog, order and policy tools. SQLite stores operational
+snapshots and chat history; embedded Chroma indexes the fixed policy corpus using
+local E5 embeddings. This small dataset does not need distributed services, an ORM
+or a generic ingestion framework.
 
 ```mermaid
 flowchart LR
@@ -13,8 +14,14 @@ flowchart LR
     Chat --> Agent[Pydantic AI / Bedrock]
     Agent --> Products[Product tools and exact pricing]
     Agent --> Orders[Customer-scoped order tools]
+    Agent --> Policy[Bounded policy search]
     Products --> Catalog[Catalog SQLite]
     Orders --> Operations[Operational SQLite]
+    Corpus[Reviewed policy corpus] --> IndexBuild[Explicit index build]
+    IndexBuild --> E5[Local E5 embeddings]
+    Policy --> E5
+    E5 --> Chroma[Embedded Chroma index]
+    Chroma --> Policy
     Prepare[One preparation command] --> Catalog
     Prepare --> Operations
 ```
@@ -104,34 +111,54 @@ and missing orders have the same result. Contacts, notes and payment methods are
 excluded. Copied product references and historical totals survive catalog changes.
 See [catalog](catalog.md) and [orders](orders.md).
 
-Tools own exact price calculations; the model presents the original price,
-discount and final price once. The output validator rejects blank/internal markup
-and adds current-run truncation disclosures and one concise discount snapshot notice.
-It rejects explicit `R$` amounts absent from current-run product prices/quotes or
-order totals, using the existing single retry. Customer amounts and search bounds
-do not authorize output amounts. Budget comparisons and clarifications use wording
-such as “seu orçamento” without repeating the amount; they need no extra search
-unless source facts are required. Assistant history and old tool results do not
-establish current prices. The check does not prove correct price associations,
-labels, percentages or every factual claim.
-Diagnostics allow metadata only. This is not a universal semantic grounding check.
+Tools own exact price calculations, payable-price filtering and customer-scoped reads.
+The output layer protects against blank/internal-control output and appends notices
+from current tool metadata: partial lists, imported snapshots and sources consulted.
+It does not parse model prose for citations, compare every currency mention with tool
+prices, or infer required tool calls from Portuguese keywords. Those gates rejected
+readable citations, legitimate budget quotes and negated return requests. The model
+still receives grounding and tool-use instructions; actual compliance requires
+conversation review. Generated claims, prices and references are not automatically
+certified by the source list. Diagnostics allow metadata only.
 
 ## Evidence and limits
 
-Real temporary SQLite and controlled models verify domain rules, ownership,
-persistence, concurrent independent chats and failures. They do not establish live
-language understanding or tool selection. [US-13 live evidence](examples/sprint-2/README.md)
-records observed catalog/context, promotion/PIX and order behavior, including two
-failed attempts and focused instruction corrections. Policy lookup/evaluation
-remains in the later retrieval sprint, outside Sprint 2 acceptance.
+Temporary SQLite/Chroma indexes and controlled models verify domain rules, ownership,
+persistence, bounded policy retrieval wiring and failures. They do not establish live
+language understanding, tool selection or policy-answer quality. [US-13 live evidence](examples/sprint-2/README.md)
+records catalog/context, promotion/PIX and order behavior, including two failed
+attempts and focused instruction corrections; those Sprint 2 runs did not cover
+policy lookup. US-16 integrates policy search. US-17 reviewed four paired real
+Portuguese conversations; the [results](examples/us-17/results.md) preserve one RAG
+HTTP 500, failures in both arms on tool selection for a mixed order/return question,
+and unsupported claims. This evidence does not establish general model quality or
+that provisional retrieval is adequate.
+
+[US-18 evidence](examples/us-18/README.md) preserves the former validator failures
+and the subsequent simplification. The source footer uses only successful current-run
+policy returns; it lists consulted sections/pages and does not claim entailment.
+The latest saved live mixed case called both tools and retained order status but
+failed the former citation grammar. A controlled HTTP replay now accepts its generated
+candidate without an output retry. This verifies delivery, not correction of its
+policy-applicability omissions or general model quality.
+
+Policy search takes no arguments. It combines the current user question with the
+latest prior user question when the combined text is at most 256 characters; assistant
+answers and tool results stay out of the retrieval query. The bounded local E5 check
+missed section 4.1 for “E se eu já usei o instrumento?” alone and returned it when
+the previous return question was included. An unrelated prior hours question added
+section 2 to a return query, so this limited context can add irrelevant evidence.
+These are retrieval observations, not answer-quality results. Broader retrieval
+optimization remains deferred; sprint completion does not require RAG to beat Full
+Context.
 
 The [simplification review](examples/simplification-review.md) preserves an earlier
 offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)
 records the final Qwen conversations, failed Nova comparisons and a combined
 correction message that preserves the same single-retry limit. Order snapshot
 limits were explicit when asked, but not repeated in every answer.
-These captures precede the source-only monetary-output rule; their budget echoes
-are historical behavior. The updated rule has offline validation, not a new live run.
+The former source-only monetary-output gate has been retired; budget references
+no longer cause output retries. The captured conversations remain historical evidence.
 
 [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
 approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation
