@@ -53,9 +53,18 @@ make up
 ```
 
 `make prepare-policy` explicitly downloads the pinned CPU E5 model if it is not
-cached and builds the local Chroma index. Run it during first-time setup or when
-intentionally rebuilding that index. Image build and normal startup do not download
-weights, prepare SQLite snapshots, rebuild the index, or call a model provider.
+cached and builds the local Chroma index. Run it once for a new data volume. It
+intentionally fails if an index already exists. To rebuild after an intentional policy
+source change, run this explicit command:
+
+```bash
+docker compose run --rm app \
+  python -m scripts.policy_benchmark.run --model e5 --index --rebuild \
+  --allow-download --output-dir /tmp/policy-rag-bootstrap
+```
+
+Image build and normal startup do not download weights, prepare SQLite snapshots,
+rebuild the index, or call a model provider.
 `make prepare-data` imports 65 products, 25 promotions, 50 customers, 20 orders and
 22 item rows from the supplied files; it never rewrites the CSV or PDF inputs.
 
@@ -70,13 +79,46 @@ and Node.js 20.19+ or 22.12+ with npm, then run `make check`. The Docker build a
 performs a packaging smoke check for the source-relative data path, an input CSV
 and write access to runtime data.
 
+For Docker chat, put temporary credentials from your approved AWS credential source
+in the Git-ignored `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
+`AWS_SESSION_TOKEN`, along with `AWS_DEFAULT_REGION`. Remove `AWS_PROFILE` from
+`.env`; Compose passes these values to the container, but does not mount the host's
+`~/.aws` directory, so a host profile or SSO login is unavailable there. Keep the
+credentials temporary and narrowly scoped. The UI and docs can start without AWS
+credentials, but the agent cannot answer. `.env` and local AWS files are excluded
+from the Docker build context and image. The policy-RAG runtime includes CPU PyTorch
+and uses additional disk for model weights, cache and index data.
+
+The named volume is initialized from `/app/data` in the image when first created.
+Rebuilding the image does not refresh source files already in an existing volume.
+To intentionally update the source data while keeping saved chat history, start the
+app, copy the source files from the updated checkout into its existing volume, then
+refresh the SQLite snapshots:
+
+```bash
+make up
+docker compose cp data/categories.csv app:/app/data/categories.csv
+docker compose cp data/products.csv app:/app/data/products.csv
+docker compose cp data/promotions.csv app:/app/data/promotions.csv
+docker compose cp data/customers.csv app:/app/data/customers.csv
+docker compose cp data/orders.csv app:/app/data/orders.csv
+docker compose cp data/order_items.csv app:/app/data/order_items.csv
+docker compose cp data/store_policies.pdf app:/app/data/store_policies.pdf
+docker compose cp data/policies/. app:/app/data/policies/
+docker compose stop app
+make prepare-data
+# If policy sources changed, run the explicit --rebuild command above here.
+make up
+```
+
+`make prepare-data` replaces only the catalog and operations snapshots; it preserves
+the conversation database. These steps leave the persistent volume in place. Do not
+run `docker compose down --volumes` when you need to retain conversations or other
+persistent runtime data.
+
 If catalog/order requests fail because SQLite snapshots are missing, run
-`make prepare-data`. Policy retrieval requires both the E5 cache and index from
-`make prepare-policy`; missing resources are service errors, not “no policy found.”
-Chat requests require valid Bedrock credentials in `.env`; the UI and docs can start
-without them, but the agent cannot answer. The `.env` file and local AWS files are
-excluded from the Docker build context and image. The policy-RAG runtime includes
-CPU PyTorch and uses additional disk for model weights, cache and index data.
+`make prepare-data`. Policy retrieval requires both the E5 cache and index; missing
+resources are service errors, not “no policy found.”
 
 Use `make down` to stop the app without deleting its data. Removing the named volume
 requires an explicit `docker compose down --volumes`.
