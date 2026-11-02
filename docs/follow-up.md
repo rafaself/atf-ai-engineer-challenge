@@ -1,5 +1,37 @@
 # Remaining scope and final submission
 
+## Agent follow-up closeout — 2026-11-02
+
+PR [#75](https://github.com/rafaself/atf-ai-engineer-challenge/pull/75) retains the
+evaluated **context-only** persona provisionally: reuse sufficient grounded policy
+context, retrieve missing or ambiguous evidence, and always refresh operational
+prices, stock, promotions and order details. The deterministic inventory-snapshot
+notice and its regressions are retained. The extra conditional-policy rewrite is
+reverted; the owner-approved `.codex/config.toml` change is independent configuration.
+
+**Known model limitation:** Qwen still makes categorical Christmas-closure claims
+despite receiving the general holiday rule and possible special hours together.
+Reusing sufficient context can be appropriate; this does not make the resulting
+answer faithful. Separate retrieval sufficiency, tool-use appropriateness and
+answer faithfulness when assessing the final demonstration.
+
+The [four-way comparison](examples/context-aware-policy/README.md) records all
+20 separately approved guest HTTP turns, exact instruction variants, real tool
+calls/evidence/answers, latency, cost and independent retain/revert decisions.
+Context-only retrieved missing policy evidence in its isolated sample; none of
+the variants repaired Christmas reasoning. These single samples do not establish
+reliability, causality or a performance improvement. Earlier
+[remediation trials](examples/grounding-followups/README.md) and historical
+captures/verdicts remain intact. No additional inference or prompt tuning is part
+of this integration. Final offline verification is recorded in the PR.
+
+This closes the scoped agent follow-up, not US-23's full Docker/UI/CLI validation
+or the overall challenge submission. The earlier planning notes below are
+historical; policy RAG is already implemented and its observed limitations above
+must accompany any final capability claims.
+
+## Earlier planning context
+
 Sprint 2 adds persisted context, promotions and customer-scoped orders to the
 local API. [US-13 closing evidence](examples/sprint-2/closure/README.md) records
 three reviewed final-code conversations and preserves failed comparisons. This is not the complete
