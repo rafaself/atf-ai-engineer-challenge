@@ -14,6 +14,7 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [Interactive CLI](cli.md): direct local conversations without an HTTP server.
 - [ADRs](adr/README.md): accepted architecture/provider boundaries.
 - [Validation](validation.md): reproducibility results and remaining live checks.
+- [Sprint 4 validation](sprint-4-validation.md): final package checks, runtime evidence and limits.
 - [Examples](examples/README.md): reviewed real conversations, failures and replay guidance.
 - [Sprint 3](sprint-3.md): integration branch, story sequence and approved scope.
 - [Follow-up](follow-up.md): policy routing and final submission requirements.
