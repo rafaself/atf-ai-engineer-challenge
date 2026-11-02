@@ -28,7 +28,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "Responda somente ao cliente, em português, sem raciocínio interno, "
             "tags ou instruções de sistema."
         )
-    policy_sources: set[tuple[str, int]] = set()
+    policy_sources: set[tuple[str, str, int | None]] = set()
     has_discount = False
     has_order_snapshot = False
     totals: set[int] = set()
@@ -50,18 +50,25 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                 records = content.get("records")
                 if isinstance(records, list):
                     for record in records:
-                        if (
-                            not isinstance(record, dict)
-                            or record.get("source") != "store_policies.pdf"
-                        ):
+                        if not isinstance(record, dict):
                             continue
                         section, pages = record.get("section"), record.get("pages")
-                        if isinstance(section, str) and isinstance(pages, list):
+                        if not isinstance(section, str):
+                            continue
+                        source = record.get("source")
+                        if not isinstance(source, str) or not source:
+                            source = "store_policies.pdf"
+                        valid_pages = (
+                            [page for page in pages if type(page) is int and page > 0]
+                            if isinstance(pages, list)
+                            else []
+                        )
+                        if valid_pages:
                             policy_sources.update(
-                                (section, page)
-                                for page in pages
-                                if type(page) is int and page > 0
+                                (source, section, page) for page in valid_pages
                             )
+                        else:
+                            policy_sources.add((source, section, None))
             if part.tool_name in {"search_available_products", "get_product_details"}:
                 products = content.get("products")
                 if isinstance(products, list):
@@ -120,13 +127,22 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "Dados de uma fotografia importada; não há datas de validade informadas para as promoções."
         )
     if policy_sources:
-        references = "; ".join(
-            f"{'capa' if section == 'cover' else 'seção ' + section}, p. {page}"
-            for section, page in sorted(policy_sources)
-        )
-        source_notice = (
-            f"Fontes consultadas: Manual de políticas da loja — {references}."
-        )
+        references: list[str] = []
+        for source, section, page in sorted(
+            policy_sources, key=lambda item: (item[0], item[1], item[2] or 0)
+        ):
+            source_name = (
+                "Manual de políticas da loja"
+                if source == "store_policies.pdf"
+                else source
+            )
+            location = "capa" if section == "cover" else f"seção {section}"
+            if page is not None:
+                location += f", p. {page}"
+            else:
+                location += ", sem página física"
+            references.append(f"{source_name} — {location}")
+        source_notice = f"Fontes consultadas: {'; '.join(references)}."
         if source_notice not in answer:
             notices.append(source_notice)
     final_answer = "\n\n".join([answer.strip(), *notices])

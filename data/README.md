@@ -27,7 +27,7 @@ re-encoding, or newline conversion is applied. The snapshot has 50 customers,
 from the same ZIP, with four marked active. Its bytes match both the archive entry
 and extracted supplied file. No dates/columns are added and no values, inactive
 records, line endings or encodings are changed. The original policy PDF remains
-in the supplied resources as well; general policy retrieval is separate work.
+byte-for-byte identical to the supplied resource.
 
 The operational importer retains customer IDs, minimal order headers and item
 references only; contacts, customer names/cities, notes and payment methods never
@@ -48,3 +48,17 @@ integer centavos, validates references/types/statuses/dates/specs, and stores
 additional normalized name columns for lookup. Original descriptive fields are
 retained. See [catalog import and retrieval](../docs/catalog.md) for the full
 snapshot replacement and schema compatibility rules.
+
+## Owner-approved freight clarification
+
+`policies/freight-clarification.json` records the owner-approved Workstream A
+decision in GitHub issue #43. Recorded on 2026-11-02, it clarifies the original
+PDF's section 5.1 for deliveries within the Região Metropolitana de Campo Grande:
+orders below R$ 500,00 have a fixed R$ 35,00 freight fee, and orders at or above
+R$ 500,00 receive free freight. This is new business evidence; the original PDF
+still leaves equality unspecified and has not been edited. The current policy
+freeze records the clarification source hash separately. The historical
+`policies/questions.json` and its benchmark captures remain unchanged. New benchmark
+runs use `policies/questions-v2.json`, which labels the exact-threshold question
+against the clarification and records its source hash; `policies/freeze.json` pins
+both datasets separately.

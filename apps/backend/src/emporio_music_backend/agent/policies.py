@@ -18,7 +18,11 @@ from emporio_music_backend.infrastructure.policy_embeddings import (
 )
 from emporio_music_backend.infrastructure.policy_index import PolicyIndex
 from emporio_music_backend.paths import DATA_DIRECTORY
-from emporio_music_backend.policy_corpus import PolicyChunk, PolicyCorpus
+from emporio_music_backend.policy_corpus import (
+    FREIGHT_CLARIFICATION_SOURCE,
+    PolicyChunk,
+    PolicyCorpus,
+)
 from emporio_music_backend.policy_retrieval import expand, query_families
 
 _EMBEDDING_INPUT = "hierarchy joined by newline + newline + section text"
@@ -37,7 +41,7 @@ class PolicySearchPort(Protocol):
 
 def _canonical_chunks_sha256(corpus: PolicyCorpus) -> str:
     serialized = json.dumps(
-        [chunk.model_dump() for chunk in corpus.chunks],
+        [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
         ensure_ascii=False,
         sort_keys=True,
     ).encode()
@@ -68,10 +72,17 @@ class LocalPolicySearch:
         freeze = json.loads((policy_directory / "freeze.json").read_text())
         source_path = self._data_directory / corpus.source
         source_sha256 = hashlib.sha256(source_path.read_bytes()).hexdigest()
+        clarification_path = self._data_directory / FREIGHT_CLARIFICATION_SOURCE
+        freight_clarification_sha256 = hashlib.sha256(
+            clarification_path.read_bytes()
+        ).hexdigest()
         chunks_sha256 = _canonical_chunks_sha256(corpus)
         if (
             source_sha256 != corpus.source_sha256
             or source_sha256 != freeze["source_sha256"]
+            or freeze["freight_clarification_source"] != FREIGHT_CLARIFICATION_SOURCE
+            or freight_clarification_sha256 != corpus.freight_clarification_sha256
+            or freight_clarification_sha256 != freeze["freight_clarification_sha256"]
             or chunks_sha256 != freeze["chunks_sha256"]
             or corpus.parser_version != freeze["parser_version"]
         ):
@@ -81,6 +92,7 @@ class LocalPolicySearch:
         config = {
             **E5_CONFIG,
             "source_sha256": corpus.source_sha256,
+            "freight_clarification_sha256": corpus.freight_clarification_sha256,
             "corpus_sha256": chunks_sha256,
             "parser_version": corpus.parser_version,
             "embedding_input": _EMBEDDING_INPUT,
@@ -119,7 +131,7 @@ class LocalPolicySearch:
                 records: list[PolicyExcerpt] = [
                     {
                         "id": chunk.id,
-                        "source": self._source,
+                        "source": chunk.source or self._source,
                         "section": chunk.section,
                         "hierarchy": list(chunk.hierarchy),
                         "pages": list(chunk.pages),

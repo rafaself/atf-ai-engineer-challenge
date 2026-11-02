@@ -1,16 +1,19 @@
-"""Explicit, local preparation of the fixed store manual (Poppler required)."""
+"""Prepare the fixed store manual and approved policy overlay locally."""
 
 import hashlib
 import json
 import re
 import subprocess
+from decimal import Decimal
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from emporio_music_backend.paths import DATA_DIRECTORY
 
-PARSER_VERSION = "poppler-normalized-sections-v3"
+PARSER_VERSION = "poppler-normalized-sections-v4"
+FREIGHT_CLARIFICATION_SOURCE = "policies/freight-clarification.json"
 HEADING = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ].+)$")
 
 
@@ -22,6 +25,23 @@ class PolicyChunk(BaseModel):
     pages: list[int]
     text: str = Field(min_length=1)
     indexable: bool
+    source: str | None = None
+
+
+class FreightPolicyClarification(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    version: Literal[1]
+    approval_status: Literal["approved"]
+    approved_by: Literal["business owner"]
+    approval_reference: str = Field(min_length=1)
+    recorded_on: str
+    manual_section: Literal["5.1"]
+    delivery_area: str = Field(min_length=1)
+    threshold_brl: Decimal = Field(gt=Decimal("0"))
+    comparison: Literal["greater_than_or_equal"]
+    fee_below_threshold_brl: Decimal = Field(ge=Decimal("0"))
+    fee_at_or_above_threshold_brl: Decimal = Field(ge=Decimal("0"))
 
 
 class PolicyCorpus(BaseModel):
@@ -30,6 +50,7 @@ class PolicyCorpus(BaseModel):
     source_sha256: str
     parser_version: str
     extractor_version: str
+    freight_clarification_sha256: str
     chunks: list[PolicyChunk]
 
 
@@ -208,11 +229,54 @@ def parse_layout(text: str) -> list[PolicyChunk]:
     return chunks
 
 
+def _format_brl(amount: Decimal) -> str:
+    return f"{amount:.2f}".replace(".", ",")
+
+
+def _freight_clarification_chunk(
+    clarification: FreightPolicyClarification,
+) -> PolicyChunk:
+    threshold = _format_brl(clarification.threshold_brl)
+    below_fee = _format_brl(clarification.fee_below_threshold_brl)
+    at_or_above_fee = clarification.fee_at_or_above_threshold_brl
+    if at_or_above_fee == 0:
+        at_or_above = "frete grátis"
+    else:
+        at_or_above = f"taxa de frete de R$ {_format_brl(at_or_above_fee)}"
+    return PolicyChunk(
+        id="policy-v2.1-freight-clarification-v1",
+        section="5.1 (clarificação aprovada)",
+        hierarchy=[
+            "5 Política de Frete e Entregas",
+            "5.1 Entregas na Região Metropolitana de Campo Grande",
+            "Esclarecimento comercial aprovado",
+        ],
+        pages=[],
+        text=(
+            "Esclarecimento comercial aprovado pela proprietária da loja "
+            f"(fonte: {FREIGHT_CLARIFICATION_SOURCE}; referência: "
+            f"{clarification.approval_reference}; registrado em "
+            f"{clarification.recorded_on}). Aplicabilidade: somente para entregas "
+            f"na {clarification.delivery_area}. A redação original do PDF na "
+            f"seção {clarification.manual_section} não define o caso de igualdade; "
+            "esta é uma clarificação comercial nova. Para pedidos com total abaixo "
+            f"de R$ {threshold}, a taxa fixa de frete é R$ {below_fee}. Para pedidos "
+            f"com total igual ou superior a R$ {threshold}, há {at_or_above}."
+        ),
+        indexable=True,
+        source=FREIGHT_CLARIFICATION_SOURCE,
+    )
+
+
 def prepare(source: Path) -> PolicyCorpus:
+    clarification_path = DATA_DIRECTORY / FREIGHT_CLARIFICATION_SOURCE
     manifest = (DATA_DIRECTORY / "SHA256SUMS").read_text()
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     if f"{digest}  store_policies.pdf" not in manifest:
         raise ValueError("Source checksum mismatch; review the manual before preparing")
+    clarification_bytes = clarification_path.read_bytes()
+    clarification_sha256 = hashlib.sha256(clarification_bytes).hexdigest()
+    clarification = FreightPolicyClarification.model_validate_json(clarification_bytes)
     version = subprocess.run(
         ["pdftotext", "-v"], capture_output=True, text=True, check=True
     ).stderr.splitlines()[0]
@@ -222,12 +286,15 @@ def prepare(source: Path) -> PolicyCorpus:
         text=True,
         check=True,
     )
+    chunks = parse_layout(result.stdout)
+    chunks.append(_freight_clarification_chunk(clarification))
     return PolicyCorpus(
         source="store_policies.pdf",
         source_sha256=digest,
         parser_version=PARSER_VERSION,
         extractor_version=version,
-        chunks=parse_layout(result.stdout),
+        freight_clarification_sha256=clarification_sha256,
+        chunks=chunks,
     )
 
 
@@ -235,7 +302,7 @@ def main() -> None:
     corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
     destination = DATA_DIRECTORY / "policies" / "corpus.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_text(corpus.model_dump_json(indent=2) + "\n")
+    destination.write_text(corpus.model_dump_json(indent=2, exclude_none=True) + "\n")
     print(json.dumps({"chunks": len(corpus.chunks), "output": str(destination)}))
 
 
