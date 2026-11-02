@@ -32,6 +32,10 @@ from emporio_music_backend.ports.catalog import ProductRepository
 from emporio_music_backend.ports.orders import OrderRepository
 
 DATA = Path(__file__).parents[3] / "data"
+INVENTORY_NOTICE = (
+    "Preços e estoque refletem uma fotografia importada do catálogo; "
+    "não há confirmação em tempo real."
+)
 
 
 @pytest.mark.parametrize("selection", [{}, {"customer_id": 1}])
@@ -217,7 +221,10 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                 )
             )
         assert results[0].status_code == results[1].status_code == 200
-        assert results[0].json()["answer"] == "Consulta atual: 2199.00"
+        assert (
+            results[0].json()["answer"]
+            == "Consulta atual: 2199.00\n\n" + INVENTORY_NOTICE
+        )
         assert results[1].json()["answer"].startswith("Consulta atual: 2089.05")
 
     asyncio.run(concurrent())

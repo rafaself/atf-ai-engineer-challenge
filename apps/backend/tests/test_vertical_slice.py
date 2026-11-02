@@ -33,6 +33,11 @@ from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
 
+INVENTORY_NOTICE = (
+    "Preços e estoque refletem uma fotografia importada do catálogo; "
+    "não há confirmação em tempo real."
+)
+
 
 @pytest.mark.parametrize(
     ("tool_name", "arguments", "total", "price", "stock"),
@@ -111,7 +116,9 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
             and str(total) in response.json()["answer"]
         )
     else:
-        assert response.json()["answer"] == answer
+        expected = answer + ("\n\n" + INVENTORY_NOTICE if total else "")
+        assert response.json()["answer"] == expected
+    assert (INVENTORY_NOTICE in response.json()["answer"]) == bool(total)
     assert len(observed) == 1
     result = observed[0]
     assert result["total_matches"] == total
@@ -171,7 +178,8 @@ def test_customer_budget_supports_comparison_or_clarification_without_echoing_am
             "/api/chat", json={"message": "Tenho R$ 1.000. Pode me ajudar?"}
         )
     assert response.status_code == 200
-    assert response.json()["answer"] == answer
+    expected = answer + ("\n\n" + INVENTORY_NOTICE if lookup_product else "")
+    assert response.json()["answer"] == expected
     assert calls == (2 if lookup_product else 1)
 
 
@@ -235,4 +243,7 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
         )
     )
     assert observed == [219900]
-    assert response.answer == "Resposta de controle da nova consulta"
+    assert (
+        response.answer
+        == "Resposta de controle da nova consulta\n\n" + INVENTORY_NOTICE
+    )
