@@ -795,6 +795,15 @@ def _load_resume_capture(
         raise ValueError(
             "Resume capture application commit differs from the current run"
         )
+    previous_application_hash = previous_application.get("source_files_sha256")
+    current_application_hash = current_application.get("source_files_sha256")
+    if (
+        not isinstance(previous_application_hash, str)
+        or previous_application_hash != current_application_hash
+    ):
+        raise ValueError(
+            "Resume capture application source differs from the current run"
+        )
 
     model_runs = report.get("model_runs")
     expected_by_id = {candidate.model_id: candidate for candidate in candidates}
@@ -832,28 +841,6 @@ def _load_resume_capture(
             if isinstance(case, dict)
         } != expected_scenario_ids:
             raise ValueError("Resume capture scenario set differs from the matrix")
-        for case in model_scenarios:
-            if not isinstance(case, dict):
-                continue
-            for turn in case.get("turns", []):
-                if not isinstance(turn, dict):
-                    continue
-                evidence = turn.get("model_trace")
-                if isinstance(evidence, dict) and _provider_unavailable(
-                    turn.get("http_status"), evidence
-                ):
-                    raise ValueError(
-                        "Resume capture contains an unresolved provider failure"
-                    )
-    for captured_id, model in by_id.items():
-        if (
-            captured_id != EXPECTED_MODEL_IDS["qwen3_32b"]
-            and int(model.get("model_calls", 0)) > 0
-        ):
-            raise ValueError(
-                "Resume capture already contains paid calls for a later model"
-            )
-
     try:
         previous_spend = Decimal(str(report.get("estimated_spend_usd", "0")))
     except Exception as exc:
