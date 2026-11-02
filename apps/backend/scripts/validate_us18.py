@@ -54,6 +54,13 @@ def sanitized(value: Any) -> Any:
     return value
 
 
+def _usage_value(usage: Any, details: dict[str, Any], name: str) -> int | None:
+    raw = getattr(usage, name, None)
+    if raw is None:
+        raw = details.get(name)
+    return int(raw) if isinstance(raw, (int, float)) else None
+
+
 def _write_checkpoint(stream: TextIO, report: dict[str, Any]) -> None:
     """Flush the latest safe report state so interruptions retain progress."""
     stream.seek(0)
@@ -170,21 +177,54 @@ class RecordingAgent:
                     current = current.__cause__
                 raise
             finally:
+                responses = [m for m in messages if isinstance(m, ModelResponse)]
+                response_usage: list[dict[str, int | None]] = []
+                for response in responses:
+                    usage = response.usage
+                    details = getattr(usage, "details", None)
+                    details = details if isinstance(details, dict) else {}
+
+                    response_usage.append(
+                        {
+                            "input_tokens": _usage_value(
+                                usage, details, "input_tokens"
+                            ),
+                            "output_tokens": _usage_value(
+                                usage, details, "output_tokens"
+                            ),
+                            "cache_read_tokens": _usage_value(
+                                usage, details, "cache_read_tokens"
+                            ),
+                            "cache_write_tokens": _usage_value(
+                                usage, details, "cache_write_tokens"
+                            ),
+                            "reasoning_tokens": _usage_value(
+                                usage, details, "reasoning_tokens"
+                            ),
+                        }
+                    )
+
+                def total(name: str) -> int | None:
+                    value_total = 0
+                    found = False
+                    for item in response_usage:
+                        value = item[name]
+                        if value is not None:
+                            value_total += value
+                            found = True
+                    return value_total if found else None
+
                 self.evidence["messages"] = sanitized(
                     ModelMessagesTypeAdapter.dump_python(messages, mode="json")
                 )
                 self.evidence["usage"] = {
-                    "requests": sum(isinstance(m, ModelResponse) for m in messages),
-                    "input_tokens": sum(
-                        m.usage.input_tokens
-                        for m in messages
-                        if isinstance(m, ModelResponse)
-                    ),
-                    "output_tokens": sum(
-                        m.usage.output_tokens
-                        for m in messages
-                        if isinstance(m, ModelResponse)
-                    ),
+                    "requests": len(responses),
+                    "input_tokens": total("input_tokens"),
+                    "output_tokens": total("output_tokens"),
+                    "cache_read_tokens": total("cache_read_tokens"),
+                    "cache_write_tokens": total("cache_write_tokens"),
+                    "reasoning_tokens": total("reasoning_tokens"),
+                    "responses": response_usage,
                 }
 
 
