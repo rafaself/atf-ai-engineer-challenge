@@ -1,0 +1,87 @@
+{
+  "new_approved_cap_usd": "0.75",
+  "total_reserved_upper_usd": "0.541440",
+  "variants": {
+    "baseline": {
+      "input_tokens": 26828,
+      "output_tokens": 707,
+      "estimated_usd": "0.0044484",
+      "provider_responses": 8,
+      "http_200": 5,
+      "http_seconds": {
+        "median": 2.41,
+        "maximum": 3.219
+      },
+      "holiday_followup_calls": [],
+      "holiday_faithfulness": "fail: categorical Christmas closure despite available qualification",
+      "topic_switch_calls": [
+        "get_product_details"
+      ],
+      "missing_policy_calls": [],
+      "missing_policy_grounding": "fail: no policy evidence and invented source attribution",
+      "instruction_sha256": "f8fd70c83437757700086218d941dfe8419c4b43123c524a23e1d11ecd4e5df3",
+      "extra_operational_claim": "Unqueried standard/PIX price equivalence was unsupported; requested standard price/stock matched tool data."
+    },
+    "context_only": {
+      "input_tokens": 31300,
+      "output_tokens": 656,
+      "estimated_usd": "0.0050886",
+      "provider_responses": 9,
+      "http_200": 5,
+      "http_seconds": {
+        "median": 2.875,
+        "maximum": 5.973
+      },
+      "holiday_followup_calls": [],
+      "holiday_faithfulness": "fail: categorical Christmas closure despite available qualification",
+      "topic_switch_calls": [
+        "get_product_details"
+      ],
+      "missing_policy_calls": [
+        "search_store_policies"
+      ],
+      "missing_policy_grounding": "pass",
+      "instruction_sha256": "9933578d6a46f8fdc822d2c9d0edfe2621e4a199420ff24441672ecdaf24da7c"
+    },
+    "conditional_only": {
+      "input_tokens": 27309,
+      "output_tokens": 626,
+      "estimated_usd": "0.00447195",
+      "provider_responses": 8,
+      "http_200": 5,
+      "http_seconds": {
+        "median": 1.931,
+        "maximum": 2.36
+      },
+      "holiday_followup_calls": [],
+      "holiday_faithfulness": "fail: categorical Christmas closure despite available qualification",
+      "topic_switch_calls": [
+        "get_product_details"
+      ],
+      "missing_policy_calls": [],
+      "missing_policy_grounding": "fail: no policy evidence and invented source attribution",
+      "instruction_sha256": "fd582714ece5b33c13fe386c88421577a3f3ac4d763eb4ae71d53d49121db686"
+    },
+    "combined": {
+      "input_tokens": 28112,
+      "output_tokens": 649,
+      "estimated_usd": "0.0046062",
+      "provider_responses": 8,
+      "http_200": 5,
+      "http_seconds": {
+        "median": 4.417,
+        "maximum": 5.269
+      },
+      "holiday_followup_calls": [],
+      "holiday_faithfulness": "fail: categorical Christmas closure despite available qualification",
+      "topic_switch_calls": [
+        "get_product_details"
+      ],
+      "missing_policy_calls": [],
+      "missing_policy_grounding": "fail: no policy evidence and invented source attribution",
+      "instruction_sha256": "cfe9a4e471625302547197d35bef8cee3da38e4a4aeb30c92ecae1782f276860"
+    }
+  },
+  "review_scope": "Exploratory single sample per cell; tool appropriateness separated from faithfulness",
+  "total_estimated_usd": "0.01861515"
+}

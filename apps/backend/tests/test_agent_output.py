@@ -98,6 +98,108 @@ def test_legitimate_customer_wording_does_not_require_output_retry(
 
 
 @pytest.mark.parametrize(
+    "tool_name", ["search_available_products", "get_product_details"]
+)
+def test_current_inventory_snapshot_results_add_notice(tool_name: str) -> None:
+    answer = "Este produto está disponível no catálogo."
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        tool_name,
+                        {
+                            "products": [{"product_id": 1, "available": True}],
+                            "inventory_basis": "imported_snapshot",
+                        },
+                    )
+                ],
+                run_id="current",
+            )
+        ],
+    )
+
+    assert customer_answer(context, answer) == (
+        answer + "\n\nPreços e estoque refletem uma fotografia importada do catálogo; "
+        "não há confirmação em tempo real."
+    )
+
+
+@pytest.mark.parametrize(
+    ("run_id", "products", "inventory_basis"),
+    [
+        ("old", [{"product_id": 1}], "imported_snapshot"),
+        ("current", [], "imported_snapshot"),
+        ("current", [{"product_id": 1}], "live"),
+    ],
+)
+@pytest.mark.parametrize(
+    "tool_name", ["search_available_products", "get_product_details"]
+)
+def test_inventory_notice_requires_current_nonempty_snapshot_results(
+    run_id: str,
+    products: list[dict[str, object]],
+    inventory_basis: str,
+    tool_name: str,
+) -> None:
+    answer = "Consultei o catálogo."
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        tool_name,
+                        {
+                            "products": products,
+                            "inventory_basis": inventory_basis,
+                        },
+                    )
+                ],
+                run_id=run_id,
+            )
+        ],
+    )
+
+    assert customer_answer(context, answer) == answer
+
+
+def test_inventory_snapshot_notice_is_added_once_and_is_idempotent() -> None:
+    answer = "O produto está disponível."
+    result = {
+        "products": [{"product_id": 1, "available": True}],
+        "inventory_basis": "imported_snapshot",
+    }
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart("search_available_products", result),
+                    ToolReturnPart("get_product_details", result),
+                ],
+                run_id="current",
+            )
+        ],
+    )
+
+    accepted = customer_answer(context, answer)
+
+    assert accepted.count("fotografia importada do catálogo") == 1
+    assert customer_answer(context, accepted) == accepted
+
+
+@pytest.mark.parametrize(
     "answer",
     [
         "O prazo depende da regra aplicável.",
