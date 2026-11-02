@@ -92,6 +92,7 @@ class ProductSearchTool:
         """Look up named products, including out-of-stock/discontinued/coming-soon.
 
         Use for price, stock and status questions, even if availability is unknown.
+        Reuse the exact returned name for follow-ups; do not prepend a category.
         Report actual stock/status; multiple partial-name matches remain visible.
         """
         trace(
