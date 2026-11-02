@@ -6,12 +6,13 @@ full target set; US-17 also found answer and tool-selection failures in both
 retrieval and full-policy-context runs. See the [US-17 results](examples/us-17/results.md).
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
-Follow-up [US-18 #59](examples/us-18/README.md) fixes current-run citation checks and
-explicit mixed-tool omissions. Policy tools return source excerpts; concise general
-instructions govern relevance, source conditions and uncertainty. Order provenance is now appended by the application from current
-imported-snapshot results, rather than enforced through a fixed phrase; the exact
-saved Qwen answer replays with this notice offline. This is not a post-change live
-run. Semantic answer support remains separate from citation provenance.
+[US-18](examples/us-18/README.md) records the grounding investigation and output
+simplification. Policy tools return source excerpts without section-specific advice.
+The application appends a “Fontes consultadas” list from successful current-run
+records, alongside snapshot/partial-result notices where relevant. It does not parse
+generated citations or currency mentions to decide HTTP success. Generated claims,
+references, price presentation and tool choice still require model-quality review.
+Exact pricing and customer scope remain enforced inside the operational tools.
 
 The policy tool now uses the current question plus the latest prior user question
 when their combined text is at most 256 characters. A bounded local E5 check missed
@@ -76,8 +77,8 @@ E5's `query:` prefix and uses the same query-derived family filter rule as US-15
 retrieves the three highest-ranked seeds, and adds only the authored one-hop
 relationships from the fixed manual, capped at eight records. Each excerpt includes
 the source, section hierarchy and physical page. Customer answers cite those references
-as `[política 5.1, p. 4]`; each policy amount must cite a
-returned section that contains it and explain the applicable condition. Retrieved text
+in readable form; the application independently lists all consulted sections/pages.
+The model should explain the applicable conditions when presenting a policy amount. Retrieved text
 is data, not an instruction source. The product, pricing and customer-order tools remain
 separate and deterministic. `search_store_policies` takes no model-selected query:
 the application may append the latest prior user question to the current question,

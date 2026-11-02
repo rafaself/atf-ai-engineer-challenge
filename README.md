@@ -14,28 +14,27 @@ unsupported claims; it does not establish that either context strategy is reliab
 or that retrieval meets the frozen US-15 targets. See the [paired results](docs/examples/us-17/results.md)
 and [captures](docs/examples/us-17/captures.json). Earlier [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
 cover budget/context, promotions/PIX and scoped orders at their recorded revision.
-They predate the current source-only monetary guard: budget comparisons now say
-“seu orçamento” without repeating customer amounts. This guard change is verified
-offline only. Failed attempts and model comparisons remain published. These observations
-do not establish complete challenge acceptance or guarantee every future answer.
+Failed attempts and model comparisons remain published; they do not establish complete
+challenge acceptance or guarantee future answers.
 
-[US-18](docs/examples/us-18/README.md) adds current-run citation enforcement,
-explicit mixed order/return tool checks and general grounding principles.
-These corrections have offline regression coverage. The first live follow-up passes
-three cases; the mixed case still needs revalidation after further corrections.
-The backend now appends an order-snapshot notice from current tool metadata instead
-of requiring a fixed phrase. An earlier saved Qwen answer replays with that notice
-offline; this is not a post-change live run. A local E5 check found that a short
-context-dependent follow-up misses section 4.1 alone; adding the previous user
-question retrieves it. Policy search now uses that bounded one-turn context when
-the combined query is short. This checks retrieval only, not live answer quality.
-See the [actual review](docs/examples/us-18/results.md).
-The latest approved current-code batch stopped on its first mixed return turn with
-HTTP 500 after citation-format retry exhaustion. Both tools succeeded and order
-status was preserved, but policy applicability and missing facts were incompletely
-addressed. The other five planned turns remain untested; see the
-[batch review](docs/examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
-Sprint completion does not require RAG to outperform Full Context.
+[US-18](docs/examples/us-18/README.md) now appends a consistent “Fontes consultadas”
+list from policy records returned in the current run. It accepts readable generated
+references without requiring a citation grammar or corrective model call. The same
+simplification removes free-text amount matching and Portuguese intent checks:
+legitimate budget quotes and negated return requests previously triggered errors.
+Pricing calculations and customer isolation remain enforced by the tools. Tool use,
+generated prices and claim support are evaluated through conversations, rather than
+inferred from the wording of an answer. Blank/internal-control output still receives
+one corrective retry. Snapshot and partial-result notices remain automatic.
+
+The last approved live batch stopped on its first mixed return turn with HTTP 500
+at the earlier revision because of citation-format retry exhaustion. Replaying its
+saved candidate through the current HTTP path now returns 200 with source metadata,
+without changing the generated text. This is a controlled regression, not a new live
+Qwen result; its policy-scope omissions remain documented in the [batch review](docs/examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
+The other five live turns remain untested. A bounded local E5 check also supports
+adding the previous user question to short contextual follow-ups; broader retrieval
+optimization is deferred. Sprint completion does not require RAG to outperform Full Context.
 
 ## Run locally
 

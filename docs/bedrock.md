@@ -96,13 +96,11 @@ search with `promotions_only`. Original prices remain in `price_centavos/price_b
 typed `pricing` supplies the exact final price, applied percentage and offer source.
 Budget filters use payable prices. The model presents returned price details once;
 the application adds a concise snapshot notice for current-run discounted products.
-An explicit `R$` amount absent from current-run product prices/quotes or order totals
-triggers the existing output retry; exhaustion fails safely. Customer amounts and
-search bounds do not authorize output amounts. Compare or clarify using “seu orçamento”
-without repeating the budget amount. No extra retrieval is needed for a clarification.
-The correction request combines formatting and price feedback and asks for retrieval
-when facts are missing. This is numeric checking, not proof of correct price labels
-or complete grounding. See the [closing review](examples/sprint-2/closure/README.md).
+The application does not reject generated text by parsing currency amounts, citation
+punctuation or inferred request intent. These heuristics caused false rejections.
+Exact calculations remain in the pricing tools; tool use and faithful presentation
+remain model behaviors to evaluate. The source footer records consulted policy
+sections, without certifying every claim. See the [closing review](examples/sprint-2/closure/README.md).
 Those captures predate the source-only rule; no new live-model quality is claimed.
 Re-import the generated catalog with `--promotions` before use;
 see [pricing rules and source limits](catalog.md). The Sprint 2 evidence includes

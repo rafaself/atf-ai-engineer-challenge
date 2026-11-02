@@ -5,10 +5,10 @@ import hashlib
 import json
 import re
 import time
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from emporio_music_backend.agent.output import _BRL_PRICE, _brl_amount
 from emporio_music_backend.infrastructure.policy_index import PolicyIndex
 from emporio_music_backend.paths import DATA_DIRECTORY
 from emporio_music_backend.policy_retrieval import expand
@@ -25,6 +25,17 @@ encaminhou ou realizou ações. Se faltam fatos sobre o cliente ou regras, expli
 isso e peça esclarecimento. Separe políticas gerais de elegibilidade individual.
 Todo valor em R$ deve estar explicitamente na evidência desta rodada; não calcule
 preços, fretes ou descontos. Não inclua raciocínio interno nem tags de controle."""
+
+
+_BRL_PRICE = re.compile(r"R\$\s*([+-]?\d+(?:[.,]\d+)*)")
+
+
+def _brl_amount(text: str) -> Decimal:
+    if "," in text:
+        text = text.replace(".", "").replace(",", ".")
+    elif "." in text and len(text.rsplit(".", 1)[1]) == 3:
+        text = text.replace(".", "")
+    return Decimal(text)
 
 
 def evidence(ids: list[str], chunks: dict[str, Any]) -> str:

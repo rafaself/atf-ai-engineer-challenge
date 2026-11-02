@@ -511,3 +511,41 @@ The next investigation should distinguish citation-format brittleness from polic
 applicability and missing-fact handling. This batch supplies no new evidence about
 the unguarded standalone no-tool workflows. No production rules were changed from
 this result, and no semantic validator or additional orchestration was introduced.
+
+## Owner-approved output simplification after the failed batch
+
+The owner rejected citation formatting as a reason for HTTP failure and requested
+simple output handling, including a review of similar cases. Three focused regressions
+failed on the former implementation: the saved Qwen citation candidate returned HTTP
+500, a legitimate customer-budget quote was rejected as an unsupported price, and
+“Não quero devolver o pedido 4; só confira o status” was classified as a return request
+requiring a policy lookup.
+
+The output layer no longer parses generated citations, matches currency mentions to
+a set of tool values, or classifies mixed intent from Portuguese keywords. It appends
+“Fontes consultadas” from successful current policy records, and retains snapshot,
+partial-result and promotion notices. It still protects blank/internal-control output.
+Exact pricing, scoped reads, input validation, persistence and execution limits remain
+in their existing tool/application boundaries. Historical captures are unchanged.
+
+This intentionally retires the former output-provenance/amount/intent gates and their
+rejection tests. The application-generated source list is trustworthy provenance of
+consulted records; generated references and prices are not automatically certified.
+Unsupported claims and missed tool calls remain possible and must be reviewed as
+model behavior. There is no new semantic parser, judge model, router or fallback layer.
+The offline benchmark's optional numeric audit stays in benchmark code and does not
+reject application answers.
+
+The exact last Qwen candidate now returns HTTP 200 through a scripted HTTP/real SQLite
+regression after both tools, with no citation correction, without editing the generated
+text. Its missing applicability conditions are still recorded as a model-quality gap.
+Other tests cover source-notice deduplication, current versus historical/insufficient
+evidence, readable or missing model citations, budget quotes and negated return text.
+No live provider call was made; the exhausted batch was not rerun. Current live model
+quality remains unverified.
+
+Validation for this simplification: all 318 backend tests passed, Ruff lint/format
+passed, strict mypy passed across 89 files, source/wheel builds passed and
+`git diff --check` passed. The lower test count reflects removal of tests asserting
+the superseded prose-rejection contract; pricing arithmetic, customer scoping,
+persistence, sanitized operational errors and execution-limit coverage remain.
