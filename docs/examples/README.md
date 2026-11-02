@@ -40,6 +40,11 @@ The [current-harness Qwen3 32B and Nova Lite comparison](model-comparison/curren
 refreshes the broader nine-scenario model comparison after the persona, policy and
 deterministic inventory-notice updates, while preserving the historical #40 capture.
 
+The [post-implementation #43 review](issue-43-review/README.md) preserves its
+approved Qwen sample and 12-query local E5 retrieval check. It complements the later
+model evaluations; completed Sprint 4 setup and integration checks are recorded in
+the [US-23 validation report](../sprint-4-validation.md).
+
 ## Historical Sprint 1 evidence
 
 The original [captures](live/) preserve failures involving truncation disclosure,
