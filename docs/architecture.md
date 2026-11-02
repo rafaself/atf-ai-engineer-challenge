@@ -147,8 +147,13 @@ the model no longer has to use a prescribed disclosure phrase. A narrow output c
 also rejects the recorded affirmative wording that tied delivery to its estimate,
 while allowing nearby explicit negation. Neither check establishes general answer
 faithfulness. The [saved Qwen answer](examples/us-18/results.md) replays with the
-notice. One authorized post-change probe returned HTTP 503 during AWS token retrieval
-with zero model requests, so it did not test current Qwen behavior.
+notice. The first post-change live attempt explicitly selected the SSO profile and
+returned HTTP 503 during token retrieval before model inference; it did not load the
+repo-root `.env`, so it did not test those environment credentials. A separately
+approved env-based attempt then returned HTTP 200, used both required tools, and
+cited section 4.1. That answer also added an unsupported visual-inspection suggestion;
+one successful case does not establish general model reliability or semantic
+faithfulness.
 
 Policy search takes no arguments and uses the exact current user question. A bounded
 local E5 check retrieves section 4.1 for the full mixed question but misses it for

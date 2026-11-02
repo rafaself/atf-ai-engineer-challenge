@@ -9,9 +9,12 @@ actual receipt date. The API nevertheless returned HTTP 500 because the answer
 omitted one prescribed snapshot phrase. The output validator no longer requires
 that wording: it appends a deterministic notice when current order-tool results
 contain imported order records. Replaying that exact Qwen response now produces
-the answer plus notice offline. One authorized post-change probe attempt returned
-HTTP 503 before a model response because AWS token retrieval failed; it recorded
-zero model requests and tokens, so live Qwen behavior remains unverified.
+the answer plus notice offline. The first post-change live attempt selected the
+SSO profile path and failed before model inference. A later approved attempt loaded
+the repo-root `.env` and completed this mixed case with HTTP 200, both tools and a
+section 4.1 citation. The single answer still included one unsupported suggestion
+about visual inspection; see the [live review](results.md). This demonstrates the
+case behavior once, not general Qwen reliability or complete semantic faithfulness.
 
 Separate narrow checks still reject the recorded affirmative statement that an order
 was delivered “conforme o prazo estimado” and the recorded section 4.1 overstatement

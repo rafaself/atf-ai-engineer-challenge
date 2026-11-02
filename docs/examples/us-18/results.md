@@ -374,31 +374,51 @@ missing section 4.1. This confirms the current-question-only contract loses cont
 for that follow-up. No query expansion, ranking, corpus, frozen labels, US-15 metrics
 or targets were changed; context-aware retrieval remains a separate follow-up.
 
-The complete offline suite now passes **348 tests**. Ruff lint and format, strict
-mypy across 89 files, package build and `git diff --check` pass. The exact saved Qwen
-trace is replay evidence; actual post-change Qwen behavior remains unverified.
-No RAG-versus-Full-Context superiority claim is needed for sprint closure, and the
-unmet US-15 retrieval targets remain unchanged.
+The complete offline suite passes **349 tests**. Ruff lint and format, strict mypy
+across 89 files, package build and `git diff --check` pass. In addition to saved-trace
+replay, one post-change live mixed-case now received a Qwen response. This single
+case is descriptive evidence, not a reliability estimate. No RAG-versus-Full-Context
+superiority claim is needed for sprint closure, and the unmet US-15 retrieval targets
+remain unchanged.
 
-## Authorized post-change Qwen attempt
+## Authorized post-change Qwen attempts
 
-One frozen `mixed-order-return` case ran in `us-east-1` with the approved limits:
-five maximum model requests/tool calls, 1,024 output tokens per request, and a
-US$0.05 reservation cap. The API returned HTTP 503 in 0.631 seconds because AWS
-token retrieval failed before a model response. The trace records **zero model
-requests and zero input/output tokens**. The request failed during credential/token
-resolution before a Qwen answer, so it provides no evidence about current model
-tool selection or generation quality. A later read-only STS check of the designated
-SSO profile succeeded, so the evidence does not identify an expired profile session
-as the cause; model-request token retrieval remains unexplained. The single
-approved run was consumed; no retry was made.
+The first frozen `mixed-order-return` attempt ran in `us-east-1` with five maximum
+model requests/tool calls, 1,024 output tokens per request, and a US$0.05 reservation
+cap. It returned HTTP 503 before inference, with **zero model requests and zero
+input/output tokens**. That command explicitly selected the SSO profile and did not
+load the repo-root `.env`; a read-only STS call later confirmed the profile identity,
+but did not test Bedrock invocation or the access keys in `.env`. This failed attempt
+provides no evidence about model tool selection or answer quality.
 
-The sanitized capture preserves the exception class but omits Botocore's raw token
-provider and error text. Future diagnostics now add a fixed, non-sensitive hint for
-`TokenRetrievalError`; that hint does not claim to identify the underlying cause.
+The sanitized capture preserves the `TokenRetrievalError` class but omits Botocore's
+raw provider error. Diagnostics add a fixed, non-sensitive hint; they do not claim
+to identify the underlying cause. The later env-based success distinguishes the
+working credential path but does not diagnose why the SSO invocation failed.
 
-The capture is [mixed-postchange-qwen.json](mixed-postchange-qwen.json). The probe
-initially marked any completed HTTP exchange as a completed case; after reviewing the
-503/zero-usage evidence, the capture labels the probe `completed_with_failures` and
-the case `failed`. The probe harness now preserves that distinction for future runs.
-A new live check would require token retrieval to be restored and separate approval.
+The first capture is [mixed-postchange-qwen.json](mixed-postchange-qwen.json). The
+probe initially marked any completed HTTP exchange as a completed case; after review,
+the capture labels the probe `completed_with_failures` and the case `failed`. The
+harness now preserves that distinction for future runs.
+
+A second attempt was separately approved and loaded the repo-root `.env` with
+`AWS_PROFILE` unset, following the documented invocation. It returned HTTP 200 in
+20.877 seconds and used `get_my_order(order_id=4)` plus `search_store_policies`.
+The response preserved the snapshot's `delivered` status, did not infer a receipt
+date from the estimate, retrieved and cited current-run section 4.1, explained the
+seven-day period from actual receipt and its condition, and asked for purchase
+channel, actual receipt date, and product condition. The application appended the
+deterministic snapshot notice. The first generated answer was rejected for an
+unsupported citation and corrected by the existing single output retry; the final
+answer returned HTTP 200 after four model requests total, 16,591 input tokens and
+510 output tokens. At the historical accounting rates, the estimated cost was
+US$0.0037262; this is not invoice pricing and was under the approved US$0.05 cap.
+
+The final answer also said the condition “must be verified visually” and offered
+examples such as string use. Those details were not in the retrieved policy or tool
+evidence. Citation provenance was correct, but that does not prove every claim is
+faithful to the evidence. This is a concrete semantic-generation limitation; no new
+wording regex or paid follow-up was added to address one observation. The capture is
+[mixed-postchange-qwen-attempt-2.json](mixed-postchange-qwen-attempt-2.json). This
+single successful case shows the functional path once, not general tool-selection
+reliability or answer quality.
