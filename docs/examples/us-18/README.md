@@ -12,9 +12,12 @@ contain imported order records. Replaying that exact Qwen response now produces
 the answer plus notice offline. The first post-change live attempt selected the
 SSO profile path and failed before model inference. A later approved attempt loaded
 the repo-root `.env` and completed this mixed case with HTTP 200, both tools and a
-section 4.1 citation. The single answer still included one unsupported suggestion
-about visual inspection; see the [live review](results.md). This demonstrates the
-case behavior once, not general Qwen reliability or complete semantic faithfulness.
+section 4.1 citation. Its initial answer preserved the requested order status, but
+the citation-correction retry omitted that fact. Retry feedback now tells the model
+to preserve relevant operational facts; a scripted regression covers this path.
+This fix has not had another live Qwen run. The captured answer also included one
+unsupported suggestion about visual inspection; see the [live review](results.md).
+One live case does not establish general Qwen reliability or complete faithfulness.
 
 Separate narrow checks still reject the recorded affirmative statement that an order
 was delivered “conforme o prazo estimado” and the recorded section 4.1 overstatement

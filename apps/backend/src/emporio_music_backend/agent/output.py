@@ -325,6 +325,11 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             )
             if mixed_order_return:
                 correction += (
+                    "Preserve na resposta corrigida os fatos relevantes do pedido "
+                    "obtidos pelas ferramentas nesta rodada, incluindo o status que "
+                    "responde à pergunta do cliente. A explicação da política deve "
+                    "complementar esses fatos, não substituí-los; descreva o status "
+                    "como dado da fotografia importada. "
                     "Mantenha a previsão distinta do recebimento real. Se a seção 4.1 foi retornada, explique "
                     "sua regra geral de arrependimento online, incluindo prazo contado "
                     "do recebimento e use o critério exato 'sem sinais de uso', não "

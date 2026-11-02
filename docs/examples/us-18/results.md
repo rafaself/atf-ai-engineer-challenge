@@ -404,21 +404,28 @@ harness now preserves that distinction for future runs.
 A second attempt was separately approved and loaded the repo-root `.env` with
 `AWS_PROFILE` unset, following the documented invocation. It returned HTTP 200 in
 20.877 seconds and used `get_my_order(order_id=4)` plus `search_store_policies`.
-The response preserved the snapshot's `delivered` status, did not infer a receipt
-date from the estimate, retrieved and cited current-run section 4.1, explained the
-seven-day period from actual receipt and its condition, and asked for purchase
-channel, actual receipt date, and product condition. The application appended the
-deterministic snapshot notice. The first generated answer was rejected for an
-unsupported citation and corrected by the existing single output retry; the final
-answer returned HTTP 200 after four model requests total, 16,591 input tokens and
-510 output tokens. At the historical accounting rates, the estimated cost was
-US$0.0037262; this is not invoice pricing and was under the approved US$0.05 cap.
+The initial generated answer stated that order 4 was marked delivered. Its citation
+was rejected; the retry explained and cited current-run section 4.1, did not infer a
+receipt date from the estimate, and asked for purchase channel, actual receipt date,
+and product condition, but omitted the requested order status. The application
+appended the deterministic snapshot notice, which describes provenance but does not
+repeat operational status. The final answer returned HTTP 200 after four model
+requests total, 16,591 input tokens and 510 output tokens. At the historical
+accounting rates, the estimated cost was US$0.0037262; this is not invoice pricing
+and was under the approved US$0.05 cap.
 
 The final answer also said the condition “must be verified visually” and offered
 examples such as string use. Those details were not in the retrieved policy or tool
 evidence. Citation provenance was correct, but that does not prove every claim is
-faithful to the evidence. This is a concrete semantic-generation limitation; no new
-wording regex or paid follow-up was added to address one observation. The capture is
-[mixed-postchange-qwen-attempt-2.json](mixed-postchange-qwen-attempt-2.json). This
-single successful case shows the functional path once, not general tool-selection
-reliability or answer quality.
+faithful to the evidence. This is a concrete semantic-generation limitation. The
+capture is [mixed-postchange-qwen-attempt-2.json](mixed-postchange-qwen-attempt-2.json).
+This single case demonstrated both tools and policy grounding, but exposed the
+retry-status omission described above.
+
+The citation-retry feedback now instructs the model to retain relevant operational
+facts already returned by tools while correcting the policy explanation. A scripted
+HTTP regression forces a citation retry after both tools have run and verifies the
+corrected response retains the order status and current-run citation; it adds no
+production requirement for a particular status word. The focused regression module
+passes. This change has not been re-evaluated with a live Qwen call, so post-fix live
+behavior remains unverified.
