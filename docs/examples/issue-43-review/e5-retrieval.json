@@ -1,0 +1,182 @@
+{
+  "date": "2026-11-02",
+  "code_commit": "9383414191b1e7d92e8e62fd1f39467e9f32bd67",
+  "kind": "local actual E5 retrieval, not model generation",
+  "embedding": {
+    "model": "intfloat/multilingual-e5-base",
+    "dimensions": 768,
+    "revision": "d128750597153bb5987e10b1c3493a34e5a4502a",
+    "region": null,
+    "distance": "cosine",
+    "preprocessing": "query:/passage:, L2 normalized",
+    "tokenizer_revision": null
+  },
+  "freeze": {
+    "version": 3,
+    "parser_version": "poppler-normalized-sections-v4",
+    "extractor_version": "pdftotext version 25.07.0",
+    "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+    "freight_clarification_source": "policies/freight-clarification.json",
+    "freight_clarification_sha256": "ac9a588b6aaf06269edfabb3f5af1b5171f978c341f328dd0ff2d25b27b8cc13",
+    "questions_sha256": "dd0e79ff18d23da48998c58e79ef039e7d1eda74ba23670dce9b1aaa4ad588db",
+    "chunks_sha256": "e7247b740fcbd3fe9eabfa31bddb2135a6b61c33f8ca637db7837edf9c989e45",
+    "questions_source": "questions-v2.json",
+    "historical_questions_source": "questions.json",
+    "historical_questions_sha256": "936d946b94800b21822eccdb346cd6109db5501c9775c0d4ff08a6a334114a3c"
+  },
+  "queries": [
+    {
+      "query": "Meu pedido deu exatamente R$ 500. O frete é grátis?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Na Região Metropolitana de Campo Grande, uma compra de R$ 500,00 tem frete grátis?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Quanto custa o frete para um pedido de R$ 499,99 em Campo Grande?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Uma compra de R$ 500,01 tem entrega grátis na região de Campo Grande?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Qual o valor mínimo para frete grátis?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Quanto custa entregar na região de Campo Grande?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Vocês entregam na Região Metropolitana de Campo Grande?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Tem frete grátis em Campo Grande?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Para quais cidades vale a entrega gratuita?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Qual é a taxa de entrega local?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Quanto custa entregar na região de Campo Grande?\nE se der exatamente R$ 500?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    },
+    {
+      "query": "Frete grátis vale para outra cidade fora da região metropolitana?",
+      "status": "evidence_found",
+      "returned_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-freight-clarification-v1",
+        "policy-v2.1-s5.2"
+      ]
+    }
+  ],
+  "records": {
+    "policy-v2.1-s5.1": {
+      "id": "policy-v2.1-s5.1",
+      "source": "store_policies.pdf",
+      "section": "5.1",
+      "hierarchy": [
+        "5 Política de Frete e Entregas",
+        "5.1 Entregas na Região Metropolitana de Campo Grande"
+      ],
+      "pages": [
+        4
+      ],
+      "text": "5.1 Entregas na Região Metropolitana de Campo Grande\n• Frete grátis para pedidos acima de R$ 500,00.\n• Para pedidos abaixo de R$ 500,00, taxa fixa de R$ 35,00.\n• Prazo de entrega: 1 a 3 dias úteis.\n• Entrega realizada por motoboy próprio. O cliente será contactado por telefone antes da entrega."
+    },
+    "policy-v2.1-freight-clarification-v1": {
+      "id": "policy-v2.1-freight-clarification-v1",
+      "source": "policies/freight-clarification.json",
+      "section": "5.1 (clarificação aprovada)",
+      "hierarchy": [
+        "5 Política de Frete e Entregas",
+        "5.1 Entregas na Região Metropolitana de Campo Grande",
+        "Esclarecimento comercial aprovado"
+      ],
+      "pages": [],
+      "text": "Esclarecimento comercial aprovado pela proprietária da loja (fonte: policies/freight-clarification.json; referência: GitHub issue #43, Workstream A — Approved freight-policy clarification; registrado em 2026-11-02). Aplicabilidade: somente para entregas na Região Metropolitana de Campo Grande. A redação original do PDF na seção 5.1 não define o caso de igualdade; esta é uma clarificação comercial nova. Para pedidos com total abaixo de R$ 500,00, a taxa fixa de frete é R$ 35,00. Para pedidos com total igual ou superior a R$ 500,00, há frete grátis."
+    },
+    "policy-v2.1-s5.2": {
+      "id": "policy-v2.1-s5.2",
+      "source": "store_policies.pdf",
+      "section": "5.2",
+      "hierarchy": [
+        "5 Política de Frete e Entregas",
+        "5.2 Entregas para Outras Cidades"
+      ],
+      "pages": [
+        4,
+        5
+      ],
+      "text": "5.2 Entregas para Outras Cidades\nUtilizamos os serviços dos Correios (PAC e SEDEX) e da transportadora Jadlog para envios fora da região metropolitana de Campo Grande.\nModalidade: PAC (Correios) | Prazo Estimado: 5 a 12 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: SEDEX (Correios) | Prazo Estimado: 2 a 5 dias úteis | Rastreamento: Sim | Seguro: Incluído\nModalidade: Jadlog (.package) | Prazo Estimado: 3 a 8 dias úteis | Rastreamento: Sim | Seguro: Incluído\nO valor do frete é calculado automaticamente com base no CEP de destino, peso e dimensões do produto. Instrumentos de grande porte (baterias acústicas, pianos digitais, contrabaixos) podem exigir frete especial com cotação individual. Todos os envios incluem seguro contra extravios e danos durante o transporte. Em caso de avaria, o cliente deve recusar o recebimento e entrar em contato imediatamente com a loja."
+    }
+  },
+  "operator_index_errors": {
+    "missing": "Missing index; run explicit indexing first",
+    "stale": "Stale index configuration; use explicit --rebuild"
+  }
+}
