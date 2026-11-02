@@ -54,6 +54,8 @@ class OrderTools:
     ) -> dict[str, object]:
         """Read an order in the selected demo account, with at most 20 items.
 
+        Call again for follow-up questions about items, quantities, status or tracking,
+        using the order_id from the preceding list or conversation.
         Missing and inaccessible orders have the same not-found response. Tracking
         and estimated delivery reflect an import, not a live carrier consultation.
         Args:
