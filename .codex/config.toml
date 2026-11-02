@@ -2,3 +2,6 @@
 inherit = "core"
 experimental_use_profile = false
 ignore_default_excludes = false
+
+[agents]
+max_concurrent_threads_per_session = 8
