@@ -56,6 +56,55 @@ variation prevent a claim of general accuracy improvement. Policy freshness,
 eligibility and source attribution remain known limitations for US-23 (#70).
 No classifier, additional model, output gate or orchestration was added to hide them.
 
+## Holiday follow-up: retrieval reuse versus interpretation
+
+A subsequent review distinguishes tool-call compliance from factual quality. The
+customer first asked “Qual é o horário normal de funcionamento da loja?” and then
+“E nos feriados e no Natal, há atendimento?”. These are related questions, so
+reusing already available information is a plausible retrieval decision. A new
+lookup for every named holiday is not inherently necessary when the relevant rule
+and qualification are already available. The current persona nevertheless requires
+fresh tools for each factual turn; skipping the call violates that instruction.
+That compliance criterion alone does not prove the answer is factually wrong.
+
+The hypothesis that general hours and Christmas rules were split across chunks
+is **not supported in this case**. The first lookup returned one record,
+`policy-v2.1-s2`, source `store_policies.pdf`, section 2, physical page 2. Its text
+contained both:
+
+> Dia: Domingo e Feriados | Horário: Fechado
+
+> Em datas especiais (Black Friday, Aniversário da Loja, Natal), o horário pode ser estendido. Alterações serão comunicadas com antecedência nas redes sociais e no atendimento via WhatsApp.
+
+Qwen's initial answer correctly repeated both statements. For the next turn,
+`agent/factory.py` reconstructs conversational user/assistant text, not old tool
+returns. Thus the original source record was not replayed as a tool result, but
+its relevant contents remained available in the previous assistant answer. The
+follow-up even repeated the possible Christmas extension after opening:
+
+> A loja **não tem atendimento nos feriados e no Natal**, pois está fechada nesses dias.
+
+This is the substantive failure: unsupported categorical Christmas closure plus
+an inconsistent qualification in the same answer. The source describes general
+holiday closure and possible special hours; it does not supply a confirmed
+Christmas schedule for a particular date. A faithful response could present both
+conditions and leave the specific schedule unconfirmed, without another retrieval
+of the same record.
+
+“Christmas is a holiday, therefore the general closure applies” is a plausible
+explanation for the observed generalization, **not an observed internal reasoning
+trace**. These captures do not establish why Qwen chose not to search. The case
+supports an evidence-interpretation/qualification failure; it does not demonstrate
+missing retrieval coverage, a chunk-boundary defect, or that another identical
+search would have prevented the error. No rechunking, holiday-specific queries,
+mandatory routing or new inference is justified by this observation alone.
+
+The original fixed protocol, captures and verdicts remain unchanged. The final
+hours case remains Fail because of its unsupported/contradictory answer. For the
+final report, score these dimensions separately: retrieval sufficiency, tool-use
+instruction compliance, and answer faithfulness. Do not equate a redundant lookup
+with better grounding, or an omitted lookup with a hallucination by itself.
+
 ## Offline checks
 
 New notice regressions failed before implementation (3 failed / 6 passed) and
