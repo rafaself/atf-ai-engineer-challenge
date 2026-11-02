@@ -36,6 +36,8 @@ The other five live turns remain untested. A bounded local E5 check also support
 adding the previous user question to short contextual follow-ups; broader retrieval
 optimization is deferred. Sprint completion does not require RAG to outperform Full Context.
 
+Sprint 3 closure scope, evidence and deferred work are recorded in [the sprint closeout](docs/sprint-3.md).
+
 ## Run locally
 
 Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
