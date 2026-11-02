@@ -12,7 +12,10 @@ from typing import Any
 
 from emporio_music_backend.infrastructure.policy_index import PolicyIndex
 from emporio_music_backend.paths import DATA_DIRECTORY
-from emporio_music_backend.policy_corpus import PolicyCorpus
+from emporio_music_backend.policy_corpus import (
+    FREIGHT_CLARIFICATION_SOURCE,
+    PolicyCorpus,
+)
 from scripts.policy_benchmark.embeddings import MODELS, RATES, Embedder
 from scripts.policy_benchmark.evaluation import query_families, score, summarize
 
@@ -24,7 +27,7 @@ def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
     questions_bytes = (directory / "questions.json").read_bytes()
     chunks_hash = hashlib.sha256(
         json.dumps(
-            [chunk.model_dump() for chunk in corpus.chunks],
+            [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
             ensure_ascii=False,
             sort_keys=True,
         ).encode()
@@ -32,11 +35,17 @@ def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
     pdf_hash = hashlib.sha256(
         (DATA_DIRECTORY / "store_policies.pdf").read_bytes()
     ).hexdigest()
+    freight_clarification_hash = hashlib.sha256(
+        (DATA_DIRECTORY / FREIGHT_CLARIFICATION_SOURCE).read_bytes()
+    ).hexdigest()
     if (
         chunks_hash != freeze["chunks_sha256"]
         or hashlib.sha256(questions_bytes).hexdigest() != freeze["questions_sha256"]
         or pdf_hash != corpus.source_sha256
         or pdf_hash != freeze["source_sha256"]
+        or freeze["freight_clarification_source"] != FREIGHT_CLARIFICATION_SOURCE
+        or freight_clarification_hash != corpus.freight_clarification_sha256
+        or freight_clarification_hash != freeze["freight_clarification_sha256"]
         or corpus.parser_version != freeze["parser_version"]
     ):
         raise ValueError(
@@ -79,6 +88,7 @@ def run(args: argparse.Namespace, report: dict[str, Any]) -> None:
     config = {
         **embedder.config,
         "source_sha256": corpus.source_sha256,
+        "freight_clarification_sha256": corpus.freight_clarification_sha256,
         "corpus_sha256": freeze["chunks_sha256"],
         "parser_version": corpus.parser_version,
         "embedding_input": report["embedding_input"],

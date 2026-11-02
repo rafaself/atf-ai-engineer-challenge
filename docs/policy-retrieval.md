@@ -40,8 +40,11 @@ uv run --directory apps/backend --locked pytest tests/test_policy_corpus.py
 ```
 
 The command verifies `data/store_policies.pdf` against `data/SHA256SUMS`, invokes
-Poppler layout extraction and writes versionable `data/policies/corpus.json`.
-No credentials, model downloads, network, or new Python dependencies are needed.
+Poppler layout extraction, applies the versioned freight clarification and writes
+`data/policies/corpus.json`. `freeze.json` keeps a separate hash for the clarification
+source and a canonical hash for the effective records. The unchanged question-file
+hash keeps the historical evaluation labels intact. No credentials, model downloads,
+network, or new Python dependencies are needed.
 It is never invoked by application startup. Missing Poppler/extraction failure is
 an error, not an empty corpus. The source is never modified.
 
@@ -62,6 +65,11 @@ uv run --project apps/backend --extra policy-rag --locked \
   --output-dir /tmp/policy-rag-bootstrap
 ```
 
+The freight clarification changes the effective corpus and index fingerprint. Any
+previous `policy-e5` collection is therefore stale; rebuild it with `--index --rebuild`
+before using the updated corpus. Keep `--allow-download` only when you
+intend to fetch the pinned local E5 weights.
+
 This command may download the pinned `intfloat/multilingual-e5-base` weights after
 the explicit `--allow-download` flag, builds `data/policy-indexes/policy-e5`, and
 stores its development comparison report under `/tmp`. Generated weights and index
@@ -71,13 +79,18 @@ weights on CPU (`local_files_only`). A missing or stale corpus, model or index r
 retrieval error surfaced through the existing sanitized HTTP 503 contract. It is never
 reported to the customer as “no policy found.”
 
-The runtime verifies the PDF hash, canonical corpus hash, parser version, index
-fingerprint and exact indexable record IDs. It embeds the bounded policy query with
+The runtime verifies the PDF hash, separately versioned freight-clarification hash,
+canonical corpus hash, parser version, index fingerprint and exact indexable record
+IDs. It embeds the bounded policy query with
 E5's `query:` prefix and uses the same query-derived family filter rule as US-15,
 retrieves the three highest-ranked seeds, and adds only the authored one-hop
 relationships from the fixed manual, capped at eight records. Each excerpt includes
-the source, section hierarchy and physical page. Customer answers cite those references
-in readable form; the application independently lists all consulted sections/pages.
+its source, section hierarchy and physical page when the source has one. The approved
+freight clarification is a separate record sourced from
+`data/policies/freight-clarification.json`; it references section 5.1 but has no PDF
+page because its wording is not in the original manual. Customer answers cite available
+references in readable form; the application independently lists consulted
+sections/pages.
 The model should explain the applicable conditions when presenting a policy amount. Retrieved text
 is data, not an instruction source. The product, pricing and customer-order tools remain
 separate and deterministic. `search_store_policies` takes no model-selected query:
@@ -105,12 +118,14 @@ generated-answer quality.
 ## Preparation decisions
 
 The fixed v2.1 manual has 8 physical pages and 28 numbered sections. A compact page-1
-contact record preserves the cover email discrepancy, giving 29 records total. Each
-numbered section is one chunk; parent headings are attached as hierarchy, not duplicated
-body text. Heading-only parent sections 5, 6 and 8 remain as provenance-bearing records
-with `indexable=false`; US-15 must exclude those three from embeddings/search. The
-remaining 26 records are indexable. Cover branding is omitted, but the contact line is
-evidence and retains its original spelling and physical page reference. Repeated page
+contact record preserves the cover email discrepancy, giving 29 PDF-derived records.
+Each numbered section is one chunk; parent headings are attached as hierarchy, not
+duplicated body text. Heading-only parent sections 5, 6 and 8 remain as
+provenance-bearing records with `indexable=false`; the 26 remaining PDF-derived records
+are indexable. The approved freight clarification adds one separate, indexable record,
+for 30 effective records and 27 indexable records total. Cover branding is omitted, but
+the contact line is evidence and retains its original spelling and physical page
+reference. Repeated page
 headers, footers and final branding/version lines are omitted. Wrapped prose and list
 continuations are joined, repeated whitespace and invisible zero-width spaces are
 removed. The four tables become explicit header-labeled rows, including wrapped cell
@@ -119,8 +134,10 @@ derive from the first complete data row. Each of the four known table sections m
 contain exactly one table with the expected headers and row count; missing recognition
 fails instead of flattening the table into prose. This is specific to the reviewed
 manual, not a general PDF table parser. Physical PDF pages are numbered from 1. Sections
-5.2, 7.2 and 9 span pages; their content is joined without page furniture. No overlap is
-used: duplicating short rules would inflate relevance counts. Unexpected section
+5.2, 7.2 and 9 span pages; their content is joined without page furniture. A deterministic
+overlay adds the owner-approved equality rule as a separate record rather than rewriting
+section 5.1. Its source hash participates in the freeze and index fingerprint. No other
+overlap is used: duplicating short rules would inflate relevance counts. Unexpected section
 structure or changed source bytes fails for explicit review. Poppler version is recorded
 because extraction can vary by version. Semantic corpus comparison excludes that
 provenance field: an identical corpus from a different Poppler release is acceptable;
@@ -144,8 +161,13 @@ hash requiring refresh for every edit.
 - Payment table gives a general installment minimum while subsection 3.1 gives
   tier-specific conditions. Retrieve both for installment questions and qualify
   the discrepancy rather than silently imposing a precedence rule.
-- Local freight specifies above/below a threshold but not equality. Equality
-  requires clarification, not an invented free-shipping entitlement.
+- The original PDF's local freight clause specifies above/below a threshold but not
+  equality. Owner-approved Workstream A in #43 resolves equality: for deliveries in
+  the Região Metropolitana de Campo Grande, totals below R$ 500,00 cost R$ 35,00 and
+  totals at or above R$ 500,00 are free. The separate clarification source preserves
+  this new decision without attributing its wording to the PDF. Historical US-15 and
+  benchmark captures remain evidence against the earlier ambiguous source; their
+  questions, labels and results are unchanged.
 - Return eligibility needs channel, actual receipt, condition and exclusions;
   imported order status alone does not establish these. Warranty statements are
   manual claims, not independently verified legal advice.

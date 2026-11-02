@@ -1,8 +1,9 @@
 {
   "source": "store_policies.pdf",
   "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
-  "parser_version": "poppler-normalized-sections-v3",
+  "parser_version": "poppler-normalized-sections-v4",
   "extractor_version": "pdftotext version 25.07.0",
+  "freight_clarification_sha256": "ac9a588b6aaf06269edfabb3f5af1b5171f978c341f328dd0ff2d25b27b8cc13",
   "chunks": [
     {
       "id": "policy-v2.1-cover",
@@ -372,6 +373,19 @@
       ],
       "text": "10. Disposições Finais\nEste manual é um documento interno da Empório da Música e deve ser utilizado como referência por todos os membros da equipe de atendimento, incluindo o assistente virtual. As políticas descritas neste documento estão sujeitas a atualizações periódicas. Em caso de dúvidas sobre a aplicação de qualquer política, o atendente deve consultar a gerência antes de fornecer informações ao cliente. O objetivo é sempre garantir transparência, precisão e a melhor experiência possível para o cliente.",
       "indexable": true
+    },
+    {
+      "id": "policy-v2.1-freight-clarification-v1",
+      "section": "5.1 (clarificação aprovada)",
+      "hierarchy": [
+        "5 Política de Frete e Entregas",
+        "5.1 Entregas na Região Metropolitana de Campo Grande",
+        "Esclarecimento comercial aprovado"
+      ],
+      "pages": [],
+      "text": "Esclarecimento comercial aprovado pela proprietária da loja (fonte: policies/freight-clarification.json; referência: GitHub issue #43, Workstream A — Approved freight-policy clarification; registrado em 2026-11-02). Aplicabilidade: somente para entregas na Região Metropolitana de Campo Grande. A redação original do PDF na seção 5.1 não define o caso de igualdade; esta é uma clarificação comercial nova. Para pedidos com total abaixo de R$ 500,00, a taxa fixa de frete é R$ 35,00. Para pedidos com total igual ou superior a R$ 500,00, há frete grátis.",
+      "indexable": true,
+      "source": "policies/freight-clarification.json"
     }
   ]
 }
