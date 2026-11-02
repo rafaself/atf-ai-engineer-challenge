@@ -1,0 +1,66 @@
+{
+  "region": "us-east-1",
+  "service_tier": "standard",
+  "currency": "USD",
+  "checked_at_utc": "2026-11-02",
+  "endpoint_tool_checked_at_utc": "2026-11-02",
+  "price_list_version": "20261030160456",
+  "verified": true,
+  "verification_note": "All standard on-demand token rates were read from the current AWS Price List Bulk API us-east-1 offer on 2026-11-02. AWS lists prices per 1K tokens; values below are converted to per 1M tokens. The offer version is 20261030160456.",
+  "models": [
+    {
+      "key": "nova_micro",
+      "model_id": "amazon.nova-micro-v1:0",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_model_id": "amazon.nova-micro-v1:0",
+      "inference_api": "converse",
+      "context_window_tokens": 128000,
+      "input_usd_per_million": 0.035,
+      "output_usd_per_million": 0.14,
+      "price_skus": {
+        "input": "XAR69MSGZSU6FEM9",
+        "output": "YUSGHKDUPQRC75RK"
+      },
+      "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
+      "rate_status": "verified",
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-micro.html",
+      "tool_use_status": "verified"
+    },
+    {
+      "key": "nova_lite",
+      "model_id": "amazon.nova-lite-v1:0",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_model_id": "amazon.nova-lite-v1:0",
+      "inference_api": "converse",
+      "context_window_tokens": 300000,
+      "input_usd_per_million": 0.06,
+      "output_usd_per_million": 0.24,
+      "price_skus": {
+        "input": "QRGWJ3P8FT28EYX2",
+        "output": "CBZ6A6U7XK8WJ3KA"
+      },
+      "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
+      "rate_status": "verified",
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-lite.html",
+      "tool_use_status": "verified"
+    },
+    {
+      "key": "qwen3_32b",
+      "model_id": "qwen.qwen3-32b-v1:0",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_model_id": "qwen.qwen3-32b-v1:0",
+      "inference_api": "converse",
+      "context_window_tokens": 32000,
+      "input_usd_per_million": 0.15,
+      "output_usd_per_million": 0.6,
+      "price_skus": {
+        "input": "U6WAJF7G3M4RQS3M",
+        "output": "7TG6VJR3W3D8EKG8"
+      },
+      "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
+      "rate_status": "verified",
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-qwen-qwen3-32b.html",
+      "tool_use_status": "verified"
+    }
+  ]
+}
