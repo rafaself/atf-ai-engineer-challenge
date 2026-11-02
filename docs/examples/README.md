@@ -1,5 +1,8 @@
 # Live interaction evidence
 
+For the evaluator, start with [four curated Portuguese conversations](submission.md).
+The selection identifies historical revisions, actual model results and limitations.
+
 Start with the [Sprint 2 closing conversations](sprint-2/closure/README.md): budget/context,
 promotions/PIX and customer orders on the final application code, including failed attempts.
 The [US-17 paired policy review](us-17/results.md) adds four real Portuguese
