@@ -23,8 +23,13 @@ do not establish complete challenge acceptance or guarantee every future answer.
 explicit mixed order/return tool checks and contextual interpretation guidance.
 These corrections have offline regression coverage. The first live follow-up passes
 three cases; the mixed case still needs revalidation after further corrections.
-See the [actual review](docs/examples/us-18/results.md). Retrieval optimization is deferred, and sprint completion does not
-require RAG to outperform Full Context.
+The backend now appends an order-snapshot notice from current tool metadata instead
+of requiring a fixed phrase. The last saved Qwen answer replays with that notice
+offline; this is not a post-change live run. A local E5 check also found that a
+context-dependent “what if I used it?” follow-up misses section 4.1 when the policy
+tool receives only that short question. Context-aware retrieval is deferred with
+other optimization work. See the [actual review](docs/examples/us-18/results.md).
+Sprint completion does not require RAG to outperform Full Context.
 
 ## Run locally
 

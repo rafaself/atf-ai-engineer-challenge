@@ -337,3 +337,46 @@ authorized check.
 After this correction, **344 offline tests passed** in 10.09 seconds. Ruff lint
 and format checks passed, strict mypy passed across 89 files, the source distribution
 and wheel built, and `git diff --check` passed. No additional provider call was made.
+
+## Follow-up implementation after the last Qwen capture
+
+The recorded final answer in [mixed-final-qwen.json](mixed-final-qwen.json) used
+both tools, retrieved section 4.1, cited it, preserved the imported “delivered”
+status without inferring an actual receipt date, and asked for the missing eligibility
+facts. Its HTTP 500 came from the output validator requiring a specific snapshot
+phrase. That phrase requirement is removed. When a current-run `get_my_order` or
+`list_my_orders` result identifies a nonempty imported snapshot, the application
+appends one deterministic note that the order data is imported and that an estimated
+delivery does not confirm actual receipt. It does not rewrite the generated status
+or dates. Exact duplicate notices are suppressed; empty results and historical tool
+returns do not trigger the notice.
+
+The recorded Qwen answer now replays through the output validator and returns the
+answer with the appended notice in an offline regression. Separate order-API tests
+verify that the notice survives the HTTP path and persisted history. The older
+`live-captures.json` answer that says the order was delivered “conforme o prazo
+estimado” is instead rejected with targeted feedback. This lexical check addresses
+that explicit observed relation only; it is not a semantic entailment guarantee and
+does not cover all paraphrases. The separate “perfeito estado” check remains because
+captures showed the model importing section 4.3's stricter condition into section
+4.1; it can reject an accurate negation of that wording. Both limitations are
+documented rather than treated as proof of faithfulness.
+
+The exact snapshot phrase was also removed from the persona and order-tool guidance,
+and the general output correction now includes only feedback for the failed checks.
+Current-run citation and monetary provenance checks, mixed-tool enforcement,
+customer-scoped order access, the single retry and execution limits remain unchanged.
+
+A bounded provider-free E5/Chroma check used the same index for two queries. The
+full mixed question returned sections 4.3, 4.1, 5.2 and 4.4. The contextual
+follow-up “E se eu já usei o instrumento?” returned 1.1, 10, 8.3, 4.2, 8.1 and 8.2,
+missing section 4.1. This confirms the current-question-only contract loses context
+for that follow-up. No query expansion, ranking, corpus, frozen labels, US-15 metrics
+or targets were changed; context-aware retrieval remains a separate follow-up.
+
+The complete offline suite now passes **347 tests**. Ruff lint and format, strict
+mypy across 89 files, package build and `git diff --check` pass. The exact saved Qwen
+trace is replay evidence, not a new provider call; actual post-change Qwen behavior
+remains unverified and requires separate opt-in. No RAG-versus-Full-Context superiority
+claim is needed for sprint closure, and the unmet US-15 retrieval targets remain
+unchanged.

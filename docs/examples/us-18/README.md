@@ -3,21 +3,40 @@
 Issue: [#59](https://github.com/rafaself/atf-ai-engineer-challenge/issues/59), parent
 [#49](https://github.com/rafaself/atf-ai-engineer-challenge/issues/49).
 Status: the orchestration, grounding, and citation-format fixes are in place. The
-latest live Qwen mixed-case run used both tools and retrieved section 4.1. One
-correction supplied the rule, current citation, and correct “sem sinais de uso”
-condition, but still omitted the explicit imported-snapshot disclosure; the output
-validator failed safely with HTTP 500 after its single retry. A new correction now
-provides exact snapshot wording, with offline trace regression. It has not received
-a post-change live check. The earlier sandbox stall was reproduced by a fake-service
-ASGI request and disappeared outside the restricted sandbox. Alternative-model
-comparison is deferred; no comparative performance claim is made. See
-[actual results and follow-up](results.md).
+latest saved live Qwen mixed-case answer used both tools, retrieved section 4.1,
+gave its rule and citation, preserved the “delivered” status, and asked for the
+actual receipt date. The API nevertheless returned HTTP 500 because the answer
+omitted one prescribed snapshot phrase. The output validator no longer requires
+that wording: it appends a deterministic notice when current order-tool results
+contain imported order records. Replaying that exact Qwen response now produces
+the answer plus notice offline; no post-change provider call has been made.
+
+A separate narrow check still rejects the recorded statement that an order was
+delivered “conforme o prazo estimado.” It addresses that observed false inference,
+not arbitrary paraphrases or general faithfulness. The “perfeito estado” guard is
+also retained because the model repeatedly imported section 4.3's stricter rule into
+section 4.1; it can reject a correct answer that negates the phrase. Both are limited
+lexical safeguards, not semantic guarantees. The earlier sandbox stall was reproduced
+by a fake-service ASGI request and disappeared outside the restricted sandbox.
+Alternative-model comparison is deferred; no comparative performance claim is made.
+See [actual results and follow-up](results.md).
 
 The owner's clarified completion criterion is required functional behavior, confirmed
 defect fixes, and an honest limitations assessment. RAG need not outperform Full
 Context to complete this story or close the sprint. Retrieval optimization and
 broader architecture comparisons are deferred. US-15's failed adequacy gates remain
 reported, without lowering them or making optimization a prerequisite for these fixes.
+
+## Bounded context-dependent retrieval check
+
+The policy tool passes the exact current question and does not include conversation
+history. With the same cached E5 model and Chroma index, the full mixed order/return
+question retrieved sections 4.3, 4.1, 5.2 and 4.4. The follow-up “E se eu já usei
+o instrumento?” returned 1.1, 10, 8.3, 4.2, 8.1 and 8.2, missing both 4.1 and its
+online-withdrawal conditions. This isolates a context-dependent retrieval gap in a
+bounded local check; it is not an answer-quality test or a new US-15 metric result.
+No corpus, ranking, labels, or query contract changed. Context-aware retrieval is
+deferred to a separate evidence-driven implementation.
 
 ## Investigation and changes
 

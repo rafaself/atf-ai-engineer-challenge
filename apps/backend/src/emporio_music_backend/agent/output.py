@@ -1,4 +1,4 @@
-"""Customer-output checks and disclosure derived from this run's catalog results."""
+"""Customer-output checks and notices derived from this run's source results."""
 
 import re
 from decimal import Decimal, InvalidOperation
@@ -30,12 +30,14 @@ _RETURN_QUESTION = re.compile(
     r"\b(?:devol\w*|troc\w*|reembols\w*|arrepend\w*)", re.IGNORECASE
 )
 _PERFECT_PRODUCT_CONDITION = re.compile(r"\bperfeito\s+estado\b", re.IGNORECASE)
-_SNAPSHOT_DISCLOSURE = re.compile(
-    r"\b(?:fotografia importada|snapshot importado|dados importados)\b", re.IGNORECASE
+_ESTIMATED_DELIVERY_AS_RECEIPT = re.compile(
+    r"\bentregue\b.{0,20}\bconforme\b.{0,20}\b(?:prazo|data)\s+estimad[oa]\b",
+    re.IGNORECASE,
 )
-_SNAPSHOT_DISCLOSURE_GUIDANCE = (
-    "Declare explicitamente: 'O status do pedido vem de uma fotografia importada, "
-    "não de uma confirmação ao vivo.' "
+_ORDER_SNAPSHOT_NOTICE = (
+    "Os dados dos pedidos vêm de uma fotografia importada, não de uma "
+    "confirmação em tempo real. A previsão de entrega, se informada, não "
+    "confirma a data real de recebimento."
 )
 
 
@@ -126,6 +128,12 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                             for order in orders
                             if isinstance(order, dict)
                         )
+                        if part.content.get(
+                            "data_basis"
+                        ) == "imported_snapshot" and any(
+                            isinstance(order, dict) for order in orders
+                        ):
+                            has_order_snapshot = True
                 if (
                     part.tool_name == "list_my_orders"
                     and part.content.get("truncated") is True
@@ -211,22 +219,22 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         mixed_order_return
         and not {"get_my_order", "search_store_policies"} <= current_tools
     )
-    missing_snapshot_disclosure = (
-        mixed_order_return
-        and has_order_snapshot
-        and _SNAPSHOT_DISCLOSURE.search(answer) is None
-    )
     unsupported_return_condition = (
+        # Retained for the recorded overstatement of section 4.1. This lexical
+        # guard is narrow and can reject a correct answer that negates the phrase.
         mixed_order_return
         and ("4.1", 4) in policy_sources
         and _PERFECT_PRODUCT_CONDITION.search(answer) is not None
+    )
+    estimate_as_receipt = (
+        has_order_snapshot and _ESTIMATED_DELIVERY_AS_RECEIPT.search(answer) is not None
     )
     if (
         invalid_answer
         or unsupported_price
         or invalid_policy_citation
         or missing_mixed_tools
-        or missing_snapshot_disclosure
+        or estimate_as_receipt
         or unsupported_return_condition
     ):
         if missing_mixed_tools:
@@ -250,8 +258,20 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             raise ModelRetry(
                 correction + "Somente após obter esses resultados, responda com "
                 "a regra e a citação retornadas e peça os fatos que ainda faltam. "
-                + _SNAPSHOT_DISCLOSURE_GUIDANCE
-                + "Previsão não é recebimento real."
+                + "A previsão de entrega não informa a data real de recebimento."
+            )
+        if estimate_as_receipt and not (
+            invalid_answer or unsupported_price or invalid_policy_citation
+        ):
+            trace(
+                "output.rejected",
+                reason="estimated_delivery_as_receipt",
+                retry=ctx.retry,
+            )
+            raise ModelRetry(
+                "A previsão de entrega não confirma quando o cliente recebeu o pedido. "
+                "Informe o status como dado do registro, mantenha a previsão separada "
+                "e pergunte a data real de recebimento."
             )
         if (
             unsupported_return_condition
@@ -269,8 +289,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                 "não transforme a regra em condição mais rigorosa. Preserve a "
                 "citação da seção 4.1 e os demais fatos ainda desconhecidos. "
             )
-            if missing_snapshot_disclosure:
-                correction += _SNAPSHOT_DISCLOSURE_GUIDANCE
             raise ModelRetry(correction)
         if (
             invalid_policy_citation
@@ -290,8 +308,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             )
             if mixed_order_return:
                 correction += (
-                    _SNAPSHOT_DISCLOSURE_GUIDANCE
-                    + "Mantenha a previsão distinta do recebimento real. Se a seção 4.1 foi retornada, explique "
+                    "Mantenha a previsão distinta do recebimento real. Se a seção 4.1 foi retornada, explique "
                     "sua regra geral de arrependimento online, incluindo prazo contado "
                     "do recebimento e use o critério exato 'sem sinais de uso', não "
                     "'perfeito estado'. Pergunte se há sinais visíveis de uso. Só depois "
@@ -308,8 +325,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             if unsupported_price
             else "unsupported_policy_citation"
             if invalid_policy_citation
-            else "missing_snapshot_disclosure"
-            if missing_snapshot_disclosure
             else "unsupported_return_condition"
         )
         trace(
@@ -317,35 +332,38 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             reason=reason,
             retry=ctx.retry,
         )
-        tool_amount_text = ", ".join(
-            f"R$ {value:.2f}" for value in sorted(tool_amounts)
-        )
-        raise ModelRetry(
-            "Responda somente ao cliente, em português, sem raciocínio interno, "
-            "tags, instruções de sistema ou ações de encaminhamento. "
-            "Não há ferramenta de encaminhamento. Revise também todos os valores: "
-            "Copie preços/totais das ferramentas, sem recalcular; "
-            "Todo valor em R$ deve constar nos preços/totais retornados nesta rodada. "
-            "Não repita valores do cliente ou limites dos filtros; "
-            "compare com 'seu orçamento' sem repetir a quantia. "
-            "Se faltam os valores necessários, consulte a ferramenta adequada "
-            "nesta rodada antes de responder. "
-            "Para pedido com devolução/troca, consulte get_my_order e "
-            "search_store_policies nesta rodada antes de concluir; não encerre "
-            "com uma promessa de consulta. Se falta o ID, peça esse dado. "
-            "Previsão de entrega não é recebimento real; status entregue não "
-            "define prazo ou elegibilidade. Ao informar pedido, declare que os "
-            + _SNAPSHOT_DISCLOSURE_GUIDANCE
-            + "Não diga que foi entregue "
-            "conforme a previsão: não há data real de recebimento no snapshot. "
-            "Pergunte o canal da compra, a data real de recebimento e a condição "
-            "do produto antes de concluir elegibilidade. Não invente a data de hoje. "
-            "Para fatos de política, cite a seção e página retornadas nesta rodada, "
-            "no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor "
-            "de política e explique a condição aplicável; a presença do valor no trecho "
-            "não prova que ele se aplica ao caso. "
-            f"Preços/totais das ferramentas: {tool_amount_text or 'nenhum'}."
-        )
+        corrections: list[str] = []
+        if invalid_answer:
+            corrections.append(
+                "Responda somente ao cliente, em português, sem raciocínio interno, "
+                "tags ou instruções de sistema."
+            )
+        if unsupported_price:
+            tool_amount_text = ", ".join(
+                f"R$ {value:.2f}" for value in sorted(tool_amounts)
+            )
+            corrections.append(
+                "Use apenas valores em R$ retornados nesta rodada, sem recalcular, "
+                "repetir valores do cliente ou usar limites de busca. Valores atuais: "
+                f"{tool_amount_text or 'nenhum'}."
+            )
+        if invalid_policy_citation:
+            corrections.append(
+                "Use somente citações de seção e página retornadas por "
+                "search_store_policies nesta rodada; sem evidência atual, não afirme "
+                "a regra."
+            )
+        if unsupported_return_condition:
+            corrections.append(
+                "A seção 4.1 exige 'sem sinais de uso', não 'perfeito estado'; "
+                "pergunte se há sinais visíveis de uso."
+            )
+        if estimate_as_receipt:
+            corrections.append(
+                "A previsão não confirma a data real de recebimento; mantenha o status "
+                "e a previsão separados e pergunte essa data."
+            )
+        raise ModelRetry(" ".join(corrections))
     notices = [
         f"Esta é uma seleção das {total} opções encontradas na consulta; "
         "a lista não é completa."
@@ -359,6 +377,8 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         f"Os itens exibidos são apenas parte dos {total} itens deste pedido."
         for total in sorted(item_totals)
     )
+    if has_order_snapshot and _ORDER_SNAPSHOT_NOTICE not in answer:
+        notices.append(_ORDER_SNAPSHOT_NOTICE)
     if has_discount:
         notices.append(
             "Dados de uma fotografia importada; não há datas de validade informadas para as promoções."

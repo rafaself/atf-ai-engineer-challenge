@@ -197,7 +197,10 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
         )
     )
 
-    assert result.answer.endswith("[política 4.1, p. 4]")
+    assert result.answer.startswith("O status vem de uma fotografia importada")
+    assert "[política 4.1, p. 4]" in result.answer
+    assert result.answer.endswith("confirma a data real de recebimento.")
+    assert result.answer.count("Os dados dos pedidos vêm") == 1
     assert called == ["search_store_policies", "get_my_order"]
     assert policy.queries == ["Meu pedido pode ser devolvido?"]
     assert orders.identities == [identity]

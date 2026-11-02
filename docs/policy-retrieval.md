@@ -8,19 +8,18 @@ Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
 Follow-up [US-18 #59](examples/us-18/README.md) fixes current-run citation checks and
 explicit mixed-tool omissions, and adds interpretation guidance beside unchanged
-policy excerpts. Semantic answer support remains separate from citation provenance.
-Its [first live follow-up](examples/us-18/results.md) passes three cases but retains
-a mixed-case failure. A focused rerun fixed snapshot semantics but exposed a
-model-rewritten query miss; policy search now takes no arguments and uses the exact
-current question from application context. The next live attempt omitted the lookup
-and failed safely; focused missing-tool feedback now requires policy lookup before
-asking customer eligibility facts. Two later checks retrieve section 4.1 with both
-tools, but answer faithfulness is still partial. The latest focused citation feedback
-requires explaining the supported rule and keeps policy references separate from
-order facts. Live functional revalidation remains pending.
-Superiority over Full Context
-and retrieval optimization are not sprint-closing requirements. Frozen benchmark
-shortfalls remain documented and optimization is deferred.
+policy excerpts. Order provenance is now appended by the application from current
+imported-snapshot results, rather than enforced through a fixed phrase; the exact
+saved Qwen answer replays with this notice offline. This is not a post-change live
+run. Semantic answer support remains separate from citation provenance.
+
+The current policy tool passes only the exact current question. A bounded local E5
+check retrieved section 4.1 for the full mixed order/return question but missed it
+for “E se eu já usei o instrumento?”, returning sections 1.1, 10, 8.3, 4.2, 8.1
+and 8.2 instead. Context-aware follow-up retrieval is therefore a measured gap;
+implementation is deferred to a later evidence-driven retrieval task. Frozen US-15
+targets remain unmet. Sprint closure does not require RAG to outperform Full Context,
+and post-change live Qwen behavior is still unverified.
 
 ## Reproduce offline
 

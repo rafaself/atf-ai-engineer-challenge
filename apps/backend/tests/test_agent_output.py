@@ -450,6 +450,9 @@ def test_combined_output_failures_include_current_prices_in_one_correction() -> 
         customer_answer(context, "<thinking>Rascunho</thinking>Preço: R$ 405,28.")
     assert "439.20" in str(correction.value)
     assert "549.00" in str(correction.value)
+    assert "get_my_order" not in str(correction.value)
+    assert "search_store_policies" not in str(correction.value)
+    assert "previsão de entrega" not in str(correction.value)
 
 
 @pytest.mark.parametrize("customer_history", [True, False])

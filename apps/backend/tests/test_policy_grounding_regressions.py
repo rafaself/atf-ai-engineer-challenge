@@ -10,6 +10,7 @@ from pydantic_ai import ModelRetry, RunContext
 from pydantic_ai.messages import (
     ModelMessage,
     ModelMessagesTypeAdapter,
+    ModelRequest,
     ModelResponse,
     TextPart,
     ToolCallPart,
@@ -67,7 +68,7 @@ class SourcePolicySearch:
         return {"status": "evidence_found", "records": self.records}
 
 
-def test_live_mixed_answer_with_both_tools_still_requires_snapshot_disclosure() -> None:
+def test_live_mixed_answer_cannot_treat_estimate_as_receipt() -> None:
     report = json.loads(
         (DATA_DIRECTORY.parent / "docs/examples/us-18/live-captures.json").read_text()
     )
@@ -85,7 +86,7 @@ def test_live_mixed_answer_with_both_tools_still_requires_snapshot_disclosure() 
         run_id="recorded-current",
         messages=messages,
     )
-    with pytest.raises(ModelRetry, match="fotografia importada"):
+    with pytest.raises(ModelRetry, match="não confirma quando o cliente recebeu"):
         customer_answer(context, run["http_response"]["answer"])
 
 
@@ -186,12 +187,14 @@ def test_recorded_qwen_mixed_answer_retries_overstated_use_condition() -> None:
         "Há sinais visíveis de uso? Você tem embalagem original, acessórios e manuais?",
     )
     assert corrected != answer
-    assert customer_answer(context, corrected) == corrected
+    accepted = customer_answer(context, corrected)
+    assert accepted.startswith(corrected)
+    assert "fotografia importada" in accepted
     assert "seção 4.1, p. 4" in answer
     assert "sem sinais de uso" in answer
 
 
-def test_latest_qwen_answer_gets_exact_imported_snapshot_correction() -> None:
+def test_latest_qwen_answer_gets_deterministic_imported_snapshot_notice() -> None:
     run = json.loads(
         (
             DATA_DIRECTORY.parent / "docs/examples/us-18/mixed-final-qwen.json"
@@ -215,24 +218,92 @@ def test_latest_qwen_answer_gets_exact_imported_snapshot_correction() -> None:
         messages=messages,
     )
 
-    with pytest.raises(ModelRetry) as correction:
-        customer_answer(context, answer)
-    assert "O status do pedido vem de uma fotografia importada" in str(correction.value)
-    assert "confirmação ao vivo" in str(correction.value)
-
-    corrected = answer.replace(
-        'O pedido 4 está listado como "entregue" na nossa base de dados, mas a '
-        "data real de recebimento não está disponível.",
-        "O pedido 4 aparece como entregue na fotografia importada, sem "
-        "confirmação ao vivo. A data real de recebimento não está disponível.",
+    notice = (
+        "Os dados dos pedidos vêm de uma fotografia importada, não de uma "
+        "confirmação em tempo real. A previsão de entrega, se informada, não "
+        "confirma a data real de recebimento."
     )
-    assert corrected != answer
-    accepted = customer_answer(context, corrected)
-    assert accepted == corrected
-    assert "pedido 4" in accepted
-    assert "entregue" in accepted
-    assert "fotografia importada" in accepted
-    assert "sem confirmação ao vivo" in accepted
+    accepted = customer_answer(context, answer)
+    assert accepted == f"{answer}\n\n{notice}"
+    assert 'O pedido 4 está listado como "entregue"' in accepted
+    assert "data real de recebimento não está disponível" in accepted
+    assert "previsão de entrega" in accepted
+    assert "não confirma a data real de recebimento" in accepted
+
+    # Replaying an answer that already carries the application notice must not
+    # append the same notice twice.
+    assert customer_answer(context, accepted) == accepted
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "content", "expected_notice"),
+    [
+        (
+            "get_my_order",
+            {"data_basis": "imported_snapshot", "order": {"order_id": 4}},
+            True,
+        ),
+        (
+            "list_my_orders",
+            {
+                "data_basis": "imported_snapshot",
+                "orders": [{"order_id": 4}],
+            },
+            True,
+        ),
+        (
+            "get_my_order",
+            {"data_basis": "imported_snapshot", "order": None},
+            False,
+        ),
+        (
+            "list_my_orders",
+            {"data_basis": "imported_snapshot", "orders": []},
+            False,
+        ),
+    ],
+)
+def test_order_snapshot_notice_requires_nonempty_current_order_data(
+    tool_name: str,
+    content: dict[str, object],
+    expected_notice: bool,
+) -> None:
+    context = RunContext(
+        deps=ExecutionContext(identity=CustomerIdentity(customer_id=1)),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(parts=[ToolReturnPart(tool_name, content)], run_id="current")
+        ],
+    )
+    answer = customer_answer(context, "Aqui estão os pedidos encontrados.")
+    assert ("fotografia importada" in answer) is expected_notice
+
+
+def test_order_snapshot_notice_ignores_previous_run_results() -> None:
+    context = RunContext(
+        deps=ExecutionContext(identity=CustomerIdentity(customer_id=1)),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=[
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "get_my_order",
+                        {
+                            "data_basis": "imported_snapshot",
+                            "order": {"order_id": 4},
+                        },
+                    )
+                ],
+                run_id="previous",
+            )
+        ],
+    )
+    answer = "Aqui estão os pedidos encontrados."
+    assert customer_answer(context, answer) == answer
 
 
 def test_recorded_mixed_failure_is_corrected_through_http(

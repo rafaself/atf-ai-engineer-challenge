@@ -76,7 +76,6 @@ class OrderTools:
             **(
                 {
                     "answer_guidance": [
-                        "Descreva status e datas como fotografia importada, não confirmação ao vivo. "
                         "estimated_delivery é somente previsão: não diga que o pedido foi entregue "
                         "nessa data ou conforme esse prazo. O snapshot não informa data real de "
                         "recebimento, canal da compra nem condição do produto. Para devolução, "
