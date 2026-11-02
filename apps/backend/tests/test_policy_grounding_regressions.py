@@ -68,7 +68,7 @@ class SourcePolicySearch:
         return {"status": "evidence_found", "records": self.records}
 
 
-def test_live_mixed_answer_cannot_treat_estimate_as_receipt() -> None:
+def test_live_mixed_answer_distinguishes_estimate_claim_from_negation() -> None:
     report = json.loads(
         (DATA_DIRECTORY.parent / "docs/examples/us-18/live-captures.json").read_text()
     )
@@ -88,6 +88,15 @@ def test_live_mixed_answer_cannot_treat_estimate_as_receipt() -> None:
     )
     with pytest.raises(ModelRetry, match="não confirma quando o cliente recebeu"):
         customer_answer(context, run["http_response"]["answer"])
+
+    negated = (
+        "O pedido 4 consta como entregue no registro, mas não podemos confirmar se foi "
+        "entregue conforme o prazo estimado. A seção 4.1 exige 'sem sinais de uso', "
+        "não uma condição de 'perfeito estado' [política 4.1, p. 4]."
+    )
+    accepted = customer_answer(context, negated)
+    assert accepted.startswith(negated)
+    assert accepted.count("Os dados dos pedidos vêm") == 1
 
 
 def test_missing_policy_retry_requests_the_lookup_before_customer_clarification() -> (

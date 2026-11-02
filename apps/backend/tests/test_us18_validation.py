@@ -15,7 +15,9 @@ from emporio_music_backend.contracts.conversations import ExecutionContext
 from emporio_music_backend.contracts.errors import AgentExecutionError
 from scripts.validate_us18 import (
     RecordingAgent,
+    _probe_status,
     _record_failure,
+    _run_status,
     _write_checkpoint,
     validate,
 )
@@ -50,6 +52,13 @@ def test_live_probe_refuses_insufficient_budget_before_provider_setup(
     with pytest.raises(ValueError, match="reservation"):
         asyncio.run(validate(output, max_cost_usd=0.01))
     assert not output.exists()
+
+
+def test_probe_reports_http_errors_as_failed_cases_not_successful_completion() -> None:
+    assert _run_status(200) == "completed"
+    assert _run_status(503) == "failed"
+    assert _probe_status([{"status": "completed"}]) == "completed"
+    assert _probe_status([{"status": "failed"}]) == "completed_with_failures"
 
 
 def test_access_denial_diagnostic_keeps_actions_without_raw_provider_message() -> None:

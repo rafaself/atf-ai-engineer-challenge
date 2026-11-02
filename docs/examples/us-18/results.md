@@ -355,12 +355,12 @@ The recorded Qwen answer now replays through the output validator and returns th
 answer with the appended notice in an offline regression. Separate order-API tests
 verify that the notice survives the HTTP path and persisted history. The older
 `live-captures.json` answer that says the order was delivered “conforme o prazo
-estimado” is instead rejected with targeted feedback. This lexical check addresses
-that explicit observed relation only; it is not a semantic entailment guarantee and
-does not cover all paraphrases. The separate “perfeito estado” check remains because
-captures showed the model importing section 4.3's stricter condition into section
-4.1; it can reject an accurate negation of that wording. Both limitations are
-documented rather than treated as proof of faithfulness.
+estimado” is instead rejected with targeted feedback. The limited matcher ignores
+nearby explicit negation, but does not cover all paraphrases or complex sentence
+structure and is not a semantic entailment guarantee. The separate “perfeito estado”
+check remains because captures showed the model importing section 4.3's stricter
+condition into section 4.1; it now allows nearby explicit negation. Both remain
+lexical safeguards rather than proof of faithfulness.
 
 The exact snapshot phrase was also removed from the persona and order-tool guidance,
 and the general output correction now includes only feedback for the failed checks.
@@ -374,9 +374,27 @@ missing section 4.1. This confirms the current-question-only contract loses cont
 for that follow-up. No query expansion, ranking, corpus, frozen labels, US-15 metrics
 or targets were changed; context-aware retrieval remains a separate follow-up.
 
-The complete offline suite now passes **347 tests**. Ruff lint and format, strict
+The complete offline suite now passes **348 tests**. Ruff lint and format, strict
 mypy across 89 files, package build and `git diff --check` pass. The exact saved Qwen
-trace is replay evidence, not a new provider call; actual post-change Qwen behavior
-remains unverified and requires separate opt-in. No RAG-versus-Full-Context superiority
-claim is needed for sprint closure, and the unmet US-15 retrieval targets remain
-unchanged.
+trace is replay evidence; actual post-change Qwen behavior remains unverified.
+No RAG-versus-Full-Context superiority claim is needed for sprint closure, and the
+unmet US-15 retrieval targets remain unchanged.
+
+## Authorized post-change Qwen attempt
+
+One frozen `mixed-order-return` case ran in `us-east-1` with the approved limits:
+five maximum model requests/tool calls, 1,024 output tokens per request, and a
+US$0.05 reservation cap. The API returned HTTP 503 in 0.631 seconds because AWS
+token retrieval failed before a model response. The trace records **zero model
+requests and zero input/output tokens**. The request failed during credential/token
+resolution before a Qwen answer, so it provides no evidence about current model
+tool selection or generation quality. A later read-only STS check of the designated
+SSO profile succeeded, so the evidence does not identify an expired profile session
+as the cause; model-request token retrieval remains unexplained. The single
+approved run was consumed; no retry was made.
+
+The capture is [mixed-postchange-qwen.json](mixed-postchange-qwen.json). The probe
+initially marked any completed HTTP exchange as a completed case; after reviewing the
+503/zero-usage evidence, the capture labels the probe `completed_with_failures` and
+the case `failed`. The probe harness now preserves that distinction for future runs.
+A new live check would require token retrieval to be restored and separate approval.

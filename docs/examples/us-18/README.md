@@ -9,15 +9,18 @@ actual receipt date. The API nevertheless returned HTTP 500 because the answer
 omitted one prescribed snapshot phrase. The output validator no longer requires
 that wording: it appends a deterministic notice when current order-tool results
 contain imported order records. Replaying that exact Qwen response now produces
-the answer plus notice offline; no post-change provider call has been made.
+the answer plus notice offline. One authorized post-change probe attempt returned
+HTTP 503 before a model response because AWS token retrieval failed; it recorded
+zero model requests and tokens, so live Qwen behavior remains unverified.
 
-A separate narrow check still rejects the recorded statement that an order was
-delivered “conforme o prazo estimado.” It addresses that observed false inference,
-not arbitrary paraphrases or general faithfulness. The “perfeito estado” guard is
-also retained because the model repeatedly imported section 4.3's stricter rule into
-section 4.1; it can reject a correct answer that negates the phrase. Both are limited
-lexical safeguards, not semantic guarantees. The earlier sandbox stall was reproduced
-by a fake-service ASGI request and disappeared outside the restricted sandbox.
+Separate narrow checks still reject the recorded affirmative statement that an order
+was delivered “conforme o prazo estimado” and the recorded section 4.1 overstatement
+using “perfeito estado.” They ignore nearby explicit negation, but remain lexical:
+paraphrases and more complex sentence structure can still evade or confuse them, so
+they are not semantic guarantees. The condition guard remains because the model
+repeatedly imported section 4.3's stricter rule into section 4.1. The earlier sandbox
+stall was reproduced by a fake-service ASGI request and disappeared outside the
+restricted sandbox.
 Alternative-model comparison is deferred; no comparative performance claim is made.
 See [actual results and follow-up](results.md).
 

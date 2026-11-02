@@ -79,6 +79,20 @@ def _progress(event: str, **fields: Any) -> None:
     )
 
 
+def _run_status(http_status: int) -> str:
+    """Classify non-2xx application results as failed evaluation cases."""
+    return "completed" if 200 <= http_status < 300 else "failed"
+
+
+def _probe_status(runs: list[dict[str, Any]]) -> str:
+    """Distinguish a finished probe from one whose cases all succeeded."""
+    return (
+        "completed_with_failures"
+        if any(run.get("status") == "failed" for run in runs)
+        else "completed"
+    )
+
+
 def _record_failure(
     report: dict[str, Any],
     run: dict[str, Any] | None,
@@ -288,7 +302,7 @@ async def validate(
                     body.pop("session_id", None)
                     current_run.update(
                         {
-                            "status": "completed",
+                            "status": _run_status(response.status_code),
                             "http_status": response.status_code,
                             "http_response": body,
                             "elapsed_seconds": round(
@@ -309,11 +323,17 @@ async def validate(
                     current_run = None
                     request_started = None
 
-            report["status"] = "completed"
+            report["status"] = _probe_status(report["runs"])
             report["phase"] = "completed"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
             _write_checkpoint(stream, report)
-            _progress("probe.completed", case_count=len(cases))
+            _progress(
+                "probe.completed",
+                case_count=len(cases),
+                failed_case_count=sum(
+                    run.get("status") == "failed" for run in report["runs"]
+                ),
+            )
         except BaseException as exc:
             status = _record_failure(
                 report,

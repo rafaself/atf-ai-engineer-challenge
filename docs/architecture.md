@@ -144,9 +144,11 @@ deterministic check; semantic claim support remains a separate review. When a cu
 order result contains imported rows, the application appends a fixed notice that the
 data is a snapshot and that estimated delivery does not establish actual receipt;
 the model no longer has to use a prescribed disclosure phrase. A narrow output check
-also rejects the recorded wording that tied delivery to its estimate. Neither check
-establishes general answer faithfulness. The [Qwen capture](examples/us-18/results.md)
-replays with the notice, but no provider call has tested the post-change code.
+also rejects the recorded affirmative wording that tied delivery to its estimate,
+while allowing nearby explicit negation. Neither check establishes general answer
+faithfulness. The [saved Qwen answer](examples/us-18/results.md) replays with the
+notice. One authorized post-change probe returned HTTP 503 during AWS token retrieval
+with zero model requests, so it did not test current Qwen behavior.
 
 Policy search takes no arguments and uses the exact current user question. A bounded
 local E5 check retrieves section 4.1 for the full mixed question but misses it for

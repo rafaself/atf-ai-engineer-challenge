@@ -41,6 +41,23 @@ _ORDER_SNAPSHOT_NOTICE = (
 )
 
 
+def _has_unnegated_match(pattern: re.Pattern[str], text: str) -> bool:
+    """Treat an explicit nearby negation as a mention, not a positive claim."""
+    for match in pattern.finditer(text):
+        start = (
+            max(text.rfind(mark, 0, match.start()) for mark in (".", "!", "?", ";")) + 1
+        )
+        clause_prefix = re.split(
+            r"\b(?:mas|porém|contudo)\b",
+            text[start : match.start()],
+            flags=re.IGNORECASE,
+        )[-1]
+        if re.search(r"\b(?:não|nunca|sem)\b", clause_prefix, re.IGNORECASE):
+            continue
+        return True
+    return False
+
+
 def _brl_amount(text: str) -> Decimal:
     if "," in text:
         text = text.replace(".", "").replace(",", ".")
@@ -221,13 +238,13 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     )
     unsupported_return_condition = (
         # Retained for the recorded overstatement of section 4.1. This lexical
-        # guard is narrow and can reject a correct answer that negates the phrase.
+        # guard only treats unnegated mentions as overstatements.
         mixed_order_return
         and ("4.1", 4) in policy_sources
-        and _PERFECT_PRODUCT_CONDITION.search(answer) is not None
+        and _has_unnegated_match(_PERFECT_PRODUCT_CONDITION, answer)
     )
-    estimate_as_receipt = (
-        has_order_snapshot and _ESTIMATED_DELIVERY_AS_RECEIPT.search(answer) is not None
+    estimate_as_receipt = has_order_snapshot and _has_unnegated_match(
+        _ESTIMATED_DELIVERY_AS_RECEIPT, answer
     )
     if (
         invalid_answer
