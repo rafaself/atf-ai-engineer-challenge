@@ -1,0 +1,32 @@
+{
+  "region": "us-east-1",
+  "currency": "USD",
+  "service_tier": "standard",
+  "checked_at_utc": "2026-11-02",
+  "verified": true,
+  "source_url": "https://aws.amazon.com/bedrock/pricing/",
+  "models": [
+    {
+      "key": "nemotron_super_120b",
+      "model_id": "nvidia.nemotron-super-3-120b",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_api": "converse",
+      "context_window_tokens": 256000,
+      "input_usd_per_million": 0.15,
+      "output_usd_per_million": 0.65,
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-nvidia-nemotron-super-3-120b.html",
+      "tool_use_status": "runtime_roundtrip_pending"
+    },
+    {
+      "key": "nemotron_nano_3_30b",
+      "model_id": "nvidia.nemotron-nano-3-30b",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_api": "converse",
+      "context_window_tokens": 256000,
+      "input_usd_per_million": 0.06,
+      "output_usd_per_million": 0.24,
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-nvidia-nemotron-nano-3-30b.html",
+      "tool_use_status": "runtime_roundtrip_pending"
+    }
+  ]
+}

@@ -22,6 +22,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
+import emporio_music_backend.composition as composition
 from emporio_music_backend import paths
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
@@ -160,7 +161,7 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
             settings, products, orders, model=FunctionModel(model)
         )
 
-    monkeypatch.setattr(api_app, "create_store_agent", factory)
+    monkeypatch.setattr(composition, "create_store_agent", factory)
     with TestClient(api_app.create_app()) as client:
         first = client.post("/api/chat", json={**demo_customer, "message": "listar"})
         assert first.status_code == 200

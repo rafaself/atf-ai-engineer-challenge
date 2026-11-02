@@ -1,8 +1,10 @@
+from pathlib import Path
 from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
 
+from emporio_music_backend.api import app as api_app
 from emporio_music_backend.api.app import create_app, get_chat_service_factory
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import ExecutionContext
@@ -18,6 +20,7 @@ from emporio_music_backend.contracts.errors import (
     SessionAccessError,
     SessionConflictError,
 )
+from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
 
 
 class FakeService:
@@ -30,6 +33,32 @@ class FakeService:
             answer=request.message,
             session_id=UUID("00000000-0000-4000-8000-000000000001"),
         )
+
+
+def test_http_adapter_reuses_lazy_shared_composition_and_service_injection(
+    monkeypatch: pytest.MonkeyPatch, operational_database: Path
+) -> None:
+    orders = SQLiteOrderRepository(operational_database)
+    service = FakeService()
+    compositions: list[SQLiteOrderRepository] = []
+
+    def compose(repository: SQLiteOrderRepository) -> FakeService:
+        compositions.append(repository)
+        return service
+
+    monkeypatch.setattr(api_app, "create_order_repository", lambda: orders)
+    monkeypatch.setattr(api_app, "compose_chat_service", compose)
+
+    app = create_app()
+    assert compositions == []
+    factory = app.state.chat_service_factory
+    assert factory() is service
+    assert factory() is service
+    assert compositions == [orders]
+
+    injected = create_app(chat_service=service)
+    assert injected.state.chat_service_factory() is service
+    assert compositions == [orders]
 
 
 def test_http_contract_docs_and_dependency_override(

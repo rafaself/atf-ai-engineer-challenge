@@ -1,5 +1,8 @@
 # Live interaction evidence
 
+For the evaluator, start with [four curated Portuguese conversations](submission.md).
+The selection identifies historical revisions, actual model results and limitations.
+
 Start with the [Sprint 2 closing conversations](sprint-2/closure/README.md): budget/context,
 promotions/PIX and customer orders on the final application code, including failed attempts.
 The [US-17 paired policy review](us-17/results.md) adds four real Portuguese
@@ -23,6 +26,24 @@ index explains SDK trace capture. No separate recorder framework is required.
 The old catalog-only recorder has been retired. The small opt-in
 [provider probe](../bedrock.md) remains available for diagnosing Bedrock tool calling;
 it does not establish customer conversation quality.
+
+The [Nemotron holiday follow-up evaluation](grounding-followups/nemotron-benchmark-2026-11-02.md)
+records a two-model smoke comparison through the current chat/RAG harness. It
+separates policy-tool selection from answer faithfulness and includes its bounded
+cost accounting and limitations.
+
+The [Nova 2 Lite holiday follow-up](grounding-followups/nova2-benchmark-2026-11-02.md)
+records the bounded, owner-approved retry after an initial IAM denial. It likewise
+separates retrieval choice from answer faithfulness and preserves the actual traces.
+
+The [current-harness Qwen3 32B and Nova Lite comparison](model-comparison/current-harness-qwen-nova-lite-2026-11-02.md)
+refreshes the broader nine-scenario model comparison after the persona, policy and
+deterministic inventory-notice updates, while preserving the historical #40 capture.
+
+The [post-implementation #43 review](issue-43-review/README.md) preserves its
+approved Qwen sample and 12-query local E5 retrieval check. It complements the later
+model evaluations; completed Sprint 4 setup and integration checks are recorded in
+the [US-23 validation report](../sprint-4-validation.md).
 
 ## Historical Sprint 1 evidence
 

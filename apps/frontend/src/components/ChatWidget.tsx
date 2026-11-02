@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import type { ChatClient } from "../services/chatClient";
+import ReactMarkdown from "react-markdown";
+import { ChatClientError, type ChatClient } from "../services/chatClient";
 import { Icon } from "./Icon";
 
 type Message = {
@@ -18,14 +19,26 @@ const quickReplies = [
   { label: "Formas de pagamento", prompt: "Quais formas de pagamento?" },
 ];
 
+function describeFailure(error: unknown) {
+  if (error instanceof ChatClientError) {
+    return error.state === "unknown"
+      ? `${error.message} Inicie uma nova conversa antes de continuar.`
+      : error.message;
+  }
+
+  return "Ocorreu um erro inesperado. Não foi possível confirmar a conversa. Inicie uma nova conversa antes de continuar.";
+}
+
 export function ChatWidget({ client }: ChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [failedPrompt, setFailedPrompt] = useState<string | null>(null);
+  const [requiresNewConversation, setRequiresNewConversation] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const nextMessageId = useRef(1);
+  const sessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (messages.length > 0 && !isSending) {
@@ -37,9 +50,14 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     const thread = threadRef.current;
 
     if (thread) {
-      thread.scrollTop = thread.scrollHeight;
+      thread.scrollTo({
+        top: thread.scrollHeight,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+      });
     }
-  }, [messages, isSending, failedPrompt]);
+  }, [messages, isSending, requestError]);
 
   function appendMessage(role: Message["role"], text: string) {
     const id = nextMessageId.current;
@@ -47,30 +65,31 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     setMessages((current) => [...current, { id, role, text }]);
   }
 
-  async function requestResponse(prompt: string, retry = false) {
-    setFailedPrompt(null);
-    setIsSending(true);
-
-    try {
-      const answer = await client.sendMessage(prompt, { retry });
-      appendMessage("assistant", answer);
-    } catch {
-      setFailedPrompt(prompt);
-    } finally {
-      setIsSending(false);
-    }
-  }
-
   async function sendMessage(prompt: string) {
     const message = prompt.trim();
 
-    if (!message || isSending) {
+    if (!message || isSending || requiresNewConversation) {
       return;
     }
 
     appendMessage("user", message);
     setDraft("");
-    await requestResponse(message);
+    setRequestError(null);
+    setIsSending(true);
+
+    try {
+      const response = await client.sendMessage(message, sessionIdRef.current ?? undefined);
+      sessionIdRef.current = response.session_id;
+      appendMessage("assistant", response.answer);
+    } catch (error) {
+      setRequestError(describeFailure(error));
+      if (!(error instanceof ChatClientError) || error.state === "unknown") {
+        sessionIdRef.current = null;
+        setRequiresNewConversation(true);
+      }
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function startNewConversation() {
@@ -79,7 +98,9 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     }
 
     setMessages([]);
-    setFailedPrompt(null);
+    sessionIdRef.current = null;
+    setRequiresNewConversation(false);
+    setRequestError(null);
     setDraft("");
     messageInputRef.current?.focus({ preventScroll: true });
   }
@@ -146,7 +167,9 @@ export function ChatWidget({ client }: ChatWidgetProps) {
 
           {messages.map((message) => (
             <div className={`message-row message-row--${message.role}`} key={message.id}>
-              <p className="message-bubble">{message.text}</p>
+              <div className="message-bubble">
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              </div>
             </div>
           ))}
 
@@ -158,16 +181,9 @@ export function ChatWidget({ client }: ChatWidgetProps) {
             </div>
           )}
 
-          {failedPrompt && (
+          {requestError && (
             <div className="chat-error" role="alert">
-              <p>Não consegui responder agora. Esta é uma falha simulada.</p>
-              <button
-                disabled={isSending}
-                onClick={() => void requestResponse(failedPrompt, true)}
-                type="button"
-              >
-                Tentar novamente
-              </button>
+              <p>{requestError}</p>
             </div>
           )}
         </div>
@@ -176,7 +192,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
           <label className="sr-only" htmlFor="chat-message">Sua mensagem</label>
           <input
             autoComplete="off"
-            disabled={isSending}
+            disabled={isSending || requiresNewConversation}
             id="chat-message"
             maxLength={300}
             onChange={(event) => setDraft(event.target.value)}
@@ -187,7 +203,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
           <button
             aria-label="Enviar mensagem"
             className="send-button"
-            disabled={!draft.trim() || isSending}
+            disabled={!draft.trim() || isSending || requiresNewConversation}
             type="submit"
           >
             <Icon name="send" size={18} />

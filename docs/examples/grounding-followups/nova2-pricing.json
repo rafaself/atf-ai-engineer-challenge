@@ -1,0 +1,18 @@
+{
+  "region": "us-east-1",
+  "currency": "USD",
+  "service_tier": "standard",
+  "checked_at_utc": "2026-11-02",
+  "model_id": "amazon.nova-2-lite-v1:0",
+  "inference_model_id": "us.amazon.nova-2-lite-v1:0",
+  "inference_endpoint": "bedrock-runtime",
+  "inference_api": "converse",
+  "context_window_tokens": 1000000,
+  "input_usd_per_million": 0.33,
+  "output_usd_per_million": 2.75,
+  "aws_model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-2-lite.html",
+  "aws_pricing_url": "https://aws.amazon.com/bedrock/pricing/",
+  "pricing_snapshot_url": "https://www.modeleol.com/pricing/amazon",
+  "pricing_snapshot_checked_at_utc": "2026-10-20",
+  "pricing_note": "US Geo standard rate used as a conservative request-budget basis; the AWS pricing page separates global and geo rates but its dynamic table was not exposed by the text renderer."
+}

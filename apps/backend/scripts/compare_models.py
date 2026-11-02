@@ -142,6 +142,18 @@ def load_project_aws_environment() -> None:
             os.environ.setdefault(name, value)
 
 
+def _selected_model_keys(model_keys: tuple[str, ...] | None) -> tuple[str, ...]:
+    selected = RUN_ORDER if model_keys is None else model_keys
+    if (
+        not selected
+        or len(set(selected)) != len(selected)
+        or any(key not in RUN_ORDER for key in selected)
+        or "qwen3_32b" not in selected
+    ):
+        raise ValueError("Select unique known models and include the Qwen baseline")
+    return selected
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -196,14 +208,14 @@ def _code_freeze() -> dict[str, object]:
     }
 
 
-def freeze_inputs() -> dict[str, object]:
+def freeze_inputs(scenarios_path: Path = SCENARIOS_PATH) -> dict[str, object]:
     hashes = {relative: _sha256(PROJECT_ROOT / relative) for relative in SOURCE_PATHS}
     index_directory = paths.DATA_DIRECTORY / "policy-indexes"
     return {
         "application": _code_freeze(),
         "source_files_sha256": hashes,
         "policy_index_sha256": _tree_sha256(index_directory),
-        "scenario_sha256": _sha256(SCENARIOS_PATH),
+        "scenario_sha256": _sha256(scenarios_path),
     }
 
 
@@ -220,8 +232,12 @@ def load_scenarios(path: Path = SCENARIOS_PATH) -> list[dict[str, Any]]:
 
 
 def load_verified_candidates(
-    path: Path = PRICING_PATH, *, today: date | None = None
+    path: Path = PRICING_PATH,
+    *,
+    today: date | None = None,
+    model_keys: tuple[str, ...] | None = None,
 ) -> list[Candidate]:
+    selected = _selected_model_keys(model_keys)
     document = json.loads(path.read_text(encoding="utf-8"))
     if document.get("region") != "us-east-1" or document.get("currency") != "USD":
         raise ValueError("Pricing must be verified for USD in us-east-1")
@@ -242,7 +258,7 @@ def load_verified_candidates(
         )
 
     candidates: list[Candidate] = []
-    for key in RUN_ORDER:
+    for key in selected:
         entry = by_key[key]
         model_id = str(entry["model_id"])
         if model_id != EXPECTED_MODEL_IDS[key]:
@@ -860,6 +876,8 @@ async def run_comparison(
     output: Path,
     max_cost_usd: Decimal,
     pricing_path: Path = PRICING_PATH,
+    scenarios_path: Path = SCENARIOS_PATH,
+    model_keys: tuple[str, ...] | None = None,
     resume_from: Path | None = None,
 ) -> dict[str, Any]:
     if (
@@ -868,11 +886,12 @@ async def run_comparison(
         or max_cost_usd > OUTPUT_CAP_USD
     ):
         raise ValueError("The approved issue #40 spend cap is US$1.00")
-    scenarios = load_scenarios()
+    selected = _selected_model_keys(model_keys)
+    scenarios = load_scenarios(scenarios_path)
     settings = load_agent_settings()
     _validate_agent_limits(settings)
     chat_timeout, history_limits = _runtime_chat_settings()
-    current_freeze = freeze_inputs()
+    current_freeze = freeze_inputs(scenarios_path)
 
     with output.open("x", encoding="utf-8") as stream:
         report: dict[str, Any] = {
@@ -886,6 +905,8 @@ async def run_comparison(
             "provider_request_count_unknown_turns": 0,
             "source_freeze": current_freeze,
             "runtime_settings_verified": True,
+            "candidate_keys": list(selected),
+            "scenario_file": scenarios_path.relative_to(PROJECT_ROOT).as_posix(),
             "scenario_count": len(scenarios),
             "planned_turns_per_model": 16,
             "model_runs": [],
@@ -893,7 +914,7 @@ async def run_comparison(
         _write_checkpoint(stream, report)
 
         try:
-            candidates = load_verified_candidates(pricing_path)
+            candidates = load_verified_candidates(pricing_path, model_keys=selected)
             report["pricing_verification"] = "verified_today"
             _write_checkpoint(stream, report)
         except (ValueError, KeyError, TypeError) as exc:
@@ -1023,7 +1044,7 @@ async def run_comparison(
                 for item in report["model_runs"]
                 if isinstance(item, dict)
             }
-            for model_key in RUN_ORDER:
+            for model_key in selected:
                 candidate = price_by_key[model_key]
                 candidate_fields: dict[str, Any] = {
                     "model_id": candidate.model_id,
@@ -1416,7 +1437,7 @@ async def run_comparison(
                     )
                 report["estimated_spend_usd"] = str(aggregate_cost)
                 if stop_all:
-                    for remaining_model in RUN_ORDER[RUN_ORDER.index(model_key) + 1 :]:
+                    for remaining_model in selected[selected.index(model_key) + 1 :]:
                         pending = price_by_key[remaining_model]
                         pending_report = existing_models.get(pending.model_id)
                         if pending_report is None:
@@ -1467,9 +1488,14 @@ async def run_comparison(
 
 
 def preflight_report(
-    *, output: Path, pricing_path: Path = PRICING_PATH
+    *,
+    output: Path,
+    pricing_path: Path = PRICING_PATH,
+    scenarios_path: Path = SCENARIOS_PATH,
+    model_keys: tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
-    scenarios = load_scenarios()
+    selected = _selected_model_keys(model_keys)
+    scenarios = load_scenarios(scenarios_path)
     settings = load_agent_settings()
     _validate_agent_limits(settings)
     chat_timeout, history_limits = _runtime_chat_settings()
@@ -1483,13 +1509,15 @@ def preflight_report(
             "scenario_count": len(scenarios),
             "planned_turns_per_model": 16,
             "pricing_file": pricing_path.relative_to(PROJECT_ROOT).as_posix(),
-            "source_freeze": freeze_inputs(),
+            "scenario_file": scenarios_path.relative_to(PROJECT_ROOT).as_posix(),
+            "candidate_keys": list(selected),
+            "source_freeze": freeze_inputs(scenarios_path),
             "runtime_settings_verified": True,
         }
         _write_checkpoint(stream, report)
         try:
             try:
-                candidates = load_verified_candidates(pricing_path)
+                candidates = load_verified_candidates(pricing_path, model_keys=selected)
                 report["pricing_verification"] = "verified_today"
             except (ValueError, KeyError, TypeError) as exc:
                 candidates = []
@@ -1526,7 +1554,7 @@ def preflight_report(
                         ),
                         tool_use_status=str(entry.get("tool_use_status", "unverified")),
                     )
-                    for key in RUN_ORDER
+                    for key in selected
                     for entry in [by_key[key]]
                 ]
             try:
@@ -1604,6 +1632,14 @@ def main() -> None:
     )
     parser.add_argument("--max-cost-usd", type=_decimal_argument)
     parser.add_argument("--pricing-file", type=Path, default=PRICING_PATH)
+    parser.add_argument("--scenarios-file", type=Path, default=SCENARIOS_PATH)
+    parser.add_argument(
+        "--model-key",
+        choices=RUN_ORDER,
+        action="append",
+        dest="model_keys",
+        help="Select a model; repeat to select multiple (Qwen is required as baseline)",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
         "--resume-from",
@@ -1617,6 +1653,14 @@ def main() -> None:
         parser.error("--live requires --max-cost-usd after separate owner approval")
     if args.preflight_only and args.max_cost_usd is not None:
         parser.error("--preflight-only does not accept a paid-run budget")
+    try:
+        model_keys = _selected_model_keys(
+            tuple(args.model_keys) if args.model_keys else None
+        )
+        scenarios_path = args.scenarios_file.resolve()
+        scenarios_path.relative_to(PROJECT_ROOT)
+    except (ValueError, OSError) as exc:
+        parser.error(str(exc))
     load_project_aws_environment()
     if args.live:
         report = asyncio.run(
@@ -1624,11 +1668,18 @@ def main() -> None:
                 output=args.output,
                 max_cost_usd=args.max_cost_usd,
                 pricing_path=args.pricing_file,
+                scenarios_path=scenarios_path,
+                model_keys=model_keys,
                 resume_from=args.resume_from,
             )
         )
     else:
-        report = preflight_report(output=args.output, pricing_path=args.pricing_file)
+        report = preflight_report(
+            output=args.output,
+            pricing_path=args.pricing_file,
+            scenarios_path=scenarios_path,
+            model_keys=model_keys,
+        )
     if report.get("status") == "blocked_retrieval_readiness":
         readiness = report["retrieval_readiness"]
         failure_type = readiness.get("failure_type", "unknown local retrieval error")

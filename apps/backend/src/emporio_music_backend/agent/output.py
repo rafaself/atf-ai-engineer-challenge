@@ -18,6 +18,10 @@ _ORDER_SNAPSHOT_NOTICE = (
     "confirmação em tempo real. A previsão de entrega, se informada, não "
     "confirma a data real de recebimento."
 )
+_INVENTORY_SNAPSHOT_NOTICE = (
+    "Preços e estoque refletem uma fotografia importada do catálogo; "
+    "não há confirmação em tempo real."
+)
 
 
 def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
@@ -31,6 +35,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     policy_sources: set[tuple[str, str, int | None]] = set()
     has_discount = False
     has_order_snapshot = False
+    has_inventory_snapshot = False
     totals: set[int] = set()
     order_totals: set[int] = set()
     item_totals: set[int] = set()
@@ -72,6 +77,10 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             if part.tool_name in {"search_available_products", "get_product_details"}:
                 products = content.get("products")
                 if isinstance(products, list):
+                    if content.get("inventory_basis") == "imported_snapshot" and any(
+                        isinstance(product, dict) for product in products
+                    ):
+                        has_inventory_snapshot = True
                     for product in products:
                         pricing = (
                             product.get("pricing")
@@ -122,6 +131,8 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     )
     if has_order_snapshot and _ORDER_SNAPSHOT_NOTICE not in answer:
         notices.append(_ORDER_SNAPSHOT_NOTICE)
+    if has_inventory_snapshot and _INVENTORY_SNAPSHOT_NOTICE not in answer:
+        notices.append(_INVENTORY_SNAPSHOT_NOTICE)
     if has_discount:
         notices.append(
             "Dados de uma fotografia importada; não há datas de validade informadas para as promoções."

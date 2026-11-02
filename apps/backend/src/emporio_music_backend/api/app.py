@@ -1,6 +1,5 @@
 """Factory-based local HTTP API with lazy, dependency-injected composition."""
 
-import os
 from collections.abc import Callable
 from functools import lru_cache
 from threading import Lock
@@ -10,38 +9,32 @@ from uuid import uuid4
 
 from fastapi import Body, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
 from emporio_music_backend import paths
-from emporio_music_backend.agent.orders import create_store_agent
-from emporio_music_backend.agent.settings import load_agent_settings
 from emporio_music_backend.api.errors import (
     application_failure_handler,
     invalid_request_handler,
     unexpected_failure_handler,
 )
 from emporio_music_backend.api.schemas import DemoChatRequest
-from emporio_music_backend.application.chat import ChatService
+from emporio_music_backend.composition import (
+    build_chat_service as compose_chat_service,
+)
+from emporio_music_backend.composition import (
+    create_order_repository,
+    resolve_demo_customer,
+)
 from emporio_music_backend.contracts.chat import ChatRequest, ChatResponse
 from emporio_music_backend.contracts.conversations import (
     ExecutionContext,
-    HistoryLimits,
 )
-from emporio_music_backend.contracts.errors import (
-    ApplicationError,
-    ConfigurationError,
-    CustomerSelectionError,
-)
+from emporio_music_backend.contracts.errors import ApplicationError
 from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.diagnostics import failure, request_id, trace
-from emporio_music_backend.infrastructure.conversations import (
-    SQLiteConversationRepository,
-)
 from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
-from emporio_music_backend.infrastructure.sqlite_repository import (
-    SQLiteProductRepository,
-)
 from emporio_music_backend.ports.chat import ChatServicePort
 
 ChatServiceFactory = Callable[[], ChatServicePort]
@@ -58,40 +51,18 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
 
     @lru_cache(maxsize=1)
     def customer_repository() -> SQLiteOrderRepository:
-        return SQLiteOrderRepository(paths.OPERATIONS_DATABASE_PATH)
+        return create_order_repository()
 
     def select_demo_customer(customer_id: int | None) -> CustomerIdentity | None:
         if customer_id is None:
             return None
-        identity = CustomerIdentity(customer_id=customer_id)
-        if not customer_repository().exists(identity):
-            raise CustomerSelectionError("Unknown demo customer")
-        return identity
+        return resolve_demo_customer(customer_id, customer_repository())
 
     @lru_cache(maxsize=1)
     def build_chat_service() -> ChatServicePort:
         if chat_service is not None:
             return chat_service
-        trace("composition.started")
-        agent_settings = load_agent_settings()
-        try:
-            chat_timeout_seconds = float(os.environ.get("CHAT_TIMEOUT_SECONDS", "60"))
-            history_limits = HistoryLimits(
-                max_turns=int(os.environ.get("HISTORY_MAX_TURNS", "6")),
-                max_characters=int(os.environ.get("HISTORY_MAX_CHARACTERS", "24000")),
-            )
-        except ValueError as exc:
-            raise ConfigurationError("Invalid conversation limits") from exc
-        return ChatService(
-            create_store_agent(
-                agent_settings,
-                SQLiteProductRepository(paths.CATALOG_DATABASE_PATH),
-                SQLiteOrderRepository(paths.OPERATIONS_DATABASE_PATH),
-            ),
-            SQLiteConversationRepository(paths.CONVERSATION_DATABASE_PATH),
-            timeout_seconds=chat_timeout_seconds,
-            history_limits=history_limits,
-        )
+        return compose_chat_service(customer_repository())
 
     chat_service_initialization_lock = Lock()
 
@@ -178,5 +149,20 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
             raise
         finally:
             request_id.reset(request_id_reset_token)
+
+    frontend_directory = paths.PROJECT_ROOT / "apps" / "frontend" / "dist"
+    frontend_index = frontend_directory / "index.html"
+    frontend_assets = frontend_directory / "assets"
+    if frontend_assets.is_dir():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=frontend_assets),
+            name="frontend-assets",
+        )
+    if frontend_index.is_file():
+
+        @app.get("/", include_in_schema=False)
+        async def frontend_index_page() -> FileResponse:
+            return FileResponse(frontend_index)
 
     return app

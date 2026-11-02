@@ -1,5 +1,12 @@
 # Bedrock Runtime model comparison (#40)
 
+The results below preserve the original one-pass issue #40 comparison. They used
+the earlier harness and original freight text; in particular, their exact
+R$ 500 freight finding predates the approved inclusive clarification. See the
+[current-harness Qwen and Nova Lite refresh](current-harness-qwen-nova-lite-2026-11-02.md)
+for the fresh two-model run, current policy rule and updated answer/tool-use
+review. The historical capture remains unchanged.
+
 The recorded run evaluated Qwen3 32B, Nova Micro, and Nova Lite through Bedrock
 Runtime Converse. All application tools ran locally. Nemotron Nano 3 was excluded
 as an architectural scope decision: this comparison stayed on Runtime Converse
@@ -58,6 +65,15 @@ Key failures:
 - Qwen's policy-hours conversation had one local HTTP 503; it is reported as an
   infrastructure failure and is excluded from semantic verdicts.
 
+## Current-harness refresh
+
+The [fresh Qwen3 32B and Nova Lite run](current-harness-qwen-nova-lite-2026-11-02.md)
+used the same nine scenarios with current harness instructions, the approved
+freight clarification and updated behavioral expectations. Each model completed
+16/16 chat turns. Qwen scored 5 pass / 3 partial / 1 fail with one critical error;
+Nova Lite scored 5 / 2 / 2 with three critical errors. This new result does not
+rewrite the original comparison above.
+
 ## Latency interpretation
 
 Latency is end-to-end `/api/chat` request wall time, including model inference,
@@ -71,6 +87,9 @@ The runner now checks local policy dependencies, cached E5 weights, and the
 existing policy index before any paid model request. It does not download model
 weights. Refresh rates and route checks on the day of a new run. The runner loads
 only AWS settings silently and never writes credential values to a capture.
+Use repeated `--model-key` options to select a subset of candidates and
+`--scenarios-file` to provide a separately versioned fixture; Qwen remains the
+required baseline.
 
 ```sh
 uv run --group benchmark --directory apps/backend --locked \

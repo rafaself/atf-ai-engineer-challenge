@@ -1,90 +1,141 @@
 # Empório da Música — customer-support agent
 
-A Python prototype for the Artefact AI Engineer challenge. It answers product,
-price, availability, promotion and account-order questions in Portuguese using
-Pydantic AI tools and the supplied fictional data. SQLite keeps chat history
-across restarts. Run one local server process; this is a challenge demonstration.
+Evaluator path: follow the Docker quick start below, open the chat and `/docs`,
+then inspect [four representative Portuguese conversations](docs/examples/submission.md).
+These are historical real-model captures with explicit revision limits. Current
+offline checks verify application behavior, not current generated-answer quality.
 
-Store-policy search is now wired into the existing agent through a local E5/Chroma
-index. The index and model are prepared explicitly; the assistant reports uncertainty
-when retrieved excerpts do not support an answer. US-17 reviewed four paired
-Portuguese conversations on 2026-11-01 using RAG and full-policy context. The
-review preserved a RAG HTTP 500, missed policy-tool calls, a wrong citation and
-unsupported claims; it does not establish that either context strategy is reliable
-or that retrieval meets the frozen US-15 targets. See the [paired results](docs/examples/us-17/results.md)
-and [captures](docs/examples/us-17/captures.json). Earlier [Sprint 2 closing examples](docs/examples/sprint-2/closure/README.md)
-cover budget/context, promotions/PIX and scoped orders at their recorded revision.
-Failed attempts and model comparisons remain published; they do not establish complete
-challenge acceptance or guarantee future answers.
+A local Python customer-support agent for the Artefact AI Engineer challenge.
+React chat, FastAPI and a standalone Python CLI share the same application service,
+Bedrock agent and persistent SQLite history. It answers product, price,
+availability, promotion, order and policy questions in Portuguese using the
+supplied fictional data.
 
-[US-18](docs/examples/us-18/README.md) now appends a consistent “Fontes consultadas”
-list from policy records returned in the current run. It accepts readable generated
-references without requiring a citation grammar or corrective model call. The same
-simplification removes free-text amount matching and Portuguese intent checks:
-legitimate budget quotes and negated return requests previously triggered errors.
-Pricing calculations and customer isolation remain enforced by the tools. Tool use,
-generated prices and claim support are evaluated through conversations, rather than
-inferred from the wording of an answer. Blank/internal-control output still receives
-one corrective retry. Snapshot and partial-result notices remain automatic.
+The demo uses typed catalog/order tools and local E5/Chroma policy retrieval.
+Model weights and indexes require explicit preparation. It has no authentication:
+keep it on loopback and use fictional customer data. The frontend selects customer
+1; the API and CLI also support guests and other fictional customers.
 
-The last approved live batch stopped on its first mixed return turn with HTTP 500
-at the earlier revision because of citation-format retry exhaustion. Replaying its
-saved candidate through the current HTTP path now returns 200 with source metadata,
-without changing the generated text. This is a controlled regression, not a new live
-Qwen result; its policy-scope omissions remain documented in the [batch review](docs/examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
-The other five live turns remain untested. A bounded local E5 check also supports
-adding the previous user question to short contextual follow-ups; broader retrieval
-optimization is deferred. Sprint completion does not require RAG to outperform Full Context.
+The [recorded conversations](docs/examples/submission.md) include successes and
+failures from earlier revisions. Generated prices, tool choices and policy claims
+still require review; a source footer records consulted material without certifying
+an answer. [Sprint 3 closure](docs/sprint-3.md) and the
+[US-18 report](docs/examples/us-18/README.md) explain the remaining grounding and
+retrieval limits, including failed mixed order/return cases. Controlled replays
+and offline tests do not establish current real-model quality. New paid Bedrock
+evaluations require separate explicit approval.
 
-Sprint 3 closure scope, evidence and deferred work are recorded in [the sprint closeout](docs/sprint-3.md).
+## Run the complete demo with Docker
 
-## Run locally
+Install Docker Engine or Docker Desktop with Compose, and GNU Make. From the
+repository root, configure Bedrock credentials for runtime use, then run:
 
-Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).
-Run these commands from the repository root:
+```bash
+test -f .env || cp .env.example .env
+# Edit .env with your local Bedrock configuration.
+make build
+make prepare-data
+make prepare-policy
+make up
+```
+
+`make prepare-policy` explicitly downloads the pinned CPU E5 model if it is not
+cached and builds the local Chroma index. Run it once for a new data volume. It
+intentionally fails if an index already exists. To rebuild after an intentional policy
+source change, run this explicit command:
+
+```bash
+docker compose run --rm app \
+  python -m scripts.policy_benchmark.run --model e5 --index --rebuild \
+  --allow-download --output-dir /tmp/policy-rag-bootstrap
+```
+
+Image build and normal startup do not download weights, prepare SQLite snapshots,
+rebuild the index, or call a model provider.
+`make prepare-data` imports 65 products, 25 promotions, 50 customers, 20 orders and
+22 item rows from the supplied files; it never rewrites the CSV or PDF inputs.
+
+Open the chat at [http://127.0.0.1:8000](http://127.0.0.1:8000) or the API docs at
+[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). The UI, static assets and
+existing API share one FastAPI process and origin. The port is published on loopback
+only. The Compose data volume persists SQLite files, the Chroma index and the
+Hugging Face cache across container restarts; `make down` keeps that volume.
+
+For checks, install Python 3.12+, [uv](https://docs.astral.sh/uv/getting-started/installation/),
+and Node.js 20.19+ or 22.12+ with npm, then run `make check`. The Docker build also
+performs a packaging smoke check for the source-relative data path, an input CSV
+and write access to runtime data.
+
+For Docker chat, put temporary credentials from your approved AWS credential source
+in the Git-ignored `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
+`AWS_SESSION_TOKEN`, along with `AWS_DEFAULT_REGION`. Remove `AWS_PROFILE` from
+`.env`; Compose passes these values to the container, but does not mount the host's
+`~/.aws` directory, so a host profile or SSO login is unavailable there. Keep the
+credentials temporary and narrowly scoped. The UI and docs can start without AWS
+credentials, but the agent cannot answer. `.env` and local AWS files are excluded
+from the Docker build context and image. The policy-RAG runtime includes CPU PyTorch
+and uses additional disk for model weights, cache and index data.
+
+The named volume is initialized from `/app/data` in the image when first created.
+Rebuilding the image does not refresh source files already in an existing volume.
+To intentionally update the source data while keeping saved chat history, start the
+app, copy the source files from the updated checkout into its existing volume, then
+refresh the SQLite snapshots:
+
+```bash
+make up
+docker compose cp data/categories.csv app:/app/data/categories.csv
+docker compose cp data/products.csv app:/app/data/products.csv
+docker compose cp data/promotions.csv app:/app/data/promotions.csv
+docker compose cp data/customers.csv app:/app/data/customers.csv
+docker compose cp data/orders.csv app:/app/data/orders.csv
+docker compose cp data/order_items.csv app:/app/data/order_items.csv
+docker compose cp data/store_policies.pdf app:/app/data/store_policies.pdf
+docker compose cp data/policies/. app:/app/data/policies/
+docker compose stop app
+make prepare-data
+# If policy sources changed, run the explicit --rebuild command above here.
+make up
+```
+
+`make prepare-data` replaces only the catalog and operations snapshots; it preserves
+the conversation database. These steps leave the persistent volume in place. Do not
+run `docker compose down --volumes` when you need to retain conversations or other
+persistent runtime data.
+
+If catalog/order requests fail because SQLite snapshots are missing, run
+`make prepare-data`. Policy retrieval requires both the E5 cache and index; missing
+resources are service errors, not “no policy found.”
+
+Use `make down` to stop the app without deleting its data. Removing the named volume
+requires an explicit `docker compose down --volumes`.
+
+If Docker starts but the published port times out on Linux, check host bridge
+networking. The [validation report](docs/sprint-4-validation.md#clean-docker-setup-and-runtime)
+records the observed limitation and a tested loopback-only host-network workaround.
+It also distinguishes controlled interface checks from historical model evidence.
+
+## Run without Docker for development
+
+Install Python 3.12+ and `uv`, then from the repository root run:
 
 ```bash
 uv sync --project apps/backend --locked --extra policy-rag
-cp .env.example .env
-```
-
-Edit `.env` to configure an AWS profile or access keys for Bedrock. Chat needs no
-login or demo tokens. Omit `customer_id` for guest mode, or select a fictional
-customer to demonstrate order retrieval. This is local demo selection, **not
-authentication**; anyone using the demo can select any fictional customer.
-
-Before starting the API, explicitly download E5 if needed and build the local Chroma
-index. This command also writes its development comparison report to `/tmp`; generated
-weights and the index remain outside Git:
-
-```bash
-uv run --project apps/backend --extra policy-rag --locked \
-  python -m scripts.policy_benchmark.run --model e5 --index --allow-download \
-  --output-dir /tmp/policy-rag-bootstrap
-```
-
-Then prepare all supplied data and start the API:
-
-```bash
+test -f .env || cp .env.example .env
 uv run --env-file .env --project apps/backend --extra policy-rag --locked python -m emporio_music_backend.prepare
 uv run --env-file .env --project apps/backend --extra policy-rag --locked uvicorn emporio_music_backend.api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
-Preparation imports 65 products, 25 promotions, 50 customers, 20 orders and 22 item
-rows. Re-running it refreshes the source snapshots and leaves chat history alone.
-It never rewrites supplied CSVs/PDFs. A leftover pre-US-12 generated catalog must
-be moved aside before preparing a fresh catalog; no migration system is included.
+The frontend can run separately with the commands in
+[`apps/frontend/README.md`](apps/frontend/README.md). Vite proxies `/api` to the
+local FastAPI server. The frontend uses fictional customer ID `1`; this is demo
+context, not authentication or customer selection. For guest API requests, omit
+`customer_id`; for orders, repeat the same fictional customer ID on every follow-up.
+See [API details](docs/api.md) for request examples and errors.
 
-Open [Swagger UI](http://127.0.0.1:8000/docs) and send
-`{"message":"Quais são as promoções?"}` as a guest. Reuse the returned `session_id`
-with `{"message":"E o segundo no PIX?","session_id":"<returned-id>"}`.
-For orders, start a new chat with `{"message":"Meus pedidos","customer_id":1}`;
-repeat the same customer selection on each follow-up. Omit `session_id` when
-switching customer or mode. Generated databases and AWS credentials stay Git-ignored.
-If upgrading from token-based sessions, stop the server and move the old
-`data/conversations.sqlite3` aside before starting. Keep that history file; old
-schemas are rejected without migration or deletion.
-See [API details](docs/api.md) for curl, configuration and errors.
+For direct terminal conversations without the HTTP server, prepare and run the
+standalone Python CLI using [these commands](docs/cli.md). Its `--live` flag is
+required before it constructs the Bedrock-backed agent.
 
 ## How it works
 
@@ -136,6 +187,7 @@ uv run --directory apps/backend --locked ruff format --check .
 uv run --directory apps/backend --locked mypy src tests scripts
 uv run --directory apps/backend --locked pytest
 uv build --project apps/backend
+uv build --project apps/cli
 ```
 
 Default tests use temporary SQLite and controlled models; real model requests are
@@ -153,7 +205,10 @@ and historical decisions. Three Sprint 2 conversations and four US-17 paired
 policy scenarios are descriptive evidence, not a guarantee of future answers. See
 the [US-17 results](docs/examples/us-17/results.md) for grounding, uncertainty,
 tool-selection and full-context findings.
-Frontend, deployment and production authentication are outside the current demo. The recruiting email determines the submission cutoff.
+The [React frontend](apps/frontend/README.md) uses the existing chat API with a
+fixed fictional customer and session context. The Docker package remains limited
+to local loopback use; public deployment is out of scope. The recruiting email
+determines the submission cutoff.
 
 OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
 Scoped commits and PRs record that workflow; controlled test answers are not claimed

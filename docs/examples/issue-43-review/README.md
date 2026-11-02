@@ -4,7 +4,8 @@ The report identifies relevant operational and evaluation concerns. The smallest
 response is to preserve evidence and use the existing Sprint 4 integration work.
 No production code, prompt, retrieval relationship, dependency or validator changes
 are justified by this review. Issue #43 stays closed for its completed implementation
-and offline scope. US-23 (#70) owns the remaining demonstration/quality evidence.
+and offline scope. US-23 (#70) has since closed after its separate Sprint 4 validation;
+this PR preserves supplemental evaluation evidence and does not replace that validation.
 
 ## Disposition of the four findings
 
@@ -12,7 +13,7 @@ and offline scope. US-23 (#70) owns the remaining demonstration/quality evidence
 | --- | --- | --- |
 | 1. Clarification retrieval coverage | Actual pinned CPU E5, current Chroma index and production `LocalPolicySearch` returned the clarification in all 12 queries, alongside original section 5.1 and section 5.2. Queries cover 499.99 / 500 / 500.01, region, minimum spend, outside-region scope, and a short contextual follow-up. Correct source, no-page metadata and text are saved in [e5-retrieval.json](e5-retrieval.json). | No reproduced retrieval failure; do not add a relationship or change ranking. This small sample does not guarantee every possible query. |
 | 2. Prompt size | #43's final merged prompt is 7,074 characters / 1,018 whitespace words versus 7,090 / 1,026 originally. | Accept the structural/maintenance benefit. No tokenizer, latency, cost or quality improvement is established by this size difference; no further shortening. |
-| 3. Stale index / packaging | US-21 #66 is closed. Commit `50c711b` on the parallel packaging line, already included in US-23's worktree at `790feb1`, documents one-time preparation, explicit `--rebuild` and persistent data/model/index storage. The US-23 validation record reports matching hashes after container recreation and a real cached-E5 query afterward. Main's existing [policy setup](../../policy-retrieval.md) also documents rebuilds. | Already addressed in US-21; retain explicit preparation and include that branch in final Sprint 4 integration. Do not duplicate packaging or add automatic startup rebuild/downloads. Default host-port reachability had a separate environment limitation; restart evidence does not prove that interface works everywhere. |
+| 3. Stale index / packaging | US-21 #66 is closed. Commit `50c711b` on the parallel packaging line, already included in US-23's worktree at `790feb1`, documents one-time preparation, explicit `--rebuild` and persistent data/model/index storage. The US-23 validation record reports matching hashes after container recreation and a real cached-E5 query afterward. Main's existing [policy setup](../../policy-retrieval.md) also documents rebuilds. | Already addressed in US-21 and validated in the completed Sprint 4 work. See [US-23 validation](../../sprint-4-validation.md). Retain explicit preparation; do not add automatic startup rebuilds/downloads. The default bridge path had a separate environment limitation; the report records the tested Linux workaround. |
 | 4. Model behavior | Owner approved Qwen only, at most six conversations / 12 turns, US$0.50 total cap. The approved sample completed all 12 HTTP turns, but manual source review found remaining failures. | Functional evidence now exists; it does not establish general reliability or that all intended improvements worked. Preserve failures under US-23 rather than adding speculative prompt patches or semantic enforcement. |
 
 The real Chroma index checks also returned the expected actionable operator errors:
@@ -26,9 +27,10 @@ No new test framework or production test logic was introduced.
 ## Approved live sample
 
 [Raw capture](qwen-approved-2026-11-02.json) preserves prompts, actual model/tool
-messages, returned evidence, final answers, timings and usage. Production source was
-`9383414` (main containing A+B); source hashes are in the capture. Only evidence files
-and the existing local Codex config were uncommitted. The six scenario IDs and all
+messages, returned evidence, final answers, timings and usage. The capture's production
+source was `9383414` (main containing A+B at run time); source hashes are in the capture.
+This is the historical evaluation revision, not the current main revision. Only evidence
+files and the existing local Codex config were uncommitted. The six scenario IDs and all
 12 user messages come unchanged from the #40 fixture. The freight fixture's
 `baseline_expected` is explicitly historical: current equality is judged against the
 new approved business evidence, not the old gap. Historical captures/verdicts remain
@@ -45,10 +47,12 @@ or failed model answer was retried.
 There was one local import-path setup failure before any provider initialization
 or calls. Setting the backend scripts directory on `PYTHONPATH` resolved it. The
 successful run used cached local E5/Chroma; the same search instance was preflighted
-before chat, so policy latency excludes cold E5 loading. No model downloads occurred. This backend ASGI sample does not validate the
-Docker/UI/CLI integration and does not complete US-23. That workstream must
-integrate current main (A+B) with its packaging line and validate the final
-prepared corpus/index on that revision.
+before chat, so policy latency excludes cold E5 loading. No model downloads occurred.
+This backend ASGI sample does not itself validate Docker/UI/CLI integration. Those
+broader checks were completed separately in US-23; see the [Sprint 4 validation
+record](../../sprint-4-validation.md) for the actual setup, environment limits and
+prepared-index check. The sample's narrower scope and historical source revision
+remain unchanged.
 
 Reproduction requires fresh explicit paid-run approval; do not overwrite the capture:
 

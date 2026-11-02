@@ -19,6 +19,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
 import emporio_music_backend.api.app as api_app
+import emporio_music_backend.composition as composition
 from emporio_music_backend import paths
 from emporio_music_backend.agent.catalog import ProductSearchTool
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
@@ -101,7 +102,7 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
             settings, repository, orders, model=FunctionModel(model)
         )
 
-    monkeypatch.setattr(api_app, "create_store_agent", factory)
+    monkeypatch.setattr(composition, "create_store_agent", factory)
     marker = "customer@example.invalid private-phone-sentinel"
     with TestClient(api_app.create_app()) as client:
         first = client.post("/api/chat", json={**demo_customer, "message": marker})
@@ -198,7 +199,7 @@ def test_invalid_session_configuration_fails_before_provider_setup(
             "Invalid session configuration must not initialize a provider"
         )
 
-    monkeypatch.setattr(api_app, "create_store_agent", forbidden)
+    monkeypatch.setattr(composition, "create_store_agent", forbidden)
     with TestClient(api_app.create_app(), raise_server_exceptions=False) as client:
         response = client.post("/api/chat", json={**demo_customer, "message": "Hello"})
     assert response.status_code == 503
