@@ -76,11 +76,9 @@ class OrderTools:
             **(
                 {
                     "answer_guidance": [
-                        "estimated_delivery é somente previsão: não diga que o pedido foi entregue "
-                        "nessa data ou conforme esse prazo. O snapshot não informa data real de "
-                        "recebimento, canal da compra nem condição do produto. Para devolução, "
-                        "chame search_store_policies agora, antes de perguntar esses três fatos. "
-                        "Não espere respostas do cliente para consultar a política nesta rodada."
+                        "Os dados são uma fotografia importada. A previsão de entrega "
+                        "não confirma o recebimento real. Se a pergunta também envolve "
+                        "políticas, consulte search_store_policies antes de responder."
                     ]
                 }
                 if order is not None

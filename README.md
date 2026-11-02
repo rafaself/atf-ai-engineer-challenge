@@ -20,7 +20,7 @@ offline only. Failed attempts and model comparisons remain published. These obse
 do not establish complete challenge acceptance or guarantee every future answer.
 
 [US-18](docs/examples/us-18/README.md) adds current-run citation enforcement,
-explicit mixed order/return tool checks and contextual interpretation guidance.
+explicit mixed order/return tool checks and general grounding principles.
 These corrections have offline regression coverage. The first live follow-up passes
 three cases; the mixed case still needs revalidation after further corrections.
 The backend now appends an order-snapshot notice from current tool metadata instead

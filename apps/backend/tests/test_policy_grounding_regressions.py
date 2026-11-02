@@ -24,7 +24,6 @@ from pydantic_ai.usage import RunUsage
 
 from emporio_music_backend.agent.orders import create_store_agent
 from emporio_music_backend.agent.output import customer_answer
-from emporio_music_backend.agent.policies import PolicyTools
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.api.app import create_app
 from emporio_music_backend.application.chat import ChatService
@@ -543,27 +542,3 @@ def test_order_return_without_id_allows_clarification(
         )
     )
     assert result.answer == "Qual é o número do pedido?"
-
-
-def test_policy_guidance_preserves_source_conditions_without_rewriting_records() -> (
-    None
-):
-    search = SourcePolicySearch({"2", "4.1", "5.1", "8.1", "8.2", "8.3"})
-    original = json.dumps(search.records, ensure_ascii=False)
-    result = PolicyTools(search).search_store_policies(
-        RunContext(
-            deps=ExecutionContext(),
-            model=TestModel(),
-            usage=RunUsage(),
-            prompt="Pedido no limite e empréstimo?",
-        )
-    )
-    notes = " ".join(result["answer_guidance"])
-    # These qualifications come from the reviewed source, not nearest-neighbor scores.
-    assert "acima de R$ 500,00" in original and "abaixo de R$ 500,00" in original
-    assert "sem sinais de uso" in original
-    assert "exatamente igual" in notes and "não confirme gratuidade" in notes
-    assert "Relato de uso não comprova sinais de uso" in notes
-    assert "sem afirmar que existe" in notes
-    assert "não omita o fechamento" in notes
-    assert json.dumps(result["records"], ensure_ascii=False) == original

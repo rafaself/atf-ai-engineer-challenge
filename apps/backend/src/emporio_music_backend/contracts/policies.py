@@ -1,6 +1,6 @@
 """Typed results returned by the fixed-manual policy search tool."""
 
-from typing import Literal, NotRequired, TypedDict
+from typing import Literal, TypedDict
 
 
 class PolicyExcerpt(TypedDict):
@@ -15,4 +15,3 @@ class PolicyExcerpt(TypedDict):
 class PolicySearchResult(TypedDict):
     status: Literal["evidence_found", "insufficient_evidence"]
     records: list[PolicyExcerpt]
-    answer_guidance: NotRequired[list[str]]

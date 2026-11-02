@@ -266,14 +266,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                     "responde à pergunta do cliente. A explicação da política deve "
                     "complementar esses fatos, não substituí-los; descreva o status "
                     "como dado da fotografia importada. "
-                    "Mantenha a previsão distinta do recebimento real. Se a seção 4.1 foi retornada, explique "
-                    "sua regra geral de arrependimento online, incluindo prazo contado "
-                    "do recebimento e use o critério exato 'sem sinais de uso', não "
-                    "'perfeito estado'. Pergunte se há sinais visíveis de uso. Só depois "
-                    "peça canal da "
-                    "compra, data real de recebimento e condição. Fatos desconhecidos "
-                    "impedem concluir elegibilidade, mas não impedem explicar a regra. "
-                    "Se a regra não foi recuperada, declare evidência insuficiente."
                 )
             raise ModelRetry(correction)
         if invalid_answer:

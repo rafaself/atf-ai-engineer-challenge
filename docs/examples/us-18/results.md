@@ -435,3 +435,25 @@ corrected response retains the order status and current-run citation; it adds no
 production requirement for a particular status word. The focused regression module
 passes. This change has not been re-evaluated with a live Qwen call, so post-fix live
 behavior remains unverified.
+
+## Instruction simplification after Finding 4
+
+The saved mixed-case request did not report instrument use. After citation retry,
+Qwen introduced that hypothetical, required visual inspection, and supplied wear
+examples absent from the evidence. The persona, policy advice and retry feedback
+repeated related historical scenarios. This supports investigating instruction
+influence; the trace alone does not establish causation.
+
+Policy tools now return only status and source records. Their section-specific
+advice branches and optional advice field were removed. The persona states general
+principles about relevance, source scope, unknown customer facts and source gaps.
+Citation feedback corrects source attribution and preserves relevant order facts
+without restating return rules or requesting visual inspection. Order-tool advice
+retains snapshot semantics and the required mixed-policy lookup.
+
+The obsolete test that asserted scenario-specific advice text was removed. Existing
+scripted source-scenario, two-turn policy, provenance, order and citation-retry
+regressions remain. The full offline suite passes 350 tests; Ruff, format, strict
+mypy, package build and diff checks pass. These checks establish application
+contracts. No live provider call was made, so the effect on Qwen answer quality
+remains unverified. Historical captures and the policy source remain unchanged.

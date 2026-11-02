@@ -7,8 +7,8 @@ retrieval and full-policy-context runs. See the [US-17 results](examples/us-17/r
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
 Follow-up [US-18 #59](examples/us-18/README.md) fixes current-run citation checks and
-explicit mixed-tool omissions, and adds interpretation guidance beside unchanged
-policy excerpts. Order provenance is now appended by the application from current
+explicit mixed-tool omissions. Policy tools return source excerpts; concise general
+instructions govern relevance, source conditions and uncertainty. Order provenance is now appended by the application from current
 imported-snapshot results, rather than enforced through a fixed phrase; the exact
 saved Qwen answer replays with this notice offline. This is not a post-change live
 run. Semantic answer support remains separate from citation provenance.

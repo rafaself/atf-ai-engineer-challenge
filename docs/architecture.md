@@ -138,8 +138,8 @@ that provisional retrieval is adequate.
 
 [US-18 corrections](examples/us-18/README.md) enforce current-run citation provenance
 even when no policy evidence exists, and reject missing tool returns for explicit
-mixed order/return requests. Contextual policy guidance addresses the recorded source
-ambiguities without changing ranking or the corpus. Citation provenance is a
+mixed order/return requests. General instructions require supported claims and explicit
+uncertainty; policy tools return source excerpts without section-specific advice. Citation provenance is a
 deterministic check; semantic claim support remains a separate review. When a current
 order result contains imported rows, the application appends a fixed notice that the
 data is a snapshot and that estimated delivery does not establish actual receipt;
