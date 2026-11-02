@@ -258,9 +258,86 @@ input:focus-visible {
   border-radius: 14px 14px 14px 4px;
   background: #f4f3f9;
   color: #333149;
+  cursor: text;
   font-size: var(--font-size-sm);
   line-height: 1.55;
-  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.message-bubble * {
+  cursor: text;
+}
+
+.message-bubble > :first-child {
+  margin-top: 0;
+}
+
+.message-bubble > :last-child {
+  margin-bottom: 0;
+}
+
+.message-bubble p,
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4,
+.message-bubble h5,
+.message-bubble h6 {
+  margin-bottom: 0.55em;
+}
+
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4,
+.message-bubble h5,
+.message-bubble h6 {
+  font-size: 1.08em;
+  line-height: 1.35;
+}
+
+.message-bubble ul,
+.message-bubble ol {
+  margin: 0.4em 0 0.65em;
+  padding-left: 1.35em;
+}
+
+.message-bubble li + li {
+  margin-top: 0.2em;
+}
+
+.message-bubble a {
+  color: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.message-bubble blockquote {
+  margin: 0.55em 0;
+  padding-left: 0.8em;
+  border-left: 2px solid currentColor;
+  opacity: 0.82;
+}
+
+.message-bubble code {
+  padding: 0.08em 0.3em;
+  border-radius: 4px;
+  background: rgba(31, 28, 69, 0.08);
+  font-size: 0.92em;
+}
+
+.message-bubble pre {
+  overflow-x: auto;
+  margin: 0.55em 0;
+  padding: 0.65em;
+  border-radius: 7px;
+  background: rgba(31, 28, 69, 0.08);
+}
+
+.message-bubble pre code {
+  padding: 0;
+  background: none;
 }
 
 .message-row--user .message-bubble {
@@ -307,19 +384,6 @@ input:focus-visible {
 
 .chat-error p {
   margin: 0;
-}
-
-.chat-error button {
-  margin-top: 7px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #8c294f;
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: 750;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 .quick-replies {

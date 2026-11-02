@@ -1,6 +1,6 @@
 import { ChatWidget } from "./components/ChatWidget";
 import { Icon } from "./components/Icon";
-import { mockChatClient } from "./services/mockChatClient";
+import { httpChatClient } from "./services/httpChatClient";
 
 export function App() {
   return (
@@ -11,7 +11,7 @@ export function App() {
         </span>
         <span>Empório da Música</span>
       </div>
-      <ChatWidget client={mockChatClient} />
+      <ChatWidget client={httpChatClient} />
     </main>
   );
 }
