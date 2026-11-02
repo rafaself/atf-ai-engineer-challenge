@@ -22,6 +22,12 @@ so this limited context can introduce irrelevant sections. These checks assess
 retrieval only, not generated answers or live Qwen behavior. Frozen US-15 targets
 remain unmet; sprint closure does not require RAG to outperform Full Context.
 
+The latest approved current-code batch stopped at its first mixed turn: both tools
+returned evidence, but the citation-format retry was exhausted and HTTP 500 resulted.
+The five remaining planned turns were not run. See the
+[batch review](examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch)
+for partial grounding and citation-format findings.
+
 ## Reproduce offline
 
 Install system Poppler (`pdftotext`; development preparation prerequisite), then

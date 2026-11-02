@@ -457,3 +457,57 @@ regressions remain. The full offline suite passes 350 tests; Ruff, format, stric
 mypy, package build and diff checks pass. These checks establish application
 contracts. No live provider call was made, so the effect on Qwen answer quality
 remains unverified. Historical captures and the policy source remain unchanged.
+
+## Finding 5: authorized current-code grounding batch
+
+The owner approved one Qwen3 32B batch in `us-east-1` at revision `4f36cf5`,
+using repo-root environment keys, four conversations/six turns, and a US$0.25
+ceiling. Each turn allowed five model requests, five tool calls and 1,024 output
+tokens per request. The frozen protocol and full sanitized trace are preserved in
+[grounding-batch-qwen.json](grounding-batch-qwen.json). The protocol required
+stopping at the first HTTP/provider failure, with no external retry.
+
+The first mixed order/return turn returned HTTP 500 after 15.657 seconds, so the
+remaining five turns were not executed. The recorded failure chain is
+`AgentExecutionError → UnexpectedModelBehavior → ToolRetryError → ModelRetry`.
+Both `get_my_order(order_id=4)` and `search_store_policies` succeeded; the policy
+result contained sections 4.3, 4.1, 5.2 and 4.4.
+
+Both generated candidates preserved the order status and product. The correction
+also described the order as imported snapshot data. The initial citation omitted
+page information. After feedback, Qwen used `(4.1 Direito de Arrependimento, p. 4)`;
+a reader can identify the returned source, but this syntax does not match the
+current citation parser. The single output retry was exhausted. Neither candidate
+was delivered as a successful customer answer. A provider-free replay reproduced the
+rejection. Changing only the citation to `[política 4.1, p. 4]` made the candidate
+pass the existing validator. That edited text is a diagnostic variant, not a new
+Qwen answer, and it retains the semantic shortcomings described below.
+
+The seven-day receipt-based rule and product conditions agree with section 4.1,
+but the candidate omitted that this rule applies to online purchases and did not
+ask for the missing purchase channel, receipt date or product condition. Its offer
+to initiate the process did not resolve eligibility. Neither candidate repeated
+the historical instrument-use hypothetical, visual-inspection requirement or wear
+examples. This one observation does not establish a causal effect of simplifying
+instructions or reliable grounding.
+
+| Dimension | Observed outcome |
+| --- | --- |
+| Required mixed-path tools | Both succeeded in the attempted turn |
+| Relevant evidence | Section 4.1 was available |
+| Operational fact preservation | Status and product retained through retry |
+| Citation output contract | Failed after one correction |
+| Claim scope and missing facts | Partial: online condition and clarification omitted |
+| Overall HTTP outcome | Failed, 500 |
+| Other five planned turns | Not executed; tool use and grounding remain untested |
+
+Usage was four model requests, 15,094 input tokens and 358 output tokens. The
+historical accounting estimate is US$0.0033052 at US$0.20/M input and US$0.80/M
+output; this is not an AWS invoice measurement. The attempted turn reserved
+US$0.036864. No remaining turn or rerun was invoked. Source/corpus and operational
+snapshot hashes still matched the frozen protocol after execution.
+
+The next investigation should distinguish citation-format brittleness from policy
+applicability and missing-fact handling. This batch supplies no new evidence about
+the unguarded standalone no-tool workflows. No production rules were changed from
+this result, and no semantic validator or additional orchestration was introduced.

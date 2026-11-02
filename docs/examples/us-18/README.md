@@ -15,8 +15,8 @@ the repo-root `.env` and completed this mixed case with HTTP 200, both tools and
 section 4.1 citation. Its initial answer preserved the requested order status, but
 the citation-correction retry omitted that fact. Retry feedback now tells the model
 to preserve relevant operational facts; a scripted regression covers this path.
-This fix has not had another live Qwen run. The captured answer also included one
-unsupported suggestion about visual inspection; see the [live review](results.md).
+A later live attempt retained the order status but failed citation-format validation.
+The earlier HTTP 200 capture also included an unsupported visual-inspection suggestion; see the [live review](results.md).
 One live case does not establish general Qwen reliability or complete faithfulness.
 
 The output validator no longer tries to infer answer meaning from phrases such as
@@ -36,6 +36,13 @@ defect fixes, and an honest limitations assessment. RAG need not outperform Full
 Context to complete this story or close the sprint. Retrieval optimization and
 broader architecture comparisons are deferred. US-15's failed adequacy gates remain
 reported, without lowering them or making optimization a prerequisite for these fixes.
+
+The latest approved grounding batch at `4f36cf5` stopped on its first turn with
+HTTP 500 after Qwen failed to produce the accepted citation syntax on correction.
+Both required tools succeeded and the order status was retained. Policy scope and
+missing-fact handling were incomplete; the other five planned turns were not run.
+See the [current-code batch review](results.md#finding-5-authorized-current-code-grounding-batch)
+and [preserved trace](grounding-batch-qwen.json). No rerun was made.
 
 ## Bounded context-dependent retrieval check
 

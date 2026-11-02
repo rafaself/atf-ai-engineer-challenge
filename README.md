@@ -24,12 +24,17 @@ explicit mixed order/return tool checks and general grounding principles.
 These corrections have offline regression coverage. The first live follow-up passes
 three cases; the mixed case still needs revalidation after further corrections.
 The backend now appends an order-snapshot notice from current tool metadata instead
-of requiring a fixed phrase. The last saved Qwen answer replays with that notice
+of requiring a fixed phrase. An earlier saved Qwen answer replays with that notice
 offline; this is not a post-change live run. A local E5 check found that a short
 context-dependent follow-up misses section 4.1 alone; adding the previous user
 question retrieves it. Policy search now uses that bounded one-turn context when
 the combined query is short. This checks retrieval only, not live answer quality.
 See the [actual review](docs/examples/us-18/results.md).
+The latest approved current-code batch stopped on its first mixed return turn with
+HTTP 500 after citation-format retry exhaustion. Both tools succeeded and order
+status was preserved, but policy applicability and missing facts were incompletely
+addressed. The other five planned turns remain untested; see the
+[batch review](docs/examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
 Sprint completion does not require RAG to outperform Full Context.
 
 ## Run locally
