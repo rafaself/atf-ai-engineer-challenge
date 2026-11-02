@@ -4,12 +4,12 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
 
-from emporio_music_backend.agent.policies import LocalPolicySearch
+from emporio_music_backend.agent.policies import LocalPolicySearch, PolicyTools
 from emporio_music_backend.contracts.errors import PolicyRetrievalError
 from emporio_music_backend.infrastructure.policy_embeddings import (
     E5_CONFIG,
@@ -29,7 +29,7 @@ class FixedEmbedder:
         return [[1.0, *([0.0] * 767)] for _ in texts]
 
 
-def _runtime_data(tmp_path: Path, *, build_index: bool) -> None:
+def _runtime_data(tmp_path: Path, *, build_index: bool) -> PolicyIndex | None:
     repository_data = Path(__file__).parents[3] / "data"
     policy_directory = tmp_path / "policies"
     policy_directory.mkdir()
@@ -37,8 +37,12 @@ def _runtime_data(tmp_path: Path, *, build_index: bool) -> None:
         shutil.copy2(repository_data / name, tmp_path / name)
     for name in ("corpus.json", "freeze.json"):
         shutil.copy2(repository_data / "policies" / name, policy_directory / name)
+    shutil.copy2(
+        repository_data / "policies" / "freight-clarification.json",
+        policy_directory / "freight-clarification.json",
+    )
     if not build_index:
-        return
+        return None
 
     corpus = PolicyCorpus.model_validate_json(
         (policy_directory / "corpus.json").read_text()
@@ -47,17 +51,21 @@ def _runtime_data(tmp_path: Path, *, build_index: bool) -> None:
     config = {
         **E5_CONFIG,
         "source_sha256": corpus.source_sha256,
+        "freight_clarification_sha256": corpus.freight_clarification_sha256,
         "corpus_sha256": freeze["chunks_sha256"],
         "parser_version": corpus.parser_version,
         "embedding_input": "hierarchy joined by newline + newline + section text",
     }
     chunks = [chunk for chunk in corpus.chunks if chunk.indexable]
     vectors = [
-        [1.0, *([0.0] * 767)] if chunk.section == "2" else [0.0, 1.0, *([0.0] * 766)]
+        [1.0, *([0.0] * 767)]
+        if chunk.section == "2" or chunk.id == "policy-v2.1-freight-clarification-v1"
+        else [0.0, 1.0, *([0.0] * 766)]
         for chunk in chunks
     ]
     index = PolicyIndex(tmp_path / "policy-indexes", "policy-e5", config)
     index.build(chunks, vectors, rebuild=False)
+    return index
 
 
 def test_query_filters_and_direct_expansion_remain_bounded() -> None:
@@ -99,6 +107,70 @@ def test_runtime_uses_frozen_index_and_returns_source_section_page(
         }
     ]
     assert embedder.queries == [(["Qual é o horário de atendimento?"], True)]
+
+
+def test_search_store_policies_returns_approved_freight_evidence(
+    tmp_path: Path,
+) -> None:
+    index = _runtime_data(tmp_path, build_index=True)
+    assert index is not None and index.collection is not None
+    indexed = index.collection.get(
+        ids=["policy-v2.1-freight-clarification-v1"],
+        include=["metadatas", "documents"],
+    )
+    assert indexed["metadatas"][0]["source"] == "policies/freight-clarification.json"
+    assert indexed["metadatas"][0]["pages"] == "[]"
+    assert "igual ou superior a R$ 500,00" in indexed["documents"][0]
+    search = LocalPolicySearch(data_directory=tmp_path, embedder=FixedEmbedder())
+    tools = PolicyTools(search)
+    context = SimpleNamespace(
+        prompt="O frete é grátis para um pedido de R$ 500 na região metropolitana?",
+        deps=SimpleNamespace(history=[]),
+    )
+
+    result = tools.search_store_policies(context)  # type: ignore[arg-type]
+
+    record = next(
+        item
+        for item in result["records"]
+        if item["id"] == "policy-v2.1-freight-clarification-v1"
+    )
+    assert result["status"] == "evidence_found"
+    assert record["source"] == "policies/freight-clarification.json"
+    assert record["section"] == "5.1 (clarificação aprovada)"
+    assert record["pages"] == []
+    assert "igual ou superior a R$ 500,00" in record["text"]
+    assert "R$ 35,00" in record["text"]
+
+
+def test_freight_clarification_source_participates_in_index_fingerprint(
+    tmp_path: Path,
+) -> None:
+    corpus = PolicyCorpus.model_validate_json(
+        (Path(__file__).parents[3] / "data" / "policies" / "corpus.json").read_text()
+    )
+    freeze = json.loads(
+        (Path(__file__).parents[3] / "data" / "policies" / "freeze.json").read_text()
+    )
+    config = {
+        **E5_CONFIG,
+        "source_sha256": corpus.source_sha256,
+        "freight_clarification_sha256": corpus.freight_clarification_sha256,
+        "corpus_sha256": freeze["chunks_sha256"],
+        "parser_version": corpus.parser_version,
+        "embedding_input": "hierarchy joined by newline + newline + section text",
+    }
+
+    first = PolicyIndex(tmp_path / "first", "policy-e5", config)
+    same = PolicyIndex(tmp_path / "same", "policy-e5", config)
+    changed = PolicyIndex(
+        tmp_path / "changed",
+        "policy-e5",
+        {**config, "freight_clarification_sha256": "different-source"},
+    )
+
+    assert first.signature == same.signature
+    assert first.signature != changed.signature
 
 
 def test_successful_empty_search_is_distinct_from_index_failure(

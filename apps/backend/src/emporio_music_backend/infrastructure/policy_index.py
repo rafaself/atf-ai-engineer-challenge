@@ -1,4 +1,4 @@
-"""Persistent Chroma index with explicit vectors and configuration fingerprints."""
+"""Persistent policy index with explicit vectors and configuration fingerprints."""
 
 import hashlib
 import importlib
@@ -15,7 +15,7 @@ def fingerprint(config: dict[str, Any]) -> str:
 
 
 class PolicyIndex:
-    """Open, query, or explicitly rebuild one named fixed-manual collection."""
+    """Open, query, or explicitly rebuild one named policy collection."""
 
     def __init__(self, directory: Path, name: str, config: dict[str, Any]) -> None:
         self.directory = directory
@@ -91,7 +91,7 @@ class PolicyIndex:
             documents=[chunk.text for chunk in chunks],
             metadatas=[
                 {
-                    "source": "store_policies.pdf",
+                    "source": chunk.source or "store_policies.pdf",
                     "section": chunk.section,
                     "family": chunk.section.split(".")[0],
                     "pages": json.dumps(chunk.pages),

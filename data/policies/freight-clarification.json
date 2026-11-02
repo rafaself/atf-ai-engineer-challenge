@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "approval_status": "approved",
+  "approved_by": "business owner",
+  "approval_reference": "GitHub issue #43, Workstream A — Approved freight-policy clarification",
+  "recorded_on": "2026-11-02",
+  "manual_section": "5.1",
+  "delivery_area": "Região Metropolitana de Campo Grande",
+  "threshold_brl": "500.00",
+  "comparison": "greater_than_or_equal",
+  "fee_below_threshold_brl": "35.00",
+  "fee_at_or_above_threshold_brl": "0.00"
+}
