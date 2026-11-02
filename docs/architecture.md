@@ -143,11 +143,12 @@ ambiguities without changing ranking or the corpus. Citation provenance is a
 deterministic check; semantic claim support remains a separate review. When a current
 order result contains imported rows, the application appends a fixed notice that the
 data is a snapshot and that estimated delivery does not establish actual receipt;
-the model no longer has to use a prescribed disclosure phrase. A narrow output check
-also rejects the recorded affirmative wording that tied delivery to its estimate,
-while allowing nearby explicit negation. Neither check establishes general answer
-faithfulness. The [saved Qwen answer](examples/us-18/results.md) replays with the
-notice. The first post-change live attempt explicitly selected the SSO profile and
+the model no longer has to use a prescribed disclosure phrase. The output validator
+does not infer semantic support from lexical matches: a regression verifies that a
+correct answer may quote and qualify the phrases from the historical failures. The
+captured failures remain evidence of model limitations, not checks the validator can
+resolve. The [saved Qwen answer](examples/us-18/results.md) replays with the notice.
+The first post-change live attempt explicitly selected the SSO profile and
 returned HTTP 503 during token retrieval before model inference; it did not load the
 repo-root `.env`, so it did not test those environment credentials. A separately
 approved env-based attempt then returned HTTP 200, used both required tools, and

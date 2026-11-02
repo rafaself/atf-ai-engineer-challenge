@@ -69,37 +69,6 @@ class SourcePolicySearch:
         return {"status": "evidence_found", "records": self.records}
 
 
-def test_live_mixed_answer_distinguishes_estimate_claim_from_negation() -> None:
-    report = json.loads(
-        (DATA_DIRECTORY.parent / "docs/examples/us-18/live-captures.json").read_text()
-    )
-    run = next(
-        case for case in report["runs"] if case["case_id"] == "mixed-order-return"
-    )
-    messages = ModelMessagesTypeAdapter.validate_python(run["messages"])
-    for message in messages:
-        message.run_id = "recorded-current"
-    context = RunContext(
-        deps=ExecutionContext(identity=CustomerIdentity(customer_id=1)),
-        model=TestModel(),
-        usage=RunUsage(),
-        prompt=run["prompt"],
-        run_id="recorded-current",
-        messages=messages,
-    )
-    with pytest.raises(ModelRetry, match="não confirma quando o cliente recebeu"):
-        customer_answer(context, run["http_response"]["answer"])
-
-    negated = (
-        "O pedido 4 consta como entregue no registro, mas não podemos confirmar se foi "
-        "entregue conforme o prazo estimado. A seção 4.1 exige 'sem sinais de uso', "
-        "não uma condição de 'perfeito estado' [política 4.1, p. 4]."
-    )
-    accepted = customer_answer(context, negated)
-    assert accepted.startswith(negated)
-    assert accepted.count("Os dados dos pedidos vêm") == 1
-
-
 def test_missing_policy_retry_requests_the_lookup_before_customer_clarification() -> (
     None
 ):
@@ -160,48 +129,6 @@ def test_citation_retry_requests_rule_explanation_not_decorative_reference() -> 
         customer_answer(context, answer)
     assert "Explique a regra" in str(correction.value)
     assert "Não cite política para fatos do pedido" in str(correction.value)
-
-
-def test_recorded_qwen_mixed_answer_retries_overstated_use_condition() -> None:
-    run = json.loads(
-        (
-            DATA_DIRECTORY.parent / "docs/examples/us-18/mixed-rule-feedback-1.json"
-        ).read_text()
-    )["runs"][0]
-    messages = ModelMessagesTypeAdapter.validate_python(run["messages"])
-    for message in messages:
-        message.run_id = "recorded-current"
-    answer = next(
-        part.content
-        for message in reversed(messages)
-        for part in message.parts
-        if isinstance(part, TextPart)
-    )
-    context = RunContext(
-        deps=ExecutionContext(identity=CustomerIdentity(customer_id=1)),
-        model=TestModel(),
-        usage=RunUsage(),
-        prompt=run["prompt"],
-        run_id="recorded-current",
-        messages=messages,
-    )
-
-    with pytest.raises(ModelRetry) as correction:
-        customer_answer(context, answer)
-    assert "sem sinais de uso" in str(correction.value)
-    assert "sinais visíveis de uso" in str(correction.value)
-
-    corrected = answer.replace(
-        "O instrumento está em perfeito estado, com embalagem original, "
-        "acessórios e manuais?",
-        "Há sinais visíveis de uso? Você tem embalagem original, acessórios e manuais?",
-    )
-    assert corrected != answer
-    accepted = customer_answer(context, corrected)
-    assert accepted.startswith(corrected)
-    assert "fotografia importada" in accepted
-    assert "seção 4.1, p. 4" in answer
-    assert "sem sinais de uso" in answer
 
 
 def test_latest_qwen_answer_gets_deterministic_imported_snapshot_notice() -> None:
@@ -396,6 +323,97 @@ def test_recorded_mixed_failure_is_corrected_through_http(
     assert observed_tools == ["get_my_order", "search_store_policies"]
     assert policy.queries == [historical["prompt"]]
     assert requests == 4  # Correction plus the missing tool stays within five requests.
+
+
+def test_mixed_answer_can_correctly_discuss_the_recorded_claims(
+    tmp_path: Path,
+    operational_database: Path,
+    demo_customer: dict[str, int],
+) -> None:
+    policy = SourcePolicySearch({"4.1", "4.3"})
+    requests = 0
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal requests
+        requests += 1
+        returned_tools = {
+            part.tool_name
+            for message in messages
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        }
+        if "get_my_order" not in returned_tools:
+            return ModelResponse(parts=[ToolCallPart("get_my_order", {"order_id": 4})])
+        if "search_store_policies" not in returned_tools:
+            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+
+        order_result = cast(
+            dict[str, object],
+            next(
+                part.content
+                for message in messages
+                for part in message.parts
+                if isinstance(part, ToolReturnPart) and part.tool_name == "get_my_order"
+            ),
+        )
+        order = cast(dict[str, object], order_result["order"])
+        assert order["status"] == "delivered"
+        policy_result = cast(
+            dict[str, object],
+            next(
+                part.content
+                for message in messages
+                for part in message.parts
+                if isinstance(part, ToolReturnPart)
+                and part.tool_name == "search_store_policies"
+            ),
+        )
+        records = cast(list[dict[str, object]], policy_result["records"])
+        assert {record["section"] for record in records} == {
+            "4.1",
+            "4.3",
+        }
+        answer = (
+            "O pedido 4 consta como entregue na fotografia. A frase ‘foi entregue "
+            "conforme o prazo estimado’ não é confirmada pelo registro; a previsão "
+            "não informa o recebimento real. Para arrependimento online, a seção "
+            "4.1 permite solicitar a devolução em até sete dias corridos após o "
+            "recebimento; o produto deve estar na embalagem original, sem sinais "
+            "de uso, com acessórios e manuais [política 4.1, p. 4]. A expressão "
+            "‘perfeito estado’ aparece na seção 4.3, sobre troca por preferência, "
+            "não como condição da devolução online [política 4.3, p. 4]. Qual foi "
+            "o canal da compra, a data real de recebimento e a condição do instrumento?"
+        )
+        return ModelResponse(parts=[TextPart(answer)])
+
+    historical = json.loads(
+        (DATA_DIRECTORY.parent / "docs/examples/us-17/captures.json").read_text()
+    )
+    prompt = next(
+        run["prompt"]
+        for run in historical["runs"]
+        if run["case_id"] == "mixed-order-return" and run["mode"] == "rag"
+    )
+    agent = create_store_agent(
+        AgentSettings(),
+        SQLiteProductRepository(
+            operational_database.parent / "operational-catalog.sqlite3"
+        ),
+        SQLiteOrderRepository(operational_database),
+        model=FunctionModel(respond),
+        policy_search=policy,
+    )
+    repository = SQLiteConversationRepository(tmp_path / "chat.sqlite3")
+    with TestClient(create_app(ChatService(agent, repository))) as client:
+        response = client.post("/api/chat", json={**demo_customer, "message": prompt})
+
+    assert response.status_code == 200
+    answer = response.json()["answer"]
+    assert "O pedido 4 consta como entregue na fotografia." in answer
+    assert "[política 4.1, p. 4]" in answer
+    assert "[política 4.3, p. 4]" in answer
+    assert "fotografia importada" in answer
+    assert requests == 3
 
 
 def test_citation_retry_feedback_preserves_current_order_facts(

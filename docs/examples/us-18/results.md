@@ -353,14 +353,15 @@ returns do not trigger the notice.
 
 The recorded Qwen answer now replays through the output validator and returns the
 answer with the appended notice in an offline regression. Separate order-API tests
-verify that the notice survives the HTTP path and persisted history. The older
-`live-captures.json` answer that says the order was delivered “conforme o prazo
-estimado” is instead rejected with targeted feedback. The limited matcher ignores
-nearby explicit negation, but does not cover all paraphrases or complex sentence
-structure and is not a semantic entailment guarantee. The separate “perfeito estado”
-check remains because captures showed the model importing section 4.3's stricter
-condition into section 4.1; it now allows nearby explicit negation. Both remain
-lexical safeguards rather than proof of faithfulness.
+verify that the notice survives the HTTP path and persisted history. The output
+validator no longer rejects claims based on the phrases “conforme o prazo estimado”
+or “perfeito estado”: those checks incorrectly rejected a correct explanation that
+quoted and qualified both phrases. A scripted HTTP regression now verifies that this
+correct answer preserves the order status, includes current policy citations, and
+receives the deterministic snapshot notice. The original Qwen captures remain as
+evidence of semantic failures, but the validator does not establish whether claims
+are supported by their evidence. That distinction requires representative model
+evaluation; no live model call was made for this change.
 
 The exact snapshot phrase was also removed from the persona and order-tool guidance,
 and the general output correction now includes only feedback for the failed checks.

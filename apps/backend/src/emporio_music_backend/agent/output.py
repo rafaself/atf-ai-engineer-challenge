@@ -29,33 +29,11 @@ _EXPLICIT_ORDER = re.compile(
 _RETURN_QUESTION = re.compile(
     r"\b(?:devol\w*|troc\w*|reembols\w*|arrepend\w*)", re.IGNORECASE
 )
-_PERFECT_PRODUCT_CONDITION = re.compile(r"\bperfeito\s+estado\b", re.IGNORECASE)
-_ESTIMATED_DELIVERY_AS_RECEIPT = re.compile(
-    r"\bentregue\b.{0,20}\bconforme\b.{0,20}\b(?:prazo|data)\s+estimad[oa]\b",
-    re.IGNORECASE,
-)
 _ORDER_SNAPSHOT_NOTICE = (
     "Os dados dos pedidos vêm de uma fotografia importada, não de uma "
     "confirmação em tempo real. A previsão de entrega, se informada, não "
     "confirma a data real de recebimento."
 )
-
-
-def _has_unnegated_match(pattern: re.Pattern[str], text: str) -> bool:
-    """Treat an explicit nearby negation as a mention, not a positive claim."""
-    for match in pattern.finditer(text):
-        start = (
-            max(text.rfind(mark, 0, match.start()) for mark in (".", "!", "?", ";")) + 1
-        )
-        clause_prefix = re.split(
-            r"\b(?:mas|porém|contudo)\b",
-            text[start : match.start()],
-            flags=re.IGNORECASE,
-        )[-1]
-        if re.search(r"\b(?:não|nunca|sem)\b", clause_prefix, re.IGNORECASE):
-            continue
-        return True
-    return False
 
 
 def _brl_amount(text: str) -> Decimal:
@@ -236,23 +214,11 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         mixed_order_return
         and not {"get_my_order", "search_store_policies"} <= current_tools
     )
-    unsupported_return_condition = (
-        # Retained for the recorded overstatement of section 4.1. This lexical
-        # guard only treats unnegated mentions as overstatements.
-        mixed_order_return
-        and ("4.1", 4) in policy_sources
-        and _has_unnegated_match(_PERFECT_PRODUCT_CONDITION, answer)
-    )
-    estimate_as_receipt = has_order_snapshot and _has_unnegated_match(
-        _ESTIMATED_DELIVERY_AS_RECEIPT, answer
-    )
     if (
         invalid_answer
         or unsupported_price
         or invalid_policy_citation
         or missing_mixed_tools
-        or estimate_as_receipt
-        or unsupported_return_condition
     ):
         if missing_mixed_tools:
             missing = {"get_my_order", "search_store_policies"} - current_tools
@@ -277,36 +243,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                 "a regra e a citação retornadas e peça os fatos que ainda faltam. "
                 + "A previsão de entrega não informa a data real de recebimento."
             )
-        if estimate_as_receipt and not (
-            invalid_answer or unsupported_price or invalid_policy_citation
-        ):
-            trace(
-                "output.rejected",
-                reason="estimated_delivery_as_receipt",
-                retry=ctx.retry,
-            )
-            raise ModelRetry(
-                "A previsão de entrega não confirma quando o cliente recebeu o pedido. "
-                "Informe o status como dado do registro, mantenha a previsão separada "
-                "e pergunte a data real de recebimento."
-            )
-        if (
-            unsupported_return_condition
-            and not invalid_policy_citation
-            and not (invalid_answer or unsupported_price)
-        ):
-            trace(
-                "output.rejected",
-                reason="unsupported_return_condition",
-                retry=ctx.retry,
-            )
-            correction = (
-                "A seção 4.1 exige 'sem sinais de uso', não 'perfeito estado'. "
-                "Explique o critério exato e pergunte se há sinais visíveis de uso; "
-                "não transforme a regra em condição mais rigorosa. Preserve a "
-                "citação da seção 4.1 e os demais fatos ainda desconhecidos. "
-            )
-            raise ModelRetry(correction)
         if (
             invalid_policy_citation
             and has_policy_evidence
@@ -340,15 +276,12 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                     "Se a regra não foi recuperada, declare evidência insuficiente."
                 )
             raise ModelRetry(correction)
-        reason = (
-            "blank_or_internal_markup"
-            if invalid_answer
-            else "unsupported_price"
-            if unsupported_price
-            else "unsupported_policy_citation"
-            if invalid_policy_citation
-            else "unsupported_return_condition"
-        )
+        if invalid_answer:
+            reason = "blank_or_internal_markup"
+        elif unsupported_price:
+            reason = "unsupported_price"
+        else:
+            reason = "unsupported_policy_citation"
         trace(
             "output.rejected",
             reason=reason,
@@ -374,16 +307,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                 "Use somente citações de seção e página retornadas por "
                 "search_store_policies nesta rodada; sem evidência atual, não afirme "
                 "a regra."
-            )
-        if unsupported_return_condition:
-            corrections.append(
-                "A seção 4.1 exige 'sem sinais de uso', não 'perfeito estado'; "
-                "pergunte se há sinais visíveis de uso."
-            )
-        if estimate_as_receipt:
-            corrections.append(
-                "A previsão não confirma a data real de recebimento; mantenha o status "
-                "e a previsão separados e pergunte essa data."
             )
         raise ModelRetry(" ".join(corrections))
     notices = [

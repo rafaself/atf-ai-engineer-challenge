@@ -19,14 +19,15 @@ This fix has not had another live Qwen run. The captured answer also included on
 unsupported suggestion about visual inspection; see the [live review](results.md).
 One live case does not establish general Qwen reliability or complete faithfulness.
 
-Separate narrow checks still reject the recorded affirmative statement that an order
-was delivered “conforme o prazo estimado” and the recorded section 4.1 overstatement
-using “perfeito estado.” They ignore nearby explicit negation, but remain lexical:
-paraphrases and more complex sentence structure can still evade or confuse them, so
-they are not semantic guarantees. The condition guard remains because the model
-repeatedly imported section 4.3's stricter rule into section 4.1. The earlier sandbox
-stall was reproduced by a fake-service ASGI request and disappeared outside the
-restricted sandbox.
+The output validator no longer tries to infer answer meaning from phrases such as
+“conforme o prazo estimado” or “perfeito estado.” Captures showed both unsupported
+claims, but the lexical guards also rejected a correct answer explaining why those
+phrases were unsupported. A scripted HTTP regression now verifies that the answer
+can quote and qualify both phrases while retaining order status and policy citations.
+This does not establish that a live model will consistently make those distinctions;
+the historical failures remain evaluation evidence, and semantic claim support still
+needs representative live review. The earlier sandbox stall was reproduced by a
+fake-service ASGI request and disappeared outside the restricted sandbox.
 Alternative-model comparison is deferred; no comparative performance claim is made.
 See [actual results and follow-up](results.md).
 
