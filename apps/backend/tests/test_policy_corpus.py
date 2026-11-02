@@ -137,9 +137,7 @@ def test_labels_reference_existing_evidence_and_preserve_frozen_dataset() -> Non
     assert len(questions) == len({q["id"] for q in questions}) == 25
     assert {q["split"] for q in questions} == {"development", "validation"}
     current_q13 = next(q for q in questions if q["id"] == "q13")
-    assert current_q13["evidence_groups"] == [
-        ["policy-v2.1-freight-clarification-v1"]
-    ]
+    assert current_q13["evidence_groups"] == [["policy-v2.1-freight-clarification-v1"]]
     assert current_q13["expectation"] == "state_conditions"
     for question in questions:
         for group in question["evidence_groups"]:
@@ -155,9 +153,7 @@ def test_benchmark_runner_loads_current_versioned_questions() -> None:
     q13 = next(question for question in questions if question["id"] == "q13")
 
     assert freeze["questions_source"] == "questions-v2.json"
-    assert q13["evidence_groups"] == [
-        ["policy-v2.1-freight-clarification-v1"]
-    ]
+    assert q13["evidence_groups"] == [["policy-v2.1-freight-clarification-v1"]]
     assert q13["expectation"] == "state_conditions"
 
 

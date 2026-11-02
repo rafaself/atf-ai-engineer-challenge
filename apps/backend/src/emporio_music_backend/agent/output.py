@@ -142,9 +142,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             else:
                 location += ", sem página física"
             references.append(f"{source_name} — {location}")
-        source_notice = (
-            f"Fontes consultadas: {'; '.join(references)}."
-        )
+        source_notice = f"Fontes consultadas: {'; '.join(references)}."
         if source_notice not in answer:
             notices.append(source_notice)
     final_answer = "\n\n".join([answer.strip(), *notices])

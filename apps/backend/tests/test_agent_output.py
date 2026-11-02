@@ -188,8 +188,7 @@ def test_policy_source_without_pdf_page_is_cited_separately() -> None:
     accepted = customer_answer(context, answer)
 
     assert accepted == (
-        answer
-        + "\n\nFontes consultadas: policies/freight-clarification.json — "
+        answer + "\n\nFontes consultadas: policies/freight-clarification.json — "
         "seção 5.1 (clarificação aprovada), sem página física; "
         "Manual de políticas da loja — seção 5.1, p. 4."
     )
