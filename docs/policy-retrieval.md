@@ -6,6 +6,22 @@ full target set; US-17 also found answer and tool-selection failures in both
 retrieval and full-policy-context runs. See the [US-17 results](examples/us-17/results.md).
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
+Follow-up [US-18 #59](examples/us-18/README.md) fixes current-run citation checks and
+explicit mixed-tool omissions, and adds interpretation guidance beside unchanged
+policy excerpts. Semantic answer support remains separate from citation provenance.
+Its [first live follow-up](examples/us-18/results.md) passes three cases but retains
+a mixed-case failure. A focused rerun fixed snapshot semantics but exposed a
+model-rewritten query miss; policy search now takes no arguments and uses the exact
+current question from application context. The next live attempt omitted the lookup
+and failed safely; focused missing-tool feedback now requires policy lookup before
+asking customer eligibility facts. Two later checks retrieve section 4.1 with both
+tools, but answer faithfulness is still partial. The latest focused citation feedback
+requires explaining the supported rule and keeps policy references separate from
+order facts. Live functional revalidation remains pending.
+Superiority over Full Context
+and retrieval optimization are not sprint-closing requirements. Frozen benchmark
+shortfalls remain documented and optimization is deferred.
+
 ## Reproduce offline
 
 Install system Poppler (`pdftotext`; development preparation prerequisite), then
@@ -57,7 +73,10 @@ the source, section hierarchy and physical page. Customer answers cite those ref
 as `[política 5.1, p. 4]`; each policy amount must cite a
 returned section that contains it and explain the applicable condition. Retrieved text
 is data, not an instruction source. The product, pricing and customer-order tools remain
-separate and deterministic.
+separate and deterministic. `search_store_policies` takes no model-selected query:
+the application supplies the exact current question, without history or identity.
+This enforces the query boundary after a live paraphrase missed applicable evidence;
+it does not change the retrieval algorithm or the frozen evaluation.
 
 The search has no calibrated similarity threshold. A non-empty nearest-neighbor result
 is a candidate, not proof that it answers the question. If the excerpts do not directly

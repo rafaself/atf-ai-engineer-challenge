@@ -136,6 +136,22 @@ HTTP 500, failures in both arms on tool selection for a mixed order/return quest
 and unsupported claims. This evidence does not establish general model quality or
 that provisional retrieval is adequate.
 
+[US-18 corrections](examples/us-18/README.md) enforce current-run citation provenance
+even when no policy evidence exists, and reject missing tool returns for explicit
+mixed order/return requests. Contextual policy guidance addresses the recorded source
+ambiguities without changing retrieval. Citation provenance is a deterministic check;
+semantic claim support remains a separate review. The [first live follow-up](examples/us-18/results.md)
+passes three cases; the mixed case uses both tools but still fails semantic/disclosure
+criteria. A focused rerun fixes snapshot framing but exposes a model-rewritten
+query miss. Policy search now takes no arguments and uses the exact current user
+question. The next live attempt still omitted policy lookup and failed safely after
+the single retry. Focused missing-tool feedback now requires lookup before customer
+clarification. Two subsequent checks run both tools and retrieve section 4.1, but
+rule explanation/claim support remain partial. Focused citation feedback now asks
+for the supported rule rather than a decorative citation; live verification remains pending.
+Sprint completion requires the functional behavior and honest limits, not proof that
+RAG beats Full Context; retrieval optimization is deferred.
+
 The [simplification review](examples/simplification-review.md) preserves an earlier
 offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)
 records the final Qwen conversations, failed Nova comparisons and a combined

@@ -16,11 +16,27 @@ _INTERNAL_MARKUP = re.compile(
 )
 _BRL_PRICE = re.compile(r"R\$\s*([+-]?\d+(?:[.,]\d+)*)")
 _POLICY_CITATION = re.compile(
-    r"\[pol[ií]tica\s+(?P<section>capa|\d+(?:\.\d+)?),\s*"
-    r"p{1,2}\.\s*(?P<pages>\d+(?:\s*,\s*\d+)*)\]",
+    r"(?:(?P<square>\[)pol[ií]tica|\(se[çc][ãa]o)\s+"
+    r"(?P<section>capa|\d+(?:\.\d+)?),\s*"
+    r"p{1,2}\.\s*(?P<pages>\d+(?:\s*,\s*\d+)*)(?(square)\]|\))",
     re.IGNORECASE,
 )
-_POLICY_CITATION_MARKER = re.compile(r"\[pol[ií]tica\b", re.IGNORECASE)
+_POLICY_CITATION_MARKER = re.compile(r"\[pol[ií]tica\b|\(se[çc][ãa]o\b", re.IGNORECASE)
+_ORDER_QUESTION = re.compile(r"\bpedidos?\b", re.IGNORECASE)
+_EXPLICIT_ORDER = re.compile(
+    r"\bpedido\s+(?:(?:n[úu]mero|n[º°.]?)\s*)?#?\s*\d+\b", re.IGNORECASE
+)
+_RETURN_QUESTION = re.compile(
+    r"\b(?:devol\w*|troc\w*|reembols\w*|arrepend\w*)", re.IGNORECASE
+)
+_PERFECT_PRODUCT_CONDITION = re.compile(r"\bperfeito\s+estado\b", re.IGNORECASE)
+_SNAPSHOT_DISCLOSURE = re.compile(
+    r"\b(?:fotografia importada|snapshot importado|dados importados)\b", re.IGNORECASE
+)
+_SNAPSHOT_DISCLOSURE_GUIDANCE = (
+    "Declare explicitamente: 'O status do pedido vem de uma fotografia importada, "
+    "não de uma confirmação ao vivo.' "
+)
 
 
 def _brl_amount(text: str) -> Decimal:
@@ -39,6 +55,8 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     policy_sources: set[tuple[str, int]] = set()
     policy_amount_sources: dict[Decimal, set[tuple[str, int]]] = {}
     has_policy_evidence = False
+    current_tools: set[str] = set()
+    has_order_snapshot = False
     totals: set[int] = set()
     order_totals: set[int] = set()
     item_totals: set[int] = set()
@@ -49,6 +67,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             if ctx.run_id is None or message.run_id != ctx.run_id:
                 continue
             if isinstance(part, ToolReturnPart) and isinstance(part.content, dict):
+                current_tools.add(part.tool_name)
                 if part.tool_name == "search_store_policies":
                     policy_records = part.content.get("records")
                     if part.content.get("status") == "evidence_found" and isinstance(
@@ -117,6 +136,9 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                 if part.tool_name == "get_my_order":
                     detail = part.content.get("order")
                     if isinstance(detail, dict):
+                        has_order_snapshot = (
+                            part.content.get("data_basis") == "imported_snapshot"
+                        )
                         current_amount_values.append(detail.get("total_brl"))
                     if (
                         isinstance(detail, dict)
@@ -160,8 +182,8 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     malformed_citation = len(citation_matches) != len(
         _POLICY_CITATION_MARKER.findall(answer)
     )
-    invalid_policy_citation = has_policy_evidence and (
-        not citations
+    invalid_policy_citation = (
+        (has_policy_evidence and not citations)
         or malformed_citation
         or not citations <= policy_sources
         or any(
@@ -170,13 +192,125 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             for amount in answer_amounts
         )
     )
-    if invalid_answer or unsupported_price or invalid_policy_citation:
+    # A narrow guard for explicit Portuguese order/return questions. This is
+    # output validation, not an intent router: the model still chooses/calls
+    # tools, and paraphrases beyond these terms require live evaluation.
+    mixed_order_return = (
+        ctx.deps.identity is not None
+        and isinstance(ctx.prompt, str)
+        and _ORDER_QUESTION.search(ctx.prompt) is not None
+        and _RETURN_QUESTION.search(ctx.prompt) is not None
+        # Without a resolvable ID the model must be allowed to clarify instead
+        # of inventing one. A lookup can also resolve a reference from history.
+        and (
+            _EXPLICIT_ORDER.search(ctx.prompt) is not None
+            or "get_my_order" in current_tools
+        )
+    )
+    missing_mixed_tools = (
+        mixed_order_return
+        and not {"get_my_order", "search_store_policies"} <= current_tools
+    )
+    missing_snapshot_disclosure = (
+        mixed_order_return
+        and has_order_snapshot
+        and _SNAPSHOT_DISCLOSURE.search(answer) is None
+    )
+    unsupported_return_condition = (
+        mixed_order_return
+        and ("4.1", 4) in policy_sources
+        and _PERFECT_PRODUCT_CONDITION.search(answer) is not None
+    )
+    if (
+        invalid_answer
+        or unsupported_price
+        or invalid_policy_citation
+        or missing_mixed_tools
+        or missing_snapshot_disclosure
+        or unsupported_return_condition
+    ):
+        if missing_mixed_tools:
+            missing = {"get_my_order", "search_store_policies"} - current_tools
+            trace("output.rejected", reason="missing_mixed_tools", retry=ctx.retry)
+            correction = (
+                "Ainda faltam consultas obrigatórias nesta rodada. "
+                "Não finalize a resposta e não prometa consultar depois. "
+            )
+            if "search_store_policies" in missing:
+                correction += (
+                    "Chame search_store_policies AGORA, sem argumentos ({}). "
+                    "Não espere respostas do cliente sobre canal, recebimento "
+                    "ou estado do produto para consultar a política. "
+                )
+            if "get_my_order" in missing:
+                correction += (
+                    "Chame get_my_order AGORA com o ID do pedido indicado na "
+                    "pergunta ou no histórico; nunca invente um ID. "
+                )
+            raise ModelRetry(
+                correction + "Somente após obter esses resultados, responda com "
+                "a regra e a citação retornadas e peça os fatos que ainda faltam. "
+                + _SNAPSHOT_DISCLOSURE_GUIDANCE
+                + "Previsão não é recebimento real."
+            )
+        if (
+            unsupported_return_condition
+            and not invalid_policy_citation
+            and not (invalid_answer or unsupported_price)
+        ):
+            trace(
+                "output.rejected",
+                reason="unsupported_return_condition",
+                retry=ctx.retry,
+            )
+            correction = (
+                "A seção 4.1 exige 'sem sinais de uso', não 'perfeito estado'. "
+                "Explique o critério exato e pergunte se há sinais visíveis de uso; "
+                "não transforme a regra em condição mais rigorosa. Preserve a "
+                "citação da seção 4.1 e os demais fatos ainda desconhecidos. "
+            )
+            if missing_snapshot_disclosure:
+                correction += _SNAPSHOT_DISCLOSURE_GUIDANCE
+            raise ModelRetry(correction)
+        if (
+            invalid_policy_citation
+            and has_policy_evidence
+            and not (invalid_answer or unsupported_price)
+        ):
+            trace(
+                "output.rejected", reason="unsupported_policy_citation", retry=ctx.retry
+            )
+            correction = (
+                "Explique a regra pertinente usando os trechos retornados nesta rodada "
+                "e cite a seção/página junto à afirmação que ela sustenta, no formato "
+                "[política 4.1, p. 4]. Não basta acrescentar uma referência à resposta. "
+                "Não cite política para fatos do pedido: status, previsão, produto e "
+                "total são evidência da ferramenta de pedidos, não da política. "
+                "Não invente condições nem use uma seção de outro assunto. "
+            )
+            if mixed_order_return:
+                correction += (
+                    _SNAPSHOT_DISCLOSURE_GUIDANCE
+                    + "Mantenha a previsão distinta do recebimento real. Se a seção 4.1 foi retornada, explique "
+                    "sua regra geral de arrependimento online, incluindo prazo contado "
+                    "do recebimento e use o critério exato 'sem sinais de uso', não "
+                    "'perfeito estado'. Pergunte se há sinais visíveis de uso. Só depois "
+                    "peça canal da "
+                    "compra, data real de recebimento e condição. Fatos desconhecidos "
+                    "impedem concluir elegibilidade, mas não impedem explicar a regra. "
+                    "Se a regra não foi recuperada, declare evidência insuficiente."
+                )
+            raise ModelRetry(correction)
         reason = (
             "blank_or_internal_markup"
             if invalid_answer
             else "unsupported_price"
             if unsupported_price
             else "unsupported_policy_citation"
+            if invalid_policy_citation
+            else "missing_snapshot_disclosure"
+            if missing_snapshot_disclosure
+            else "unsupported_return_condition"
         )
         trace(
             "output.rejected",
@@ -196,6 +330,16 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "compare com 'seu orçamento' sem repetir a quantia. "
             "Se faltam os valores necessários, consulte a ferramenta adequada "
             "nesta rodada antes de responder. "
+            "Para pedido com devolução/troca, consulte get_my_order e "
+            "search_store_policies nesta rodada antes de concluir; não encerre "
+            "com uma promessa de consulta. Se falta o ID, peça esse dado. "
+            "Previsão de entrega não é recebimento real; status entregue não "
+            "define prazo ou elegibilidade. Ao informar pedido, declare que os "
+            + _SNAPSHOT_DISCLOSURE_GUIDANCE
+            + "Não diga que foi entregue "
+            "conforme a previsão: não há data real de recebimento no snapshot. "
+            "Pergunte o canal da compra, a data real de recebimento e a condição "
+            "do produto antes de concluir elegibilidade. Não invente a data de hoje. "
             "Para fatos de política, cite a seção e página retornadas nesta rodada, "
             "no formato [política 5.1, p. 4]. Cite uma seção que contém cada valor "
             "de política e explique a condição aplicável; a presença do valor no trecho "

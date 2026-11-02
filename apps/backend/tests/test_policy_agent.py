@@ -31,7 +31,10 @@ from emporio_music_backend.contracts.conversations import (
     ConversationSession,
     ExecutionContext,
 )
-from emporio_music_backend.contracts.errors import PolicyRetrievalError
+from emporio_music_backend.contracts.errors import (
+    AgentExecutionError,
+    PolicyRetrievalError,
+)
 from emporio_music_backend.contracts.identity import CustomerIdentity
 from emporio_music_backend.contracts.orders import (
     OrderDetail,
@@ -112,6 +115,38 @@ def _store_agent(
     )
 
 
+def test_policy_tool_uses_current_question_without_model_query_arguments() -> None:
+    policy = FixedPolicySearch()
+    prompt = "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora."
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        tool = next(
+            tool for tool in info.function_tools if tool.name == "search_store_policies"
+        )
+        assert tool.parameters_json_schema["properties"] == {}
+        if not policy.queries:
+            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+        return ModelResponse(
+            parts=[TextPart("Preciso confirmar as condições [política 4.1, p. 4].")]
+        )
+
+    context = ExecutionContext(
+        session=ConversationSession(),
+        history=(
+            ConversationMessage(role="user", content="Qual é o horário?"),
+            ConversationMessage(role="assistant", content="Vou consultar."),
+        ),
+    )
+    result = asyncio.run(
+        _store_agent(FunctionModel(respond), policy).run(
+            ChatRequest(message=prompt),
+            context=context,
+        )
+    )
+    assert result.answer
+    assert policy.queries == [prompt]
+
+
 def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() -> None:
     policy = FixedPolicySearch()
     orders = FixedOrders()
@@ -128,21 +163,14 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
         ]
         if not returns:
             called.append("search_store_policies")
-            return ModelResponse(
-                parts=[
-                    ToolCallPart(
-                        "search_store_policies",
-                        {"query": "Meu pedido pode ser devolvido?"},
-                    )
-                ]
-            )
+            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
         if returns[-1].tool_name == "search_store_policies":
             called.append("get_my_order")
             return ModelResponse(parts=[ToolCallPart("get_my_order", {"order_id": 7})])
         return ModelResponse(
             parts=[
                 TextPart(
-                    "Vou verificar a condição do manual e o status do pedido. "
+                    "O status vem de uma fotografia importada; preciso confirmar as condições. "
                     "[política 4.1, p. 4]"
                 )
             ]
@@ -175,6 +203,40 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
     assert orders.identities == [identity]
 
 
+@pytest.mark.parametrize("omitted_tool", ["search_store_policies", "get_my_order"])
+def test_mixed_answer_cannot_skip_either_current_tool(omitted_tool: str) -> None:
+    policy = FixedPolicySearch()
+    orders = FixedOrders()
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        if not any(
+            isinstance(part, ToolReturnPart)
+            for message in messages
+            for part in message.parts
+        ):
+            call = (
+                ToolCallPart("get_my_order", {"order_id": 4})
+                if omitted_tool == "search_store_policies"
+                else ToolCallPart("search_store_policies", {})
+            )
+            return ModelResponse(parts=[call])
+        # Mirrors the US-17 full-context failure: promise a lookup and stop.
+        text = "Vou consultar as políticas para verificar a devolução."
+        if omitted_tool == "get_my_order":
+            text += " [política 4.1, p. 4]"
+        return ModelResponse(parts=[TextPart(text)])
+
+    prompt = "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora."
+    agent = _store_agent(FunctionModel(respond), policy, orders)
+    with pytest.raises(AgentExecutionError):
+        asyncio.run(
+            agent.run(
+                ChatRequest(message=prompt),
+                context=ExecutionContext(identity=CustomerIdentity(customer_id=1)),
+            )
+        )
+
+
 def test_post_chat_can_answer_policy_question_with_source_reference(
     tmp_path: Path,
 ) -> None:
@@ -186,14 +248,7 @@ def test_post_chat_can_answer_policy_question_with_source_reference(
             for message in messages
             for part in message.parts
         ):
-            return ModelResponse(
-                parts=[
-                    ToolCallPart(
-                        "search_store_policies",
-                        {"query": "Qual o prazo para arrependimento?"},
-                    )
-                ]
-            )
+            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
         return ModelResponse(
             parts=[
                 TextPart(
@@ -237,14 +292,7 @@ def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() 
             for message in messages
             for part in message.parts
         ):
-            return ModelResponse(
-                parts=[
-                    ToolCallPart(
-                        "search_store_policies",
-                        {"query": "Comprei há uma semana, posso devolver?"},
-                    )
-                ]
-            )
+            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
         return ModelResponse(
             parts=[
                 TextPart(
@@ -277,9 +325,7 @@ def test_policy_tool_failure_propagates_instead_of_becoming_no_match() -> None:
             raise PolicyRetrievalError("private index failure")
 
     def call_policy(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        return ModelResponse(
-            parts=[ToolCallPart("search_store_policies", {"query": "Qual o horário?"})]
-        )
+        return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
 
     agent = _store_agent(FunctionModel(call_policy), FailedSearch())
     with pytest.raises(PolicyRetrievalError, match="private index failure"):

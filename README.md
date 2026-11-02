@@ -19,6 +19,13 @@ They predate the current source-only monetary guard: budget comparisons now say
 offline only. Failed attempts and model comparisons remain published. These observations
 do not establish complete challenge acceptance or guarantee every future answer.
 
+[US-18](docs/examples/us-18/README.md) adds current-run citation enforcement,
+explicit mixed order/return tool checks and contextual interpretation guidance.
+These corrections have offline regression coverage. The first live follow-up passes
+three cases; the mixed case still needs revalidation after further corrections.
+See the [actual review](docs/examples/us-18/results.md). Retrieval optimization is deferred, and sprint completion does not
+require RAG to outperform Full Context.
+
 ## Run locally
 
 Install Python 3.12+ and [uv](https://docs.astral.sh/uv/getting-started/installation/).

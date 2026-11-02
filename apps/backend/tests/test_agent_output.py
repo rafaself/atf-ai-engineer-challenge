@@ -261,6 +261,97 @@ def test_policy_answer_requires_a_citation_from_this_turn() -> None:
         customer_answer(context, "A loja atende em horário comercial.")
 
 
+@pytest.mark.parametrize("evidence_run", [None, "previous", "current"])
+@pytest.mark.parametrize("page", [2, 3])
+def test_explicit_section_page_reference_still_requires_current_provenance(
+    evidence_run: str | None,
+    page: int,
+) -> None:
+    messages: list[ModelMessage] = []
+    if evidence_run is not None:
+        messages.append(
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "evidence_found",
+                            "records": [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "2",
+                                    "pages": [2],
+                                    "text": "Domingos e feriados: fechado.",
+                                }
+                            ],
+                        },
+                    )
+                ],
+                run_id=evidence_run,
+            )
+        )
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=messages,
+    )
+    answer = f"Fechada em feriados (seção 2, p. {page})."
+    if evidence_run == "current" and page == 2:
+        assert customer_answer(context, answer) == answer
+    else:
+        with pytest.raises(ModelRetry):
+            customer_answer(context, answer)
+
+
+@pytest.mark.parametrize("evidence_run", [None, "previous", "current"])
+@pytest.mark.parametrize(
+    "answer", ["Prazo de sete dias [política 4.1, p. 4].", "Prazo [política 4.1]."]
+)
+def test_policy_citation_cannot_create_its_own_provenance(
+    evidence_run: str | None, answer: str
+) -> None:
+    # A current insufficient-evidence return, an old successful return and no
+    # lookup at all must all reject a citation, even without a monetary claim.
+    messages: list[ModelMessage] = []
+    if evidence_run:
+        messages.append(
+            ModelRequest(
+                parts=[
+                    ToolReturnPart(
+                        "search_store_policies",
+                        {
+                            "status": "insufficient_evidence"
+                            if evidence_run == "current"
+                            else "evidence_found",
+                            "records": []
+                            if evidence_run == "current"
+                            else [
+                                {
+                                    "source": "store_policies.pdf",
+                                    "section": "4.1",
+                                    "pages": [4],
+                                    "text": "Prazo de sete dias.",
+                                }
+                            ],
+                        },
+                    )
+                ],
+                run_id=evidence_run,
+            )
+        )
+    context = RunContext(
+        deps=ExecutionContext(),
+        model=TestModel(),
+        usage=RunUsage(),
+        run_id="current",
+        messages=messages,
+    )
+    with pytest.raises(ModelRetry):
+        customer_answer(context, answer)
+
+
 def test_policy_amount_must_cite_the_section_that_contains_it() -> None:
     context = RunContext(
         deps=ExecutionContext(),

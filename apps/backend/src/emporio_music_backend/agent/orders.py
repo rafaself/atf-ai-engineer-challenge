@@ -73,6 +73,20 @@ class OrderTools:
             if order is not None
             else "Pedido não encontrado na sua conta.",
             "data_basis": "imported_snapshot",
+            **(
+                {
+                    "answer_guidance": [
+                        "Descreva status e datas como fotografia importada, não confirmação ao vivo. "
+                        "estimated_delivery é somente previsão: não diga que o pedido foi entregue "
+                        "nessa data ou conforme esse prazo. O snapshot não informa data real de "
+                        "recebimento, canal da compra nem condição do produto. Para devolução, "
+                        "chame search_store_policies agora, antes de perguntar esses três fatos. "
+                        "Não espere respostas do cliente para consultar a política nesta rodada."
+                    ]
+                }
+                if order is not None
+                else {}
+            ),
         }
 
 
