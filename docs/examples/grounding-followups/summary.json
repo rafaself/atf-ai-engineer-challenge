@@ -1,0 +1,66 @@
+{
+  "goal_cap_usd": "1.00",
+  "total_reserved_upper_usd": "0.649728",
+  "batches": {
+    "qwen-after.json": {
+      "source_commit": "8cbf8db9f4046abc2e75ee848b572c19e5dd898f",
+      "http_200": 12,
+      "provider_responses": 24,
+      "synthetic_history_responses": 7,
+      "input_tokens": 83362,
+      "output_tokens": 2166,
+      "estimated_usd": "0.0138039",
+      "seconds": {
+        "median": 2.2195,
+        "maximum": 5.46
+      }
+    },
+    "qwen-final.json": {
+      "source_commit": "3417a1ed395511de24f0cc933cdb385ff7f72756",
+      "http_200": 12,
+      "provider_responses": 24,
+      "synthetic_history_responses": 7,
+      "input_tokens": 83477,
+      "output_tokens": 1956,
+      "estimated_usd": "0.01369515",
+      "seconds": {
+        "median": 1.9135,
+        "maximum": 3.42
+      }
+    }
+  },
+  "total_estimated_usd": "0.02749905",
+  "baseline_verdicts": [
+    "partial",
+    "pass",
+    "pass",
+    "fail",
+    "partial",
+    "partial"
+  ],
+  "candidate_verdicts": [
+    "partial",
+    "partial",
+    "pass",
+    "partial",
+    "fail",
+    "pass"
+  ],
+  "final_verdicts": [
+    "pass",
+    "pass",
+    "pass",
+    "partial",
+    "fail",
+    "partial"
+  ],
+  "case_order": [
+    "named-stock-alternative",
+    "promotion-pix",
+    "selected-orders-list-detail",
+    "mixed-order-return-followup",
+    "policy-hours-context-topic-change",
+    "freight-exact-threshold"
+  ],
+  "review_method": "Root coding agent source-based review; exploratory, no causal or general reliability claim"
+}
