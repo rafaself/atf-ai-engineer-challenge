@@ -51,12 +51,11 @@ scoping, pricing calculations, retrieval and output validation are unchanged.
 The prompt uses no extra system prompt, external prompt file or parser.
 
 Compared with `origin/main` at `b333dd3`, the original prompt has 7,090 characters
-and 1,026 whitespace-separated words. The revised text has 6,935 characters and
-990 words. These are text-size measures, not model token counts or quality scores.
-Headings and bullets add navigation while duplicated rules are removed. The existing citation passage is retained verbatim so Workstream A can amend it
-without a merge conflict. A three-way merge check confirms that both the Markdown
-structure and A's page-less source attribution survive integration. No business
-freight rule is encoded here.
+and 1,026 whitespace-separated words. The revised text has 7,074 characters and
+1,018 words. These are text-size measures, not model token counts or quality scores.
+Headings and bullets add navigation while duplicated rules are removed. Workstream A's citation passage is preserved in the integrated version. Both
+the Markdown structure and page-less source attribution survived the actual
+three-way merge without conflicts. No business freight rule is encoded here.
 
 ## Validation
 
@@ -69,7 +68,7 @@ uv run --directory apps/backend --locked ruff format --check .
 uv run --directory apps/backend --locked mypy src tests scripts
 ```
 
-The full offline suite passed: 338 tests in 8.97 seconds. Ruff lint/format passed,
+The full offline suite passed: 347 tests in 7.74 seconds on the combined A+B version. Ruff lint/format passed,
 and strict mypy passed across 91 files. The suite includes source checksums,
 policy corpus/index tests, pricing, customer boundaries, API contracts and execution
 limits. Existing controlled scenarios provide regression coverage for these
