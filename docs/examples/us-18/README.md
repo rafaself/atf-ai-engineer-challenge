@@ -39,14 +39,23 @@ reported, without lowering them or making optimization a prerequisite for these 
 
 ## Bounded context-dependent retrieval check
 
-The policy tool passes the exact current question and does not include conversation
-history. With the same cached E5 model and Chroma index, the full mixed order/return
-question retrieved sections 4.3, 4.1, 5.2 and 4.4. The follow-up “E se eu já usei
-o instrumento?” returned 1.1, 10, 8.3, 4.2, 8.1 and 8.2, missing both 4.1 and its
-online-withdrawal conditions. This isolates a context-dependent retrieval gap in a
-bounded local check; it is not an answer-quality test or a new US-15 metric result.
-No corpus, ranking, labels, or query contract changed. Context-aware retrieval is
-deferred to a separate evidence-driven implementation.
+The policy tool originally searched only the exact current question. With the same
+cached E5 model and Chroma index, the full mixed order/return question retrieved
+sections 4.3, 4.1, 5.2 and 4.4. The follow-up “E se eu já usei o instrumento?” alone
+returned 1.1, 10, 8.3, 4.2, 8.1 and 8.2, missing section 4.1. Combining it with the
+preceding user question returned sections 4.4, 4.1 and 4. The runtime now includes
+only the latest prior user question when the combined query is at most 256 characters;
+assistant answers and tool results are excluded. A topic-switch check added unrelated
+section 2 while retaining section 4.1, so this bounded context can add retrieval noise.
+These are local retrieval checks, not answer-quality tests or new US-15 metrics. The
+corpus, filter rules, ranking and expansion remain unchanged.
+
+Returning all 29 policy records would make section 4.1 available whenever the policy
+tool is called. US-17 already exercised that Full Policy arm, but its generated answer
+still treated “used” as conclusive proof of visible use and it also missed the policy
+tool call in the mixed case. Full context removes this retrieval selection miss; it
+does not guarantee the needed tool call or a correct answer. The bounded prior-user
+query retains the existing RAG setup and makes no general quality comparison claim.
 
 ## Investigation and changes
 

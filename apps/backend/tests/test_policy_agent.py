@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic_ai import RunContext
 from pydantic_ai.messages import (
     ModelMessage,
     ModelResponse,
@@ -14,10 +15,12 @@ from pydantic_ai.messages import (
     ToolReturnPart,
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
+from pydantic_ai.models.test import TestModel
+from pydantic_ai.usage import RunUsage
 
 from emporio_music_backend.agent.factory import PydanticAgentExecutor
 from emporio_music_backend.agent.orders import create_store_agent
-from emporio_music_backend.agent.policies import PolicySearchPort
+from emporio_music_backend.agent.policies import PolicySearchPort, PolicyTools
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.api.app import create_app
 from emporio_music_backend.application.chat import ChatService
@@ -115,7 +118,7 @@ def _store_agent(
     )
 
 
-def test_policy_tool_uses_current_question_without_model_query_arguments() -> None:
+def test_policy_tool_has_no_model_query_arguments() -> None:
     policy = FixedPolicySearch()
     prompt = "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora."
 
@@ -130,17 +133,10 @@ def test_policy_tool_uses_current_question_without_model_query_arguments() -> No
             parts=[TextPart("Preciso confirmar as condições [política 4.1, p. 4].")]
         )
 
-    context = ExecutionContext(
-        session=ConversationSession(),
-        history=(
-            ConversationMessage(role="user", content="Qual é o horário?"),
-            ConversationMessage(role="assistant", content="Vou consultar."),
-        ),
-    )
     result = asyncio.run(
         _store_agent(FunctionModel(respond), policy).run(
             ChatRequest(message=prompt),
-            context=context,
+            context=ExecutionContext(),
         )
     )
     assert result.answer
@@ -179,16 +175,7 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
     agent = _store_agent(FunctionModel(respond), policy, orders)
     identity = CustomerIdentity(customer_id=1)
     context = ExecutionContext(
-        identity=identity,
-        session=ConversationSession(owner=identity),
-        history=(
-            ConversationMessage(
-                role="user", content="Antes perguntei sobre empréstimo."
-            ),
-            ConversationMessage(
-                role="assistant", content="Não encontrei essa informação."
-            ),
-        ),
+        identity=identity, session=ConversationSession(owner=identity)
     )
 
     result = asyncio.run(
@@ -271,6 +258,70 @@ def test_post_chat_can_answer_policy_question_with_source_reference(
     assert response.status_code == 200
     assert "[política 4.1, p. 4]" in response.json()["answer"]
     assert policy.queries == ["Qual o prazo para arrependimento?"]
+
+
+def test_follow_up_policy_search_includes_the_latest_prior_user_question(
+    tmp_path: Path,
+) -> None:
+    policy = FixedPolicySearch()
+    previous_question = "Quero saber as condições para devolver um instrumento."
+    follow_up = "E se eu já usei o instrumento?"
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        if not any(
+            isinstance(part, ToolReturnPart)
+            and part.tool_name == "search_store_policies"
+            for message in messages
+            for part in message.parts
+        ):
+            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+        return ModelResponse(
+            parts=[
+                TextPart(
+                    "O relato de uso não confirma sinais de uso. [política 4.1, p. 4]"
+                )
+            ]
+        )
+
+    service = ChatService(
+        _store_agent(FunctionModel(respond), policy),
+        SQLiteConversationRepository(tmp_path / "history.sqlite3"),
+    )
+    with TestClient(create_app(service)) as client:
+        first = client.post("/api/chat", json={"message": previous_question})
+        assert first.status_code == 200
+        second = client.post(
+            "/api/chat",
+            json={"message": follow_up, "session_id": first.json()["session_id"]},
+        )
+
+    assert second.status_code == 200
+    assert policy.queries == [
+        previous_question,
+        f"{previous_question}\n{follow_up}",
+    ]
+
+
+def test_long_policy_context_falls_back_to_the_current_question() -> None:
+    policy = FixedPolicySearch()
+    current_question = "E se eu já usei o instrumento?"
+    context = ExecutionContext(
+        session=ConversationSession(),
+        history=(
+            ConversationMessage(role="user", content="x" * 250),
+            ConversationMessage(role="assistant", content="Resposta anterior."),
+        ),
+    )
+    PolicyTools(policy).search_store_policies(
+        RunContext(
+            deps=context,
+            model=TestModel(),
+            usage=RunUsage(),
+            prompt=current_question,
+        )
+    )
+
+    assert policy.queries == [current_question]
 
 
 def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() -> None:

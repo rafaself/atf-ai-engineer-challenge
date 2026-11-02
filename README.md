@@ -25,10 +25,11 @@ These corrections have offline regression coverage. The first live follow-up pas
 three cases; the mixed case still needs revalidation after further corrections.
 The backend now appends an order-snapshot notice from current tool metadata instead
 of requiring a fixed phrase. The last saved Qwen answer replays with that notice
-offline; this is not a post-change live run. A local E5 check also found that a
-context-dependent “what if I used it?” follow-up misses section 4.1 when the policy
-tool receives only that short question. Context-aware retrieval is deferred with
-other optimization work. See the [actual review](docs/examples/us-18/results.md).
+offline; this is not a post-change live run. A local E5 check found that a short
+context-dependent follow-up misses section 4.1 alone; adding the previous user
+question retrieves it. Policy search now uses that bounded one-turn context when
+the combined query is short. This checks retrieval only, not live answer quality.
+See the [actual review](docs/examples/us-18/results.md).
 Sprint completion does not require RAG to outperform Full Context.
 
 ## Run locally

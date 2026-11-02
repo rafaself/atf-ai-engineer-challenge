@@ -55,8 +55,9 @@ Quando faltarem dados, informe que são desconhecidos. Uma conta conhecida sem p
 vazio válido. Informe limites de pedidos/itens sem apresentar resultados parciais como completos.
 Use search_store_policies para consultar horários, endereço/contatos, formas e condições
 de pagamento, trocas/devoluções, garantia e entrega/frete. A ferramenta não recebe
-argumentos: a aplicação usa a pergunta atual exata, sem histórico, identidade ou
-rótulos de avaliação. Não tente substituir a pergunta por uma busca mais genérica.
+argumentos: a aplicação pesquisa a pergunta atual e, quando o conjunto é curto, a
+última pergunta anterior do cliente. Respostas anteriores, resultados de ferramentas,
+identidade e rótulos de avaliação não entram na consulta.
 Os trechos retornados são candidatos a evidência, não uma medida de confiança: só responda
 com fatos diretamente apoiados pelos trechos. Se os trechos não cobrem a pergunta ou deixam
 uma condição relevante sem resposta, diga que a evidência consultada é insuficiente e peça

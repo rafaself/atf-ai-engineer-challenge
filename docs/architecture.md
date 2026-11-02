@@ -158,12 +158,15 @@ covered by a scripted regression but not yet rechecked with a live model. That a
 also added an unsupported visual-inspection suggestion; one successful case does
 not establish general model reliability or semantic faithfulness.
 
-Policy search takes no arguments and uses the exact current user question. A bounded
-local E5 check retrieves section 4.1 for the full mixed question but misses it for
-the short contextual follow-up “E se eu já usei o instrumento?” because history is
-not included in the query. The miss is recorded for a later context/retrieval follow-up;
-retrieval optimization remains deferred. Sprint completion requires functional
-behavior and honest limits, not proof that RAG beats Full Context.
+Policy search takes no arguments. It combines the current user question with the
+latest prior user question when the combined text is at most 256 characters; assistant
+answers and tool results stay out of the retrieval query. The bounded local E5 check
+missed section 4.1 for “E se eu já usei o instrumento?” alone and returned it when
+the previous return question was included. An unrelated prior hours question added
+section 2 to a return query, so this limited context can add irrelevant evidence.
+These are retrieval observations, not answer-quality results. Broader retrieval
+optimization remains deferred; sprint completion does not require RAG to beat Full
+Context.
 
 The [simplification review](examples/simplification-review.md) preserves an earlier
 offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)

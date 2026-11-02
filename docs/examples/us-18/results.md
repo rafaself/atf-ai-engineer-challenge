@@ -128,14 +128,15 @@ ranking, filter, expansion, corpus or frozen benchmark changes were made. This i
 an orchestration/input-contract fix for a confirmed functional failure, not deferred
 retrieval optimization.
 
-An offline regression failed before the fix because the schema exposed a model
-`query` argument. It now verifies the no-argument schema and exact current question
-across a session with unrelated history. Existing callers were updated to this
-intentional contract change; no compatibility path remains. All **330 offline tests**
-pass (7.00 seconds), and strict mypy passes across 89 files. Prior live passes are
-historical observations at their recorded revision, not proof of final-revision
-generation behavior. The query-contract correction still requires a live functional
-check before US-18 can be declared complete.
+An offline regression failed before the initial correction because the schema exposed
+a model-selected `query` argument. That earlier check covered the no-argument schema
+and a standalone question; the separate context-dependent correction below adds a
+two-turn HTTP regression for the latest prior user question. Existing callers still
+use the no-argument tool schema. All **330 offline tests** passed at the initial
+correction (7.00 seconds), and strict mypy passed across 89 files. Prior live passes
+are historical observations at their recorded revision, not proof of final-revision
+generation behavior. The context correction below has offline retrieval and HTTP
+evidence; it has not had a live model check.
 
 The owner approved that next single-case check, executed once with output
 `docs/examples/us-18/mixed-current-question.json`, capped at US$0.05.
@@ -368,14 +369,18 @@ and the general output correction now includes only feedback for the failed chec
 Current-run citation and monetary provenance checks, mixed-tool enforcement,
 customer-scoped order access, the single retry and execution limits remain unchanged.
 
-A bounded provider-free E5/Chroma check used the same index for two queries. The
-full mixed question returned sections 4.3, 4.1, 5.2 and 4.4. The contextual
+A bounded provider-free E5/Chroma check used the existing index. The standalone
 follow-up “E se eu já usei o instrumento?” returned 1.1, 10, 8.3, 4.2, 8.1 and 8.2,
-missing section 4.1. This confirms the current-question-only contract loses context
-for that follow-up. No query expansion, ranking, corpus, frozen labels, US-15 metrics
-or targets were changed; context-aware retrieval remains a separate follow-up.
+missing section 4.1. Adding the preceding user question returned sections 4.4, 4.1
+and 4. Runtime search now uses the current question plus the latest previous user
+question when their combined text is at most 256 characters. Assistant responses,
+tool results, identity and evaluation labels are excluded. A topic-switch check with
+a prior hours question returned section 2 alongside sections 4.3, 4.1 and 4; limited
+context can add irrelevant evidence. This is a retrieval-only correction, not an
+answer-quality result or new US-15 metric. Ranking, expansion, corpus, frozen labels
+and US-15 targets are unchanged.
 
-The complete offline suite passes **349 tests**. Ruff lint and format, strict mypy
+The complete offline suite passes **351 tests**. Ruff lint and format, strict mypy
 across 89 files, package build and `git diff --check` pass. In addition to saved-trace
 replay, one post-change live mixed-case now received a Qwen response. This single
 case is descriptive evidence, not a reliability estimate. No RAG-versus-Full-Context

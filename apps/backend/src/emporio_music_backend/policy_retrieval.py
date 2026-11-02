@@ -2,7 +2,7 @@
 
 import unicodedata
 
-# Same broad union rule as the US-15 benchmark; only the current query is inspected.
+# Same broad union rule as the US-15 benchmark; inspect only supplied query text.
 _FILTER_RULES = [
     (("horario", "abrem", "sabado", "domingo", "feriado"), {"2"}),
     (("endereco", "contato", "whatsapp", "email", "e-mail"), {"cover", "1", "7"}),

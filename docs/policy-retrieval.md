@@ -13,13 +13,14 @@ imported-snapshot results, rather than enforced through a fixed phrase; the exac
 saved Qwen answer replays with this notice offline. This is not a post-change live
 run. Semantic answer support remains separate from citation provenance.
 
-The current policy tool passes only the exact current question. A bounded local E5
-check retrieved section 4.1 for the full mixed order/return question but missed it
-for “E se eu já usei o instrumento?”, returning sections 1.1, 10, 8.3, 4.2, 8.1
-and 8.2 instead. Context-aware follow-up retrieval is therefore a measured gap;
-implementation is deferred to a later evidence-driven retrieval task. Frozen US-15
-targets remain unmet. Sprint closure does not require RAG to outperform Full Context,
-and post-change live Qwen behavior is still unverified.
+The policy tool now uses the current question plus the latest prior user question
+when their combined text is at most 256 characters. A bounded local E5 check missed
+section 4.1 for “E se eu já usei o instrumento?” alone, returning sections 1.1, 10,
+8.3, 4.2, 8.1 and 8.2. Adding the preceding return question returned sections 4.4,
+4.1 and 4. An unrelated prior hours question also added section 2 to a return query,
+so this limited context can introduce irrelevant sections. These checks assess
+retrieval only, not generated answers or live Qwen behavior. Frozen US-15 targets
+remain unmet; sprint closure does not require RAG to outperform Full Context.
 
 ## Reproduce offline
 
@@ -64,8 +65,8 @@ retrieval error surfaced through the existing sanitized HTTP 503 contract. It is
 reported to the customer as “no policy found.”
 
 The runtime verifies the PDF hash, canonical corpus hash, parser version, index
-fingerprint and exact indexable record IDs. It embeds only the current policy question
-with E5's `query:` prefix, uses the same frozen query-derived family filters as US-15,
+fingerprint and exact indexable record IDs. It embeds the bounded policy query with
+E5's `query:` prefix and uses the same query-derived family filter rule as US-15,
 retrieves the three highest-ranked seeds, and adds only the authored one-hop
 relationships from the fixed manual, capped at eight records. Each excerpt includes
 the source, section hierarchy and physical page. Customer answers cite those references
@@ -73,9 +74,12 @@ as `[política 5.1, p. 4]`; each policy amount must cite a
 returned section that contains it and explain the applicable condition. Retrieved text
 is data, not an instruction source. The product, pricing and customer-order tools remain
 separate and deterministic. `search_store_policies` takes no model-selected query:
-the application supplies the exact current question, without history or identity.
-This enforces the query boundary after a live paraphrase missed applicable evidence;
-it does not change the retrieval algorithm or the frozen evaluation.
+the application may append the latest prior user question to the current question,
+but excludes assistant text, tool results, identity and labels. The combined text is
+bounded to 256 characters; longer combinations use only the current question. This
+addresses the recorded short follow-up miss without a query-rewriting model or changes
+to ranking and expansion. The contextual check is exploratory; it does not change
+frozen labels or US-15 metrics.
 
 The search has no calibrated similarity threshold. A non-empty nearest-neighbor result
 is a candidate, not proof that it answers the question. If the excerpts do not directly

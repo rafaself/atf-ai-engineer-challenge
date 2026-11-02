@@ -24,6 +24,7 @@ from emporio_music_backend.policy_retrieval import expand, query_families
 _EMBEDDING_INPUT = "hierarchy joined by newline + newline + section text"
 _COLLECTION = "policy-e5"
 _SEED_LIMIT = 3
+_MAX_CONTEXTUAL_QUERY_CHARS = 256
 
 
 class QueryEmbedder(Protocol):
@@ -146,10 +147,10 @@ class PolicyTools:
     def search_store_policies(
         self, ctx: RunContext[ExecutionContext]
     ) -> PolicySearchResult:
-        """Search policy excerpts for the current customer question, with no arguments.
+        """Search policy excerpts with the current and latest prior user question.
 
-        The application supplies the exact current question. Do not rewrite it
-        or add history, identity, or evaluation labels.
+        Keep assistant responses, tool results, identity, and evaluation labels
+        out of the retrieval query. Long question pairs use the current question only.
 
         Returned records are candidate evidence, not a confidence score. If they
         do not directly support the answer or leave a condition unresolved, report
@@ -159,8 +160,21 @@ class PolicyTools:
         """
         if not isinstance(ctx.prompt, str):
             raise PolicyRetrievalError("Current policy question is unavailable")
+        query = ctx.prompt
+        previous_question = next(
+            (
+                message.content
+                for message in reversed(ctx.deps.history)
+                if message.role == "user"
+            ),
+            None,
+        )
+        if previous_question is not None:
+            contextual_query = f"{previous_question}\n{ctx.prompt}"
+            if len(contextual_query) <= _MAX_CONTEXTUAL_QUERY_CHARS:
+                query = contextual_query
         trace("tool.called", tool="search_store_policies")
-        result = self.search.search(ctx.prompt)
+        result = self.search.search(query)
         # Application interpretation cautions accompany, but never replace or
         # modify, the source excerpts. These address the reviewed US-17 errors.
         guidance = [
