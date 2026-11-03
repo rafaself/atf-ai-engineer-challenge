@@ -1,0 +1,524 @@
+{
+  "version": 1,
+  "issue": 78,
+  "language": "pt-BR",
+  "scenario_count": 12,
+  "planned_turns_per_arm": 18,
+  "sources": {
+    "current_v7": "docs/examples/model-comparison/scenarios-current-v7.json",
+    "current_v7_sha256": "00a9a0f039df7bb1a5f1a9a797c8c3a7bdff3fdf5bed0d9eee35ba23c7c73f89",
+    "expansion": "docs/benchmarks/expansion/questions.json",
+    "expansion_sha256": "1394f2a5dcd41b4a37b1aa4ab138d4c040de452f03c944d2cc51640d425b3e33",
+    "corpus_sha256": "46ca8d8b3ced38cbc5cedda58af390c4eac4baa6181b7e8ae3ecbca54b36d033",
+    "freeze_sha256": "192a74fd9ac62b92fee83736368f17e19a520507d4a479b005ed5e9ca738284e",
+    "freight_overlay_sha256": "ac9a588b6aaf06269edfabb3f5af1b5171f978c341f328dd0ff2d25b27b8cc13"
+  },
+  "scenarios": [
+    {
+      "id": "C01",
+      "source_id": "policy-hours-context-topic-change",
+      "turns": [
+        {
+          "message": "Qual é o horário normal de funcionamento da loja?",
+          "policy_scope": "general",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s2"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": true
+        },
+        {
+          "message": "E nos feriados e no Natal, há atendimento?",
+          "policy_scope": "general",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s2"
+            ]
+          ],
+          "required_tools": [],
+          "retrieval_diagnostic_eligible": true,
+          "may_reuse_prior_evidence": true
+        },
+        {
+          "message": "O Takamine GD20 está disponível? Qual é o preço e o estoque?",
+          "policy_scope": null,
+          "evidence_groups": [],
+          "required_tools": [
+            "find_product_by_name"
+          ],
+          "retrieval_diagnostic_eligible": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "Policy section 2 gives weekday hours 09:00–18:00, Saturday 09:00–13:00, and Sunday/holiday closure.",
+          "The same evidence says special-date hours, including Natal, may be extended and that changes are communicated in advance.",
+          "Because the policy does not confirm the schedule for a specific Natal, do not assert either that the store is open or categorically closed on Natal; communicate the uncertainty.",
+          "When the first answer retains both the normal closure and special-date qualification, reuse that sufficient evidence without a redundant policy lookup; score tool choice separately from answer faithfulness.",
+          "The product topic switch requires a fresh find_product_by_name lookup; the current catalog lists Takamine GD20 at R$ 2,199.00 with stock 5.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "invented authoritative policy",
+          "invented price or stock"
+        ],
+        "review_notes": [
+          "Prior assistant answer may support the follow-up only if it retained both the normal schedule and special-date uncertainty; do not require a redundant policy lookup."
+        ]
+      }
+    },
+    {
+      "id": "C02",
+      "source_id": "mixed-order-return-followup",
+      "customer_id": 1,
+      "turns": [
+        {
+          "message": "Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora.",
+          "policy_scope": "online_return",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s4.1"
+            ],
+            [
+              "policy-v2.1-s4.4"
+            ]
+          ],
+          "required_tools": [
+            "get_my_order",
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false
+        },
+        {
+          "message": "Foi uma compra online e recebi há cinco dias. Posso devolver?",
+          "policy_scope": "online_return",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s4.1"
+            ],
+            [
+              "policy-v2.1-s4.4"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "The first answer consults both the selected customer order and the return policy.",
+          "An imported delivered status and estimated_delivery do not establish the actual receipt date or purchase channel.",
+          "The follow-up supplies online purchase and a five-day receipt interval; explain the seven-day request window, but do not decide eligibility until packaging, use, accessories and manuals are confirmed.",
+          "Ask only for remaining eligibility facts; distinguish customer-reported facts from imported order data.",
+          "Treat order results as current simulated system records; estimated_delivery is not actual receipt. Preserve return exclusions, do not require sealed packaging, and do not equate any use with signs of use. Do not promise posting labels, return initiation or other unavailable actions.",
+          "Each assessment reads search_store_policies(policy_scope=online_return) in the current run, selecting sections 4.1 and 4.4 without preference-exchange or unrelated shipping rules.",
+          "Known customer facts must come from user messages; unknown facts remain unknown. Ask only remaining confirmations; refund payment method is not an eligibility condition."
+        ],
+        "critical_errors": [
+          "unjustified definitive eligibility decision",
+          "customer-boundary disclosure",
+          "invented actionable contact details",
+          "invented label issuance or return-initiation capability",
+          "invented return workflow or refund timing/eligibility conditions"
+        ],
+        "review_notes": [
+          "Online remorse requires user-supplied purchase channel and actual receipt interval; the order record cannot establish these. Do not decide eligibility until packaging, use, accessories and manuals are confirmed."
+        ]
+      }
+    },
+    {
+      "id": "C03",
+      "source_id": "freight-exact-threshold",
+      "turns": [
+        {
+          "message": "Para uma entrega na Região Metropolitana de Campo Grande, um pedido de R$ 500,00 tem frete grátis?",
+          "policy_scope": "general",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s5.1"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": true
+        }
+      ],
+      "expected": {
+        "facts": [
+          "The effective processed policy grants free freight for R$500.00 or more in the Metropolitan Region of Campo Grande and charges R$35 below it.",
+          "No explanation of ingestion history is required; internal provenance preserves the original PDF and the approved clarification. Do not present amended text as a literal PDF quotation."
+        ],
+        "critical_errors": [
+          "denying free shipping at exactly R$ 500.00 within the applicable region",
+          "claiming that the original PDF specifies the approved equality rule",
+          "applying the metropolitan rule outside its stated region"
+        ],
+        "review_notes": [
+          "The effective processed overlay is authoritative for the equality threshold; do not quote the original PDF as if it stated that clarification."
+        ]
+      }
+    },
+    {
+      "id": "C04",
+      "source_id": "outside-online-window",
+      "turns": [
+        {
+          "message": "Comprei pela internet e recebi há oito dias corridos. Ainda posso devolver por arrependimento?",
+          "policy_scope": "online_return",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s4.1"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "Use online_return scope and correctly extract online purchase and eight-day receipt interval from exact user evidence.",
+          "Eight days is outside the seven-calendar-day online remorse window; do not conclude that every other policy is unavailable."
+        ],
+        "critical_errors": [
+          "reversing the deadline",
+          "unjustified blanket denial",
+          "invented return procedure"
+        ],
+        "review_notes": [
+          "Eight calendar days is outside the seven-day online remorse request window; do not deny unrelated rights."
+        ]
+      }
+    },
+    {
+      "id": "C05",
+      "source_id": "used-without-marks-and-procedure",
+      "turns": [
+        {
+          "message": "Recebi ontem uma compra online. Toquei o violão uma vez, mas ele está sem marcas. Tenho a embalagem original aberta, todos os acessórios e o manual. Não houve personalização nem ajuste sob encomenda, não havia aviso de venda final e não é uma boquilha.",
+          "policy_scope": "online_return",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s4.1"
+            ],
+            [
+              "policy-v2.1-s4.4"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false
+        },
+        {
+          "message": "Qual é o e-mail do SAC para devolver? Vocês podem emitir uma etiqueta para mim?",
+          "policy_scope": "return_contact",
+          "evidence_groups": [
+            [
+              "policy-v2.1-cover"
+            ],
+            [
+              "policy-v2.1-s1.2"
+            ],
+            [
+              "policy-v2.1-s4.1"
+            ],
+            [
+              "policy-v2.1-s4.4"
+            ],
+            [
+              "policy-v2.1-s7"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "The reported receipt interval is one day. Original opened packaging is not disqualified for being unsealed. Use without marks is not signs of use.",
+          "Extract only user-supported facts; do not impose perfect condition, sealed packaging, additional documents or payment method as eligibility prerequisites.",
+          "For the follow-up refresh online_return scope and explain only documented procedures. State only the documented procedure limit and supported read-only capabilities. Do not invent a SAC address, telephone or posting label."
+        ],
+        "critical_errors": [
+          "rejecting solely because of reported use or opened packaging",
+          "invented actionable contacts",
+          "claiming to issue a label or initiate a return",
+          "invented workflow"
+        ],
+        "review_notes": [
+          "An opened original package and use without signs are not automatic disqualifiers. The return-contact scope must distinguish general contacts from a returns SAC and must not invent labels or workflow."
+        ]
+      }
+    },
+    {
+      "id": "C06",
+      "source_id": "in-store-preference-scope",
+      "turns": [
+        {
+          "message": "Comprei presencialmente ontem e queria trocar o violão só pela cor. Qual regra vale?",
+          "policy_scope": "preference_exchange",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s4.3"
+            ],
+            [
+              "policy-v2.1-s4.4"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "Choose preference_exchange and return sections 4.3 and 4.4.",
+          "Explain preference exchange, desired-product availability, condition/original packaging and applicable price differences. Do not apply the online remorse refund window/procedure or reject all possibilities because purchase was in store."
+        ],
+        "critical_errors": [
+          "applying an online-only rule to refuse the preference exchange",
+          "invented authoritative conditions or procedures"
+        ],
+        "review_notes": [
+          "Apply preference exchange rules for an in-store purchase; do not replace them with online remorse rules."
+        ]
+      }
+    },
+    {
+      "id": "C07",
+      "source_id": "promotion-pix",
+      "turns": [
+        {
+          "message": "Quais instrumentos em promoção estão disponíveis? Mostre três opções com preço original, desconto e preço final.",
+          "policy_scope": null,
+          "evidence_groups": [],
+          "required_tools": [
+            "search_available_products"
+          ],
+          "retrieval_diagnostic_eligible": false
+        },
+        {
+          "message": "E o segundo da lista no PIX? Posso somar o desconto PIX com essa promoção?",
+          "policy_scope": "general",
+          "evidence_groups": [
+            [
+              "policy-v2.1-s3"
+            ],
+            [
+              "policy-v2.1-s3.1"
+            ],
+            [
+              "policy-v2.1-s6.2"
+            ]
+          ],
+          "required_tools": [
+            "get_product_details",
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": true
+        }
+      ],
+      "expected": {
+        "facts": [
+          "The follow-up must resolve the second product from the prior answer.",
+          "The Ohana CK-20 promotion price is R$ 439.20 and discounts do not stack with PIX.",
+          "An alternative may be chosen only if the first response's second product differs; review against its returned pricing.",
+          "Present product codes and use the returned product_id for follow-up detail requests. Explain discounts from pricing.explanation and discount_kind.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "incorrect final price",
+          "stacked promotion and PIX discounts"
+        ],
+        "review_notes": [
+          "Compare current promotion with PIX without stacking; use actual product and policy evidence."
+        ]
+      }
+    },
+    {
+      "id": "C08",
+      "source_id": "catalog-budget-ordinal",
+      "turns": [
+        {
+          "message": "Tenho até R$ 1.000. Mostre três violões disponíveis, com preço e estoque.",
+          "policy_scope": null,
+          "evidence_groups": [],
+          "required_tools": [
+            "search_available_products"
+          ],
+          "retrieval_diagnostic_eligible": false
+        },
+        {
+          "message": "E o segundo da lista: qual é o preço e o estoque?",
+          "policy_scope": null,
+          "evidence_groups": [],
+          "required_tools": [
+            "get_product_details"
+          ],
+          "retrieval_diagnostic_eligible": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "The first search must stay within the Violões category and the R$ 1,000 budget.",
+          "Only products returned by the current snapshot may be described as available.",
+          "The ordinal follow-up must refer to the second product in the prior answer and retrieve fresh details.",
+          "Present product codes and use the returned product_id for follow-up detail requests. Explain discounts from pricing.explanation and discount_kind.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "invented price",
+          "claiming unavailable stock is available"
+        ],
+        "review_notes": [
+          "Keep the Violões category and R$1,000 limit; follow up on the second returned product using fresh details and its product_id."
+        ]
+      }
+    },
+    {
+      "id": "C09",
+      "source_id": "n01",
+      "turns": [
+        {
+          "message": "Meu teclado apresentou defeito 45 dias após a compra. A loja ainda troca ou tenho garantia?",
+          "policy_scope": "defect",
+          "evidence_groups": [
+            [
+              "policy-v2.1-policy-v2.1-s4.2"
+            ],
+            [
+              "policy-v2.1-policy-v2.1-s8.1"
+            ],
+            [
+              "policy-v2.1-policy-v2.1-s8.2"
+            ],
+            [
+              "policy-v2.1-policy-v2.1-s8.3"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false,
+          "unanswerable": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "Distinguish 30-day store exchange from legal/manufacturer warranty; ask receipt date and certificate; exclude misuse."
+        ],
+        "critical_errors": [
+          "materially incorrect warranty/payment/contact claims"
+        ],
+        "review_notes": [
+          "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+        ]
+      }
+    },
+    {
+      "id": "C10",
+      "source_id": "n04",
+      "turns": [
+        {
+          "message": "Qual a parcela mínima para pagar em oito vezes, e posso juntar PIX?",
+          "policy_scope": "general",
+          "evidence_groups": [
+            [
+              "policy-v2.1-policy-v2.1-s3"
+            ],
+            [
+              "policy-v2.1-policy-v2.1-s3.1"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": true,
+          "unanswerable": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "Specific eight-installment minimum R$100; mixed-payment threshold above R$2000; note general versus tier rule."
+        ],
+        "critical_errors": [
+          "materially incorrect warranty/payment/contact claims"
+        ],
+        "review_notes": [
+          "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+        ]
+      }
+    },
+    {
+      "id": "C11",
+      "source_id": "n06",
+      "turns": [
+        {
+          "message": "Achei dois telefones no manual. Qual uso para falar com a loja?",
+          "policy_scope": "general",
+          "evidence_groups": [
+            [
+              "policy-v2.1-policy-v2.1-s1.2"
+            ],
+            [
+              "policy-v2.1-policy-v2.1-s7"
+            ]
+          ],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": true,
+          "unanswerable": false
+        }
+      ],
+      "expected": {
+        "facts": [
+          "Disclose differing contacts without inventing an authoritative choice."
+        ],
+        "critical_errors": [
+          "materially incorrect warranty/payment/contact claims"
+        ],
+        "review_notes": [
+          "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+        ]
+      }
+    },
+    {
+      "id": "C12",
+      "source_id": "n12",
+      "turns": [
+        {
+          "message": "Vocês emprestam um instrumento enquanto o meu está na garantia?",
+          "policy_scope": "general",
+          "evidence_groups": [],
+          "required_tools": [
+            "search_store_policies"
+          ],
+          "retrieval_diagnostic_eligible": false,
+          "unanswerable": true
+        }
+      ],
+      "expected": {
+        "facts": [
+          "No loan/replacement-instrument policy provided; state missing evidence."
+        ],
+        "critical_errors": [],
+        "review_notes": [
+          "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+        ]
+      }
+    }
+  ]
+}

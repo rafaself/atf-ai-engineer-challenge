@@ -1,0 +1,666 @@
+{
+  "issue": 78,
+  "source_capture": "capture.json",
+  "status": "reconciled_by_arm_tool_set",
+  "capture_preserved_unchanged": true,
+  "reason": "The embedded arm intentionally has no search_store_policies tool; it is excluded from that arm's required-tool checks.",
+  "by_arm": {
+    "rag": {
+      "completed_conversations": 12,
+      "failed_conversations": 0,
+      "not_executed_conversations": 0,
+      "missing_required_tool_turns": [
+        {
+          "scenario_id": "C07",
+          "turn_index": 1,
+          "tools": [
+            "search_store_policies"
+          ]
+        }
+      ],
+      "policy_scope_mismatches": []
+    },
+    "embedded": {
+      "completed_conversations": 12,
+      "failed_conversations": 0,
+      "not_executed_conversations": 0,
+      "missing_required_tool_turns": [],
+      "policy_scope_mismatches": []
+    }
+  },
+  "turns": [
+    {
+      "arm": "rag",
+      "scenario_id": "C01",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": [
+        "general"
+      ]
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C01",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [],
+      "applicable_required_tools": [],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": [
+        "general"
+      ]
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C01",
+      "turn_index": 2,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "find_product_by_name"
+      ],
+      "applicable_required_tools": [
+        "find_product_by_name"
+      ],
+      "observed_tools": [
+        "find_product_by_name"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C01",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C01",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C01",
+      "turn_index": 2,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "find_product_by_name"
+      ],
+      "applicable_required_tools": [
+        "find_product_by_name"
+      ],
+      "observed_tools": [
+        "find_product_by_name"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C02",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "get_my_order",
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "get_my_order",
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "get_my_order",
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "online_return",
+      "observed_policy_scopes": [
+        "online_return"
+      ]
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C02",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "get_my_order",
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "online_return",
+      "observed_policy_scopes": [
+        "online_return"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C02",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "get_my_order",
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "get_my_order"
+      ],
+      "observed_tools": [
+        "get_my_order"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C02",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [
+        "get_my_order"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C03",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": [
+        "general"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C03",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C04",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "online_return",
+      "observed_policy_scopes": [
+        "online_return"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C04",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C05",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "online_return",
+      "observed_policy_scopes": [
+        "online_return"
+      ]
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C05",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "return_contact",
+      "observed_policy_scopes": [
+        "return_contact"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C05",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C05",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C06",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "preference_exchange",
+      "observed_policy_scopes": [
+        "preference_exchange"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C06",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C07",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_available_products"
+      ],
+      "applicable_required_tools": [
+        "search_available_products"
+      ],
+      "observed_tools": [
+        "search_available_products",
+        "search_available_products"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C07",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "get_product_details",
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "get_product_details",
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "get_product_details"
+      ],
+      "missing_required_tools": [
+        "search_store_policies"
+      ],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C07",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_available_products"
+      ],
+      "applicable_required_tools": [
+        "search_available_products"
+      ],
+      "observed_tools": [
+        "search_available_products"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C07",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "get_product_details",
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "get_product_details"
+      ],
+      "observed_tools": [
+        "get_product_details"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C08",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_available_products"
+      ],
+      "applicable_required_tools": [
+        "search_available_products"
+      ],
+      "observed_tools": [
+        "search_available_products"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C08",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "get_product_details"
+      ],
+      "applicable_required_tools": [
+        "get_product_details"
+      ],
+      "observed_tools": [
+        "get_product_details"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C08",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_available_products"
+      ],
+      "applicable_required_tools": [
+        "search_available_products"
+      ],
+      "observed_tools": [
+        "search_available_products"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C08",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "get_product_details"
+      ],
+      "applicable_required_tools": [
+        "get_product_details"
+      ],
+      "observed_tools": [
+        "get_product_details"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C09",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "defect",
+      "observed_policy_scopes": [
+        "defect"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C09",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C10",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": [
+        "general"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C10",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C11",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": [
+        "general"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C11",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    },
+    {
+      "arm": "rag",
+      "scenario_id": "C12",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [
+        "search_store_policies"
+      ],
+      "observed_tools": [
+        "search_store_policies"
+      ],
+      "missing_required_tools": [],
+      "expected_policy_scope": "general",
+      "observed_policy_scopes": [
+        "general"
+      ]
+    },
+    {
+      "arm": "embedded",
+      "scenario_id": "C12",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "configured_required_tools": [
+        "search_store_policies"
+      ],
+      "applicable_required_tools": [],
+      "observed_tools": [],
+      "missing_required_tools": [],
+      "expected_policy_scope": null,
+      "observed_policy_scopes": []
+    }
+  ]
+}

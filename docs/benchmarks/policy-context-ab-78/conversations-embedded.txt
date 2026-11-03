@@ -1,0 +1,164 @@
+Cliente:
+Qual é o horário normal de funcionamento da loja?
+
+Assistente:
+O horário normal é de segunda a sexta, das 9h às 18h, e aos sábados, das 9h às 13h. Aos domingos e feriados, a loja fica fechada, exceto quando há horário especial em datas como Natal, Black Friday e aniversário da loja.
+
+Cliente:
+E nos feriados e no Natal, há atendimento?
+
+Assistente:
+Nos feriados, a loja fica fechada no horário normal, salvo exceções em datas especiais. No Natal, pode haver atendimento em horário especial ou estendido, mas não tenho confirmação de abertura nem do horário para uma data específica. As alterações são comunicadas nas redes sociais e pelo WhatsApp: (67) 3321-4500.
+
+Cliente:
+O Takamine GD20 está disponível? Qual é o preço e o estoque?
+
+Assistente:
+Sim, o **Takamine GD20 Dreadnought Natural** está disponível.
+
+- **Código:** 95
+- **Preço:** R$ 2.199,00
+- **Estoque:** 5 unidades
+
+---
+
+Cliente:
+Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora.
+
+Assistente:
+O pedido **nº 4** consta como entregue e contém **1 Giannini GF-3D Dreadnought Sunburst**. O total registrado do pedido é **R$ 799,90**. A previsão de entrega era 22/12/2025, mas ela não confirma a data em que você realmente recebeu o instrumento.
+
+Se a compra foi **online**, você pode solicitar a devolução por arrependimento em até **7 dias corridos após o recebimento**, desde que o produto esteja na embalagem original, sem sinais de uso e com todos os acessórios e manuais. A regra exclui, entre outros casos, instrumentos personalizados ou com ajustes sob encomenda e produtos de liquidação anunciados como venda final. O frete de devolução fica por conta da loja; o reembolso é feito pela mesma forma de pagamento em até 10 dias úteis.
+
+Para verificar se ainda está no prazo, me confirme: **a compra foi online e em que data você recebeu o instrumento?** Ele está na embalagem original, sem sinais de uso e com todos os acessórios e manuais?
+
+Cliente:
+Foi uma compra online e recebi há cinco dias. Posso devolver?
+
+Assistente:
+Sim — como você recebeu há cinco dias, ainda está dentro do prazo de **7 dias corridos** para solicitar a devolução por arrependimento de uma compra online.
+
+A devolução depende de o instrumento estar na embalagem original, sem sinais de uso e acompanhado de todos os acessórios e manuais. Essas condições estão atendidas?
+
+---
+
+Cliente:
+Para uma entrega na Região Metropolitana de Campo Grande, um pedido de R$ 500,00 tem frete grátis?
+
+Assistente:
+Sim. Na Região Metropolitana de Campo Grande, pedidos com total igual ou superior a R$ 500,00 têm frete grátis.
+
+---
+
+Cliente:
+Comprei pela internet e recebi há oito dias corridos. Ainda posso devolver por arrependimento?
+
+Assistente:
+Pela política da loja, o arrependimento de compras online pode ser solicitado em até 7 dias corridos após o recebimento. Como você recebeu há 8 dias, esse prazo já passou.
+
+---
+
+Cliente:
+Recebi ontem uma compra online. Toquei o violão uma vez, mas ele está sem marcas. Tenho a embalagem original aberta, todos os acessórios e o manual. Não houve personalização nem ajuste sob encomenda, não havia aviso de venda final e não é uma boquilha.
+
+Assistente:
+Você está dentro do prazo: compras online podem ser devolvidas por arrependimento em até 7 dias corridos após o recebimento. A política exige embalagem original, todos os acessórios e manuais, e que o produto esteja sem sinais de uso.
+
+Você informou que tocou o violão uma vez e que ele não tem marcas visíveis. Ele apresenta algum outro sinal de uso? Se atender às condições, o reembolso é feito pela mesma forma de pagamento em até 10 dias úteis, e o frete da devolução fica por conta da loja.
+
+Cliente:
+Qual é o e-mail do SAC para devolver? Vocês podem emitir uma etiqueta para mim?
+
+Assistente:
+O manual não identifica um e-mail específico do SAC ou de devoluções. Ele traz dois e-mails gerais divergentes: **contato@emporiodamusica.com.br** e **contato@empóriodamusica.com.br**. O WhatsApp indicado como principal canal remoto é **(67) 3321-4500**.
+
+A política não especifica emissão de etiqueta nem instruções de postagem, então não consigo confirmar que uma etiqueta possa ser emitida. Para arrependimento dentro do prazo e das condições, o frete de devolução é por conta da loja.
+
+---
+
+Cliente:
+Comprei presencialmente ontem e queria trocar o violão só pela cor. Qual regra vale?
+
+Assistente:
+Como foi uma compra presencial feita ontem, vale a regra de **troca por preferência**: pode ser solicitada em até 7 dias, desde que haja disponibilidade da cor desejada. O violão precisa estar em perfeito estado e na embalagem original; eventual diferença de valor será cobrada ou reembolsada. A regra não se aplica a instrumentos personalizados ou com ajustes sob encomenda, nem a itens de liquidação anunciados como “venda final”.
+
+O violão está em perfeito estado e você ainda tem a embalagem original?
+
+---
+
+Cliente:
+Quais instrumentos em promoção estão disponíveis? Mostre três opções com preço original, desconto e preço final.
+
+Assistente:
+Aqui estão três instrumentos em promoção disponíveis:
+
+- **Kalani KAL-700T Tenor Natural** — código **127**
+  Original: **R$ 359,00** | Desconto: **10%** | Preço final: **R$ 323,10** | Estoque: **11**
+
+- **Ohana CK-20 Concert Natural** — código **121**
+  Original: **R$ 549,00** | Desconto: **20%** | Preço final: **R$ 439,20** | Estoque: **6**
+
+- **Crafter HT-100 Folk Aço Natural** — código **90**
+  Original: **R$ 2.399,00** | Desconto: **18%** | Preço final: **R$ 1.967,18** | Estoque: **3**
+
+Esta é uma seleção das 4 opções encontradas na consulta; a lista não é completa.
+
+Cliente:
+E o segundo da lista no PIX? Posso somar o desconto PIX com essa promoção?
+
+Assistente:
+O **Ohana CK-20 Concert Natural** (cód. **121**) custa **R$ 439,20 no PIX**. A promoção de **20%** já está aplicada; o desconto do PIX não é cumulativo com essa promoção. Está disponível, com **6 unidades em estoque**.
+
+---
+
+Cliente:
+Tenho até R$ 1.000. Mostre três violões disponíveis, com preço e estoque.
+
+Assistente:
+Aqui estão três violões disponíveis:
+
+- **Tagima Memphis AC-39 Nylon Natural** — código **83** — **R$ 429,90** — estoque: **15**
+- **Rozini RC-104 Nylon Estudante** — código **85** — **R$ 459,90** — estoque: **10**
+- **Shelby SN-100 Folk Aço Preto** — código **89** — **R$ 549,00** — estoque: **5**
+
+Esta é uma seleção das 12 opções encontradas na consulta; a lista não é completa.
+
+Cliente:
+E o segundo da lista: qual é o preço e o estoque?
+
+Assistente:
+O **Rozini RC-104 Nylon Estudante** (código **85**) está por **R$ 459,90** e tem **10 unidades em estoque**.
+
+---
+
+Cliente:
+Meu teclado apresentou defeito 45 dias após a compra. A loja ainda troca ou tenho garantia?
+
+Assistente:
+A troca direta por defeito pela loja é permitida em até **30 dias corridos após a compra**; após esse prazo, a orientação é acionar o fabricante. A loja pode intermediar o processo mediante solicitação.
+
+Mas ainda pode haver cobertura da **garantia legal de 90 dias**, contados a partir do recebimento do teclado, para defeitos de fabricação. Como você mencionou 45 dias desde a compra, para confirmar se está dentro desse prazo, preciso saber a data em que recebeu o instrumento. A garantia não cobre danos por mau uso, quedas, umidade excessiva ou modificações não autorizadas.
+
+---
+
+Cliente:
+Qual a parcela mínima para pagar em oito vezes, e posso juntar PIX?
+
+Assistente:
+Em 8 vezes, a parcela mínima é de **R$ 100**, sem juros. É possível combinar PIX com cartão em compras acima de **R$ 2.000**.
+
+---
+
+Cliente:
+Achei dois telefones no manual. Qual uso para falar com a loja?
+
+Assistente:
+Para falar com a loja **pelo WhatsApp**, use **(67) 3321-4500** — é o canal principal de atendimento remoto. O **(67) 3341-4444** também consta como telefone/WhatsApp da loja.
+
+---
+
+Cliente:
+Vocês emprestam um instrumento enquanto o meu está na garantia?
+
+Assistente:
+Não temos uma política de empréstimo de instrumentos durante o período de garantia, então não consigo confirmar se esse serviço está disponível. Você pode consultar a equipe pelo WhatsApp no (67) 3321-4500 ou pelo telefone (67) 3341-4444.

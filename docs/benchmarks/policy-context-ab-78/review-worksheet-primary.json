@@ -1,0 +1,579 @@
+{
+  "issue": 78,
+  "reviewer_type": "primary",
+  "status": "blank_pending_human_review",
+  "instructions": "Score completed customer-facing answers against the frozen facts. Leave failed or unexecuted responses without a semantic score. Do not infer the arm. Use Pass/Partial/Fail; explain every Partial/Fail or critical error. This worksheet has no tool traces so policy access remains blinded.",
+  "rows": [
+    {
+      "case_id": "C01",
+      "customer_turns": [
+        "Qual é o horário normal de funcionamento da loja?",
+        "E nos feriados e no Natal, há atendimento?",
+        "O Takamine GD20 está disponível? Qual é o preço e o estoque?"
+      ],
+      "expected_facts": [
+        "Policy section 2 gives weekday hours 09:00–18:00, Saturday 09:00–13:00, and Sunday/holiday closure.",
+        "The same evidence says special-date hours, including Natal, may be extended and that changes are communicated in advance.",
+        "Because the policy does not confirm the schedule for a specific Natal, do not assert either that the store is open or categorically closed on Natal; communicate the uncertainty.",
+        "When the first answer retains both the normal closure and special-date qualification, reuse that sufficient evidence without a redundant policy lookup; score tool choice separately from answer faithfulness.",
+        "The product topic switch requires a fresh find_product_by_name lookup; the current catalog lists Takamine GD20 at R$ 2,199.00 with stock 5.",
+        "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+      ],
+      "critical_error_criteria": [
+        "invented authoritative policy",
+        "invented price or stock"
+      ],
+      "review_notes": [
+        "Prior assistant answer may support the follow-up only if it retained both the normal schedule and special-date uncertainty; do not require a redundant policy lookup."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "O horário normal é de segunda a sexta, das 9h às 18h, e aos sábados, das 9h às 13h. Domingos e feriados, a loja fica fechada, exceto em datas especiais, quando pode haver horário diferenciado.\n\nFontes consultadas: Manual de políticas da loja — seção 2, p. 2.",
+            "Em feriados, a loja fica fechada no horário regular, salvo exceções em datas especiais. No Natal pode haver atendimento em horário especial ou estendido, mas não há confirmação de abertura nem horário definido para uma data específica. Alterações são comunicadas nas redes sociais e pelo WhatsApp; o atendimento por WhatsApp segue o horário da loja, com respostas automáticas fora do expediente.\n\nFontes consultadas: Manual de políticas da loja — seção 2, p. 2.",
+            "Sim, o **Takamine GD20 Dreadnought Natural** está disponível.\n\n- **Código:** 95\n- **Preço:** R$ 2.199,00\n- **Estoque:** 5 unidades"
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "O horário normal é de segunda a sexta, das 9h às 18h, e aos sábados, das 9h às 13h. Aos domingos e feriados, a loja fica fechada, exceto quando há horário especial em datas como Natal, Black Friday e aniversário da loja.",
+            "Nos feriados, a loja fica fechada no horário normal, salvo exceções em datas especiais. No Natal, pode haver atendimento em horário especial ou estendido, mas não tenho confirmação de abertura nem do horário para uma data específica. As alterações são comunicadas nas redes sociais e pelo WhatsApp: (67) 3321-4500.",
+            "Sim, o **Takamine GD20 Dreadnought Natural** está disponível.\n\n- **Código:** 95  \n- **Preço:** R$ 2.199,00  \n- **Estoque:** 5 unidades"
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C02",
+      "customer_turns": [
+        "Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora.",
+        "Foi uma compra online e recebi há cinco dias. Posso devolver?"
+      ],
+      "expected_facts": [
+        "The first answer consults both the selected customer order and the return policy.",
+        "An imported delivered status and estimated_delivery do not establish the actual receipt date or purchase channel.",
+        "The follow-up supplies online purchase and a five-day receipt interval; explain the seven-day request window, but do not decide eligibility until packaging, use, accessories and manuals are confirmed.",
+        "Ask only for remaining eligibility facts; distinguish customer-reported facts from imported order data.",
+        "Treat order results as current simulated system records; estimated_delivery is not actual receipt. Preserve return exclusions, do not require sealed packaging, and do not equate any use with signs of use. Do not promise posting labels, return initiation or other unavailable actions.",
+        "Each assessment reads search_store_policies(policy_scope=online_return) in the current run, selecting sections 4.1 and 4.4 without preference-exchange or unrelated shipping rules.",
+        "Known customer facts must come from user messages; unknown facts remain unknown. Ask only remaining confirmations; refund payment method is not an eligibility condition."
+      ],
+      "critical_error_criteria": [
+        "unjustified definitive eligibility decision",
+        "customer-boundary disclosure",
+        "invented actionable contact details",
+        "invented label issuance or return-initiation capability",
+        "invented return workflow or refund timing/eligibility conditions"
+      ],
+      "review_notes": [
+        "Online remorse requires user-supplied purchase channel and actual receipt interval; the order record cannot establish these. Do not decide eligibility until packaging, use, accessories and manuals are confirmed."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "O pedido **nº 4** consta como entregue e contém **1 Giannini GF-3D Dreadnought Sunburst**. O total registrado do pedido é **R$ 799,90**. A previsão de entrega era 22/12/2025, mas ela não confirma a data em que você realmente recebeu o instrumento.\n\nSe a compra foi **online**, você pode solicitar a devolução por arrependimento em até **7 dias corridos após o recebimento**, desde que o produto esteja na embalagem original, sem sinais de uso e com todos os acessórios e manuais. A regra exclui, entre outros casos, instrumentos personalizados ou com ajustes sob encomenda e produtos de liquidação anunciados como venda final. O frete de devolução fica por conta da loja; o reembolso é feito pela mesma forma de pagamento em até 10 dias úteis.\n\nPara verificar se ainda está no prazo, me confirme: **a compra foi online e em que data você recebeu o instrumento?** Ele está na embalagem original, sem sinais de uso e com todos os acessórios e manuais?",
+            "Sim — como você recebeu há cinco dias, ainda está dentro do prazo de **7 dias corridos** para solicitar a devolução por arrependimento de uma compra online.\n\nA devolução depende de o instrumento estar na embalagem original, sem sinais de uso e acompanhado de todos os acessórios e manuais. Essas condições estão atendidas?"
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "O pedido 4 consta como entregue e contém 1 violão Giannini GF-3D Dreadnought Sunburst. Porém, o registro não informa quando você recebeu o produto de fato nem se a compra foi online — a previsão de entrega não confirma a data real de recebimento.\n\nPara compras online, a devolução por arrependimento pode ser solicitada em até 7 dias corridos após o recebimento. O produto também precisa estar na embalagem original, sem sinais de uso e com todos os acessórios e manuais.\n\nA compra foi online? Em que data você recebeu o violão? Ele está nessas condições?\n\nFontes consultadas: Manual de políticas da loja — seção 4.1, p. 4; Manual de políticas da loja — seção 4.4, p. 4.",
+            "Sim, você está dentro do prazo: a devolução por arrependimento pode ser solicitada em até 7 dias corridos do recebimento, e você recebeu há 5 dias.\n\nPara confirmar se o produto atende às condições da política: ele está na embalagem original, sem sinais de uso e com todos os acessórios e manuais?\n\nFontes consultadas: Manual de políticas da loja — seção 4.1, p. 4; Manual de políticas da loja — seção 4.4, p. 4."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C03",
+      "customer_turns": [
+        "Para uma entrega na Região Metropolitana de Campo Grande, um pedido de R$ 500,00 tem frete grátis?"
+      ],
+      "expected_facts": [
+        "The effective processed policy grants free freight for R$500.00 or more in the Metropolitan Region of Campo Grande and charges R$35 below it.",
+        "No explanation of ingestion history is required; internal provenance preserves the original PDF and the approved clarification. Do not present amended text as a literal PDF quotation."
+      ],
+      "critical_error_criteria": [
+        "denying free shipping at exactly R$ 500.00 within the applicable region",
+        "claiming that the original PDF specifies the approved equality rule",
+        "applying the metropolitan rule outside its stated region"
+      ],
+      "review_notes": [
+        "The effective processed overlay is authoritative for the equality threshold; do not quote the original PDF as if it stated that clarification."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Sim. Para entrega na Região Metropolitana de Campo Grande, pedidos com total igual ou superior a R$ 500,00 têm frete grátis.\n\nFontes consultadas: Políticas da loja — seção 5.1; Manual de políticas da loja — seção 5.2, p. 4; Manual de políticas da loja — seção 5.2, p. 5; Manual de políticas da loja — seção 5.3, p. 5."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Sim. Na Região Metropolitana de Campo Grande, pedidos com total igual ou superior a R$ 500,00 têm frete grátis."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C04",
+      "customer_turns": [
+        "Comprei pela internet e recebi há oito dias corridos. Ainda posso devolver por arrependimento?"
+      ],
+      "expected_facts": [
+        "Use online_return scope and correctly extract online purchase and eight-day receipt interval from exact user evidence.",
+        "Eight days is outside the seven-calendar-day online remorse window; do not conclude that every other policy is unavailable."
+      ],
+      "critical_error_criteria": [
+        "reversing the deadline",
+        "unjustified blanket denial",
+        "invented return procedure"
+      ],
+      "review_notes": [
+        "Eight calendar days is outside the seven-day online remorse request window; do not deny unrelated rights."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "O prazo para arrependimento é de **7 dias corridos após o recebimento**. Como você recebeu há 8 dias, o prazo previsto pela política já passou.\n\nFontes consultadas: Manual de políticas da loja — seção 4.1, p. 4; Manual de políticas da loja — seção 4.4, p. 4."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Pela política da loja, o arrependimento de compras online pode ser solicitado em até 7 dias corridos após o recebimento. Como você recebeu há 8 dias, esse prazo já passou."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C05",
+      "customer_turns": [
+        "Recebi ontem uma compra online. Toquei o violão uma vez, mas ele está sem marcas. Tenho a embalagem original aberta, todos os acessórios e o manual. Não houve personalização nem ajuste sob encomenda, não havia aviso de venda final e não é uma boquilha.",
+        "Qual é o e-mail do SAC para devolver? Vocês podem emitir uma etiqueta para mim?"
+      ],
+      "expected_facts": [
+        "The reported receipt interval is one day. Original opened packaging is not disqualified for being unsealed. Use without marks is not signs of use.",
+        "Extract only user-supported facts; do not impose perfect condition, sealed packaging, additional documents or payment method as eligibility prerequisites.",
+        "For the follow-up refresh online_return scope and explain only documented procedures. State only the documented procedure limit and supported read-only capabilities. Do not invent a SAC address, telephone or posting label."
+      ],
+      "critical_error_criteria": [
+        "rejecting solely because of reported use or opened packaging",
+        "invented actionable contacts",
+        "claiming to issue a label or initiate a return",
+        "invented workflow"
+      ],
+      "review_notes": [
+        "An opened original package and use without signs are not automatic disqualifiers. The return-contact scope must distinguish general contacts from a returns SAC and must not invent labels or workflow."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Você está dentro do prazo: compras online podem ser devolvidas por arrependimento em até 7 dias corridos após o recebimento. A política exige embalagem original, todos os acessórios e manuais, e que o produto esteja sem sinais de uso.\n\nVocê informou que tocou o violão uma vez e que ele não tem marcas visíveis. Ele apresenta algum outro sinal de uso? Se atender às condições, o reembolso é feito pela mesma forma de pagamento em até 10 dias úteis, e o frete da devolução fica por conta da loja.",
+            "O manual não identifica um e-mail específico do SAC ou de devoluções. Ele traz dois e-mails gerais divergentes: **contato@emporiodamusica.com.br** e **contato@empóriodamusica.com.br**. O WhatsApp indicado como principal canal remoto é **(67) 3321-4500**.\n\nA política não especifica emissão de etiqueta nem instruções de postagem, então não consigo confirmar que uma etiqueta possa ser emitida. Para arrependimento dentro do prazo e das condições, o frete de devolução é por conta da loja."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Pelo prazo, você está dentro: a devolução por arrependimento pode ser solicitada em até 7 dias corridos após o recebimento. A regra exige embalagem original, acessórios e manual, além de o violão estar sem sinais de uso; ela não exige que a embalagem esteja lacrada. Também não se aplicam, pelo que você informou, as exclusões de personalização, venda final ou boquilha.\n\nTer tocado uma vez não confirma, por si só, que há sinais de uso. Além das marcas que você já mencionou, há algum sinal de desgaste ou alteração no violão? A política prevê reembolso na forma de pagamento original em até 10 dias úteis e frete de devolução por conta da loja.\n\nFontes consultadas: Manual de políticas da loja — seção 4.1, p. 4; Manual de políticas da loja — seção 4.4, p. 4.",
+            "Não encontrei um e-mail identificado especificamente como SAC de devoluções. O manual traz estes contatos gerais, com grafias diferentes do e-mail: **contato@emporiodamusica.com.br** e **contato@empóriodamusica.com.br**. Também informa o WhatsApp **(67) 3321-4500** como principal canal de atendimento remoto.\n\nA política não informa como emitir etiqueta nem instruções de postagem. Ela prevê que o frete da devolução por arrependimento fica por conta da loja, mas não consigo emitir uma etiqueta por aqui.\n\nFontes consultadas: Manual de políticas da loja — seção 1.2, p. 2; Manual de políticas da loja — seção 4.1, p. 4; Manual de políticas da loja — seção 4.4, p. 4; Manual de políticas da loja — seção 7, p. 6; Manual de políticas da loja — capa, p. 1."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C06",
+      "customer_turns": [
+        "Comprei presencialmente ontem e queria trocar o violão só pela cor. Qual regra vale?"
+      ],
+      "expected_facts": [
+        "Choose preference_exchange and return sections 4.3 and 4.4.",
+        "Explain preference exchange, desired-product availability, condition/original packaging and applicable price differences. Do not apply the online remorse refund window/procedure or reject all possibilities because purchase was in store."
+      ],
+      "critical_error_criteria": [
+        "applying an online-only rule to refuse the preference exchange",
+        "invented authoritative conditions or procedures"
+      ],
+      "review_notes": [
+        "Apply preference exchange rules for an in-store purchase; do not replace them with online remorse rules."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Para troca por preferência de cor, a regra permite a troca em até 7 dias, se houver disponibilidade do produto desejado. O violão deve estar em perfeito estado e na embalagem original; se houver diferença de valor, ela será cobrada ou reembolsada conforme o caso.\n\nFontes consultadas: Manual de políticas da loja — seção 4.3, p. 4; Manual de políticas da loja — seção 4.4, p. 4."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Como foi uma compra presencial feita ontem, vale a regra de **troca por preferência**: pode ser solicitada em até 7 dias, desde que haja disponibilidade da cor desejada. O violão precisa estar em perfeito estado e na embalagem original; eventual diferença de valor será cobrada ou reembolsada. A regra não se aplica a instrumentos personalizados ou com ajustes sob encomenda, nem a itens de liquidação anunciados como “venda final”.\n\nO violão está em perfeito estado e você ainda tem a embalagem original?"
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C07",
+      "customer_turns": [
+        "Quais instrumentos em promoção estão disponíveis? Mostre três opções com preço original, desconto e preço final.",
+        "E o segundo da lista no PIX? Posso somar o desconto PIX com essa promoção?"
+      ],
+      "expected_facts": [
+        "The follow-up must resolve the second product from the prior answer.",
+        "The Ohana CK-20 promotion price is R$ 439.20 and discounts do not stack with PIX.",
+        "An alternative may be chosen only if the first response's second product differs; review against its returned pricing.",
+        "Present product codes and use the returned product_id for follow-up detail requests. Explain discounts from pricing.explanation and discount_kind.",
+        "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+      ],
+      "critical_error_criteria": [
+        "incorrect final price",
+        "stacked promotion and PIX discounts"
+      ],
+      "review_notes": [
+        "Compare current promotion with PIX without stacking; use actual product and policy evidence."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Aqui estão três instrumentos em promoção disponíveis:\n\n- **Kalani KAL-700T Tenor Natural** — código **127**  \n  Original: **R$ 359,00** | Desconto: **10%** | Preço final: **R$ 323,10** | Estoque: **11**\n\n- **Ohana CK-20 Concert Natural** — código **121**  \n  Original: **R$ 549,00** | Desconto: **20%** | Preço final: **R$ 439,20** | Estoque: **6**\n\n- **Crafter HT-100 Folk Aço Natural** — código **90**  \n  Original: **R$ 2.399,00** | Desconto: **18%** | Preço final: **R$ 1.967,18** | Estoque: **3**\n\nEsta é uma seleção das 4 opções encontradas na consulta; a lista não é completa.",
+            "O **Ohana CK-20 Concert Natural** (cód. **121**) custa **R$ 439,20 no PIX**. A promoção de **20%** já está aplicada; o desconto do PIX não é cumulativo com essa promoção. Está disponível, com **6 unidades em estoque**."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Aqui estão três instrumentos em promoção e disponíveis:\n\n- **Kalani KAL-700T Tenor Natural** — código **127**; original **R$ 359,00**; desconto de **10% (R$ 35,90)**; preço final **R$ 323,10**. Estoque: 11.\n- **Ohana CK-20 Concert Natural** — código **121**; original **R$ 549,00**; desconto de **20% (R$ 109,80)**; preço final **R$ 439,20**. Estoque: 6.\n- **Crafter HT-100 Folk Aço Natural** — código **90**; original **R$ 2.399,00**; desconto de **18% (R$ 431,82)**; preço final **R$ 1.967,18**. Estoque: 3.\n\nEsta é uma seleção das 4 opções encontradas na consulta; a lista não é completa.",
+            "O **Ohana CK-20 Concert Natural** (código **121**) sai por **R$ 439,20 no PIX**. Não é possível somar outro desconto PIX: a promoção de **20%** já está aplicada, e o sistema informa que não há desconto adicional para essa compra."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C08",
+      "customer_turns": [
+        "Tenho até R$ 1.000. Mostre três violões disponíveis, com preço e estoque.",
+        "E o segundo da lista: qual é o preço e o estoque?"
+      ],
+      "expected_facts": [
+        "The first search must stay within the Violões category and the R$ 1,000 budget.",
+        "Only products returned by the current snapshot may be described as available.",
+        "The ordinal follow-up must refer to the second product in the prior answer and retrieve fresh details.",
+        "Present product codes and use the returned product_id for follow-up detail requests. Explain discounts from pricing.explanation and discount_kind.",
+        "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+      ],
+      "critical_error_criteria": [
+        "invented price",
+        "claiming unavailable stock is available"
+      ],
+      "review_notes": [
+        "Keep the Violões category and R$1,000 limit; follow up on the second returned product using fresh details and its product_id."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Aqui estão três violões disponíveis:\n\n- **Tagima Memphis AC-39 Nylon Natural** — código **83** — **R$ 429,90** — estoque: **15**\n- **Rozini RC-104 Nylon Estudante** — código **85** — **R$ 459,90** — estoque: **10**\n- **Shelby SN-100 Folk Aço Preto** — código **89** — **R$ 549,00** — estoque: **5**\n\nEsta é uma seleção das 12 opções encontradas na consulta; a lista não é completa.",
+            "O **Rozini RC-104 Nylon Estudante** (código **85**) está por **R$ 459,90** e tem **10 unidades em estoque**."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Aqui estão três violões disponíveis dentro do seu orçamento:\n\n- **Tagima Memphis AC-39 Nylon Natural** — código **83** — **R$ 429,90** — estoque: **15**\n- **Rozini RC-104 Nylon Estudante** — código **85** — **R$ 459,90** — estoque: **10**\n- **Shelby SN-100 Folk Aço Preto** — código **89** — **R$ 549,00** — estoque: **5**\n\nEsta é uma seleção das 12 opções encontradas na consulta; a lista não é completa.",
+            "O **Rozini RC-104 Nylon Estudante** (código **85**) custa **R$ 459,90** e tem **10 unidades em estoque**."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C09",
+      "customer_turns": [
+        "Meu teclado apresentou defeito 45 dias após a compra. A loja ainda troca ou tenho garantia?"
+      ],
+      "expected_facts": [
+        "Distinguish 30-day store exchange from legal/manufacturer warranty; ask receipt date and certificate; exclude misuse."
+      ],
+      "critical_error_criteria": [
+        "materially incorrect warranty/payment/contact claims"
+      ],
+      "review_notes": [
+        "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "A troca pela loja para defeito de fabricação pode ser feita em até 30 dias da compra; como já se passaram 45 dias, esse prazo terminou. Porém, há garantia legal de 90 dias contra defeitos de fabricação, contados da data em que você recebeu o teclado. Após os 30 dias, a orientação é acionar o fabricante; a loja pode intermediar o processo se você solicitar.\n\nA garantia não cobre, por exemplo, danos por mau uso, queda ou modificações não autorizadas. Você recebeu o teclado há menos de 90 dias?\n\nFontes consultadas: Manual de políticas da loja — seção 4.2, p. 4; Manual de políticas da loja — seção 8.1, p. 7; Manual de políticas da loja — seção 8.2, p. 7; Manual de políticas da loja — seção 8.3, p. 7."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "A troca direta por defeito pela loja é permitida em até **30 dias corridos após a compra**; após esse prazo, a orientação é acionar o fabricante. A loja pode intermediar o processo mediante solicitação.\n\nMas ainda pode haver cobertura da **garantia legal de 90 dias**, contados a partir do recebimento do teclado, para defeitos de fabricação. Como você mencionou 45 dias desde a compra, para confirmar se está dentro desse prazo, preciso saber a data em que recebeu o instrumento. A garantia não cobre danos por mau uso, quedas, umidade excessiva ou modificações não autorizadas."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C10",
+      "customer_turns": [
+        "Qual a parcela mínima para pagar em oito vezes, e posso juntar PIX?"
+      ],
+      "expected_facts": [
+        "Specific eight-installment minimum R$100; mixed-payment threshold above R$2000; note general versus tier rule."
+      ],
+      "critical_error_criteria": [
+        "materially incorrect warranty/payment/contact claims"
+      ],
+      "review_notes": [
+        "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Em 8 vezes, a parcela mínima é de **R$ 100,00**, sem juros. Você pode combinar PIX com cartão para compras acima de **R$ 2.000,00**.\n\nFontes consultadas: Manual de políticas da loja — seção 3, p. 3; Manual de políticas da loja — seção 3.1, p. 3; Manual de políticas da loja — seção 6.2, p. 6."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Em 8 vezes, a parcela mínima é de **R$ 100**, sem juros. É possível combinar PIX com cartão em compras acima de **R$ 2.000**."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C11",
+      "customer_turns": [
+        "Achei dois telefones no manual. Qual uso para falar com a loja?"
+      ],
+      "expected_facts": [
+        "Disclose differing contacts without inventing an authoritative choice."
+      ],
+      "critical_error_criteria": [
+        "materially incorrect warranty/payment/contact claims"
+      ],
+      "review_notes": [
+        "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Não encontrei os telefones no trecho do manual disponível para consulta, então não consigo confirmar qual deles é o contato da loja. Se você me enviar os dois números — ou uma foto do trecho — tento ajudar a identificar.\n\nFontes consultadas: Manual de políticas da loja — seção 2, p. 2; Manual de políticas da loja — seção 7.1, p. 6; Manual de políticas da loja — seção 7.3, p. 7."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Para falar com a loja **pelo WhatsApp**, use **(67) 3321-4500** — é o canal principal de atendimento remoto. O **(67) 3341-4444** também consta como telefone/WhatsApp da loja."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    },
+    {
+      "case_id": "C12",
+      "customer_turns": [
+        "Vocês emprestam um instrumento enquanto o meu está na garantia?"
+      ],
+      "expected_facts": [
+        "No loan/replacement-instrument policy provided; state missing evidence."
+      ],
+      "critical_error_criteria": [],
+      "review_notes": [
+        "Check every grouped evidence requirement against the frozen corpus; do not treat a tool call alone as proof of grounding."
+      ],
+      "responses": [
+        {
+          "response_label": "Response X",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Não encontrei nas informações disponíveis uma regra que confirme empréstimo de instrumento enquanto o seu está na garantia. A política menciona a possibilidade de a loja intermediar o processo de garantia com o fabricante, mas não fala sobre instrumento reserva.\n\nFontes consultadas: Manual de políticas da loja — seção 4, p. 4; Manual de políticas da loja — seção 4.2, p. 4; Manual de políticas da loja — seção 8.1, p. 7; Manual de políticas da loja — seção 8.2, p. 7; Manual de políticas da loja — seção 8.3, p. 7."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        },
+        {
+          "response_label": "Response Y",
+          "execution_status": "completed",
+          "turn_answers": [
+            "Não temos uma política de empréstimo de instrumentos durante o período de garantia, então não consigo confirmar se esse serviço está disponível. Você pode consultar a equipe pelo WhatsApp no (67) 3321-4500 ou pelo telefone (67) 3341-4444."
+          ],
+          "score": null,
+          "critical_error": null,
+          "facts_met": [],
+          "unsupported_claims": [],
+          "grounding_notes": "",
+          "reviewer_rationale": ""
+        }
+      ]
+    }
+  ]
+}
