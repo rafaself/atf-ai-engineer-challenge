@@ -150,10 +150,10 @@ model; multi-model comparisons require Qwen as the baseline. The runner defaults
 to [current v4](scenarios-current-v4.json).
 
 ```sh
-uv run --group benchmark --directory apps/backend --locked \
+uv run --extra policy-rag --project apps/api --locked \
   python -m scripts.compare_models \
   --live --max-cost-usd 1.00 \
-  --output ../../docs/examples/model-comparison/new-capture.json
+  --output docs/examples/model-comparison/new-capture.json
 ```
 
 The command requires separate approval for any new paid run. Choose a fresh

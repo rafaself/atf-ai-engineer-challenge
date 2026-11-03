@@ -182,9 +182,9 @@ customer. Both arms called the order tool for that selected customer and the
 returned order identified its imported-snapshot basis. This is scenario review,
 not a new cross-customer security proof. Existing API/order tests remain the
 evidence for guest selection requirements and customer-scoped reads; see
-`apps/backend/tests/test_api.py`, `apps/backend/tests/test_guest_demo.py`,
-`apps/backend/tests/test_order_api.py`, and
-`apps/backend/tests/test_order_regressions.py`.
+`tests/test_api.py`, `tests/test_guest_demo.py`,
+`tests/test_order_api.py`, and
+`tests/test_order_regressions.py`.
 
 The RAG failure and the incorrect full-context answers are retained as results.
 Only eight route calls were observed once each; these are qualitative examples,

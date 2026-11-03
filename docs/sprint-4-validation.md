@@ -1,5 +1,9 @@
 # US-23 validation evidence
 
+> Archived Sprint 4 validation record. Paths and commands below describe the
+> repository layout at that time. For the current modular-monolith layout and
+> commands, see the [README](../README.md) and [architecture](architecture.md).
+
 Candidate base: `790feb1` (`integration/sprint-4`), validated on 2026-11-02.
 The US-23 changes add the backend typing marker and reconcile submission docs.
 This report records actual checks and their limits. In particular, the default

@@ -74,7 +74,7 @@ successful retry.
 - [Completed retry trace](nova2-capture-2026-11-02-retry.json)
 - [Initial and post-IAM preflights](nova2-preflight-2026-11-02.json), [final initial preflight](nova2-preflight-final-2026-11-02.json)
 - [Price assumptions and sources](nova2-pricing.json)
-- [Focused evaluation runner](../../../apps/backend/scripts/evaluate_nova2_holiday.py)
+- [Focused evaluation runner](../../../scripts/evaluate_nova2_holiday.py)
 
 Captures preserve the actual model answers, tool calls, retrieved source record,
 latencies, source hashes and budget accounting. Historical Qwen and Nemotron

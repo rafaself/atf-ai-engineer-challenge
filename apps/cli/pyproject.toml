@@ -3,39 +3,20 @@ name = "emporio-music-cli"
 version = "0.1.0"
 description = "Interactive terminal client for the Empório da Música agent."
 requires-python = ">=3.12"
-dependencies = ["emporio-music-backend"]
+dependencies = ["emporio-music>=0.1.0"]
 
 [project.scripts]
 emporio-music-chat = "emporio_music_cli.cli:main"
 
 [project.optional-dependencies]
-policy-rag = ["emporio-music-backend[policy-rag]"]
+policy-rag = ["emporio-music[policy-rag]>=0.1.0"]
 
 [build-system]
 requires = ["uv_build>=0.13.4,<0.14.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
-emporio-music-backend = { path = "../backend", editable = true }
-torch = { index = "pytorch-cpu" }
+emporio-music = { workspace = true }
 
-[[tool.uv.index]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[tool.ruff]
-target-version = "py312"
-line-length = 88
-
-[tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
-files = ["src", "tests"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = ["--import-mode=importlib", "--strict-config", "--strict-markers"]
+[dependency-groups]
+dev = ["mypy>=2.4.1", "pytest>=9.2.0", "ruff>=0.17.3"]

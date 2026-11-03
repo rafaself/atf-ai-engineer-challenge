@@ -1,18 +1,19 @@
 # Demo architecture
 
-The backend is one Python package; a separate package in `apps/cli` consumes it
-directly. React calls FastAPI's local text API, and Pydantic AI
-uses Bedrock with typed catalog, order and policy tools. SQLite stores operational
-snapshots and chat history; embedded Chroma indexes the fixed policy corpus using
-local E5 embeddings. This small dataset does not need distributed services, an ORM
-or a generic ingestion framework.
+The repository is a simple modular monolith. `apps/api` owns FastAPI and serves
+the React build from `apps/frontend`; `apps/cli` owns the interactive terminal
+entry point. Both consume the independently installable `emporio-music` package in
+`packages/emporio_music`. Pydantic AI uses Bedrock with typed catalog, order and
+policy tools. SQLite stores operational snapshots and chat history; embedded
+Chroma indexes the fixed policy corpus using local E5 embeddings. This small
+dataset does not need distributed services, an ORM or a generic ingestion framework.
 
 ```mermaid
 flowchart LR
     React[React chat] --> HTTP
-    CLI[Python CLI] --> Selection
+    CLI[apps/cli] --> Selection
     CLI --> Chat
-    HTTP[FastAPI] --> Selection[Optional fictional customer selection]
+    HTTP[apps/api / FastAPI] --> Selection[Optional fictional customer selection]
     HTTP --> Chat[ChatService]
     Chat --> History[Conversation SQLite]
     Chat --> Agent[Pydantic AI / Bedrock]
@@ -30,25 +31,44 @@ flowchart LR
     Prepare --> Operations
 ```
 
-`contracts` groups immutable values in focused modules: `chat` for request/response
+## Repository boundaries
+
+- `packages/emporio_music/src/emporio_music/agent` owns model settings and
+  construction, the persona, typed tools, execution and customer-output handling.
+- `packages/emporio_music/src/emporio_music/policies` owns the frozen corpus,
+  retrieval rules and local search. `infrastructure` owns the E5 and Chroma
+  adapters.
+- `domain` holds contracts and business invariants; `ports` defines dependency
+  boundaries; `application` owns chat orchestration; `composition.py` wires the
+  shared repositories and agent once for either app.
+- `apps/api/src/emporio_music_api` owns HTTP schemas, routes, error mapping and
+  frontend serving. `apps/cli/src/emporio_music_cli` owns terminal prompts and
+  error presentation. Neither app imports the other.
+- Repository-only evaluation utilities live in `scripts/`; regression tests live
+  in `tests/`, with CLI-specific checks in `apps/cli/tests/`.
+
+`domain` groups immutable values in focused modules: `chat` for request/response
 values, `identity` for selected customer scope, `conversations` for owned history
 and execution context, `catalog` for product search, `pricing` for quotes, and
 `orders` for order projections. `base` contains shared validation types and the
 frozen model base; `errors` contains application failures.
 
 `ports` groups protocols by boundary (`chat`, `agent`, `catalog`,
-`conversations`, `orders`). `ChatServicePort` lives in `ports.chat`; its implementation
-lives in `application.chat`. `application.pricing` owns the pure price calculation.
+`conversations`, `orders`, `policies`). `ChatServicePort` lives in `ports.chat`; its
+implementation lives in `application.chat`. `application.pricing` owns the pure
+price calculation.
 Package initializers contain docstrings only; callers import each symbol directly
 from its defining module, without compatibility re-exports.
 
-`infrastructure` loads CSVs and performs parameterized SQL. `agent` owns provider
-construction, persona, tool schemas and output checks. `composition` supplies the
-shared dependency construction and customer validation used by HTTP and CLI.
+`infrastructure` loads CSVs and performs parameterized SQL. The agent factory owns
+Bedrock configuration; the agent executor translates provider failures. Policy
+search stays separate from its Pydantic AI tool wrapper. `composition.py` supplies
+the shared dependency construction and customer validation used by HTTP and CLI.
 FastAPI retains lazy initialization; the CLI requires `--live` for default agent
-construction. Neither adapter duplicates application orchestration.
-Core modules do not import FastAPI, AWS, SQLite or Pydantic AI. Boundary tests import
-all core modules so minimal initializers cannot hide an accidental dependency.
+construction. Neither adapter duplicates application orchestration. Domain,
+application and port modules do not import FastAPI, CLI, AWS, SQLite or Pydantic AI.
+Boundary tests import all core modules so minimal initializers cannot hide an
+accidental dependency.
 
 ## Local demo selection
 
@@ -90,13 +110,16 @@ arguments. Prior answers preserve references but are not current factual evidenc
 
 ## Storage paths
 
-`paths.py` defines PROJECT_ROOT from the package's source location and the fixed
-`data/catalog.sqlite3`, `data/operations.sqlite3`, `data/conversations.sqlite3`
-locations. Preparation, HTTP composition and individual import commands share these
-constants; environment storage paths, CLI database overrides, repeated resolution
-and collision checks are removed. Low-level repositories/import functions accept
-explicit absolute paths so tests can use temporary storage. No path factory or
-configuration framework is needed.
+`paths.py` reads `EMPORIO_MUSIC_DATA_DIR` once and resolves it against the process
+working directory when it is relative. The default `data` directory preserves the
+documented repository-root workflow and the existing `catalog.sqlite3`,
+`operations.sqlite3` and `conversations.sqlite3` files. Docker sets it to
+`/app/data`, which remains the persistent volume. Preparation, HTTP composition and
+import commands share these constants; low-level repository/import functions
+accept explicit paths so tests can use temporary storage. The API resolves the
+React build through `EMPORIO_MUSIC_FRONTEND_DIR`, defaulting to
+`apps/frontend/dist` from the repository root. Installed-package behavior does not
+derive paths from Python source locations.
 
 ## Data and tools
 

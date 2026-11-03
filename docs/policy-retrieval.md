@@ -82,8 +82,8 @@ Install system Poppler (`pdftotext`; development preparation prerequisite), then
 from the repository root run:
 
 ```bash
-uv run --directory apps/backend --locked python -m emporio_music_backend.policy_corpus
-uv run --directory apps/backend --locked pytest tests/test_policy_corpus.py
+uv run --project packages/emporio_music --locked python -m emporio_music.policies.corpus
+uv run --project apps/api --locked pytest tests/test_policy_corpus.py
 ```
 
 The command updates the derived corpus and freeze hashes reproducibly. It verifies `data/store_policies.pdf` against `data/SHA256SUMS`, invokes
@@ -103,14 +103,14 @@ an error, not an empty corpus. The source is never modified.
 Install the opt-in runtime libraries with:
 
 ```bash
-uv sync --project apps/backend --locked --extra policy-rag
+uv sync --project apps/api --locked --extra policy-rag
 ```
 
 The default dependency set remains unchanged. Before answering policy questions,
 explicitly build the ignored E5 Chroma collection using the existing benchmark runner:
 
 ```bash
-uv run --project apps/backend --extra policy-rag --locked \
+uv run --project apps/api --extra policy-rag --locked \
   python -m scripts.policy_benchmark.run --model e5 --index --allow-download \
   --output-dir /tmp/policy-rag-bootstrap
 ```

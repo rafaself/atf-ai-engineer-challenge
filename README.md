@@ -11,8 +11,8 @@ These are historical real-model captures with explicit revision limits. Current
 offline checks verify application behavior, not current generated-answer quality.
 
 A local Python customer-support agent for the Artefact AI Engineer challenge.
-React chat, FastAPI and a standalone Python CLI share the same application service,
-Bedrock agent and persistent SQLite history. It answers product, price,
+React chat, FastAPI and a standalone Python CLI share the reusable
+`emporio-music` package, Bedrock agent and persistent SQLite history. It answers product, price,
 availability, promotion, order and policy questions in Portuguese using the
 supplied fictional data.
 
@@ -68,8 +68,8 @@ Hugging Face cache across container restarts; `make down` keeps that volume.
 
 For checks, install Python 3.12+, [uv](https://docs.astral.sh/uv/getting-started/installation/),
 and Node.js 20.19+ or 22.12+ with npm, then run `make check`. The Docker build also
-performs a packaging smoke check for the source-relative data path, an input CSV
-and write access to runtime data.
+checks that the installed shared package reads its configured `/app/data` source
+directory and can write runtime state there.
 
 For Docker chat, put temporary credentials from your approved AWS credential source
 in the Git-ignored `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
@@ -125,10 +125,10 @@ It also distinguishes controlled interface checks from historical model evidence
 Install Python 3.12+ and `uv`, then from the repository root run:
 
 ```bash
-uv sync --project apps/backend --locked --extra policy-rag
+uv sync --project apps/api --locked --extra policy-rag
 test -f .env || cp .env.example .env
-uv run --env-file .env --project apps/backend --extra policy-rag --locked python -m emporio_music_backend.prepare
-uv run --env-file .env --project apps/backend --extra policy-rag --locked uvicorn emporio_music_backend.api.app:create_app --factory --host 127.0.0.1 --port 8000
+uv run --env-file .env --project apps/api --extra policy-rag --locked python -m emporio_music.prepare
+uv run --env-file .env --project apps/api --extra policy-rag --locked uvicorn emporio_music_api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 The frontend can run separately with the commands in
@@ -172,10 +172,13 @@ runtime libraries. Startup and default tests do not download weights, build inde
 or call an embedding provider. See [policy retrieval setup and limitations](docs/policy-retrieval.md).
 
 Three SQLite files separate replaceable catalog/order snapshots from chat history.
-The small `paths.py` module derives `PROJECT_ROOT` from its source location and
-defines all storage under `PROJECT_ROOT / "data"`: `catalog.sqlite3`,
-`operations.sqlite3` and `conversations.sqlite3`. Paths are fixed, independent of
-the launch directory; no storage-path environment variables or CLI overrides are needed.
+`EMPORIO_MUSIC_DATA_DIR` selects the source-data and persistent runtime directory.
+Its default is `data` relative to the process working directory; the documented
+local commands run from the repository root, preserving
+`data/catalog.sqlite3`, `data/operations.sqlite3` and
+`data/conversations.sqlite3`. Compose sets `/app/data` on its persistent volume.
+The API uses `EMPORIO_MUSIC_FRONTEND_DIR` for built React assets and defaults to
+`apps/frontend/dist` from the repository root.
 Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not
 distinguish individual guests. Keep the demo on loopback with fictional data; it
 has no authentication. Each tool read is authoritative within the simulation; local data does not imply
@@ -187,11 +190,9 @@ no dates. The demo has no cross-process turn coordination or retry deduplication
 From the repository root:
 
 ```bash
-uv run --directory apps/backend --locked ruff check .
-uv run --directory apps/backend --locked ruff format --check .
-uv run --directory apps/backend --locked mypy src tests scripts
-uv run --directory apps/backend --locked pytest
-uv build --project apps/backend
+make check-python
+uv build --project packages/emporio_music
+uv build --project apps/api
 uv build --project apps/cli
 ```
 
@@ -201,8 +202,8 @@ forbidden. Paid Bedrock probes require explicit opt-in. See [validation](docs/va
 
 ## Documentation and remaining work
 
-Contracts and protocols are grouped by responsibility. Import definitions directly
-(for example, `contracts.chat.ChatRequest`, `ports.chat.ChatServicePort` and
+Domain contracts and ports are grouped by responsibility. Import definitions directly
+(for example, `domain.chat.ChatRequest`, `ports.chat.ChatServicePort` and
 `application.chat.ChatService`); package initializers hold no implementation.
 
 Start here; use the [documentation index](docs/README.md) for implementation details

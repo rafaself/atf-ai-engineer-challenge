@@ -1,5 +1,10 @@
 # Current output-delivery simplification
 
+This file keeps a chronological validation record. Commands and source paths in
+older sections describe the repository layout used at the time; the current
+structure and runnable checks are documented in [architecture](architecture.md)
+and the [README](../README.md). Issue #76's current validation is recorded below.
+
 The former prose-based monetary, citation and mixed-intent gates described below
 have been retired under the owner's simplification request. Current output handling
 adds source/snapshot/partial-result notices and protects blank/internal-control output.
@@ -118,11 +123,10 @@ preserve their historical scope, including superseded token/path assumptions.
 
 # Earlier fixed-path verification
 
-Storage now uses `emporio_music_backend.paths`: PROJECT_ROOT derives from the
-package's source location; catalog, orders, history and the reserved ChromaDB
-storage directory live under its data directory. Environment/CLI database path
-overrides, repeated resolution and collision checks are removed. No ChromaDB
-adapter or dependency was added.
+At that earlier implementation stage, storage used
+`emporio_music_backend.paths` and derived PROJECT_ROOT from the package's source
+location. Issue #76 replaces that source-relative behavior with the explicit
+`EMPORIO_MUSIC_DATA_DIR`; see the current [storage documentation](architecture.md#storage-paths).
 
 The preparation regression failed before implementation because launching from
 outside the project used the current directory's data path. The updated command
@@ -515,3 +519,39 @@ strict tool inputs and evidence boundaries. No independent review, fresh runtime
 wheel installation or live pricing/language evaluation is claimed. Original live
 captures are preserved and predate this feature. Real promotion/PIX and multi-turn
 Bedrock evaluation remains explicitly opted in under US-13.
+
+# Issue #76 modular-monolith move — 2026-11-03 UTC
+
+Ruff lint and format checks passed across 103 Python files, strict mypy passed
+for 104 files, and `uv lock --check --offline` passed. Source and wheel builds
+passed for `emporio-music`, `emporio-music-api` and `emporio-music-cli`. The
+focused boundary and installed-wheel checks passed (**5 tests**); CLI tests passed
+(**6 tests**) using absolute source paths. Compose configuration validation and
+the Docker image build passed. The image build installed the three workspace
+packages and its runtime smoke check verified `/app/data` reads and writes.
+Frontend build layers were reused from Docker's cache. All seven source files in
+`data/SHA256SUMS` matched; no JSON capture or supplied source file changed. No
+Bedrock request was made.
+
+The full root suite passed: **361 tests**. Two model-comparison preflight tests
+now freeze the manifest's recorded `2026-11-02` verification date in test scope;
+the separate expiry test still verifies that endpoint compatibility is rejected
+on `2026-11-03`. The manifest and its captured evidence were not changed.
+
+The `make check-python` sync could not start in the restricted offline cache
+because the locked CPU Torch wheel was unavailable there. Ruff, mypy, pytest,
+package builds, Docker installation and the lock check were run directly with the
+available environment or Docker builder. AWS settings were unset during the
+offline suites, and the default live-model guard remained enabled. The third-party
+lock versions are unchanged.
+
+### Full workflow rerun
+
+After provisioning the locked dependencies with network access, `make check`
+completed from the repository root with exit code 0. Ruff lint and format passed
+across 103 Python files, strict mypy passed for 104 files, the root suite passed
+(**361 tests**), the CLI suite passed (**6 tests**), and source/wheel builds passed
+for all three Python packages. Frontend lint, typecheck and production build passed
+after a fresh `npm ci`; this run did not rely on Docker's cached frontend layer.
+`npm ci` reported 10 moderate audit findings; no dependency or lockfile changes
+were made. No Bedrock request was made.

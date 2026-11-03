@@ -11,16 +11,17 @@ For normal setup use the single [README preparation command](../README.md#run-lo
 For a focused operational refresh after catalog setup, the individual importer is:
 
 ```bash
-uv run --project apps/backend --locked python -m \
-  emporio_music_backend.infrastructure.operations_import \
+uv run --project packages/emporio_music --locked python -m \
+  emporio_music.infrastructure.operations_import \
   --customers data/customers.csv \
   --orders data/orders.csv \
   --order-items data/order_items.csv
 ```
 
 Expected output: `Imported 50 customers, 20 orders and 22 items`.
-Catalog and operational destinations use the fixed project paths in `paths.py`:
-`PROJECT_ROOT / "data/catalog.sqlite3"` and `PROJECT_ROOT / "data/operations.sqlite3"`.
+Catalog and operational destinations use `EMPORIO_MUSIC_DATA_DIR`:
+`catalog.sqlite3` and `operations.sqlite3` beneath that directory. The default
+remains `data/` when commands run from the repository root.
 They are separate from `data/conversations.sqlite3`; environment/CLI path overrides
 and runtime collision checks are unnecessary. The importer accepts explicit CSV
 sources for focused experiments and validates data before replacing its owned snapshot.

@@ -42,7 +42,9 @@ retrieval, and user experience. Keep that integration reliable and simple.
 - Use representative real conversations to evaluate LLM behavior; controlled
   tests do not establish answer quality. Live model calls require explicit opt-in.
 - Run checks appropriate to the change from the repository root using the README's
-  `uv run --directory apps/backend ...` commands. Report actual results and gaps.
+  workspace commands, including `make check-python` and `make check-frontend` when
+  applicable. Run `make check` for the complete local check workflow and report
+  actual results and gaps.
 
 ## Delivery
 

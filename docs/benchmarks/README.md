@@ -9,7 +9,7 @@ as well as completed runs; do not overwrite them with improved scores.
 From the repository root:
 
 ```bash
-uv sync --project apps/backend --group benchmark --locked
+uv sync --project packages/emporio_music --extra policy-rag --group benchmark --locked
 export HF_HOME="$PWD/data/benchmark-cache/hf"
 export UV_CACHE_DIR="$PWD/data/benchmark-cache/uv"
 export OMP_NUM_THREADS=4
@@ -25,7 +25,7 @@ call providers. Model/download caches and generated indexes are Git-ignored.
 For each configuration (`e5`, `titan`), first run development only:
 
 ```bash
-uv run --directory apps/backend --env-file ../../.env --group benchmark --locked python -m scripts.policy_benchmark.run --model e5 --index --allow-download
+uv run --project packages/emporio_music --env-file .env --extra policy-rag --group benchmark --locked python -m scripts.policy_benchmark.run --model e5 --index --allow-download
 ```
 
 Replace `e5` with a Bedrock configuration and add `--allow-paid --budget-usd 0.10`
@@ -50,7 +50,7 @@ After freezing the configuration and query rules, run the untouched validation
 split exactly once per model, without indexing again:
 
 ```bash
-uv run --directory apps/backend --env-file ../../.env --group benchmark --locked python -m scripts.policy_benchmark.run --model e5 --split validation --final-validation
+uv run --project packages/emporio_music --env-file .env --extra policy-rag --group benchmark --locked python -m scripts.policy_benchmark.run --model e5 --split validation --final-validation
 ```
 
 Do not tune after viewing validation scores. Report contamination if a later
@@ -70,7 +70,7 @@ the non-truncating API reports exact input token counts after invocation. These
 limitations must remain visible; estimates are not exact provider billing data.
 Oversized inputs fail, requiring explicit corpus/label review rather than truncation.
 
-The query-only filtering rule is frozen in `apps/backend/scripts/policy_benchmark/evaluation.py` before runs.
+The query-only filtering rule is frozen in `scripts/policy_benchmark/evaluation.py` before runs.
 It unions broad policy families when multiple recognized terms occur and applies
 no filter for unknown topics. It never reads question topics/gold labels. Each
 query embedding is reused between vector-only and filtered search for fairness;
@@ -127,18 +127,17 @@ source-based answer review. Original US-15 reports and thresholds are unchanged.
 
 ## Development scripts, outside runtime
 
-Benchmark runners and helpers live in `apps/backend/scripts/policy_benchmark/`.
-They are excluded from the built backend wheel. Run from the repository root
-using the `--directory apps/backend` commands above; the dotenv path is relative
-to that working directory. Tests import the development scripts through pytest's
-explicit backend-root search path. To type-check scripts as well as application
-code, run `uv run --directory apps/backend --locked mypy src tests scripts`.
+Benchmark runners and helpers live in repository-level `scripts/policy_benchmark/`.
+They are excluded from the shared-package wheel. Run from the repository root
+using the commands above; the dotenv path is relative to that working directory.
+The repository checks include development scripts in strict mypy:
+`make check-python`.
 
 The follow-up comparison can be reproduced with:
 
 ```bash
-uv run --directory apps/backend --group benchmark --locked python -m scripts.policy_benchmark.context_experiment
-uv run --directory apps/backend --env-file ../../.env --group benchmark --locked python -m scripts.policy_benchmark.context_experiment --generate --retrieval-report ../../docs/benchmarks/expansion/<retrieval-report>.json
+uv run --project packages/emporio_music --extra policy-rag --group benchmark --locked python -m scripts.policy_benchmark.context_experiment
+uv run --project packages/emporio_music --env-file .env --extra policy-rag --group benchmark --locked python -m scripts.policy_benchmark.context_experiment --generate --retrieval-report docs/benchmarks/expansion/<retrieval-report>.json
 ```
 
 The second command makes paid calls; use it only with explicit approval and the

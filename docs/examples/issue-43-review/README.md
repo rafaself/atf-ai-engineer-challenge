@@ -45,10 +45,10 @@ were reserved upfront at **US$0.324864**, below the approved US$0.50 cap. No con
 or failed model answer was retried.
 
 There was one local import-path setup failure before any provider initialization
-or calls. Setting the backend scripts directory on `PYTHONPATH` resolved it. The
+or calls. Setting the package and API source directories on `PYTHONPATH` resolved it. The
 successful run used cached local E5/Chroma; the same search instance was preflighted
 before chat, so policy latency excludes cold E5 loading. No model downloads occurred.
-This backend ASGI sample does not itself validate Docker/UI/CLI integration. Those
+This API ASGI sample does not itself validate Docker/UI/CLI integration. Those
 broader checks were completed separately in US-23; see the [Sprint 4 validation
 record](../../sprint-4-validation.md) for the actual setup, environment limits and
 prepared-index check. The sample's narrower scope and historical source revision
@@ -57,10 +57,10 @@ remain unchanged.
 Reproduction requires fresh explicit paid-run approval; do not overwrite the capture:
 
 ```sh
-PYTHONPATH="$PWD/apps/backend" \
+PYTHONPATH="$PWD/packages/emporio_music/src:$PWD/apps/api/src" \
 HF_HOME="$PWD/data/benchmark-cache/hf" HF_HUB_OFFLINE=1 \
 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
-uv run --project apps/backend --extra policy-rag --locked \
+uv run --project apps/api --extra policy-rag --locked \
   python docs/examples/issue-43-review/run_approved_probe.py --live \
   --output /tmp/new-approved-qwen-capture.json
 ```
