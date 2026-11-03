@@ -1,5 +1,12 @@
 # Bedrock Runtime model comparison (#40)
 
+The [full v7 Qwen / Luna / Sol comparison](full-qwen-luna-sol-2026-11-03.md)
+is the one-run sample cited by the root README for the runtime-model cost/quality
+trade-off: Luna scored 11/1/0 and Sol 12/0/0 across 12 conversations. Its capture
+records base commit `93316169` with a dirty source tree, so these results are not
+a clean capture of the current checkout. Read the report's run details and limits
+before using the scores.
+
 The latest [Luna budget-echo benchmark](luna-budget-clarification-2026-11-03.md)
 records two Luna-only full v7 runs. The first inline instruction did not stop the
 budget echo; the clearer standalone instruction produced 12/0/0 in the second
@@ -24,13 +31,15 @@ tests a dedicated lookup and explicit guidance on four conversations / five turn
 per model. Both models still make unsupported conclusions; GPT-OSS invents a
 document checklist and label workflow despite retrieving the new evidence.
 
-The latest [scoped harness evaluation](scoped-harness-qwen32-gptoss120-2026-11-03.md) records the 12-conversation v7 run, corrected historical call accounting, and the rejected structured-return output experiment.
+The [scoped harness evaluation](scoped-harness-qwen32-gptoss120-2026-11-03.md)
+records the 12-conversation v7 run, corrected historical call accounting and the
+rejected structured-return output experiment.
 
-The current default is [v7](scenarios-current-v7.json), covering 12 conversations
-and 20 HTTP turns per model. It retains scoped policies, explicit product/payment
-contracts and stronger severity review. The bounded-output experiment was rejected
-after live failures; its captures and patch remain available. See the
-[scoped harness review](scoped-harness-qwen32-gptoss120-2026-11-03.md).
+The runner's default fixture is [v7](scenarios-current-v7.json), covering 12
+conversations and 20 HTTP turns per model. It retains scoped policies, explicit
+product/payment contracts and stronger severity review. The bounded-output
+experiment was rejected after live failures; its captures and patch remain
+available. See the [scoped harness review](scoped-harness-qwen32-gptoss120-2026-11-03.md).
 
 See the [accounting erratum](accounting-erratum-2026-11-03.md) before comparing
 historical model-call totals. Version 2 separates current responses, provider

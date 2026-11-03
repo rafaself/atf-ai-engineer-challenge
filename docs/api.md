@@ -1,9 +1,29 @@
 # Local chat API
 
-Use the [README](../README.md) for the two preparation/run commands. Run one uvicorn
-process on loopback. Setup uses the same fixed storage paths as the API and never
-opens the conversation database. The application does not load `.env` automatically;
-`uv --env-file .env` does. Existing shell variables take precedence.
+Use the [README Getting Started guide](../README.md#getting-started) for the
+recommended Docker setup and preparation/startup sequence. Run one uvicorn process
+on loopback for local API development. Setup uses the same fixed storage paths as
+the API and never opens the conversation database. The application does not load
+`.env` automatically; `uv --env-file .env` does. Existing shell variables take
+precedence.
+
+## Local API setup
+
+For local development, install Python 3.12+ and `uv`, then run these commands from
+the repository root. Edit `.env` for the desired Bedrock model and host credentials
+before starting the API; a host AWS profile or SSO session can use the normal
+credential chain here.
+
+```bash
+uv sync --project apps/api --locked --extra policy-rag
+test -f .env || cp .env.example .env
+uv run --env-file .env --project apps/api --extra policy-rag --locked python -m emporio_music.prepare
+uv run --project apps/api --extra policy-rag --locked python -m emporio_music.prepare_policy_index --allow-download
+uv run --env-file .env --project apps/api --extra policy-rag --locked uvicorn emporio_music_api.app:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Policy indexing remains explicit in this path too. To develop the React client
+against this API, follow the [frontend guide](../apps/frontend/README.md).
 
 ## Guest and fictional-customer requests
 

@@ -7,7 +7,7 @@ This is snapshot retrieval, not production authentication or a fulfillment syste
 
 ## Required import
 
-For normal setup use the single [README preparation command](../README.md#run-locally).
+For normal Docker setup, follow the [README Getting Started guide](../README.md#getting-started).
 For a focused operational refresh after catalog setup, the individual importer is:
 
 ```bash
