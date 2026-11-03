@@ -10,8 +10,17 @@ services:
       HF_HOME: /app/data/benchmark-cache/hf
       EMPORIO_MUSIC_DATA_DIR: /app/data
       EMPORIO_MUSIC_FRONTEND_DIR: /app/apps/frontend/dist
-    ports:
-      - "127.0.0.1:8000:8000"
+    # Some VPN or firewall policies may block traffic through Docker bridge subnets.
+    # Host networking avoids that bridge path; keep the app on host loopback.
+    network_mode: host
+    command:
+      - uvicorn
+      - emporio_music_api.app:create_app
+      - --factory
+      - --host
+      - 127.0.0.1
+      - --port
+      - "8000"
     volumes:
       - app-data:/app/data
 
