@@ -1,8 +1,9 @@
 # Policy corpus, runtime retrieval and evaluation protocol
 
-Current processing (2026-11-03): `poppler-effective-policies-v6` prepares 29
+Current processing (2026-11-03): `poppler-reviewed-returns-v9` prepares 29
 records with canonical hours, one effective freight section, and structured
-online-return conditions/exclusions. The original PDF and freight approval remain
+online-return conditions/exclusions, applicability, refund facts, explicit
+procedure documentation status and source-preserved general contacts. The original PDF and freight approval remain
 unchanged; effective freight provenance is stored in `source_references`. The
 current labels are `questions-v3.json`; prior label files/captures remain historical.
 The application shows policy references and partial-list notices, with one-time
@@ -16,14 +17,34 @@ retrieval and full-policy-context runs. See the [US-17 results](examples/us-17/r
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
 [US-18](examples/us-18/README.md) records the grounding investigation and output
-simplification. Policy tools return source excerpts without section-specific advice.
+simplification. That version returned source excerpts without section-specific advice;
+the current return-contact scope additionally returns reviewed interpretation guidance.
 The application appends a “Fontes consultadas” list from successful current-run
 records, alongside partial-result notices where relevant. It does not parse
 generated citations or currency mentions to decide HTTP success. Generated claims,
 references, price presentation and tool choice still require model-quality review.
 Exact pricing and customer scope remain enforced inside the operational tools.
 
-The policy tool now uses the current question plus the latest prior user question
+The policy tool requires an explicit scope. The retained routing is the baseline:
+`online_return` selects 4.1/4.4; `return_contact` selects those sections plus
+cover, 1.2 and 7; `preference_exchange` selects 4.3/4.4; `defect` selects
+4.2 and 8.1–8.3. The attempted unified scope and shorter instructions were not
+retained after controlled runs failed to improve grounding and regressed Qwen
+follow-ups. See the v9 comparison below rather than treating simplification as
+proven improvement.
+
+The retained source improvement replaces an empty next-step list with explicit
+`procedure` documentation statuses, bound to a full-manual review and its PDF
+hash. Contact entries retain their exact values, roles and section/page references.
+Both email spellings remain unresolved; section 7 explicitly designates a primary
+remote WhatsApp channel. Missing documentation is not proof of unavailable service
+or of no requirements. Existing source excerpts remain unchanged.
+
+The model still chooses tools and authors prose. No semantic validator, additional
+model stage or retry/fallback mechanism was added. Existing output checks protect
+presentation and append consulted sources without certifying answer truth.
+
+For `general` scope, the policy tool uses the current question plus the latest prior user question
 when their combined text is at most 256 characters. A bounded local E5 check missed
 section 4.1 for “E se eu já usei o instrumento?” alone, returning sections 1.1, 10,
 8.3, 4.2, 8.1 and 8.2. Adding the preceding return question returned sections 4.4,
@@ -37,6 +58,23 @@ returned evidence, but the citation-format retry was exhausted and HTTP 500 resu
 The five remaining planned turns were not run. See the
 [batch review](examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch)
 for partial grounding and citation-format findings.
+
+## Full-source return review (2026-11-03)
+
+The reviewed v9 metadata supersedes v7's empty next-step list. The v8 routing
+and advisory strings remain after the unified-scope candidates failed evaluation. Source excerpts and pages remain unchanged. The full eight-page
+manual was checked, including outgoing shipment tracking, complaint escalation,
+and final management-consultation guidance. None specifies return paperwork,
+label issuance, posting instructions, a dedicated returns SAC, or the starting
+event of the ten-business-day refund period. Those findings are preparation-time
+facts bound to the reviewed source SHA-256. A different source requires review
+before those facts can be regenerated. No claim is made that those services or
+requirements cannot exist outside this manual.
+
+The metadata participates in the existing corpus fingerprint. The local index
+must be rebuilt even though the embedding text itself did not change. See the
+[controlled v9 comparison](examples/model-comparison/grounding-v9-2026-11-03.md)
+for separate correctness, tool-use and UX results.
 
 ## Reproduce offline
 

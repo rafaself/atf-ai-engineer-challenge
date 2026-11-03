@@ -45,17 +45,17 @@ class ProductSearchTool:
 
     def search_available_products(
         self,
+        payment_method: PaymentMethod,
         category: NonblankText | None = None,
         product_name: NonblankText | None = None,
         min_price_brl: BRLAmount | None = None,
         max_price_brl: BRLAmount | None = None,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10,
-        payment_method: PaymentMethod = "standard",
         promotions_only: StrictBool = False,
     ) -> dict[str, object]:
         """Find available instruments for requested recommendations, by category, budget or partial name.
 
-        For price/stock/status/specifications about a named product, use get_product_details.
+        For an initial named product, use find_product_by_name; for a known code use get_product_details.
         Use find_product_alternatives for substitutes without a customer budget.
         Do not search alternatives to a named product unless the customer asks.
         For alternatives, use the category and customer-requested budget; omit
@@ -88,36 +88,44 @@ class ProductSearchTool:
         )
         return self._search(query)
 
-    def get_product_details(
+    def find_product_by_name(
         self,
-        product_name: NonblankText | None = None,
-        product_id: Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)]
-        | None = None,
+        product_name: NonblankText,
+        payment_method: PaymentMethod,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10,
-        payment_method: PaymentMethod = "standard",
     ) -> dict[str, object]:
-        """Look up a named product, including out-of-stock/discontinued/coming-soon.
+        """Initial named-product lookup, including unavailable products.
 
-        Use for price, stock, status and structured catalog specifications, even if availability is unknown.
-        For follow-ups, use product_id from the prior result, not a rewritten name.
-        Provide exactly one of product_name (initial lookup) or product_id (follow-up).
-        One lookup is sufficient for the named product. Do not also search for it
-        unless the customer asks for alternatives. Report returned fields only;
-        multiple partial-name matches remain visible.
+        Return codes for disambiguation. Once the product is identified, use
+        get_product_details(product_id, payment_method) for every fresh follow-up.
+        Set payment_method=pix only for an explicit PIX request, otherwise standard.
         """
-        if (product_name is None) == (product_id is None):
-            raise ModelRetry("Provide exactly one of product_name or product_id.")
-        trace(
-            "tool.called",
-            tool="get_product_details",
-            limit=limit,
-        )
+        trace("tool.called", tool="find_product_by_name", limit=limit)
         return self._search(
             ProductSearchQuery(
                 product_name=product_name,
-                product_id=product_id,
                 available_only=False,
                 limit=limit,
+                payment_method=payment_method,
+            )
+        )
+
+    def get_product_details(
+        self,
+        product_id: Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)],
+        payment_method: PaymentMethod,
+    ) -> dict[str, object]:
+        """Read fresh price, stock and specs for an identified product code.
+
+        Resolve ordinal references using codes in the previous answer. This tool
+        accepts no names. Set pix for an explicit PIX request, otherwise standard.
+        """
+        trace("tool.called", tool="get_product_details")
+        return self._search(
+            ProductSearchQuery(
+                product_id=product_id,
+                available_only=False,
+                limit=1,
                 payment_method=payment_method,
             )
         )
@@ -125,17 +133,20 @@ class ProductSearchTool:
     def find_product_alternatives(
         self,
         product_id: Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)],
+        payment_method: PaymentMethod,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 5,
     ) -> dict[str, object]:
         """Find available alternatives when the customer asks for a substitute.
 
         Use the product_id from the original detail lookup. The category comes
         from the catalog; no budget or product-name restriction is inferred.
+        Set pix for an explicit PIX request, otherwise standard.
         If the customer provides a budget, use search_available_products instead.
         """
         original = self.repository.search(
             ProductSearchQuery(
                 product_id=product_id,
+                payment_method=payment_method,
                 available_only=False,
                 limit=1,
             )
@@ -149,6 +160,7 @@ class ProductSearchTool:
             ProductSearchQuery(
                 category=original.products[0].category_name,
                 exclude_product_id=product_id,
+                payment_method=payment_method,
                 limit=limit,
             )
         )
@@ -194,6 +206,7 @@ def product_tools(repository: ProductRepository) -> list[Tool[ExecutionContext]]
     tools = ProductSearchTool(repository)
     return [
         Tool(tools.search_available_products),
+        Tool(tools.find_product_by_name),
         Tool(tools.get_product_details),
         Tool(tools.find_product_alternatives),
     ]

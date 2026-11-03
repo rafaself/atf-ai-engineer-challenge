@@ -97,7 +97,8 @@ rounding applies to the final price: `(original * (100 - percentage) + 50) // 10
 No floats, ambient Decimal rounding, historical unit-price reconstruction or order
 repricing are involved.
 
-Both product tools accept `payment_method="standard"` (default) or `"pix"`.
+Every catalog tool requires an explicit `payment_method="standard"` or `"pix"`.
+There is no implicit payment choice, including for alternatives.
 Search budget bounds are capped at R$1,000,000,000 each as a commercial limit,
 with at most two decimal places, rather than exposing SQLite's storage ceiling.
 `search_available_products` additionally accepts strict `promotions_only=False`;
@@ -127,10 +128,12 @@ available. All values reflect the imported CSV snapshot, not a live inventory.
 
 ## Product references and alternatives
 
-Product results expose `product_id`. Initial detail lookups accept a literal
-`product_name`; follow-ups use `product_id`, with exactly one selector per call.
+Product results expose `product_id`. Initial named lookups use
+`find_product_by_name(product_name, payment_method)`; identified follow-ups use
+`get_product_details(product_id, payment_method)`. Separate tool schemas prevent
+a product code from being silently treated as a name.
 Customer answers include product codes so references survive the text-only history.
-`find_product_alternatives(product_id, limit)` derives the original category,
+`find_product_alternatives(product_id, payment_method, limit)` derives the original category,
 excludes the original product, and searches available products without invented
 price restrictions. Explicit customer budget searches remain available through
 `search_available_products`. Tool results are current simulated store records.

@@ -47,6 +47,7 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
     repository = RecordingRepository()
     tool = ProductSearchTool(repository)
     result = tool.search_available_products(
+        payment_method="standard",
         category=" Violões ",
         max_price_brl=Decimal("1000.00"),
         min_price_brl=Decimal("0.29"),
@@ -68,14 +69,18 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
         Decimal("1e999999"),
     ):
         with pytest.raises(ValidationError):
-            tool.search_available_products(max_price_brl=amount)
+            tool.search_available_products(
+                payment_method="standard", max_price_brl=amount
+            )
     for minimum, maximum in ((Decimal("2"), Decimal("1")),):
         with pytest.raises(ValidationError):
-            tool.search_available_products(min_price_brl=minimum, max_price_brl=maximum)
+            tool.search_available_products(
+                payment_method="standard", min_price_brl=minimum, max_price_brl=maximum
+            )
     with pytest.raises(ValidationError):
-        tool.search_available_products(category=" ")
+        tool.search_available_products(payment_method="standard", category=" ")
     with pytest.raises(ValidationError):
-        tool.search_available_products(limit=21)
+        tool.search_available_products(payment_method="standard", limit=21)
     assert repository.query is expected
 
 
@@ -84,16 +89,22 @@ def test_search_price_bounds_use_the_commercial_limit(bound: str) -> None:
     repository = RecordingRepository()
     tool = ProductSearchTool(repository)
     limit = Decimal("1000000000.00")
-    tool.search_available_products(min_price_brl=limit, max_price_brl=limit)
+    tool.search_available_products(
+        payment_method="standard", min_price_brl=limit, max_price_brl=limit
+    )
     assert repository.query is not None
     assert repository.query.min_price_centavos == 100000000000
     assert repository.query.max_price_centavos == 100000000000
     expected = repository.query
     with pytest.raises(ValidationError):
         if bound == "minimum":
-            tool.search_available_products(min_price_brl=Decimal("1000000000.01"))
+            tool.search_available_products(
+                payment_method="standard", min_price_brl=Decimal("1000000000.01")
+            )
         else:
-            tool.search_available_products(max_price_brl=Decimal("1000000000.01"))
+            tool.search_available_products(
+                payment_method="standard", max_price_brl=Decimal("1000000000.01")
+            )
     assert repository.query is expected
 
 
@@ -130,7 +141,11 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
                 parts=[
                     ToolCallPart(
                         "search_available_products",
-                        {"category": "violoes", "max_price_brl": "1000.00"},
+                        {
+                            "payment_method": "standard",
+                            "category": "violoes",
+                            "max_price_brl": "1000.00",
+                        },
                     )
                 ]
             )
@@ -155,17 +170,29 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
         == "Olá!"
     )
     tool = ProductSearchTool(repository)
-    named = tool.get_product_details(product_name="GD20")
+    named = tool.find_product_by_name(payment_method="standard", product_name="GD20")
     assert named["products"] == [
         repository.search(ProductSearchQuery(product_name="GD20"))
         .products[0]
         .model_dump(mode="json")
         | {"price_brl": "2199.00"}
     ]
-    unavailable = tool.get_product_details(product_name="GF-3D")
+    unavailable = tool.find_product_by_name(
+        payment_method="standard", product_name="GF-3D"
+    )
     assert unavailable["total_matches"] == 1
-    assert tool.search_available_products(product_name="GF-3D")["total_matches"] == 0
-    assert tool.search_available_products(product_name="nonexistent")["products"] == []
+    assert (
+        tool.search_available_products(payment_method="standard", product_name="GF-3D")[
+            "total_matches"
+        ]
+        == 0
+    )
+    assert (
+        tool.search_available_products(
+            payment_method="standard", product_name="nonexistent"
+        )["products"]
+        == []
+    )
 
 
 def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
@@ -175,12 +202,17 @@ def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(
-            parts=[ToolCallPart("search_available_products", {"product_name": "GD20"})]
+            parts=[
+                ToolCallPart(
+                    "search_available_products",
+                    {"payment_method": "standard", "product_name": "GD20"},
+                )
+            ]
         )
 
     tool = ProductSearchTool(BrokenRepository())
     with pytest.raises(ProductRetrievalError):
-        tool.search_available_products(product_name="GD20")
+        tool.search_available_products(payment_method="standard", product_name="GD20")
     executor = create_catalog_agent(
         AgentSettings(), BrokenRepository(), model=FunctionModel(respond)
     )
@@ -197,7 +229,7 @@ def test_money_conversion_does_not_inherit_ambient_decimal_rounding() -> None:
     with localcontext() as context:
         context.prec = 2
         ProductSearchTool(repository).search_available_products(
-            max_price_brl=Decimal("999.99")
+            payment_method="standard", max_price_brl=Decimal("999.99")
         )
     assert repository.query is not None
     assert repository.query.max_price_centavos == 99999

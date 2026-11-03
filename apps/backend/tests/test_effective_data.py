@@ -3,10 +3,12 @@
 from pathlib import Path
 
 import pytest
-from pydantic_ai import ModelRetry
 
 from emporio_music_backend.agent.catalog import ProductSearchTool
-from emporio_music_backend.contracts.catalog import ProductSearchQuery
+from emporio_music_backend.contracts.catalog import (
+    ProductSearchQuery,
+    ProductSearchResult,
+)
 from emporio_music_backend.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
@@ -46,12 +48,14 @@ def test_product_id_followup_and_unrestricted_alternatives_use_real_catalog(
         operational_database.parent / "operational-catalog.sqlite3"
     )
     tool = ProductSearchTool(repository)
-    result = tool.get_product_details(product_id=85)
+    result = tool.get_product_details(product_id=85, payment_method="standard")
     products = result["products"]
     assert isinstance(products, list)
     assert products[0]["name"] == "Rozini RC-104 Nylon Estudante"
     assert result["total_matches"] == 1
-    alternatives = tool.find_product_alternatives(product_id=83, limit=20)
+    alternatives = tool.find_product_alternatives(
+        product_id=83, payment_method="standard", limit=20
+    )
     candidates = alternatives["products"]
     assert isinstance(candidates, list)
     assert candidates
@@ -64,8 +68,10 @@ def test_product_id_followup_and_unrestricted_alternatives_use_real_catalog(
     assert [p["product_id"] for p in candidates] == [
         p.product_id for p in expected.products
     ]
-    with pytest.raises(ModelRetry, match="exactly one"):
-        tool.get_product_details(product_name="wrong name", product_id=85)
+    with pytest.raises(TypeError, match="product_name"):
+        tool.get_product_details(
+            product_name="wrong name", product_id=85, payment_method="standard"
+        )  # type: ignore[call-arg]
 
 
 def test_pix_promotion_explanation_uses_the_actual_discount_origin(
@@ -84,3 +90,58 @@ def test_pix_promotion_explanation_uses_the_actual_discount_origin(
         products[0]["pricing"]["explanation"]
         == "Promoção de 20%; não há desconto PIX adicional."
     )
+
+
+def test_alternatives_honor_explicit_pix_payment(operational_database: Path) -> None:
+    tool = ProductSearchTool(
+        SQLiteProductRepository(
+            operational_database.parent / "operational-catalog.sqlite3"
+        )
+    )
+    result = tool.find_product_alternatives(product_id=96, payment_method="pix")
+    products = result["products"]
+    assert isinstance(products, list)
+    assert products
+    assert all(product["pricing"]["payment_method"] == "pix" for product in products)
+    assert products[0]["product_id"] == 83
+    assert products[0]["pricing"]["final_price_brl"] == "408.41"
+
+
+def test_model_visible_lookup_contracts_separate_names_ids_and_require_payment() -> (
+    None
+):
+    import asyncio
+
+    from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
+    from pydantic_ai.models.function import AgentInfo, FunctionModel
+
+    from emporio_music_backend.agent.catalog import create_catalog_agent
+    from emporio_music_backend.agent.settings import AgentSettings
+    from emporio_music_backend.contracts.chat import ChatRequest
+    from emporio_music_backend.contracts.conversations import ExecutionContext
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        schemas = {
+            tool.name: tool.parameters_json_schema for tool in info.function_tools
+        }
+        for name in (
+            "find_product_by_name",
+            "get_product_details",
+            "search_available_products",
+            "find_product_alternatives",
+        ):
+            assert "payment_method" in schemas[name]["required"]
+        assert "product_name" not in schemas["get_product_details"]["properties"]
+        assert "product_id" in schemas["get_product_details"]["required"]
+        assert "product_id" not in schemas["find_product_by_name"]["properties"]
+        assert "product_name" in schemas["find_product_by_name"]["required"]
+        return ModelResponse(parts=[TextPart("Olá!")])
+
+    class UnusedRepository:
+        def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+            raise AssertionError("Schema inspection needs no catalog read")
+
+    agent = create_catalog_agent(
+        AgentSettings(), UnusedRepository(), model=FunctionModel(respond)
+    )
+    asyncio.run(agent.run(ChatRequest(message="Olá"), context=ExecutionContext()))

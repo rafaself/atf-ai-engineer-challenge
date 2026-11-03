@@ -76,7 +76,11 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                     parts=[
                         ToolCallPart(
                             "search_available_products",
-                            {"promotions_only": True, "limit": 2},
+                            {
+                                "payment_method": "standard",
+                                "promotions_only": True,
+                                "limit": 2,
+                            },
                         )
                     ]
                 )
@@ -85,7 +89,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                 return ModelResponse(
                     parts=[
                         ToolCallPart(
-                            "get_product_details",
+                            "find_product_by_name",
                             {
                                 "product_name": answers[0]
                                 .splitlines()[1]
@@ -100,13 +104,16 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                     conn.execute("DROP TABLE promotions")
                 return ModelResponse(
                     parts=[
-                        ToolCallPart("get_product_details", {"product_name": "GD20"})
+                        ToolCallPart(
+                            "find_product_by_name",
+                            {"payment_method": "standard", "product_name": "GD20"},
+                        )
                     ]
                 )
             return ModelResponse(
                 parts=[
                     ToolCallPart(
-                        "get_product_details",
+                        "find_product_by_name",
                         {
                             "product_name": "GD20",
                             "payment_method": "pix"

@@ -131,6 +131,21 @@ still receives grounding and tool-use instructions; actual compliance requires
 conversation review. Generated claims, prices and references are not automatically
 certified by the source list. Diagnostics allow metadata only.
 
+## Scoped return evidence
+
+The model chooses a policy scope. Named scopes select prepared sections directly;
+general queries retain E5 retrieval. Online-return evidence separates the seven-day
+receipt window, required conditions, exclusions, refund facts and documented next
+steps. Each assessment requires fresh policy retrieval in the instructions.
+Original PDF bytes and provenance remain intact.
+
+Answers remain model prose. A bounded return-output function was evaluated and
+rejected because schema/correction failures caused HTTP errors and repeated
+questions. It is not registered in the delivered runtime; the experiment and
+rejected patch are retained in the model-comparison evidence. Scope selection,
+customer-fact extraction, freshness and answer faithfulness still require live
+conversation review. A source list does not certify generated claims.
+
 ## Evidence and limits
 
 Temporary SQLite/Chroma indexes and controlled models verify domain rules, ownership,

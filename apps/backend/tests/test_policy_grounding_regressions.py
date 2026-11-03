@@ -62,7 +62,9 @@ class SourcePolicySearch:
         ]
         self.queries: list[str] = []
 
-    def search(self, query: str) -> PolicySearchResult:
+    def search(
+        self, query: str, *, policy_scope: str = "general"
+    ) -> PolicySearchResult:
         self.queries.append(query)
         return {"status": "evidence_found", "records": self.records}
 
@@ -201,7 +203,11 @@ def test_mixed_answer_can_correctly_discuss_the_recorded_claims(
         if "get_my_order" not in returned_tools:
             return ModelResponse(parts=[ToolCallPart("get_my_order", {"order_id": 4})])
         if "search_store_policies" not in returned_tools:
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
 
         order_result = cast(
             dict[str, object],
@@ -328,7 +334,11 @@ def test_recorded_qwen_candidate_is_delivered_without_citation_retry(
         if "get_my_order" not in returned:
             return ModelResponse(parts=[ToolCallPart("get_my_order", {"order_id": 4})])
         if "search_store_policies" not in returned:
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
         return ModelResponse(parts=[TextPart(candidate)])
 
     policy = SourcePolicySearch({"4.1", "4.3", "4.4", "5.2"})

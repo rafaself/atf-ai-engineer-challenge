@@ -72,14 +72,23 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
                     parts=[
                         ToolCallPart(
                             "search_available_products",
-                            {"category": "violoes", "max_price_brl": 1000},
+                            {
+                                "payment_method": "standard",
+                                "category": "violoes",
+                                "max_price_brl": 1000,
+                            },
                         )
                     ]
                 )
             # Consume the persisted displayed ordering; this controls wiring, not LLM quality.
             name = historical[0].splitlines()[1].removeprefix("2. ")
             return ModelResponse(
-                parts=[ToolCallPart("get_product_details", {"product_name": name})]
+                parts=[
+                    ToolCallPart(
+                        "find_product_by_name",
+                        {"payment_method": "standard", "product_name": name},
+                    )
+                ]
             )
         assert isinstance(returned[-1].content, dict)
         payload: dict[str, Any] = dict(returned[-1].content)
@@ -157,8 +166,8 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
         assert invalid.status_code == 422 and marker not in invalid.text
         assert len(calls) == before
     assert len(built) == 2
-    ProductSearchTool(SQLiteProductRepository(catalog)).get_product_details(
-        product_name=marker
+    ProductSearchTool(SQLiteProductRepository(catalog)).find_product_by_name(
+        payment_method="standard", product_name=marker
     )
     events = [
         json.loads(r.getMessage())

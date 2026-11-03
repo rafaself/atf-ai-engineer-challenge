@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from emporio_music_backend.paths import DATA_DIRECTORY
-from emporio_music_backend.policy_corpus import normalize_lines, parse_layout, prepare
+from emporio_music_backend.policy_corpus import (
+    _reviewed_return_procedure,
+    normalize_lines,
+    parse_layout,
+    prepare,
+)
 
 
 def test_manual_tables_cross_pages_and_source_bytes_are_preserved() -> None:
@@ -191,10 +196,46 @@ def test_cover_preserves_conflicting_contact_with_page_reference() -> None:
     assert "contato@empóriodamusica.com.br" in chunks["1.2"].text
 
 
+def test_full_manual_review_distinguishes_unknown_procedures_from_no_requirements() -> (
+    None
+):
+    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    chunk = next(c for c in corpus.chunks if c.section == "4.1")
+    assert chunk.online_return_rule is not None
+    procedure = chunk.online_return_rule["procedure"]
+    assert procedure["review_scope"] == "full_manual"
+    assert procedure["reviewed_source_sha256"] == corpus.source_sha256
+    assert procedure["required_documents"] == "not_specified_in_manual"
+    assert procedure["label_issuance"] == "not_specified_in_manual"
+    assert procedure["posting_instructions"] == "not_specified_in_manual"
+    assert procedure["refund_deadline_start"] == "not_specified_in_manual"
+    assert procedure["returns_specific_contact"] == "not_identified_in_manual"
+    assert procedure["authoritative_email"] == "unresolved_in_manual"
+    contacts = procedure["general_contacts"]
+    assert {c["value"] for c in contacts if c["channel"] == "email"} == {
+        "contato@emporiodamusica.com.br",
+        "contato@empóriodamusica.com.br",
+    }
+    assert (
+        next(c for c in contacts if c["channel"] == "primary_remote_whatsapp")["value"]
+        == "(67) 3321-4500"
+    )
+    by_section = {c.section: c for c in corpus.chunks}
+    for contact in contacts:
+        source = by_section[contact["section"]]
+        assert contact["value"] in source.text
+        assert contact["pages"] == source.pages
+
+
 @pytest.mark.parametrize("section", ["1.2", "2", "3", "5.2"])
 def test_known_table_cannot_silently_become_prose(section: str) -> None:
     with pytest.raises(ValueError, match="table"):
         normalize_lines(section, ["Section heading", "Missing table header"])
+
+
+def test_new_source_cannot_inherit_negative_findings_from_old_manual() -> None:
+    with pytest.raises(ValueError, match="review required"):
+        _reviewed_return_procedure([], "unreviewed-source")
 
 
 def test_heading_only_sections_are_marked_non_indexable() -> None:

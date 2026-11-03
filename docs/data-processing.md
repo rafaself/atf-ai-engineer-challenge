@@ -153,3 +153,76 @@ behaviors; repeating that instruction is not a verified solution.
 
 The existing experiments demonstrate the failures motivating this plan. They do not establish general reliability of the revised behavior; consult the
 new evaluation capture for observed results.
+
+## Scoped return follow-up (2026-11-03)
+
+Parser `poppler-scoped-policies-v7` labels online remorse, preference exchange,
+defect and shared exclusions separately. Online returns receive only sections
+4.1 and 4.4, avoiding the stricter condition from preference exchange. Prepared
+refund facts retain the same payment method, ten business days and store-paid
+return freight. No posting instructions, contact details or label generation are
+present, so `documented_next_steps` is empty. Original files remain unchanged.
+
+The final runtime uses these scoped facts as evidence and instructs fresh reads
+on each assessment. It does not force quoted customer-fact extraction through a
+new output schema. That experiment prevented some fabrication, but repeated quote
+omissions, invented schema keys and correction loops caused HTTP failures and
+unnecessary questions in both models. It was removed from the runtime rather
+than treating safe but unusable answers as success. The rejected implementation
+patch and all trial captures remain in model-comparison evidence.
+
+No deterministic prose validator certifies return eligibility, current reads or
+procedures. Scope selection and answer faithfulness remain observed limitations.
+Missing procedure metadata means the prepared rule documents no steps; it does
+not prove that the store has no return service or that no general contact exists.
+
+## Return contact lookup (2026-11-03)
+
+The manual has general contact details, but does not designate a returns SAC.
+The cover and company table list the same phone number with two email spellings;
+the WhatsApp section lists a different remote-contact number. Keep all values
+verbatim and describe them as general contacts. The online-remorse rule gives
+product-condition requirements and refund facts, but no label, posting steps or
+additional paperwork checklist. This lookup exposes the relevant source records
+directly and attaches short typed guidance about those distinctions. It uses the
+existing prepared corpus records; original PDF bytes and embedding inputs are
+unchanged. Absence from this manual is not a claim that the store lacks a
+separate process.
+
+
+## Reviewed return information (v9, 2026-11-03)
+
+The complete eight-page manual was reviewed against its unchanged SHA-256
+`b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7`.
+Section 4.1 has product conditions and refund facts; sections 5.2/5.3 describe
+outgoing shipments/tracking, 7.3 complaint handling, and 10 consultation with
+management. None provides return paperwork, label issuance/posting steps, a
+dedicated returns contact, or the event starting the refund deadline.
+
+Preparation replaces v7's empty next-step list with explicit
+`not_specified_in_manual` / `not_identified_in_manual` statuses in the existing
+online-return rule, with full-review scope and source hash. Unknown is not an empty
+requirement list or an unavailable service. Contact entries are extracted verbatim
+from cover, 1.2 and 7, with roles, sections and pages. Both email spellings remain
+unresolved. Section 7's primary remote WhatsApp designation remains supported;
+the different company phone/WhatsApp entry does not erase it or prove either
+number invalid. A different source requires a new full review before inheriting
+these negative findings.
+
+Raw PDF/CSV bytes and every excerpt text/page remain unchanged. Derived metadata
+participates in the existing corpus fingerprint; corpus/freeze and the ignored
+local E5 index were regenerated together. Existing eligibility/exclusions
+interpretation was retained. No new semantic validator, inference stage,
+dependency, agent, or corrective workflow was introduced.
+
+The attempted unified scope and rewritten instructions were rejected after the
+controlled paired evaluation did not improve grounding and regressed Qwen's
+follow-ups. Original prompting/routing was restored for a source-only ablation.
+Do not interpret the richer evidence contract as proof of faithful model answers.
+The source-only comparison and retain decision are in the v9 report.
+
+The focused history test establishes that prior assistant claims remain
+conversation text and do not become source evidence. Actual resistance to those
+claims is evaluated in real multi-turn conversations, not established by the
+fake model. Frozen v9 criteria review factual correctness, necessary tool use,
+refusals, usefulness and execution separately.

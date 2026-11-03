@@ -28,8 +28,8 @@ def test_supplied_active_offer_is_quoted_separately_from_original_price(
         data / "promotions.csv",
         database,
     )
-    result = ProductSearchTool(SQLiteProductRepository(database)).get_product_details(
-        "Kalani KAL-700T"
+    result = ProductSearchTool(SQLiteProductRepository(database)).find_product_by_name(
+        "Kalani KAL-700T", payment_method="standard"
     )
     products = result["products"]
     assert isinstance(products, list)
@@ -72,12 +72,12 @@ def test_discount_disclosure_uses_current_run_evidence_only(
         messages=[
             ModelRequest(
                 parts=[
-                    ToolReturnPart("get_product_details", {"products": [historical]})
+                    ToolReturnPart("find_product_by_name", {"products": [historical]})
                 ],
                 run_id="old",
             ),
             ModelRequest(
-                parts=[ToolReturnPart("get_product_details", {"products": [product]})],
+                parts=[ToolReturnPart("find_product_by_name", {"products": [product]})],
                 run_id="current",
             ),
         ],

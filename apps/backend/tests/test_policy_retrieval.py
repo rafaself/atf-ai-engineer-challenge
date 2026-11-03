@@ -155,7 +155,7 @@ def test_search_store_policies_returns_approved_freight_evidence(
         deps=SimpleNamespace(history=[]),
     )
 
-    result = tools.search_store_policies(context)  # type: ignore[arg-type]
+    result = tools.search_store_policies(context, policy_scope="general")  # type: ignore[arg-type]
 
     record = next(
         item for item in result["records"] if item["id"] == "policy-v2.1-s5.1"
@@ -166,6 +166,64 @@ def test_search_store_policies_returns_approved_freight_evidence(
     assert record["pages"] == []
     assert "igual ou superior a R$ 500,00" in record["text"]
     assert "R$ 35,00" in record["text"]
+
+
+def test_online_scope_returns_only_applicable_prepared_rules(tmp_path: Path) -> None:
+    _runtime_data(tmp_path, build_index=True)
+    embedder = FixedEmbedder()
+    result = LocalPolicySearch(data_directory=tmp_path, embedder=embedder).search(
+        "Meu pedido consta entregue; posso devolver?", policy_scope="online_return"
+    )
+    assert result["policy_scope"] == "online_return"
+    assert {record["section"] for record in result["records"]} == {"4.1", "4.4"}
+    assert embedder.queries == []
+    record = next(record for record in result["records"] if record["section"] == "4.1")
+    assert record["applicability"] == "online_purchase_remorse"
+    assert (
+        record["online_return_rule"]["refund_information"]["deadline_business_days"]
+        == 10
+    )
+    assert (
+        record["online_return_rule"]["procedure"]["required_documents"]
+        == "not_specified_in_manual"
+    )
+
+
+def test_return_contact_scope_preserves_contact_roles_and_unknown_procedure(
+    tmp_path: Path,
+) -> None:
+    _runtime_data(tmp_path, build_index=True)
+    embedder = FixedEmbedder()
+    result = LocalPolicySearch(data_directory=tmp_path, embedder=embedder).search(
+        "Qual contato do SAC para devolução e como recebo a etiqueta?",
+        policy_scope="return_contact",
+    )
+
+    assert result["policy_scope"] == "return_contact"
+    assert {record["section"] for record in result["records"]} == {
+        "cover",
+        "1.2",
+        "4.1",
+        "4.4",
+        "7",
+    }
+    assert any(
+        "contato@emporiodamusica.com.br" in record["text"]
+        for record in result["records"]
+    )
+    assert any(
+        "contato@empóriodamusica.com.br" in record["text"]
+        for record in result["records"]
+    )
+    assert any("3341-4444" in record["text"] for record in result["records"])
+    assert any("3321-4500" in record["text"] for record in result["records"])
+    rule = next(
+        record["online_return_rule"]
+        for record in result["records"]
+        if record["section"] == "4.1"
+    )
+    assert rule["procedure"]["returns_specific_contact"] == "not_identified_in_manual"
+    assert embedder.queries == []
 
 
 def test_freight_clarification_source_participates_in_index_fingerprint(

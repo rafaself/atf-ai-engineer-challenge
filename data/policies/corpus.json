@@ -1,7 +1,7 @@
 {
   "source": "store_policies.pdf",
   "source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
-  "parser_version": "poppler-effective-policies-v6",
+  "parser_version": "poppler-reviewed-returns-v9",
   "extractor_version": "pdftotext version 25.07.0",
   "freight_clarification_sha256": "ac9a588b6aaf06269edfabb3f5af1b5171f978c341f328dd0ff2d25b27b8cc13",
   "chunks": [
@@ -124,8 +124,10 @@
       ],
       "text": "4.1 Direito de Arrependimento (Compras Online)\n• O cliente pode solicitar a devolução em até 7 (sete) dias corridos após o recebimento do produto, sem necessidade de justificativa.\n• O produto deve estar em sua embalagem original, sem sinais de uso, com todos os acessórios e manuais.\n• O reembolso será realizado na mesma forma de pagamento original em até 10 dias úteis.\n• O frete de devolução é por conta da loja em caso de arrependimento.",
       "indexable": true,
+      "applicability": "online_purchase_remorse",
       "source_references": [],
       "online_return_rule": {
+        "applicability": "online_purchase_remorse",
         "request_deadline_calendar_days_after_receipt": 7,
         "minimum_wait_calendar_days": 0,
         "required_customer_facts": [
@@ -136,6 +138,63 @@
           "all_accessories",
           "all_manuals"
         ],
+        "refund_information": {
+          "same_payment_method": true,
+          "deadline_business_days": 10,
+          "return_freight_payer": "store"
+        },
+        "procedure": {
+          "review_scope": "full_manual",
+          "reviewed_source_sha256": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+          "required_documents": "not_specified_in_manual",
+          "label_issuance": "not_specified_in_manual",
+          "posting_instructions": "not_specified_in_manual",
+          "refund_deadline_start": "not_specified_in_manual",
+          "returns_specific_contact": "not_identified_in_manual",
+          "authoritative_email": "unresolved_in_manual",
+          "general_contacts": [
+            {
+              "channel": "telephone",
+              "value": "(67) 3341-4444",
+              "section": "cover",
+              "pages": [
+                1
+              ]
+            },
+            {
+              "channel": "email",
+              "value": "contato@emporiodamusica.com.br",
+              "section": "cover",
+              "pages": [
+                1
+              ]
+            },
+            {
+              "channel": "telephone_whatsapp",
+              "value": "(67) 3341-4444",
+              "section": "1.2",
+              "pages": [
+                2
+              ]
+            },
+            {
+              "channel": "email",
+              "value": "contato@empóriodamusica.com.br",
+              "section": "1.2",
+              "pages": [
+                2
+              ]
+            },
+            {
+              "channel": "primary_remote_whatsapp",
+              "value": "(67) 3321-4500",
+              "section": "7",
+              "pages": [
+                6
+              ]
+            }
+          ]
+        },
         "excluded_product_conditions": [
           "customized_or_custom_setup",
           "clearance_explicit_final_sale",
@@ -155,6 +214,7 @@
       ],
       "text": "4.2 Trocas por Defeito\n• Produtos com defeito de fabricação podem ser trocados em até 30 (trinta) dias corridos após a compra.\n• Após os 30 dias, o cliente deve acionar a garantia diretamente com o fabricante. A Empório da Música pode intermediar o processo mediante solicitação.\n• Danos causados por mau uso, quedas, exposição a umidade excessiva ou modificações não autorizadas não são cobertos.",
       "indexable": true,
+      "applicability": "product_defect",
       "source_references": []
     },
     {
@@ -169,6 +229,7 @@
       ],
       "text": "4.3 Trocas por Preferência\n• Trocas por preferência (cor, modelo, tamanho) são permitidas em até 7 dias, mediante disponibilidade do produto desejado.\n• O produto deve estar em perfeito estado e na embalagem original.\n• Diferenças de valor serão cobradas ou reembolsadas conforme o caso.",
       "indexable": true,
+      "applicability": "preference_exchange",
       "source_references": []
     },
     {
@@ -183,6 +244,7 @@
       ],
       "text": "4.4 Itens Não Elegíveis para Troca\n• Instrumentos com personalização ou ajustes sob encomenda (setup, regulagem especial).\n• Produtos adquiridos em promoções de liquidação com aviso explícito de \"venda final\".\n• Boquilhas de instrumentos de sopro, por questões de higiene.",
       "indexable": true,
+      "applicability": "return_exchange_exclusions",
       "source_references": []
     },
     {

@@ -48,7 +48,7 @@ def test_output_notices_use_current_run_even_if_sdk_history_has_old_tools() -> N
             ModelRequest(
                 parts=[
                     ToolReturnPart(
-                        "get_product_details", {"truncated": True, "total_matches": 99}
+                        "find_product_by_name", {"truncated": True, "total_matches": 99}
                     )
                 ],
                 run_id="old-run",
@@ -56,7 +56,7 @@ def test_output_notices_use_current_run_even_if_sdk_history_has_old_tools() -> N
             ModelRequest(
                 parts=[
                     ToolReturnPart(
-                        "get_product_details", {"truncated": True, "total_matches": 12}
+                        "find_product_by_name", {"truncated": True, "total_matches": 12}
                     )
                 ],
                 run_id="current-run",

@@ -44,27 +44,43 @@ INVENTORY_NOTICE = (
     [
         (
             "search_available_products",
-            {"category": "violões", "max_price_brl": 1000},
+            {
+                "payment_method": "standard",
+                "category": "violões",
+                "max_price_brl": 1000,
+            },
             12,
             None,
             None,
         ),
-        ("get_product_details", {"product_name": "Takamine GD20"}, 1, 219900, 5),
+        (
+            "find_product_by_name",
+            {"payment_method": "standard", "product_name": "Takamine GD20"},
+            1,
+            219900,
+            5,
+        ),
         (
             "search_available_products",
-            {"product_name": "Giannini GF-3D"},
+            {"payment_method": "standard", "product_name": "Giannini GF-3D"},
             0,
             None,
             None,
         ),
         (
-            "get_product_details",
-            {"product_name": "Giannini GF-3D"},
+            "find_product_by_name",
+            {"payment_method": "standard", "product_name": "Giannini GF-3D"},
             1,
             None,
             0,
         ),
-        ("get_product_details", {"product_name": "ZXQ-999-Inexistente"}, 0, None, None),
+        (
+            "find_product_by_name",
+            {"payment_method": "standard", "product_name": "ZXQ-999-Inexistente"},
+            0,
+            None,
+            None,
+        ),
     ],
 )
 def test_snapshot_facts_survive_http_agent_tool_pipeline(
@@ -162,7 +178,12 @@ def test_customer_budget_supports_comparison_or_clarification_without_echoing_am
         ]
         if lookup_product and not returned:
             return ModelResponse(
-                parts=[ToolCallPart("get_product_details", {"product_name": "GD20"})]
+                parts=[
+                    ToolCallPart(
+                        "find_product_by_name",
+                        {"payment_method": "standard", "product_name": "GD20"},
+                    )
+                ]
             )
         return ModelResponse(parts=[TextPart(answer)])
 
@@ -224,7 +245,12 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
         ]
         if not returned:
             return ModelResponse(
-                parts=[ToolCallPart("get_product_details", {"product_name": "GD20"})]
+                parts=[
+                    ToolCallPart(
+                        "find_product_by_name",
+                        {"payment_method": "standard", "product_name": "GD20"},
+                    )
+                ]
             )
         assert isinstance(returned[-1].content, dict)
         payload: dict[str, Any] = dict(returned[-1].content)

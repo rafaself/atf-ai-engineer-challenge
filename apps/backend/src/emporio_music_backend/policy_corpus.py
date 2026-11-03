@@ -10,10 +10,18 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from emporio_music_backend.contracts.policies import OnlineReturnRule
+from emporio_music_backend.contracts.policies import (
+    OnlineReturnRule,
+    PolicyContact,
+    ReturnProcedure,
+)
 from emporio_music_backend.paths import DATA_DIRECTORY
 
-PARSER_VERSION = "poppler-effective-policies-v6"
+PARSER_VERSION = "poppler-reviewed-returns-v9"
+# Negative findings require a review of this entire source, not retrieved silence.
+_RETURN_REVIEW_SOURCE_SHA256 = (
+    "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7"
+)
 FREIGHT_CLARIFICATION_SOURCE = "policies/freight-clarification.json"
 HEADING = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ].+)$")
 
@@ -26,6 +34,7 @@ class PolicyChunk(BaseModel):
     pages: list[int]
     text: str = Field(min_length=1)
     indexable: bool
+    applicability: str | None = None
     source: str | None = None
     source_references: list[str] = Field(default_factory=list)
     online_return_rule: OnlineReturnRule | None = None
@@ -243,8 +252,59 @@ def _format_brl(amount: Decimal) -> str:
     return f"{amount:.2f}".replace(".", ",")
 
 
+def _reviewed_return_procedure(
+    chunks: list[PolicyChunk], source_sha256: str
+) -> ReturnProcedure:
+    if source_sha256 != _RETURN_REVIEW_SOURCE_SHA256:
+        raise ValueError(
+            "Full manual return-procedure review required for changed source"
+        )
+    contacts: list[PolicyContact] = []
+    sections = {chunk.section: chunk for chunk in chunks}
+    roles: dict[
+        str, Literal["telephone", "telephone_whatsapp", "primary_remote_whatsapp"]
+    ] = {
+        "cover": "telephone",
+        "1.2": "telephone_whatsapp",
+        "7": "primary_remote_whatsapp",
+    }
+    for section, role in roles.items():
+        chunk = sections[section]
+        for phone in re.findall(r"\(67\) \d{4}-\d{4}", chunk.text):
+            contacts.append(
+                {
+                    "channel": role,
+                    "value": phone,
+                    "section": section,
+                    "pages": list(chunk.pages),
+                }
+            )
+        for email in re.findall(r"[^\s|]+@[^\s|]+", chunk.text):
+            contacts.append(
+                {
+                    "channel": "email",
+                    "value": email,
+                    "section": section,
+                    "pages": list(chunk.pages),
+                }
+            )
+    return {
+        "review_scope": "full_manual",
+        "reviewed_source_sha256": source_sha256,
+        "required_documents": "not_specified_in_manual",
+        "label_issuance": "not_specified_in_manual",
+        "posting_instructions": "not_specified_in_manual",
+        "refund_deadline_start": "not_specified_in_manual",
+        "returns_specific_contact": "not_identified_in_manual",
+        "authoritative_email": "unresolved_in_manual",
+        "general_contacts": contacts,
+    }
+
+
 def _effective_chunks(
-    chunks: list[PolicyChunk], clarification: FreightPolicyClarification
+    chunks: list[PolicyChunk],
+    clarification: FreightPolicyClarification,
+    procedure: ReturnProcedure,
 ) -> list[PolicyChunk]:
     """Apply reviewed rules once, preserving raw sources and internal provenance."""
     result: list[PolicyChunk] = []
@@ -253,6 +313,7 @@ def _effective_chunks(
             chunk = chunk.model_copy(update={"text": _EFFECTIVE_HOURS})
         elif chunk.section == "4.1":
             rule: OnlineReturnRule = {
+                "applicability": "online_purchase_remorse",
                 "request_deadline_calendar_days_after_receipt": 7,
                 "minimum_wait_calendar_days": 0,
                 "required_customer_facts": [
@@ -263,13 +324,34 @@ def _effective_chunks(
                     "all_accessories",
                     "all_manuals",
                 ],
+                "refund_information": {
+                    "same_payment_method": True,
+                    "deadline_business_days": 10,
+                    "return_freight_payer": "store",
+                },
+                "procedure": procedure,
                 "excluded_product_conditions": [
                     "customized_or_custom_setup",
                     "clearance_explicit_final_sale",
                     "wind_instrument_mouthpiece",
                 ],
             }
-            chunk = chunk.model_copy(update={"online_return_rule": rule})
+            chunk = chunk.model_copy(
+                update={
+                    "online_return_rule": rule,
+                    "applicability": "online_purchase_remorse",
+                }
+            )
+        elif chunk.section in {"4.2", "4.3", "4.4"}:
+            chunk = chunk.model_copy(
+                update={
+                    "applicability": {
+                        "4.2": "product_defect",
+                        "4.3": "preference_exchange",
+                        "4.4": "return_exchange_exclusions",
+                    }[chunk.section]
+                }
+            )
         elif chunk.section == "5.1":
             threshold = _format_brl(clarification.threshold_brl)
             fee = _format_brl(clarification.fee_below_threshold_brl)
@@ -323,7 +405,8 @@ def prepare(source: Path) -> PolicyCorpus:
         check=True,
     )
     chunks = parse_layout(result.stdout)
-    chunks = _effective_chunks(chunks, clarification)
+    procedure = _reviewed_return_procedure(chunks, digest)
+    chunks = _effective_chunks(chunks, clarification, procedure)
     return PolicyCorpus(
         source="store_policies.pdf",
         source_sha256=digest,

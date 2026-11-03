@@ -67,7 +67,7 @@ def test_uncorrectable_output_fails_safely_within_both_budgets(
         (
             "Tenho R$ 1.000. O que cabe no orçamento?",
             "A opção de R$ 439,20 cabe no seu orçamento de R$ 1.000.",
-            "get_product_details",
+            "find_product_by_name",
             {"products": [{"price_brl": "439.20"}]},
         ),
         (
@@ -98,7 +98,7 @@ def test_legitimate_customer_wording_does_not_require_output_retry(
 
 
 @pytest.mark.parametrize(
-    "tool_name", ["search_available_products", "get_product_details"]
+    "tool_name", ["search_available_products", "find_product_by_name"]
 )
 def test_operational_results_do_not_repeat_demo_disclosure(tool_name: str) -> None:
     answer = "Este produto está disponível no catálogo."
@@ -135,7 +135,7 @@ def test_operational_results_do_not_repeat_demo_disclosure(tool_name: str) -> No
     ],
 )
 @pytest.mark.parametrize(
-    "tool_name", ["search_available_products", "get_product_details"]
+    "tool_name", ["search_available_products", "find_product_by_name"]
 )
 def test_inventory_notice_requires_current_nonempty_snapshot_results(
     run_id: str,
@@ -183,7 +183,7 @@ def test_multiple_operational_results_do_not_add_disclosures() -> None:
             ModelRequest(
                 parts=[
                     ToolReturnPart("search_available_products", result),
-                    ToolReturnPart("get_product_details", result),
+                    ToolReturnPart("find_product_by_name", result),
                 ],
                 run_id="current",
             )

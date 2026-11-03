@@ -65,6 +65,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             if part.tool_name in {
                 "search_available_products",
                 "get_product_details",
+                "find_product_by_name",
                 "find_product_alternatives",
             }:
                 if content.get("truncated") is True:

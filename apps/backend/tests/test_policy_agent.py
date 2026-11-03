@@ -48,6 +48,8 @@ from emporio_music_backend.contracts.policies import PolicySearchResult
 from emporio_music_backend.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
+from emporio_music_backend.paths import DATA_DIRECTORY
+from emporio_music_backend.policy_corpus import prepare
 from emporio_music_backend.ports.orders import OrderRepository
 
 
@@ -98,7 +100,9 @@ class FixedPolicySearch:
             ],
         }
 
-    def search(self, query: str) -> PolicySearchResult:
+    def search(
+        self, query: str, *, policy_scope: str = "general"
+    ) -> PolicySearchResult:
         self.queries.append(query)
         return self.result
 
@@ -125,9 +129,13 @@ def test_policy_tool_has_no_model_query_arguments() -> None:
         tool = next(
             tool for tool in info.function_tools if tool.name == "search_store_policies"
         )
-        assert tool.parameters_json_schema["properties"] == {}
+        assert set(tool.parameters_json_schema["properties"]) == {"policy_scope"}
         if not policy.queries:
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
         return ModelResponse(
             parts=[TextPart("Preciso confirmar as condições [política 4.1, p. 4].")]
         )
@@ -158,7 +166,11 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
         ]
         if not returns:
             called.append("search_store_policies")
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
         if returns[-1].tool_name == "search_store_policies":
             called.append("get_my_order")
             return ModelResponse(parts=[ToolCallPart("get_my_order", {"order_id": 7})])
@@ -203,7 +215,11 @@ def test_post_chat_can_answer_policy_question_with_source_reference(
             for message in messages
             for part in message.parts
         ):
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
         return ModelResponse(
             parts=[
                 TextPart(
@@ -239,7 +255,11 @@ def test_follow_up_policy_search_includes_the_latest_prior_user_question(
             for message in messages
             for part in message.parts
         ):
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
         return ModelResponse(
             parts=[
                 TextPart(
@@ -283,10 +303,77 @@ def test_long_policy_context_falls_back_to_the_current_question() -> None:
             model=TestModel(),
             usage=RunUsage(),
             prompt=current_question,
-        )
+        ),
+        policy_scope="general",
     )
 
     assert policy.queries == [current_question]
+
+
+def test_invented_assistant_history_does_not_become_current_policy_evidence() -> None:
+    policy = FixedPolicySearch()
+    rule = next(
+        c.online_return_rule
+        for c in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+        if c.section == "4.1"
+    )
+    assert rule is not None
+    policy.result["records"][0]["online_return_rule"] = rule
+    prior_claim = "Envie fotos para sac@inventado.example; enviaremos sua etiqueta."
+    question = "Como obtenho a etiqueta e quais documentos envio?"
+    context = ExecutionContext(
+        session=ConversationSession(),
+        history=(
+            ConversationMessage(
+                role="user", content="Quero devolver uma compra online."
+            ),
+            ConversationMessage(role="assistant", content=prior_claim),
+        ),
+    )
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        returns = [
+            part
+            for message in messages
+            for part in message.parts
+            if isinstance(part, ToolReturnPart)
+        ]
+        if not returns:
+            assert any(
+                isinstance(part, TextPart) and part.content == prior_claim
+                for message in messages
+                for part in message.parts
+            )
+            return ModelResponse(
+                parts=[
+                    ToolCallPart(
+                        "search_store_policies", {"policy_scope": "online_return"}
+                    )
+                ]
+            )
+        evidence = returns[-1].content
+        assert isinstance(evidence, dict)
+        current_rule = evidence["records"][0]["online_return_rule"]
+        assert current_rule["procedure"]["label_issuance"] == "not_specified_in_manual"
+        assert (
+            current_rule["procedure"]["required_documents"] == "not_specified_in_manual"
+        )
+        assert prior_claim not in str(evidence)
+        return ModelResponse(
+            parts=[
+                TextPart(
+                    "O manual não detalha os documentos nem a emissão de etiqueta. O frete de devolução por arrependimento é por conta da loja."
+                )
+            ]
+        )
+
+    result = asyncio.run(
+        _store_agent(FunctionModel(respond), policy).run(
+            ChatRequest(message=question), context=context
+        )
+    )
+    assert "frete" in result.answer
+    assert policy.queries == [f"Quero devolver uma compra online.\n{question}"]
 
 
 def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() -> None:
@@ -311,7 +398,11 @@ def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() 
             for message in messages
             for part in message.parts
         ):
-            return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("search_store_policies", {"policy_scope": "general"})
+                ]
+            )
         return ModelResponse(
             parts=[
                 TextPart(
@@ -340,11 +431,15 @@ def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() 
 
 def test_policy_tool_failure_propagates_instead_of_becoming_no_match() -> None:
     class FailedSearch:
-        def search(self, query: str) -> PolicySearchResult:
+        def search(
+            self, query: str, *, policy_scope: str = "general"
+        ) -> PolicySearchResult:
             raise PolicyRetrievalError("private index failure")
 
     def call_policy(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        return ModelResponse(parts=[ToolCallPart("search_store_policies", {})])
+        return ModelResponse(
+            parts=[ToolCallPart("search_store_policies", {"policy_scope": "general"})]
+        )
 
     agent = _store_agent(FunctionModel(call_policy), FailedSearch())
     with pytest.raises(PolicyRetrievalError, match="private index failure"):
