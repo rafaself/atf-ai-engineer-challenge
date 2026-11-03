@@ -11,12 +11,13 @@ import pytest
 from scripts.benchmark_support import Candidate
 from scripts.compare_policy_context import (
     MODEL_ID,
+    PRICING_FILE,
     BudgetStop,
     Ledger,
     embedded_instructions,
-    load_scenarios,
-    load_luna_candidate,
     input_paths,
+    load_luna_candidate,
+    load_scenarios,
     operational_metrics,
 )
 
@@ -227,6 +228,7 @@ def test_tool_compliance_does_not_require_rag_policy_tool_in_embedded_arm() -> N
     ]
     assert metrics["by_arm"]["embedded"]["missing_required_tool_turns"] == []
 
+
 def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
     names = [path.as_posix() for path in input_paths()]
     assert not any("docs/examples/" in path for path in names)
@@ -236,8 +238,6 @@ def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
 
 
 def test_luna_candidate_loads_standalone_verified_prices() -> None:
-    from scripts.compare_policy_context import PRICING_FILE
-
     manifest = json.loads(PRICING_FILE.read_text(encoding="utf-8"))
     checked = date.fromisoformat(manifest["checked_at_utc"][:10])
     candidate = load_luna_candidate(today=checked)
@@ -247,8 +247,6 @@ def test_luna_candidate_loads_standalone_verified_prices() -> None:
 
 
 def test_luna_candidate_rejects_stale_and_unverified_prices(tmp_path: Path) -> None:
-    from scripts.compare_policy_context import PRICING_FILE
-
     document = json.loads(PRICING_FILE.read_text(encoding="utf-8"))
     fixture = tmp_path / "pricing.json"
     fixture.write_text(json.dumps(document), encoding="utf-8")
