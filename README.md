@@ -89,19 +89,29 @@ Open the chat at [http://127.0.0.1:8000](http://127.0.0.1:8000). The API docs ar
 
 Preparing the policy index downloads the embedding model; do this once for each new data volume. The demo has no authentication, so use fictional data. Stop the app with `make down` or `docker compose down`.
 
-## Architecture
+## Technical Decisions
 
-The Docker setup runs a local FastAPI service that serves the React chat. The API uses the shared `emporio_music` Python package to manage conversations and call a Bedrock-backed agent; the optional CLI uses the same package directly. SQLite stores product, order, and conversation data. Store policies are indexed locally with E5 embeddings and Chroma. See the [architecture details](docs/architecture.md).
 
-## Tests
+### Framework / Agent approach
 
-From the repository root, run `make check` for the documented project checks.
 
-## Model and technical choices
+### Provider
+
+
+### Model
 
 The application uses GPT-6 Luna through Amazon Bedrock Runtime's US cross-Region inference profile by default. In the retained model-selection evaluation, Luna and GPT-6.1 Sol each scored 16/16 Pass; Luna won the cost tiebreak. This was one unblinded AI assessment without independent human review, so the result is provisional rather than a general quality guarantee. See the [model-selection record](docs/evaluations/model-selection/README.md).
 
 React/Vite is served by FastAPI from the same origin. Pydantic AI makes typed tool calls; deterministic Python and parameterized SQL handle structured catalog, pricing and order facts. Policy answers use local Chroma retrieval with cached multilingual E5 embeddings, and prompts constrain tool use and factual claims. SQLite stores operational snapshots and conversation history. See [architecture](docs/architecture.md), [Bedrock configuration](docs/guides/bedrock.md) and [policy retrieval](docs/guides/policy-retrieval.md) for details.
+
+### UI Interface
+
+
+### Data Persistance
+
+
+### Data Processing
+
 
 ## Known limitations and evidence
 
@@ -126,3 +136,11 @@ Repository guidance helped make this process repeatable. `AGENTS.md` documented 
 I've made some mistakes in the beginning, the project was going into a unnecessary complexity, I had to go back and review the codebase in order to change and proceed with a clearer direction. Also I took too much time trying to improve the quality using only Qwen-3 32B, although it's a very good model, it hallucinates in some ambiguos or not too much clear context. That was one of the reason that I proceeded with data processing, some points in the policits was not too clear such as the time context related to "Natal" and "Feriados".
 
 The usual cycle was to define the goal and boundaries, plan the work, delegate where it made sense, review the changes, and validate the result. I used delegation where it reduced execution time, while keeping coordination overhead, rework, and unnecessary complexity under control.
+
+## Architecture
+
+The Docker setup runs a local FastAPI service that serves the React chat. The API uses the shared `emporio_music` Python package to manage conversations and call a Bedrock-backed agent; the optional CLI uses the same package directly. SQLite stores product, order, and conversation data. Store policies are indexed locally with E5 embeddings and Chroma. See the [architecture details](docs/architecture.md).
+
+## Tests
+
+From the repository root, run `make check` for the documented project checks.
