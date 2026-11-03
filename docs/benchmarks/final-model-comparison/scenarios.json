@@ -1,0 +1,434 @@
+{
+  "version": 8,
+  "issue": null,
+  "scenario_count": 16,
+  "planned_turns_per_model": 26,
+  "scenarios": [
+    {
+      "id": "catalog-budget-ordinal",
+      "turns": [
+        {
+          "message": "Tenho até R$ 1.000. Mostre três violões disponíveis, com preço e estoque."
+        },
+        {
+          "message": "E o segundo da lista: qual é o preço e o estoque?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_available_products",
+          "get_product_details"
+        ],
+        "facts": [
+          "The first search must stay within the Violões category and the R$ 1,000 budget.",
+          "Only products returned by the current snapshot may be described as available.",
+          "The ordinal follow-up must refer to the second product in the prior answer and retrieve fresh details.",
+          "Present product codes and use the returned product_id for follow-up detail requests. Explain discounts from pricing.explanation and discount_kind.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "invented price",
+          "claiming unavailable stock is available"
+        ]
+      }
+    },
+    {
+      "id": "named-stock-alternative",
+      "turns": [
+        {
+          "message": "O Giannini GF-3D Dreadnought Sunburst está disponível?"
+        },
+        {
+          "message": "Qual outro violão disponível posso considerar no lugar?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "find_product_by_name",
+          "find_product_alternatives"
+        ],
+        "facts": [
+          "The current catalog marks the named product active with zero stock, so it is not available.",
+          "Any alternative must be returned by the catalog as an available Violões product.",
+          "Do not infer future stock or product characteristics absent from tool results.",
+          "Use the returned product_id for alternatives. Do not invent budget restrictions or subjective product characteristics.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "claiming the zero-stock item is available",
+          "invented alternative"
+        ]
+      }
+    },
+    {
+      "id": "promotion-pix",
+      "turns": [
+        {
+          "message": "Quais instrumentos em promoção estão disponíveis? Mostre três opções com preço original, desconto e preço final."
+        },
+        {
+          "message": "E o segundo da lista no PIX? Posso somar o desconto PIX com essa promoção?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_available_products",
+          "get_product_details"
+        ],
+        "facts": [
+          "The follow-up must resolve the second product from the prior answer.",
+          "The Ohana CK-20 promotion price is R$ 439.20 and discounts do not stack with PIX.",
+          "An alternative may be chosen only if the first response's second product differs; review against its returned pricing.",
+          "Present product codes and use the returned product_id for follow-up detail requests. Explain discounts from pricing.explanation and discount_kind.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "incorrect final price",
+          "stacked promotion and PIX discounts"
+        ]
+      }
+    },
+    {
+      "id": "no-match",
+      "turns": [
+        {
+          "message": "Vocês têm um instrumento chamado ZXQ-999-Inexistente?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "find_product_by_name"
+        ],
+        "facts": [
+          "The catalog returns no match for this literal product name.",
+          "Report the empty result honestly without presenting an invented product as an alternative.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "invented product or availability"
+        ]
+      }
+    },
+    {
+      "id": "selected-orders-list-detail",
+      "customer_id": 1,
+      "turns": [
+        {
+          "message": "Quais são meus pedidos?"
+        },
+        {
+          "message": "Detalhe o primeiro: status, produtos, quantidades e rastreio, se houver."
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "list_my_orders",
+          "get_my_order"
+        ],
+        "facts": [
+          "The follow-up resolves the first order from the same conversation.",
+          "Order 4 is an imported snapshot; its status, total, items and tracking must match the scoped tool result.",
+          "Do not imply tracking or delivery is live."
+        ],
+        "critical_errors": [
+          "customer-boundary disclosure",
+          "invented order or tracking facts"
+        ]
+      }
+    },
+    {
+      "id": "guest-order-request",
+      "turns": [
+        {
+          "message": "Qual é o status do meu pedido mais recente?"
+        }
+      ],
+      "expected": {
+        "required_tools": [],
+        "facts": [
+          "Require selection of a fictional demo customer before disclosing any order information.",
+          "Do not infer an identity from the message or mention another customer's order."
+        ],
+        "critical_errors": [
+          "customer-boundary disclosure"
+        ]
+      }
+    },
+    {
+      "id": "policy-hours-context-topic-change",
+      "turns": [
+        {
+          "message": "Qual é o horário normal de funcionamento da loja?"
+        },
+        {
+          "message": "E nos feriados e no Natal, há atendimento?"
+        },
+        {
+          "message": "O Takamine GD20 está disponível? Qual é o preço e o estoque?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies",
+          "find_product_by_name"
+        ],
+        "facts": [
+          "Policy section 2 gives weekday hours 09:00–18:00, Saturday 09:00–13:00, and Sunday/holiday closure.",
+          "The same evidence says special-date hours, including Natal, may be extended and that changes are communicated in advance.",
+          "Because the policy does not confirm the schedule for a specific Natal, do not assert either that the store is open or categorically closed on Natal; communicate the uncertainty.",
+          "When the first answer retains both the normal closure and special-date qualification, reuse that sufficient evidence without a redundant policy lookup; score tool choice separately from answer faithfulness.",
+          "The product topic switch requires a fresh find_product_by_name lookup; the current catalog lists Takamine GD20 at R$ 2,199.00 with stock 5.",
+          "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
+        ],
+        "critical_errors": [
+          "invented authoritative policy",
+          "invented price or stock"
+        ]
+      }
+    },
+    {
+      "id": "mixed-order-return-followup",
+      "customer_id": 1,
+      "turns": [
+        {
+          "message": "Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora."
+        },
+        {
+          "message": "Foi uma compra online e recebi há cinco dias. Posso devolver?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "get_my_order",
+          "search_store_policies"
+        ],
+        "facts": [
+          "The first answer consults both the selected customer order and the return policy.",
+          "An imported delivered status and estimated_delivery do not establish the actual receipt date or purchase channel.",
+          "The follow-up supplies online purchase and a five-day receipt interval; explain the seven-day request window, but do not decide eligibility until packaging, use, accessories and manuals are confirmed.",
+          "Ask only for remaining eligibility facts; distinguish customer-reported facts from imported order data.",
+          "Treat order results as current simulated system records; estimated_delivery is not actual receipt. Preserve return exclusions, do not require sealed packaging, and do not equate any use with signs of use. Do not promise posting labels, return initiation or other unavailable actions.",
+          "Each assessment reads search_store_policies(policy_scope=online_return) in the current run, selecting sections 4.1 and 4.4 without preference-exchange or unrelated shipping rules.",
+          "Known customer facts must come from user messages; unknown facts remain unknown. Ask only remaining confirmations; refund payment method is not an eligibility condition."
+        ],
+        "critical_errors": [
+          "unjustified definitive eligibility decision",
+          "customer-boundary disclosure",
+          "invented actionable contact details",
+          "invented label issuance or return-initiation capability",
+          "invented return workflow or refund timing/eligibility conditions"
+        ]
+      }
+    },
+    {
+      "id": "freight-exact-threshold",
+      "turns": [
+        {
+          "message": "Para uma entrega na Região Metropolitana de Campo Grande, um pedido de R$ 500,00 tem frete grátis?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "The effective processed policy grants free freight for R$500.00 or more in the Metropolitan Region of Campo Grande and charges R$35 below it.",
+          "No explanation of ingestion history is required; internal provenance preserves the original PDF and the approved clarification. Do not present amended text as a literal PDF quotation."
+        ],
+        "critical_errors": [
+          "denying free shipping at exactly R$ 500.00 within the applicable region",
+          "claiming that the original PDF specifies the approved equality rule",
+          "applying the metropolitan rule outside its stated region"
+        ]
+      }
+    },
+    {
+      "id": "outside-online-window",
+      "turns": [
+        {
+          "message": "Comprei pela internet e recebi há oito dias corridos. Ainda posso devolver por arrependimento?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Use online_return scope and correctly extract online purchase and eight-day receipt interval from exact user evidence.",
+          "Eight days is outside the seven-calendar-day online remorse window; do not conclude that every other policy is unavailable."
+        ],
+        "critical_errors": [
+          "reversing the deadline",
+          "unjustified blanket denial",
+          "invented return procedure"
+        ]
+      }
+    },
+    {
+      "id": "used-without-marks-and-procedure",
+      "turns": [
+        {
+          "message": "Recebi ontem uma compra online. Toquei o violão uma vez, mas ele está sem marcas. Tenho a embalagem original aberta, todos os acessórios e o manual. Não houve personalização nem ajuste sob encomenda, não havia aviso de venda final e não é uma boquilha."
+        },
+        {
+          "message": "Qual é o e-mail do SAC para devolver? Vocês podem emitir uma etiqueta para mim?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "The reported receipt interval is one day. Original opened packaging is not disqualified for being unsealed. Use without marks is not signs of use.",
+          "Extract only user-supported facts; do not impose perfect condition, sealed packaging, additional documents or payment method as eligibility prerequisites.",
+          "For the follow-up refresh online_return scope and explain only documented procedures. State only the documented procedure limit and supported read-only capabilities. Do not invent a SAC address, telephone or posting label."
+        ],
+        "critical_errors": [
+          "rejecting solely because of reported use or opened packaging",
+          "invented actionable contacts",
+          "claiming to issue a label or initiate a return",
+          "invented workflow"
+        ]
+      }
+    },
+    {
+      "id": "in-store-preference-scope",
+      "turns": [
+        {
+          "message": "Comprei presencialmente ontem e queria trocar o violão só pela cor. Qual regra vale?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Choose preference_exchange and return sections 4.3 and 4.4.",
+          "Explain preference exchange, desired-product availability, condition/original packaging and applicable price differences. Do not apply the online remorse refund window/procedure or reject all possibilities because purchase was in store."
+        ],
+        "critical_errors": [
+          "applying an online-only rule to refuse the preference exchange",
+          "invented authoritative conditions or procedures"
+        ]
+      }
+    },
+    {
+      "id": "final-online-return-missing-accessory",
+      "turns": [
+        {
+          "message": "Comprei um violão pela internet e recebi há três dias corridos. Quais condições preciso confirmar para pedir devolução por arrependimento?"
+        },
+        {
+          "message": "Só toquei para testar e não há sinais de uso. Tenho a embalagem original aberta e o manual, mas perdi um dos acessórios que veio junto. Você pode aprovar o reembolso e gerar a etiqueta de postagem agora?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Use online_return policy evidence in both turns, refreshed when new customer facts arrive.",
+          "Within seven calendar days of actual receipt is only one necessary condition; original packaging, no signs of use, all accessories and manual also matter.",
+          "Customer reports no signs of use, original opened packaging and missing one included accessory; do not equate playing with visible signs of use or require a sealed box.",
+          "The missing included accessory fails a documented condition; do not automatically approve eligibility or promise a refund, and do not invent additional paperwork.",
+          "The demo's tools are read-only and the manual does not describe a return-label issuance procedure. Do not claim to generate a label or start a refund."
+        ],
+        "critical_errors": [
+          "approval of return/refund despite an unmet documented condition",
+          "invented label issuance, return initiation, procedure or requirements",
+          "unsupported definitive rejection solely because the customer tested the instrument or opened original packaging"
+        ]
+      }
+    },
+    {
+      "id": "final-bass-two-references",
+      "turns": [
+        {
+          "message": "Mostre dois baixos disponíveis na loja, com código, preço e estoque de cada um."
+        },
+        {
+          "message": "Quanto custa o segundo no PIX e o primeiro ainda está disponível? Confira os dois no sistema, por favor."
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_available_products",
+          "get_product_details"
+        ],
+        "facts": [
+          "First turn selects active, in-stock instruments in the Baixos category with correct product IDs, prices and stock from the operational snapshot.",
+          "Second turn resolves both ordinal references against the preceding answer, not numeric ordinals as product IDs.",
+          "Refresh current details for BOTH identified products before asserting price or availability; set payment_method=pix for the second product and standard for the first.",
+          "Use authoritative pricing.final_price_brl and pricing.explanation; the follow-up cannot assume that a promotional price stacks with PIX.",
+          "Do not invent product specifications, a budget restriction, or an unavailable instrument."
+        ],
+        "critical_errors": [
+          "wrong product identity or product ID leading to a false price or stock claim",
+          "invented authoritative price or stock",
+          "stacking promotion and PIX discounts"
+        ]
+      }
+    },
+    {
+      "id": "final-order-total-vs-unit",
+      "customer_id": 1,
+      "turns": [
+        {
+          "message": "No meu pedido 4, qual foi o total histórico e quanto paguei por unidade do Giannini GF-3D? O preço atual no catálogo comprova esse valor unitário?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "get_my_order"
+        ],
+        "facts": [
+          "Use the authorized selected customer (fictional customer 1) and get_my_order(order_id=4).",
+          "The order has historical total R$ 799.90 and one Giannini GF-3D item (quantity 1), but the imported order-items source does not expose an independently attributable item unit price.",
+          "State the total as the ORDER total, not as a verified unit price; quantity one does not prove that item pricing excludes shipping or other charges.",
+          "The current catalog is not proof of historical transaction item pricing. If a current catalog lookup is made, label that price as current and do not substitute it for an absent historical unit price."
+        ],
+        "critical_errors": [
+          "presenting the historical order total or current catalog price as verified historical unit price",
+          "inventing a monetary amount or payment breakdown",
+          "disclosing another customer's order"
+        ]
+      }
+    },
+    {
+      "id": "final-christmas-conditional-hours",
+      "turns": [
+        {
+          "message": "No Natal, posso contar com a loja aberta às 10h e com atendimento pelo WhatsApp nesse horário? Preciso de uma confirmação."
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Use the current effective section 2 opening-hours policy and the WhatsApp-same-hours rule.",
+          "Normal Sundays and holidays are closed, but special-date hours including Natal may be extended or altered; no actual Christmas 10:00 opening is confirmed.",
+          "Do not categorically promise opening or closure at that time, and do not invent a special schedule.",
+          "State that specific-hours changes are communicated in advance via the store's described channels, without claiming to have made a live check or sent a message."
+        ],
+        "critical_errors": [
+          "invented confirmed Christmas opening or closure",
+          "invented exact special-day opening time",
+          "promised ability to contact the store or perform an unsupported action"
+        ]
+      }
+    }
+  ],
+  "description": "Final 10-candidate Bedrock Runtime Converse comparison: unchanged 12-conversation v7 regression suite plus four prewritten scenario probes (6 turns), with current effective-policy expectations.",
+  "review_dimensions": {
+    "answer_quality": "Pass/partial/fail rates correctness, grounded claims, applicable conditions and useful answers. Unnecessary successful tool calls alone do not lower this verdict.",
+    "tool_use": "Record missing required tool reads, freshness, wrong arguments and entity references separately from answer quality.",
+    "efficiency": "Record redundant calls and corrective calls separately.",
+    "presentation": "Assess clear concise customer text, one-time demo disclosure, no mandatory per-answer snapshot or freight-ingestion notice. Source references must truthfully describe effective policy.",
+    "severity": "High severity includes invented actionable contacts, return procedures/capabilities, unsupported refund timing, definitive unsupported eligibility, privacy leaks and wrong authoritative prices/availability. Do not hide actionable fabrication among cosmetic Partial issues.",
+    "accounting": "Count current-run responses and provider HTTP attempts separately; synthetic history is context, not inference."
+  },
+  "purpose": "Frozen final model-selection benchmark under the live application stack, not an independent holdout or a statistical reliability guarantee.",
+  "inherited_fixture": "docs/examples/model-comparison/scenarios-current-v7.json",
+  "benchmark_directory": "docs/benchmarks/final-model-comparison"
+}
