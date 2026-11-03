@@ -32,6 +32,8 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from tests._support import REPOSITORY_ROOT
+
 
 class RecordingRepository:
     def __init__(self) -> None:
@@ -124,7 +126,7 @@ def test_search_price_bounds_use_the_commercial_limit(bound: str) -> None:
 def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     tmp_path: Path,
 ) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
         data / "products.csv",

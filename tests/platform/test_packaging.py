@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from zipfile import ZipFile
 
-REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+from tests._support import REPOSITORY_ROOT
 
 
 def test_shared_wheel_imports_outside_checkout_with_explicit_data_path(

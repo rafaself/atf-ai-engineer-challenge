@@ -49,9 +49,9 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from tests._support import run_async
+from tests._support import REPOSITORY_ROOT, run_async
 
-DATA = Path(__file__).resolve().parents[1] / "data"
+DATA = REPOSITORY_ROOT / "data"
 
 
 def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(

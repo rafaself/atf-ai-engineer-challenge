@@ -33,6 +33,8 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from tests._support import REPOSITORY_ROOT
+
 
 def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     tmp_path: Path,
@@ -40,7 +42,7 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     caplog: pytest.LogCaptureFixture,
     fixed_demo_identity: CustomerIdentity,
 ) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     catalog = tmp_path / "catalog.sqlite3"
     conversations = tmp_path / "conversations.sqlite3"
     import_catalog(

@@ -19,7 +19,7 @@ from emporio_music.policies.corpus import PolicyCorpus
 from emporio_music.policies.retrieval import expand, query_families
 from emporio_music.policies.search import LocalPolicySearch
 
-from tests._support import run_async
+from tests._support import REPOSITORY_ROOT, run_async
 
 
 class FixedEmbedder:
@@ -32,7 +32,7 @@ class FixedEmbedder:
 
 
 def _runtime_data(tmp_path: Path, *, build_index: bool) -> PolicyIndex | None:
-    repository_data = Path(__file__).resolve().parents[1] / "data"
+    repository_data = REPOSITORY_ROOT / "data"
     policy_directory = tmp_path / "policies"
     policy_directory.mkdir()
     for name in ("store_policies.pdf",):
@@ -232,14 +232,10 @@ def test_freight_clarification_source_participates_in_index_fingerprint(
     tmp_path: Path,
 ) -> None:
     corpus = PolicyCorpus.model_validate_json(
-        (
-            Path(__file__).resolve().parents[1] / "data" / "policies" / "corpus.json"
-        ).read_text()
+        (REPOSITORY_ROOT / "data" / "policies" / "corpus.json").read_text()
     )
     freeze = json.loads(
-        (
-            Path(__file__).resolve().parents[1] / "data" / "policies" / "freeze.json"
-        ).read_text()
+        (REPOSITORY_ROOT / "data" / "policies" / "freeze.json").read_text()
     )
     config = {
         **E5_CONFIG,

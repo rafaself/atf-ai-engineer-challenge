@@ -22,7 +22,9 @@ from emporio_music.infrastructure.sqlite_repository import (
 )
 from pydantic import ValidationError
 
-DATA = Path(__file__).resolve().parents[1] / "data"
+from tests._support import REPOSITORY_ROOT
+
+DATA = REPOSITORY_ROOT / "data"
 
 
 def write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, str]]) -> None:

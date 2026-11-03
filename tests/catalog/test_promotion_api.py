@@ -31,7 +31,9 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-DATA = Path(__file__).resolve().parents[1] / "data"
+from tests._support import REPOSITORY_ROOT
+
+DATA = REPOSITORY_ROOT / "data"
 INVENTORY_NOTICE = (
     "Preços e estoque refletem uma fotografia importada do catálogo; "
     "não há confirmação em tempo real."
