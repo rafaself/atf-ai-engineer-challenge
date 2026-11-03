@@ -18,10 +18,12 @@ uv run --extra policy-rag --project apps/api --locked \
 After checking readiness and confirming the frozen inputs, the authorized run is:
 
 ```bash
-uv run --extra policy-rag --project apps/api --locked \
+AWS_PROFILE=your-authorized-profile uv run --extra policy-rag --project apps/api --locked \
   python -m scripts.compare_policy_context --work-dir /tmp/policy-context-ab-78 \
   --live --max-cost-usd 1.00 \
   --approval-note '2026-11-03: owner approved issue #78 paid inference, US$1.00 cap'
 ```
+
+Set `AWS_PROFILE` to the account explicitly authorized for Bedrock inference; the runner does not select among configured profiles. A current SSO login or equivalent credentials must be available before the live command.
 
 A separate work directory is required for a new run. Final captures are exclusive and never overwritten. The runner does not retry failed calls.
