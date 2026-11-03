@@ -8,6 +8,8 @@ The paid run is capped at US$1.00, including preflight. The runner reserves seri
 
 Live capture completed on 2026-11-03: 24/24 conversation executions, 66 Luna requests, and no failed executions. Cost results are in [results.md](results.md) and [cost-reconciliation.json](cost-reconciliation.json); arm-specific operational checks are in [operational-reconciliation.json](operational-reconciliation.json). Primary human review remains pending; no semantic verdict or architecture recommendation is included.
 
+For side-by-side semantic review, [conversations-rag.txt](conversations-rag.txt) and [conversations-embedded.txt](conversations-embedded.txt) contain only the customer and assistant messages, in matching scenario order.
+
 Run readiness from the repository root:
 
 ```bash

@@ -55,7 +55,7 @@ There is no paid inference without the recorded explicit issue #78 approval. The
 
 Freeze the commit, app source hash, scenario file, original seven supplied CSV/PDF bytes, generated SQLite snapshots, corpus, freeze manifest, freight overlay, E5 weights and Chroma index before preflight. Recheck the freeze before each request. Generated databases/indexes and credentials are not committed. Historical benchmark files/captures remain unchanged.
 
-Artifacts in this directory: `protocol.md`, `scenarios.json`, `embedded-policy.json`, `readiness.json`, `preflight.json`, immutable `capture.json`, `cost-reconciliation.json`, `operational-reconciliation.json`, `retrieval-metrics.json`, empty human `review.json`, blinded `review-worksheet-primary.json`, `review-worksheet-second.json` for required independent second reviews, `results.md`, and `SHA256SUMS`. The human candidate-arm map is private until reviews are frozen. Selection/recommendation waits for actual human review; no unreviewed AI recommendation is emitted.
+Artifacts in this directory: `protocol.md`, `scenarios.json`, `embedded-policy.json`, `readiness.json`, `preflight.json`, immutable `capture.json`, `cost-reconciliation.json`, `operational-reconciliation.json`, `retrieval-metrics.json`, conversation-only `conversations-rag.txt` and `conversations-embedded.txt`, empty human `review.json`, blinded `review-worksheet-primary.json`, `review-worksheet-second.json` for required independent second reviews, `results.md`, and `SHA256SUMS`. The human candidate-arm map is private until reviews are frozen. Selection/recommendation waits for actual human review; no unreviewed AI recommendation is emitted.
 
 ### Post-run accounting amendment — 2026-11-03
 
