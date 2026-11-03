@@ -87,9 +87,7 @@ def _code_freeze() -> dict[str, object]:
         for path in root.rglob("*.py")
         if "__pycache__" not in path.parts
     )
-    file_hashes = {
-        path.relative_to(ROOT).as_posix(): _sha256(path) for path in files
-    }
+    file_hashes = {path.relative_to(ROOT).as_posix(): _sha256(path) for path in files}
     status = subprocess.run(
         ["git", "status", "--short"],
         check=True,
