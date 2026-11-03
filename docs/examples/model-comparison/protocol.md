@@ -1,9 +1,43 @@
 # Issue #40: Bedrock model comparison protocol
 
-Status: the approved three-model Bedrock Runtime comparison is complete. The
+The current default is [v4](scenarios-current-v4.json), with semantic verdicts
+separate from tool compliance, efficiency and presentation. The
+[effective-data report](effective-data-qwen32-gptoss120-2026-11-03.md) records the
+implementation and cumulative spending under the approved US$1.00. Older default
+and criterion descriptions below are historical.
+
+The [structured return evidence experiment](structured-return-qwen32-gptoss120-2026-11-03.md)
+uses the unchanged v3 prompts and records cumulative spending within the approved
+US$1.00, including the preceding run. Its per-run cap was US$0.97557130.
+
+Status: the original three-model Bedrock Runtime comparison is complete. Its
 reviewed results are in `README.md`; the original model responses and tool traces
-remain in `capture-runtime-2026-11-02.json`. No additional Bedrock inference was
-used for the post-run review and erratum.
+remain in `capture-runtime-2026-11-02.json`. A later current-harness GPT-OSS
+follow-up and separately approved GPT-OSS 20B retry are recorded in
+`gpt-oss-runtime-2026-11-03.md` and `gpt-oss-20b-retry-2026-11-03.md`; neither
+rewrites the historical captures.
+The subsequent Qwen3 32B / GPT-OSS 120B remediation run, including the derived
+Natal interpretation and remaining semantic failures, is documented in
+`remediated-qwen32-gptoss120-2026-11-03.md` and its capture. It used a separate
+US$0.95 live-run approval; that cap does not authorize another run.
+The later [prompt and harness evaluation](prompt-harness-qwen32-gptoss120-2026-11-03.md)
+also completed 16/16 turns per model under a fresh US$1.00 cap, with no HTTP
+errors. Its capture used the then-default legacy `scenarios.json`; because all
+scenario IDs and prompts match `scenarios-current-v3.json`, manual verdicts use
+the v3 expectations preserved alongside the capture. The runner default is now
+v3. This correction did not require further inference.
+No additional Bedrock inference was used for the post-run review and erratum of
+the original comparison.
+
+The 20B retry used a fresh Qwen control, the nine-conversation current-harness
+fixture, and a separately approved US$0.95 cap. Before the run, the agent
+request allowance was raised from five to six to leave room for final answer
+synthesis after five tool calls, one retry was enabled for unknown tool names,
+and catalog lookup normalized Unicode dash punctuation. The reviewed capture
+and retry findings are recorded in `gpt-oss-20b-retry-2026-11-03.md`. It
+completed all 16 turns for each
+model with no HTTP errors, but manual review found two critical errors in 20B
+and one in Qwen.
 
 ## Scope and candidates
 
@@ -28,12 +62,15 @@ read-only; conversation state uses a temporary SQLite database.
 The live run used frozen scenario fixture v1. Its exact bytes are preserved as
 `scenarios-frozen-v1.json` (SHA-256
 `20b4210c198d3742a65ca7a9997bcd762626feac30b07aa9c4fe8872b8244b62`), matching
-the scenario hash recorded in the original capture. Current `scenarios.json` is
-v2: the `no-match` scenario's `required_tools` is corrected from nonexistent
+the scenario hash recorded in the original capture. The legacy `scenarios.json`
+fixture is v2: the `no-match` scenario's `required_tools` is corrected from nonexistent
 `search_products` to the registered `get_product_details` tool. That tool is
 appropriate for a literal product-name lookup. The recorded models used
 `get_product_details`; this expectation correction does not change their scores.
 The capture retains its v1 expectations and records this erratum separately.
+The active current-harness fixture is `scenarios-current-v3.json`; it adds the
+approved freight clarification and current Natal, return, and snapshot-notice
+expectations. The runner defaults to v3 and hashes it in the source freeze.
 
 The Qwen policy-hours conversation stopped on a local policy-retrieval HTTP 503
 caused by `ModuleNotFoundError` because the benchmark dependency group was not

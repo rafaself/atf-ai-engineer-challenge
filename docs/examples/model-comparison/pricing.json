@@ -2,11 +2,11 @@
   "region": "us-east-1",
   "service_tier": "standard",
   "currency": "USD",
-  "checked_at_utc": "2026-11-02",
-  "endpoint_tool_checked_at_utc": "2026-11-02",
-  "price_list_version": "20261030160456",
+  "checked_at_utc": "2026-11-03",
+  "endpoint_tool_checked_at_utc": "2026-11-03",
+  "price_list_version": "20261102165015",
   "verified": true,
-  "verification_note": "All standard on-demand token rates were read from the current AWS Price List Bulk API us-east-1 offer on 2026-11-02. AWS lists prices per 1K tokens; values below are converted to per 1M tokens. The offer version is 20261030160456.",
+  "verification_note": "Standard on-demand token rates for all registered candidates are from the AWS Price List Bulk API us-east-1 offer, checked on 2026-11-03. AWS lists prices per 1K tokens; values are converted to per 1M tokens. The offer version is 20261102165015, published 2026-11-02T16:50:15Z.",
   "models": [
     {
       "key": "nova_micro",
@@ -61,6 +61,42 @@
       "rate_status": "verified",
       "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-qwen-qwen3-32b.html",
       "tool_use_status": "verified"
+    },
+    {
+      "key": "gpt_oss_20b",
+      "model_id": "openai.gpt-oss-20b-1:0",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_model_id": "openai.gpt-oss-20b-1:0",
+      "inference_api": "converse",
+      "context_window_tokens": 128000,
+      "input_usd_per_million": 0.07,
+      "output_usd_per_million": 0.3,
+      "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
+      "rate_status": "verified",
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-oss-20b.html",
+      "tool_use_status": "verified",
+      "price_skus": {
+        "input": "V7FNUEGYBCQ8QAW2",
+        "output": "F9R4KP9PYNDYGQ9E"
+      }
+    },
+    {
+      "key": "gpt_oss_120b",
+      "model_id": "openai.gpt-oss-120b-1:0",
+      "inference_endpoint": "bedrock-runtime",
+      "inference_model_id": "openai.gpt-oss-120b-1:0",
+      "inference_api": "converse",
+      "context_window_tokens": 128000,
+      "input_usd_per_million": 0.15,
+      "output_usd_per_million": 0.6,
+      "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
+      "rate_status": "verified",
+      "model_card_url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-oss-120b.html",
+      "tool_use_status": "verified",
+      "price_skus": {
+        "input": "Q2U4FFKKTW34QVFG",
+        "output": "KGHQD8ZHB5468Z38"
+      }
     }
   ]
 }

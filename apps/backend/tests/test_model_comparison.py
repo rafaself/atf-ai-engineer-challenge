@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -95,6 +95,7 @@ def test_scenario_tool_expectations_match_the_registered_agent_tools() -> None:
         "list_my_orders",
         "get_my_order",
         "search_store_policies",
+        "find_product_alternatives",
     }
     required_tools = {
         tool
@@ -170,13 +171,22 @@ def test_usage_estimate_reserves_missing_usage_at_full_request_ceiling() -> None
     assert usage["requests_with_missing_usage"] == 1
 
 
+def _manifest_review_date(key: str = "checked_at_utc") -> date:
+    manifest = json.loads(
+        (paths.PROJECT_ROOT / "docs/examples/model-comparison/pricing.json").read_text()
+    )
+    return date.fromisoformat(manifest[key][:10])
+
+
 def test_verified_rates_and_routes_load_from_the_current_manifest() -> None:
-    candidates = load_verified_candidates(today=date(2026, 11, 2))
+    candidates = load_verified_candidates(today=_manifest_review_date())
 
     assert [candidate.key for candidate in candidates] == [
         "qwen3_32b",
         "nova_micro",
         "nova_lite",
+        "gpt_oss_20b",
+        "gpt_oss_120b",
     ]
     assert candidates[0].inference_endpoint == "bedrock-runtime"
     assert candidates[0].inference_model_id == "qwen.qwen3-32b-v1:0"
@@ -187,7 +197,7 @@ def test_verified_rates_and_routes_load_from_the_current_manifest() -> None:
 
 def test_verified_candidates_can_select_only_qwen_and_nova_lite() -> None:
     candidates = load_verified_candidates(
-        today=date(2026, 11, 2), model_keys=("qwen3_32b", "nova_lite")
+        today=_manifest_review_date(), model_keys=("qwen3_32b", "nova_lite")
     )
 
     assert [candidate.key for candidate in candidates] == [
@@ -224,10 +234,15 @@ def test_project_aws_environment_load_is_silent_and_limited_to_aws_keys(
 
 
 def test_endpoint_tool_verification_expires_after_the_review_date() -> None:
-    validate_endpoint_tool_manifest(today=date(2026, 11, 2))
+    validate_endpoint_tool_manifest(
+        today=_manifest_review_date("endpoint_tool_checked_at_utc")
+    )
 
     with pytest.raises(ValueError, match="endpoint tool compatibility"):
-        validate_endpoint_tool_manifest(today=date(2026, 11, 3))
+        validate_endpoint_tool_manifest(
+            today=_manifest_review_date("endpoint_tool_checked_at_utc")
+            + timedelta(days=1)
+        )
 
 
 def test_verified_candidates_use_model_card_endpoint_and_api_combinations() -> None:
@@ -245,6 +260,8 @@ def test_verified_candidates_use_model_card_endpoint_and_api_combinations() -> N
         "nova_micro": ("bedrock-runtime", "converse"),
         "nova_lite": ("bedrock-runtime", "converse"),
         "qwen3_32b": ("bedrock-runtime", "converse"),
+        "gpt_oss_20b": ("bedrock-runtime", "converse"),
+        "gpt_oss_120b": ("bedrock-runtime", "converse"),
     }
 
 
@@ -390,6 +407,8 @@ def test_live_runner_uses_baseline_probe_when_availability_permission_is_denied(
     assert report["paid_calls"] == 0
     assert report["model_runs"][0]["status"] == "excluded_provider_setup_failure"
     assert [item["status"] for item in report["model_runs"][1:]] == [
+        "not_executed_provider_failure",
+        "not_executed_provider_failure",
         "not_executed_provider_failure",
         "not_executed_provider_failure",
     ]

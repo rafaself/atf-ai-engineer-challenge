@@ -1,0 +1,71 @@
+{
+  "region": "us-east-1",
+  "endpoint": "bedrock-runtime",
+  "api": "Converse",
+  "models": [
+    {
+      "model_id": "openai.gpt-oss-20b-1:0",
+      "tool_loop_verified": true,
+      "calls": [
+        {
+          "stop_reason": "tool_use",
+          "usage": {
+            "inputTokens": 144,
+            "outputTokens": 68,
+            "totalTokens": 212
+          },
+          "latency_seconds": 0.836
+        },
+        {
+          "stop_reason": "end_turn",
+          "usage": {
+            "inputTokens": 234,
+            "outputTokens": 7,
+            "totalTokens": 241
+          },
+          "latency_seconds": 0.401
+        }
+      ],
+      "tool_name": "probe_ping",
+      "tool_input": {
+        "phrase": "gpt-oss-tool-ok"
+      },
+      "final_answer": "probe passed.",
+      "input_tokens": 378,
+      "output_tokens": 75,
+      "estimated_cost_usd": "0.00004896"
+    },
+    {
+      "model_id": "openai.gpt-oss-120b-1:0",
+      "tool_loop_verified": true,
+      "calls": [
+        {
+          "stop_reason": "tool_use",
+          "usage": {
+            "inputTokens": 144,
+            "outputTokens": 68,
+            "totalTokens": 212
+          },
+          "latency_seconds": 0.75
+        },
+        {
+          "stop_reason": "end_turn",
+          "usage": {
+            "inputTokens": 230,
+            "outputTokens": 7,
+            "totalTokens": 237
+          },
+          "latency_seconds": 0.347
+        }
+      ],
+      "tool_name": "probe_ping",
+      "tool_input": {
+        "phrase": "gpt-oss-tool-ok"
+      },
+      "final_answer": "probe passed.",
+      "input_tokens": 374,
+      "output_tokens": 75,
+      "estimated_cost_usd": "0.0001011"
+    }
+  ]
+}

@@ -1,11 +1,30 @@
 # Bedrock Runtime model comparison (#40)
 
+The latest [effective-data and simulation evaluation](effective-data-qwen32-gptoss120-2026-11-03.md)
+records canonical prepared policies, one-time disclosure and reviewed v4 dimensions.
+Historical results below retain their original criteria.
+
+The latest [structured return evidence experiment](structured-return-qwen32-gptoss120-2026-11-03.md)
+records the next Qwen/GPT-OSS 120B run and its reviewed capture.
+
 The results below preserve the original one-pass issue #40 comparison. They used
 the earlier harness and original freight text; in particular, their exact
 R$ 500 freight finding predates the approved inclusive clarification. See the
 [current-harness Qwen and Nova Lite refresh](current-harness-qwen-nova-lite-2026-11-02.md)
 for the fresh two-model run, current policy rule and updated answer/tool-use
-review. The historical capture remains unchanged.
+review. The historical capture remains unchanged. The separately run GPT-OSS
+comparison, with a fresh Qwen control and the current policy clarification, is
+documented in the [GPT-OSS Runtime benchmark](gpt-oss-runtime-2026-11-03.md).
+The subsequent [GPT-OSS 20B retry](gpt-oss-20b-retry-2026-11-03.md) records
+the harness adjustments, retry results and remaining quality issues without
+changing either earlier capture.
+The later prompt and processed-corpus remediation run for Qwen3 32B and
+GPT-OSS 120B is recorded in the
+[remediation benchmark report](remediated-qwen32-gptoss120-2026-11-03.md), with
+its reviewed [capture](capture-remediated-qwen32-gptoss120-2026-11-03.json).
+The latest [prompt and harness evaluation](prompt-harness-qwen32-gptoss120-2026-11-03.md)
+records the shorter instructions, structured product specifications, current-v3
+manual review, and a fresh Qwen/GPT-OSS 120B comparison.
 
 The recorded run evaluated Qwen3 32B, Nova Micro, and Nova Lite through Bedrock
 Runtime Converse. All application tools ran locally. Nemotron Nano 3 was excluded
@@ -13,7 +32,8 @@ as an architectural scope decision: this comparison stayed on Runtime Converse
 and did not add a Mantle adapter solely for that candidate. Its Runtime Converse
 tool support was not verified; this is not a general claim that Runtime lacks
 tool calling. See the [protocol](protocol.md), current
-[scenario fixture](scenarios.json), [frozen v1 fixture](scenarios-frozen-v1.json),
+[scenario fixture](scenarios-current-v3.json), [legacy v2 fixture](scenarios.json),
+[frozen v1 fixture](scenarios-frozen-v1.json),
 and [reviewed capture](capture-runtime-2026-11-02.json).
 
 Each model had nine planned conversations and 16 planned HTTP turns. Nova Micro
@@ -88,8 +108,8 @@ existing policy index before any paid model request. It does not download model
 weights. Refresh rates and route checks on the day of a new run. The runner loads
 only AWS settings silently and never writes credential values to a capture.
 Use repeated `--model-key` options to select a subset of candidates and
-`--scenarios-file` to provide a separately versioned fixture; Qwen remains the
-required baseline.
+`--scenarios-file` to provide a separately versioned fixture. The runner defaults
+to [current v4](scenarios-current-v4.json); Qwen remains the required baseline.
 
 ```sh
 uv run --group benchmark --directory apps/backend --locked \

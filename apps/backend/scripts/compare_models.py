@@ -44,7 +44,9 @@ from emporio_music_backend.infrastructure.sqlite_repository import (
 from scripts.validate_us18 import RecordingAgent, _write_checkpoint, sanitized
 
 PROJECT_ROOT = paths.PROJECT_ROOT
-SCENARIOS_PATH = PROJECT_ROOT / "docs/examples/model-comparison/scenarios.json"
+SCENARIOS_PATH = (
+    PROJECT_ROOT / "docs/examples/model-comparison/scenarios-current-v4.json"
+)
 PRICING_PATH = PROJECT_ROOT / "docs/examples/model-comparison/pricing.json"
 AWS_ENVIRONMENT_KEYS = (
     "AWS_ACCESS_KEY_ID",
@@ -59,34 +61,50 @@ EXPECTED_INFERENCE_ENDPOINTS = {
     "qwen3_32b": ENDPOINT_RUNTIME,
     "nova_micro": ENDPOINT_RUNTIME,
     "nova_lite": ENDPOINT_RUNTIME,
+    "gpt_oss_20b": ENDPOINT_RUNTIME,
+    "gpt_oss_120b": ENDPOINT_RUNTIME,
 }
 EXPECTED_INFERENCE_APIS = {
     "qwen3_32b": "converse",
     "nova_micro": "converse",
     "nova_lite": "converse",
+    "gpt_oss_20b": "converse",
+    "gpt_oss_120b": "converse",
 }
 EXPECTED_INFERENCE_MODEL_IDS = {
     "qwen3_32b": "qwen.qwen3-32b-v1:0",
     "nova_micro": "amazon.nova-micro-v1:0",
     "nova_lite": "amazon.nova-lite-v1:0",
+    "gpt_oss_20b": "openai.gpt-oss-20b-1:0",
+    "gpt_oss_120b": "openai.gpt-oss-120b-1:0",
 }
 OUTPUT_CAP_USD = Decimal("1.00")
 EXPECTED_SETTINGS = {
     "request_timeout_seconds": 15.0,
-    "max_requests": 5,
+    "max_requests": 6,
     "max_tool_calls": 5,
     "max_output_tokens": 1024,
 }
-RUN_ORDER = ("qwen3_32b", "nova_micro", "nova_lite")
+RUN_ORDER = (
+    "qwen3_32b",
+    "nova_micro",
+    "nova_lite",
+    "gpt_oss_20b",
+    "gpt_oss_120b",
+)
 EXPECTED_MODEL_IDS = {
     "qwen3_32b": "qwen.qwen3-32b-v1:0",
     "nova_micro": "amazon.nova-micro-v1:0",
     "nova_lite": "amazon.nova-lite-v1:0",
+    "gpt_oss_20b": "openai.gpt-oss-20b-1:0",
+    "gpt_oss_120b": "openai.gpt-oss-120b-1:0",
 }
 EXPECTED_CONTEXT_WINDOWS = {
     "qwen3_32b": 32_000,
     "nova_micro": 128_000,
     "nova_lite": 300_000,
+    "gpt_oss_20b": 128_000,
+    "gpt_oss_120b": 128_000,
 }
 SOURCE_PATHS = (
     "data/SHA256SUMS",
@@ -106,6 +124,8 @@ SOURCE_PATHS = (
     "docs/examples/model-comparison/scenarios.json",
     "docs/examples/model-comparison/pricing.json",
     "docs/examples/model-comparison/protocol.md",
+    "docs/examples/model-comparison/scenarios-current-v3.json",
+    "docs/examples/model-comparison/scenarios-current-v4.json",
     "docs/examples/model-comparison/scenarios-frozen-v1.json",
 )
 
@@ -253,9 +273,7 @@ def load_verified_candidates(
         raise ValueError("Pricing manifest has no model list")
     by_key = {entry.get("key"): entry for entry in entries}
     if set(by_key) != set(RUN_ORDER):
-        raise ValueError(
-            "Pricing manifest must contain exactly the three Runtime issue #40 models"
-        )
+        raise ValueError("Pricing manifest must contain every registered Runtime model")
 
     candidates: list[Candidate] = []
     for key in selected:
@@ -323,7 +341,7 @@ def validate_endpoint_tool_manifest(
         raise ValueError("Endpoint compatibility manifest has no model list")
     by_key = {entry.get("key"): entry for entry in entries}
     if set(by_key) != set(RUN_ORDER):
-        raise ValueError("Endpoint compatibility manifest must list all three models")
+        raise ValueError("Endpoint compatibility manifest must list every model")
     for key in RUN_ORDER:
         entry = by_key[key]
         if (
@@ -398,11 +416,17 @@ def estimate_usage_cost(
     }
 
 
+def _availability_status(value: object) -> str:
+    if isinstance(value, dict):
+        return str(value.get("status", "UNKNOWN"))
+    return value if isinstance(value, str) else "UNKNOWN"
+
+
 def _availability_result(response: dict[str, Any], model_id: str) -> dict[str, object]:
-    agreement = response.get("agreementAvailability", {}).get("status", "UNKNOWN")
+    agreement = _availability_status(response.get("agreementAvailability"))
     authorization = response.get("authorizationStatus", "UNKNOWN")
-    entitlement = response.get("entitlementAvailability", {}).get("status", "UNKNOWN")
-    region = response.get("regionAvailability", {}).get("status", "UNKNOWN")
+    entitlement = _availability_status(response.get("entitlementAvailability"))
+    region = _availability_status(response.get("regionAvailability"))
     available = (
         agreement == "AVAILABLE"
         and authorization == "AUTHORIZED"
@@ -1523,7 +1547,7 @@ def preflight_report(
                 candidates = []
                 report["pricing_verification"] = "pending"
                 report["pricing_failure_type"] = type(exc).__name__
-            # Use the three known Runtime IDs for access probing while rates refresh.
+            # Use known Runtime IDs for access probing while rates refresh.
             if not candidates:
                 document = json.loads(pricing_path.read_text(encoding="utf-8"))
                 entries = document.get("models")
@@ -1532,7 +1556,7 @@ def preflight_report(
                 by_key = {entry.get("key"): entry for entry in entries}
                 if set(by_key) != set(RUN_ORDER):
                     raise ValueError(
-                        "Preflight requires the exact three Runtime issue #40 candidates"
+                        "Preflight requires every registered Runtime candidate"
                     )
                 candidates = [
                     Candidate(
