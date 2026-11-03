@@ -6,9 +6,9 @@ import sys
 from collections.abc import Callable, Sequence
 from enum import Enum
 
-from emporio_music_backend.contracts.chat import ChatRequest
-from emporio_music_backend.contracts.conversations import ExecutionContext
-from emporio_music_backend.contracts.errors import (
+from emporio_music.domain.chat import ChatRequest
+from emporio_music.domain.conversations import ExecutionContext
+from emporio_music.domain.errors import (
     AgentTimeoutError,
     ApplicationError,
     ConfigurationError,
@@ -19,9 +19,9 @@ from emporio_music_backend.contracts.errors import (
     SessionAccessError,
     SessionConflictError,
 )
-from emporio_music_backend.contracts.identity import CustomerIdentity
-from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
-from emporio_music_backend.ports.chat import ChatServicePort
+from emporio_music.domain.identity import CustomerIdentity
+from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
+from emporio_music.ports.chat import ChatServicePort
 from pydantic import UUID4, ValidationError
 
 InputFunction = Callable[[str], str]
@@ -70,7 +70,7 @@ def _choose_identity(
     input_fn: InputFunction,
     output_fn: OutputFunction,
 ) -> CustomerIdentity | None | _SelectionCommand:
-    from emporio_music_backend.composition import resolve_demo_customer
+    from emporio_music.composition import resolve_demo_customer
 
     while True:
         selection = input_fn("Cliente fictício (ID) ou convidado [g]: ").strip()
@@ -163,7 +163,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("use --live to opt in to Bedrock-backed conversation")
 
     try:
-        from emporio_music_backend.composition import (
+        from emporio_music.composition import (
             build_chat_service,
             create_order_repository,
         )

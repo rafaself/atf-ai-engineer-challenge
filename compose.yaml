@@ -8,6 +8,8 @@ services:
       - .env
     environment:
       HF_HOME: /app/data/benchmark-cache/hf
+      EMPORIO_MUSIC_DATA_DIR: /app/data
+      EMPORIO_MUSIC_FRONTEND_DIR: /app/apps/frontend/dist
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
