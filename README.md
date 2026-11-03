@@ -91,9 +91,28 @@ Preparing the policy index downloads the embedding model; do this once for each 
 
 ## Technical Decisions
 
+The project's shared core is the independently installable `emporio_music` package, which owns the domain logic and agent harness while remaining independent of the web and CLI apps. Its composition builds a `ChatService` around the Pydantic AI agent and its repositories, so the FastAPI app and CLI share the same behavior. The harness provides the agent persona and typed tools, passes trusted per-run context, enforces request, tool-call, and output limits, and translates provider failures into application errors; each app keeps its own transport and user interaction.
 
 ### Framework / Agent approach
 
+I use Pydantic AI to orchestrate function (tool) calls. The model interprets the conversation and chooses from typed tools; application code handles exact pricing, product quotes and comparisons, customer-scoped order lookups, and deadline calculations against SQLite. This keeps business rules and data access in deterministic functions while the model focuses on understanding requests and writing responses.
+
+For store policies, the agent can call a read-only RAG tool. It searches a reviewed policy corpus indexed with local multilingual E5 embeddings and Chroma, then returns a bounded set of source-linked passages. I chose this as the long-term approach because it lets the agent retrieve relevant policy excerpts without placing the entire corpus in every prompt. As the policy collection grows, this keeps the retrieved context focused and lets policy updates flow through the reviewed corpus and index instead of expanding the system prompt. The index still needs to be rebuilt and checked when its sources change.
+
+I compared RAG with providing the full policy corpus in GPT-6 Luna's prompt across 12 paired conversations. The table summarizes the operational results; the comparison used arm-specific tool requirements.
+
+| Measure | RAG | Embedded policies |
+| --- | ---: | ---: |
+| Completed conversations | 12 / 12 | 12 / 12 |
+| HTTP turns | 18 | 18 |
+| Model calls, including preflight | 39 | 27 |
+| Total input tokens | 99,886 | 201,681 |
+| Estimated AWS-rate cost (USD) | 0.00719744 | 0.01402996 |
+| Average cost per model call (USD) | 0.00018455 | 0.00051963 |
+| Median / maximum turn latency (seconds) | 4.804 / 11.772296 | 4.098 / 13.439175 |
+| Missed required tool calls | 1 | 0 |
+
+In this small run, RAG used fewer input tokens and had lower estimated cost, while embedded policies had lower median latency and no missed required tool calls. The project owner also reviewed the paired conversations and agrees with the results; this small sample does not establish performance on other conversations. An earlier retrieval-only benchmark met none of its frozen target sets, so the current RAG implementation remains provisional. See the [full policy-context benchmark](docs/evaluations/policy-context/results.md), [comparison protocol](docs/evaluations/policy-context/protocol.md), and [policy retrieval guide](docs/guides/policy-retrieval.md).
 
 ### Provider
 
