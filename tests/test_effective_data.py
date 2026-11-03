@@ -5,6 +5,8 @@ from pathlib import Path
 import pytest
 from emporio_music.agent.catalog import ProductSearchTool
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -137,6 +139,11 @@ def test_model_visible_lookup_contracts_separate_names_ids_and_require_payment()
 
     class UnusedRepository:
         def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+            raise AssertionError("Schema inspection needs no catalog read")
+
+        def lookup_many(
+            self, query: ProductBatchLookupQuery
+        ) -> ProductBatchLookupResult:
             raise AssertionError("Schema inspection needs no catalog read")
 
     agent = create_catalog_agent(

@@ -208,8 +208,11 @@ hash requiring refresh for every edit.
   also differ in email spelling. Present the discrepancy; do not choose an
   authoritative contact without clarification.
 - Payment table gives a general installment minimum while subsection 3.1 gives
-  tier-specific conditions. Retrieve both for installment questions and qualify
-  the discrepancy rather than silently imposing a precedence rule.
+  tier-specific conditions. Explanatory answers should retrieve both and qualify
+  the discrepancy. The deterministic quote tool marks installment plans below the
+  general R$ 100,00 minimum as policy ambiguous while retaining the tier-specific
+  calculation from 3.1. Its confirmed and uncertain maximum counts remain separate;
+  no policy precedence is inferred.
 - The original PDF's local freight clause specifies above/below a threshold but not
   equality. Owner-approved Workstream A in #43 resolves equality: for deliveries in
   the Região Metropolitana de Campo Grande, totals below R$ 500,00 cost R$ 35,00 and
@@ -228,6 +231,25 @@ hash requiring refresh for every edit.
 - Campaign descriptions do not establish current promotions. Operational tools
   remain authoritative for active offers and amounts. Procedures about forwarding
   complaints do not grant the agent capabilities to perform those actions.
+
+## Deterministic quote and deadline sources
+
+Issue #85 adds typed calculations beside retrieval. Quote results identify policy
+sections 3.1, 5.1/5.2 and the separately approved freight clarification. The
+R$ 500,00 equality rule is confirmed for Campo Grande metropolitan freight, but the
+manual does not define whether the threshold uses original or discounted totals;
+quotes return a freight amount only when those two bases agree. Mixed payment is
+allowed only above R$ 2.000,00; neither the threshold basis nor an extra PIX discount
+for mixed tender is specified, so those cases remain qualified in the tool result.
+
+Deadline results identify sections 4.1, 4.2, 5.1/5.2 or 8.1. Current orders do not
+store dispatch or actual-receipt dates, and estimated delivery never supplies either
+event. Dispatch-based application of delivery windows is labeled a conditional
+estimate because policy does not explicitly establish dispatch as the start event.
+The ten-business-day refund period has no documented start event. Business-day
+delivery estimates exclude weekends and state that public holidays are not modeled.
+These outcomes preserve source uncertainty rather than expanding the retrieval
+corpus or fabricating operational facts.
 
 ## Frozen evaluation, before tuning
 

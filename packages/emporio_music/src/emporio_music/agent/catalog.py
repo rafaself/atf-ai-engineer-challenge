@@ -1,43 +1,22 @@
 """Grounded product-search tool and catalog-agent composition."""
 
-from decimal import Decimal, localcontext
 from typing import Annotated
 
-from pydantic import Field, StrictBool, TypeAdapter
+from pydantic import Field, StrictBool
 from pydantic_ai import ModelRetry, Tool
 from pydantic_ai.models import Model
 
+from emporio_music.agent.amounts import BRLAmount, brl_to_centavos
 from emporio_music.agent.executor import PydanticAgentExecutor
 from emporio_music.agent.factory import create_agent
+from emporio_music.agent.quotes import quote_tools
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.diagnostics import trace
 from emporio_music.domain.base import NonblankText
-from emporio_music.domain.catalog import ProductSearchQuery
+from emporio_music.domain.catalog import ProductSearchQuery, ProductSortOrder
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.pricing import PaymentMethod
 from emporio_music.ports.catalog import ProductRepository
-
-BRLAmount = Annotated[
-    Decimal,
-    Field(
-        ge=0,
-        le=Decimal("1000000000"),
-        max_digits=12,
-        decimal_places=2,
-        allow_inf_nan=False,
-    ),
-]
-_amount = TypeAdapter(BRLAmount)
-
-
-def _centavos(value: Decimal | None) -> int | None:
-    if value is None:
-        return None
-    # Validation bounds precision and magnitude before multiplication/conversion.
-    amount = _amount.validate_python(value)
-    with localcontext() as context:
-        context.prec = 21
-        return int(amount * 100)
 
 
 class ProductSearchTool:
@@ -53,6 +32,7 @@ class ProductSearchTool:
         max_price_brl: BRLAmount | None = None,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10,
         promotions_only: StrictBool = False,
+        sort_order: ProductSortOrder = "price_asc",
     ) -> dict[str, object]:
         """Find available instruments for requested recommendations, by category, budget or partial name.
 
@@ -62,6 +42,10 @@ class ProductSearchTool:
         For alternatives, use the category and customer-requested budget; omit
         product_name unless the customer explicitly restricts alternatives by name.
         Keeping the unavailable model name would exclude other products.
+        Use price_asc for cheapest questions and price_desc for most-expensive
+        questions. Both sort by payable price with product ID as a stable tie-breaker.
+        Use calculate_quote for exact totals and compare_products only after products
+        have been identified.
 
         Args:
             category: Instrument category, e.g. Violões, not an individual model name.
@@ -71,6 +55,7 @@ class ProductSearchTool:
             limit: Maximum returned products, 1–20. Total count includes omitted matches.
             payment_method: standard unless the customer explicitly requests pix pricing.
             promotions_only: Return only eligible active promotional products, not PIX-only discounts.
+            sort_order: Sort by payable price ascending or descending; ties use product ID.
         """
         trace(
             "tool.called",
@@ -80,12 +65,13 @@ class ProductSearchTool:
         query = ProductSearchQuery(
             category=category,
             product_name=product_name,
-            min_price_centavos=_centavos(min_price_brl),
-            max_price_centavos=_centavos(max_price_brl),
+            min_price_centavos=brl_to_centavos(min_price_brl),
+            max_price_centavos=brl_to_centavos(max_price_brl),
             available_only=True,
             payment_method=payment_method,
             promotions_only=promotions_only,
             limit=limit,
+            sort_order=sort_order,
         )
         return self._search(query)
 
@@ -210,4 +196,5 @@ def product_tools(repository: ProductRepository) -> list[Tool[ExecutionContext]]
         Tool(tools.find_product_by_name),
         Tool(tools.get_product_details),
         Tool(tools.find_product_alternatives),
+        *quote_tools(repository),
     ]

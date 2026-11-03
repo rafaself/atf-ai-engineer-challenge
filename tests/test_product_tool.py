@@ -6,6 +6,8 @@ import pytest
 from emporio_music.agent.catalog import ProductSearchTool, create_catalog_agent
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -39,6 +41,9 @@ class RecordingRepository:
         self.query = query
         return ProductSearchResult()
 
+    def lookup_many(self, query: ProductBatchLookupQuery) -> ProductBatchLookupResult:
+        raise AssertionError("This search scenario does not request identified quotes")
+
 
 def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository() -> (
     None
@@ -58,6 +63,7 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
         max_price_centavos=100000,
         available_only=True,
         limit=20,
+        sort_order="price_asc",
     )
     assert result["total_matches"] == 0 and result["truncated"] is False
     expected = repository.query
@@ -81,6 +87,14 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
     with pytest.raises(ValidationError):
         tool.search_available_products(payment_method="standard", limit=21)
     assert repository.query is expected
+
+
+def test_search_tool_forwards_price_descending_order() -> None:
+    repository = RecordingRepository()
+    ProductSearchTool(repository).search_available_products(
+        payment_method="standard", sort_order="price_desc"
+    )
+    assert repository.query == ProductSearchQuery(sort_order="price_desc")
 
 
 @pytest.mark.parametrize("bound", ["minimum", "maximum"])
@@ -197,6 +211,11 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
 def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
     class BrokenRepository:
         def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+            raise ProductRetrievalError("Catalog unavailable")
+
+        def lookup_many(
+            self, query: ProductBatchLookupQuery
+        ) -> ProductBatchLookupResult:
             raise ProductRetrievalError("Catalog unavailable")
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:

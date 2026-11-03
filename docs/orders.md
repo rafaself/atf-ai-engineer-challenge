@@ -83,6 +83,7 @@ access enforces the same ownership; it does not depend on HTTP checks or prompt 
 | --- | --- | --- |
 | `list_my_orders` | `limit=5`, integer 1–20 | Own order ID/date/status/exact total; date descending then ID descending; total matches and truncation |
 | `get_my_order` | Positive 64-bit `order_id` | Owned header, optional tracking/estimate, up to 20 product references/quantities sorted by product ID; total item rows and truncation |
+| `calculate_deadline` | Deadline type, optional owned `order_id`, event date/type, request date and delivery service/area | A policy-based date/window or an explicit missing-reference/policy outcome |
 
 Neither tool exposes `customer_id`. Unexpected scope fields and invalid identifiers
 fail tool validation. Foreign and nonexistent IDs both return `order: null` and
@@ -106,6 +107,34 @@ See [API setup](api.md), [ADR-0005](adr/0005-authorized-operational-snapshots.md
 real Portuguese tool choice, follow-ups and adversarial behavior remain opt-in US-13.
 Catalog-only factories and smoke/examples are isolated probes, never an HTTP fallback
 when operational storage is missing.
+
+## Policy deadlines
+
+`calculate_deadline` reads an owned order first when an `order_id` is provided.
+The current snapshot has `order_date` and `estimated_delivery`; it has no dispatch,
+actual receipt or request date. The tool never treats an estimated delivery as
+actual receipt. Defect-exchange deadlines use the stored purchase/order date; online
+return and legal-warranty deadlines require a separately supplied actual receipt
+date and label it customer-reported. The optional request date checks whether a
+reported return/exchange/warranty request falls inside the calculated window.
+
+The manual supports seven calendar days after actual receipt for online remorse,
+30 calendar days after purchase for a defect exchange, and 90 calendar days from
+actual receipt for the legal warranty. Manufacturer warranty dates require the
+product certificate. The manual allows up to ten business days for a refund but
+does not identify the event that starts the clock; the tool returns that duration
+without inventing a due date.
+
+Delivery uses an owned order's stored estimate when present. Otherwise it requires
+a dispatch date and destination scope; outside Campo Grande it also requires PAC,
+SEDEX or Jadlog. Applying the published window after the supplied dispatch date is
+a conditional estimate because the manual does not explicitly establish dispatch
+as the start event. Business-day arithmetic excludes weekends only because no
+holiday calendar is available, and the result says that explicitly. Missing dates,
+service or policy start events produce a qualified status rather than a guessed
+date.
+Order ownership is enforced by the existing read-only repository, and deadline
+lookups do not change order history or totals.
 
 ## Current simulation presentation
 
