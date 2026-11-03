@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pytest
-
 from emporio_music.agent.catalog import ProductSearchTool
 from emporio_music.domain.catalog import (
     ProductSearchQuery,
@@ -112,13 +111,12 @@ def test_model_visible_lookup_contracts_separate_names_ids_and_require_payment()
 ):
     import asyncio
 
-    from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
-    from pydantic_ai.models.function import AgentInfo, FunctionModel
-
     from emporio_music.agent.catalog import create_catalog_agent
     from emporio_music.agent.settings import AgentSettings
     from emporio_music.domain.chat import ChatRequest
     from emporio_music.domain.conversations import ExecutionContext
+    from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
+    from pydantic_ai.models.function import AgentInfo, FunctionModel
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         schemas = {

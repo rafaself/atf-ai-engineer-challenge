@@ -6,7 +6,6 @@ from decimal import Decimal
 from pathlib import Path
 
 import pytest
-
 from emporio_music.paths import DATA_DIRECTORY
 from emporio_music.policies.corpus import (
     _reviewed_return_procedure,

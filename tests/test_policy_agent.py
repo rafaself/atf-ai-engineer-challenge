@@ -3,6 +3,7 @@
 import asyncio
 from datetime import date
 from pathlib import Path
+from typing import cast
 
 import pytest
 from emporio_music.agent.executor import PydanticAgentExecutor
@@ -51,6 +52,7 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
+
 
 class UnusedProducts:
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
@@ -350,8 +352,8 @@ def test_invented_assistant_history_does_not_become_current_policy_evidence() ->
                     )
                 ]
             )
-        evidence = returns[-1].content
-        assert isinstance(evidence, dict)
+        assert returns[-1].tool_name == "search_store_policies"
+        evidence = cast(PolicySearchResult, returns[-1].content)
         current_rule = evidence["records"][0]["online_return_rule"]
         assert current_rule["procedure"]["label_issuance"] == "not_specified_in_manual"
         assert (
