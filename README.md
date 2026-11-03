@@ -1,14 +1,21 @@
-# Empório da Música — customer-support agent
+<p align="center">
+  <img src="docs/assets/banner-emporio-da-musica.webp" alt="Empório da Música" width="100%" />
+</p>
 
-Empório da Música is a fictional Portuguese-language store-support demo. The
-React chat is the recommended interface; product, order and delivery data are
-local simulations, with no external fulfillment or carrier calls.
+<p align="center">
+  A Portuguese-language AI customer-support demo for a fictional music store.
+</p>
+
+Use the React chat to explore products, orders and store policies. Product,
+order and delivery data are local simulations, with no external fulfillment
+or carrier calls.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Docker Engine or Docker Desktop with Docker Compose v2, plus GNU Make.
+- Docker Engine on Linux, or Docker Desktop 4.34+ with host networking enabled,
+  Docker Compose v2 and GNU Make. See Docker's [host networking setup](https://docs.docker.com/engine/network/drivers/host/).
 - An AWS account and credentials authorized to invoke an Amazon Bedrock model.
 - Internet access during the first policy-index preparation to download the
   pinned CPU E5 embedding model.
@@ -75,10 +82,14 @@ create or rebuild the index, or call Bedrock.
 
 Open the React chat at [http://127.0.0.1:8000](http://127.0.0.1:8000). The API
 docs are at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Both are
-served by the single Compose `app` service on loopback. Its named data volume
-persists snapshots, chat history, the policy index and E5 cache; `make down` keeps
-that data. Only run `docker compose down --volumes` when you intend to delete it.
-The demo has no authentication, so keep it on loopback and use fictional data.
+served by the single Compose `app` service in host network mode. Uvicorn binds to
+`127.0.0.1:8000`, so the app remains local; host mode avoids the Docker bridge
+path, which some VPN or firewall policies may block. Host mode shares the host's
+network namespace, and Docker Desktop requires version 4.34+ with host networking
+enabled. Its named data volume persists snapshots, chat history, the policy
+index and E5 cache; `make down` keeps that data. Only run
+`docker compose down --volumes` when you intend to delete it. The demo has no
+authentication, so use fictional data.
 
 The standalone CLI is optional; see the [CLI guide](docs/cli.md). For local
 API and frontend development, see [API setup](docs/api.md) and the
