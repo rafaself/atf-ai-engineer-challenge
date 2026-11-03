@@ -107,7 +107,7 @@ React/Vite is served by FastAPI from the same origin. Pydantic AI makes typed to
 ### UI Interface
 
 
-### Data Persistance
+### Data Persistence
 
 
 ### Data Processing
