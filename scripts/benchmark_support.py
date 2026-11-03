@@ -29,6 +29,7 @@ AWS_ENVIRONMENT_KEYS = (
     "AWS_PROFILE",
 )
 
+
 @dataclass(frozen=True)
 class Candidate:
     key: str

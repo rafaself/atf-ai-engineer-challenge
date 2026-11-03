@@ -23,9 +23,8 @@ Check their stated limits before applying results to the current checkout.
 
 - [Final Bedrock Runtime model comparison](benchmarks/final-model-comparison/README.md):
   ten-model capture, assessments, cost and execution limits.
-- [Policy retrieval benchmark](benchmarks/README.md): opt-in setup, methodology,
-  local hardware and provider access.
-- [Retrieval results](benchmarks/results.md): frozen-metric comparison and observed failures.
+- [RAG versus embedded policies](benchmarks/policy-context-ab-78/README.md):
+  Luna A/B capture, cost, retrieval diagnostics and pending human review.
 
 ## Decisions and delivery history
 

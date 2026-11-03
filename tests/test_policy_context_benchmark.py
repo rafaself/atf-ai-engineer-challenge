@@ -227,7 +227,6 @@ def test_tool_compliance_does_not_require_rag_policy_tool_in_embedded_arm() -> N
     ]
     assert metrics["by_arm"]["embedded"]["missing_required_tool_turns"] == []
 
-
 def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
     names = [path.as_posix() for path in input_paths()]
     assert not any("docs/examples/" in path for path in names)

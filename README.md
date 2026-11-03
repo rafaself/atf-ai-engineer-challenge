@@ -117,8 +117,9 @@ Retrieved sources and typed tools do not guarantee faithful generated prose.
 The final model-selection benchmark is bounded evidence: five failed conversations
 were not semantically scored, and no independent human review has occurred. See
 the [benchmark analysis](docs/benchmarks/final-model-comparison/analysis.md) for
-its scope and limitations. Offline checks verify application behavior, not current
-model-answer quality.
+its scope and limitations. The [RAG versus embedded-policy comparison](docs/benchmarks/policy-context-ab-78/README.md)
+reports operational and retrieval evidence but has no completed human answer-quality
+verdict. Offline checks verify application behavior, not current model-answer quality.
 
 For deterministic project checks, install Python 3.12+, `uv`, and Node.js 20.19+
 or 22.12+, then run `make check` from the repository root.

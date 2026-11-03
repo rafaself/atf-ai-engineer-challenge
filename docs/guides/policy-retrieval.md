@@ -12,7 +12,7 @@ See [data processing decisions](data-processing.md) for the implemented rational
 
 Status: US-14 corpus, US-15 retrieval benchmark, and US-16 policy tool are complete.
 US-15 met none of the frozen configurations' full target set; see the
-[retrieval results](../benchmarks/results.md).
+[retrieval results](https://github.com/rafaself/atf-ai-engineer-challenge/blob/9f6dcadb4981cc3dfaa6ef480576f88218fb2640/docs/benchmarks/results.md).
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
 The application appends a “Fontes consultadas” list from successful current-run
@@ -146,7 +146,7 @@ expansion remain provisional. The prior full-policy-context comparison did not e
 reliable answers either. US-17 reviewed four real conversations in both modes. The RAG arm
 returned one HTTP 500, and both modes missed a required policy-tool call in the mixed-order
 case. Retrieval metrics and offline tests do not establish future generated-answer
-quality. See the [frozen retrieval results](../benchmarks/results.md) for the
+quality. See the [frozen retrieval results](https://github.com/rafaself/atf-ai-engineer-challenge/blob/9f6dcadb4981cc3dfaa6ef480576f88218fb2640/docs/benchmarks/results.md) for the
 retrieval-only evidence.
 
 ## Preparation decisions

@@ -97,9 +97,7 @@ def load_luna_candidate(
     if not isinstance(source, dict):
         raise ValueError("Missing Luna model configuration")
     fields = Candidate.__dataclass_fields__
-    values: dict[str, Any] = {
-        key: source[key] for key in fields if key in source
-    }
+    values: dict[str, Any] = {key: source[key] for key in fields if key in source}
     for key in values:
         if key.endswith("usd_per_million"):
             values[key] = Decimal(str(values[key]))
