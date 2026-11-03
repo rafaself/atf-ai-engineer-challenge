@@ -1,10 +1,10 @@
-.PHONY: build prepare-data prepare-policy up down check check-backend check-frontend
+.PHONY: build prepare-data prepare-policy up down check check-python check-frontend
 
 build:
 	docker compose build app
 
 prepare-data:
-	docker compose run --rm app python -m emporio_music_backend.prepare
+	docker compose run --rm app python -m emporio_music.prepare
 
 prepare-policy:
 	docker compose run --rm app python -m scripts.policy_benchmark.run --model e5 --index --allow-download --output-dir /tmp/policy-rag-bootstrap
@@ -15,18 +15,18 @@ up:
 down:
 	docker compose down
 
-check: check-backend check-frontend
+check: check-python check-frontend
 
-check-backend:
-	uv sync --project apps/backend --locked --group dev --extra policy-rag
-	uv run --directory apps/backend --locked --extra policy-rag ruff check .
-	uv run --directory apps/backend --locked --extra policy-rag ruff check ../cli/src ../cli/tests
-	uv run --directory apps/backend --locked --extra policy-rag ruff format --check .
-	uv run --directory apps/backend --locked --extra policy-rag ruff format --check ../cli/src ../cli/tests
-	uv run --directory apps/backend --locked --extra policy-rag mypy src tests scripts
-	uv run --directory apps/backend --locked --extra policy-rag mypy ../cli/src ../cli/tests
-	uv run --directory apps/backend --locked --extra policy-rag pytest
-	PYTHONPATH=../cli/src uv run --directory apps/backend --locked --extra policy-rag pytest ../cli/tests
+check-python:
+	uv sync --project apps/api --package emporio-music-api --locked --group dev --extra policy-rag
+	uv run --project apps/api --package emporio-music-api --locked ruff check packages/emporio_music/src apps/api/src apps/cli/src scripts tests conftest.py
+	uv run --project apps/api --package emporio-music-api --locked ruff format --check packages/emporio_music/src apps/api/src apps/cli/src scripts tests conftest.py
+	MYPYPATH=apps/cli/src uv run --project apps/api --package emporio-music-api --locked mypy packages/emporio_music/src apps/api/src apps/cli/src apps/cli/tests scripts tests conftest.py
+	uv run --project apps/api --package emporio-music-api --locked pytest tests
+	uv sync --project apps/cli --package emporio-music-cli --locked --group dev --extra policy-rag
+	uv run --project apps/cli --package emporio-music-cli --locked pytest apps/cli/tests
+	uv build --project packages/emporio_music
+	uv build --project apps/api
 	uv build --project apps/cli
 
 check-frontend:

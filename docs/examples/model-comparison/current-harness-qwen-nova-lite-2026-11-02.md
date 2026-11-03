@@ -78,17 +78,17 @@ latency. No further Bedrock inference was made after this run.
 - [Preflight: sandbox endpoint unavailable](preflight-context-updated-2026-11-02.json)
 - [Preflight: AWS availability action denied, no paid calls](preflight-context-updated-network-2026-11-02.json)
 - [Pricing and endpoint manifest](pricing.json)
-- [Focused runner](../../../apps/backend/scripts/compare_models.py)
+- [Focused runner](../../../scripts/compare_models.py)
 
 Reproduction command used the approved cap and selected only the two candidates:
 
 ```sh
-uv run --group benchmark --directory apps/backend --locked \
+uv run --extra policy-rag --project apps/api --locked \
   python -m scripts.compare_models \
   --live --max-cost-usd 0.25 \
   --model-key qwen3_32b --model-key nova_lite \
-  --scenarios-file ../../docs/examples/model-comparison/scenarios-current-v3.json \
-  --output ../../docs/examples/model-comparison/capture-context-updated-2026-11-02.json
+  --scenarios-file docs/examples/model-comparison/scenarios-current-v3.json \
+  --output docs/examples/model-comparison/capture-context-updated-2026-11-02.json
 ```
 
 The capture contains per-turn calls, arguments, returned evidence, actual

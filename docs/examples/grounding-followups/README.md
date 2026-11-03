@@ -124,10 +124,10 @@ Final reduced implementation: **356 tests passed in 9.68s**, Ruff lint/format
 passed and strict mypy passed across 91 files. Commands from repository root:
 
 ```sh
-uv run --directory apps/backend --locked pytest
-uv run --directory apps/backend --locked ruff check .
-uv run --directory apps/backend --locked ruff format --check .
-uv run --directory apps/backend --locked mypy src tests scripts
+uv run --project apps/api --locked pytest tests
+uv run --project apps/api --locked ruff check .
+uv run --project apps/api --locked ruff format --check .
+make check-python
 ```
 
 The offline suite ran outside the restricted sandbox because its asyncio model

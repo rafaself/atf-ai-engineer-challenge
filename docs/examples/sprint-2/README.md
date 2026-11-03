@@ -71,10 +71,10 @@ The existing 246 offline tests, Ruff lint/format, strict mypy (71 source/test fi
 and source/wheel builds pass from the repository root. Offline tests prohibit real
 model calls. Relevant reusable checks include:
 
-- [Guest sessions and selection](../../../apps/backend/tests/test_guest_demo.py): mode/customer matching, restart continuity, unknown customers, order guards.
-- [Order integration](../../../apps/backend/tests/test_order_api.py): scoped results, forged arguments, refreshed snapshots, independent customers and storage failures.
-- [Promotion integration](../../../apps/backend/tests/test_promotion_api.py): guest/customer follow-ups, exact non-stacking quotes and failed-turn integrity.
-- [Persistence failures](../../../apps/backend/tests/test_persistent_chat.py), [safe HTTP errors](../../../apps/backend/tests/test_api.py) and [diagnostics](../../../apps/backend/tests/test_pipeline_logging.py).
+- [Guest sessions and selection](../../../tests/test_guest_demo.py): mode/customer matching, restart continuity, unknown customers, order guards.
+- [Order integration](../../../tests/test_order_api.py): scoped results, forged arguments, refreshed snapshots, independent customers and storage failures.
+- [Promotion integration](../../../tests/test_promotion_api.py): guest/customer follow-ups, exact non-stacking quotes and failed-turn integrity.
+- [Persistence failures](../../../tests/test_persistent_chat.py), [safe HTTP errors](../../../tests/test_api.py) and [diagnostics](../../../tests/test_pipeline_logging.py).
 
 The instruction changes were motivated by observed real failures; controlled
 models cannot prove real tool selection. No prompt-text assertions or duplicate

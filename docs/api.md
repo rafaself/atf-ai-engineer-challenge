@@ -62,10 +62,11 @@ Docs/OpenAPI require no provider setup.
 | `HISTORY_MAX_CHARACTERS` | 24000; supported 1–64000 |
 | `PIPELINE_LOGS` | 0; set 1 for metadata diagnostics |
 
-Storage paths are fixed in `emporio_music_backend.paths`, beneath the project root's
-`data/` directory: `catalog.sqlite3`, `operations.sqlite3` and `conversations.sqlite3`.
-PROJECT_ROOT derives from the package's source location; the launch directory and
-environment do not redirect storage.
+`EMPORIO_MUSIC_DATA_DIR` explicitly selects the source-data and persistent runtime
+directory. It defaults to `data` relative to the process working directory; the
+documented commands run from the repository root. Compose sets `/app/data` on the
+persistent volume. The API's React build path is `EMPORIO_MUSIC_FRONTEND_DIR`,
+defaulting to `apps/frontend/dist` from the repository root.
 Conversation files are private; preparation refreshes only source snapshots. Before
 using this version with a v1 conversation database, stop the server and move that
 file aside, preserving it. Startup then creates a fresh database at the fixed path.
@@ -94,10 +95,10 @@ still leave a saved turn; automatic retry deduplication is outside the demo.
 Trusted code imports the defining modules:
 
 ```python
-from emporio_music_backend.application.chat import ChatService
-from emporio_music_backend.contracts.chat import ChatRequest
-from emporio_music_backend.contracts.conversations import ExecutionContext
-from emporio_music_backend.ports.chat import ChatServicePort
+from emporio_music.application.chat import ChatService
+from emporio_music.domain.chat import ChatRequest
+from emporio_music.domain.conversations import ExecutionContext
+from emporio_music.ports.chat import ChatServicePort
 ```
 
 It calls `ChatService.chat(request, context=ExecutionContext())` for guests or

@@ -5,23 +5,23 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from emporio_music_backend.application.chat import ChatService
-from emporio_music_backend.contracts.chat import AgentResponse, ChatRequest
-from emporio_music_backend.contracts.conversations import (
+from emporio_music.application.chat import ChatService
+from emporio_music.domain.chat import AgentResponse, ChatRequest
+from emporio_music.domain.conversations import (
     ExecutionContext,
     HistoryLimits,
 )
-from emporio_music_backend.contracts.errors import (
+from emporio_music.domain.errors import (
     ProviderUnavailableError,
     SessionAccessError,
 )
-from emporio_music_backend.contracts.identity import CustomerIdentity
-from emporio_music_backend.infrastructure.catalog_import import import_catalog
-from emporio_music_backend.infrastructure.conversations import (
+from emporio_music.domain.identity import CustomerIdentity
+from emporio_music.infrastructure.catalog_import import import_catalog
+from emporio_music.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
-from emporio_music_backend.infrastructure.operations_import import import_operations
-from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
+from emporio_music.infrastructure.operations_import import import_operations
+from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
 from pydantic import UUID4
 
 from emporio_music_cli.cli import main, run_cli
@@ -40,7 +40,7 @@ class ControlledAgent:
 
 @pytest.fixture
 def order_repository(tmp_path: Path) -> SQLiteOrderRepository:
-    data = Path(__file__).parents[3] / "data"
+    data = Path(__file__).resolve().parents[3] / "data"
     catalog = tmp_path / "catalog.sqlite3"
     operations = tmp_path / "operations.sqlite3"
     import_catalog(
@@ -208,7 +208,7 @@ def test_help_and_missing_live_opt_in_do_not_construct_the_service(
     capsys: pytest.CaptureFixture[str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from emporio_music_backend import composition
+    from emporio_music import composition
 
     def unexpected_build(*_args: object) -> None:
         raise AssertionError("the default service must stay behind --live")

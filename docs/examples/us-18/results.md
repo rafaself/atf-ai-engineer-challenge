@@ -91,8 +91,8 @@ export HF_HOME="$PWD/data/benchmark-cache/hf"
 export HF_HUB_OFFLINE=1
 export OMP_NUM_THREADS=4
 export MKL_NUM_THREADS=4
-uv run --env-file .env --project apps/backend --locked --extra policy-rag \
-  python apps/backend/scripts/validate_us18.py --live --case mixed-order-return \
+uv run --env-file .env --project apps/api --locked --extra policy-rag \
+  python scripts/validate_us18.py --live --case mixed-order-return \
   --max-cost-usd 0.05 --output docs/examples/us-18/mixed-followup.json
 ```
 

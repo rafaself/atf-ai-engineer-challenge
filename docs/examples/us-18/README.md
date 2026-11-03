@@ -86,11 +86,11 @@ has been introduced.
 Run from the repository root:
 
 ```bash
-uv run --directory apps/backend --locked pytest
-uv run --directory apps/backend --locked ruff check .
-uv run --directory apps/backend --locked ruff format --check .
-uv run --directory apps/backend --locked mypy src tests scripts
-uv build --project apps/backend
+uv run --project apps/api --locked pytest tests
+uv run --project apps/api --locked ruff check .
+uv run --project apps/api --locked ruff format --check .
+make check-python
+uv build --project packages/emporio_music
 git diff --check
 ```
 
@@ -143,8 +143,8 @@ export HF_HOME="$PWD/data/benchmark-cache/hf"
 export HF_HUB_OFFLINE=1
 export OMP_NUM_THREADS=4
 export MKL_NUM_THREADS=4
-uv run --env-file .env --project apps/backend --locked --extra policy-rag \
-  python apps/backend/scripts/validate_us18.py --live --max-cost-usd 0.25 \
+uv run --env-file .env --project apps/api --locked --extra policy-rag \
+  python scripts/validate_us18.py --live --max-cost-usd 0.25 \
   --output docs/examples/us-18/live-captures.json
 ```
 

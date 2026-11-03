@@ -1,0 +1,38 @@
+[project]
+name = "emporio-music"
+version = "0.1.0"
+description = "Reusable customer-support agent and domain package for Empório da Música."
+requires-python = ">=3.12"
+dependencies = [
+    "boto3>=1.43.123",
+    "pydantic>=2,<3",
+    "pydantic-ai-slim[bedrock]>=2.64.0",
+    "pydantic-settings>=2.14,<3",
+]
+
+[project.optional-dependencies]
+policy-rag = [
+    "chromadb>=1,<2",
+    "sentence-transformers>=5,<6",
+    "torch>=2,<3",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.4,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+benchmark = ["sentence-transformers>=5,<6", "torch>=2,<3"]
+dev = [
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
