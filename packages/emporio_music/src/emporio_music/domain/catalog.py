@@ -77,3 +77,40 @@ class ProductSearchResult(ContractModel):
     @property
     def truncated(self) -> bool:
         return self.total_matches > len(self.products)
+
+
+class ProductBatchLookupQuery(ContractModel):
+    """Identify a bounded set of products in one catalog snapshot."""
+
+    product_ids: Annotated[
+        tuple[Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)], ...],
+        Field(min_length=1, max_length=10),
+    ]
+    payment_method: PaymentMethod
+
+    @model_validator(mode="after")
+    def validate_product_ids(self) -> Self:
+        if len(set(self.product_ids)) != len(self.product_ids):
+            raise ValueError("product IDs must be unique")
+        return self
+
+
+class ProductBatchLookupResult(ContractModel):
+    requested_product_ids: tuple[int, ...]
+    products: tuple[ProductSummary, ...] = ()
+    missing_product_ids: tuple[int, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_lookup(self) -> Self:
+        requested = set(self.requested_product_ids)
+        found = {product.product_id for product in self.products}
+        missing = set(self.missing_product_ids)
+        if (
+            len(requested) != len(self.requested_product_ids)
+            or len(found) != len(self.products)
+            or len(missing) != len(self.missing_product_ids)
+            or found & missing
+            or found | missing != requested
+        ):
+            raise ValueError("batch lookup must account for each requested ID once")
+        return self

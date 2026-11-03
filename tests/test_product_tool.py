@@ -6,6 +6,8 @@ import pytest
 from emporio_music.agent.catalog import ProductSearchTool, create_catalog_agent
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -38,6 +40,9 @@ class RecordingRepository:
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
         self.query = query
         return ProductSearchResult()
+
+    def lookup_many(self, query: ProductBatchLookupQuery) -> ProductBatchLookupResult:
+        raise AssertionError("This search scenario does not request identified quotes")
 
 
 def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository() -> (
@@ -197,6 +202,11 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
 def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
     class BrokenRepository:
         def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+            raise ProductRetrievalError("Catalog unavailable")
+
+        def lookup_many(
+            self, query: ProductBatchLookupQuery
+        ) -> ProductBatchLookupResult:
             raise ProductRetrievalError("Catalog unavailable")
 
     def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:

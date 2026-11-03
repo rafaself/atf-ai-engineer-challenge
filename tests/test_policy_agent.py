@@ -12,6 +12,8 @@ from emporio_music.agent.policies import PolicyTools
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.application.chat import ChatService
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -56,6 +58,9 @@ from pydantic_ai.usage import RunUsage
 
 class UnusedProducts:
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
+        raise AssertionError("This scenario does not ask about catalog products")
+
+    def lookup_many(self, query: ProductBatchLookupQuery) -> ProductBatchLookupResult:
         raise AssertionError("This scenario does not ask about catalog products")
 
 

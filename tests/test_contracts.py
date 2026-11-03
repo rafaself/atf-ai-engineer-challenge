@@ -3,6 +3,8 @@ from uuid import uuid4
 
 import pytest
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
     ProductSummary,
@@ -195,6 +197,9 @@ class FakeRepository:
 
     def search(self, query: ProductSearchQuery) -> ProductSearchResult:
         return ProductSearchResult(products=(product(),), total_matches=1)
+
+    def lookup_many(self, query: ProductBatchLookupQuery) -> ProductBatchLookupResult:
+        raise AssertionError("This contract test does not request identified quotes")
 
 
 class FakeChatService:

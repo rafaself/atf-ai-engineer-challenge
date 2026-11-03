@@ -1,14 +1,15 @@
 """Grounded product-search tool and catalog-agent composition."""
 
-from decimal import Decimal, localcontext
 from typing import Annotated
 
-from pydantic import Field, StrictBool, TypeAdapter
+from pydantic import Field, StrictBool
 from pydantic_ai import ModelRetry, Tool
 from pydantic_ai.models import Model
 
+from emporio_music.agent.amounts import BRLAmount, brl_to_centavos
 from emporio_music.agent.executor import PydanticAgentExecutor
 from emporio_music.agent.factory import create_agent
+from emporio_music.agent.quotes import quote_tools
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.diagnostics import trace
 from emporio_music.domain.base import NonblankText
@@ -16,28 +17,6 @@ from emporio_music.domain.catalog import ProductSearchQuery
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.pricing import PaymentMethod
 from emporio_music.ports.catalog import ProductRepository
-
-BRLAmount = Annotated[
-    Decimal,
-    Field(
-        ge=0,
-        le=Decimal("1000000000"),
-        max_digits=12,
-        decimal_places=2,
-        allow_inf_nan=False,
-    ),
-]
-_amount = TypeAdapter(BRLAmount)
-
-
-def _centavos(value: Decimal | None) -> int | None:
-    if value is None:
-        return None
-    # Validation bounds precision and magnitude before multiplication/conversion.
-    amount = _amount.validate_python(value)
-    with localcontext() as context:
-        context.prec = 21
-        return int(amount * 100)
 
 
 class ProductSearchTool:
@@ -62,6 +41,9 @@ class ProductSearchTool:
         For alternatives, use the category and customer-requested budget; omit
         product_name unless the customer explicitly restricts alternatives by name.
         Keeping the unavailable model name would exclude other products.
+        Use the payable-price order for open-ended cheapest/most-expensive questions.
+        Use calculate_quote for exact totals and compare_products only after products
+        have been identified.
 
         Args:
             category: Instrument category, e.g. Violões, not an individual model name.
@@ -80,8 +62,8 @@ class ProductSearchTool:
         query = ProductSearchQuery(
             category=category,
             product_name=product_name,
-            min_price_centavos=_centavos(min_price_brl),
-            max_price_centavos=_centavos(max_price_brl),
+            min_price_centavos=brl_to_centavos(min_price_brl),
+            max_price_centavos=brl_to_centavos(max_price_brl),
             available_only=True,
             payment_method=payment_method,
             promotions_only=promotions_only,
@@ -210,4 +192,5 @@ def product_tools(repository: ProductRepository) -> list[Tool[ExecutionContext]]
         Tool(tools.find_product_by_name),
         Tool(tools.get_product_details),
         Tool(tools.find_product_alternatives),
+        *quote_tools(repository),
     ]
