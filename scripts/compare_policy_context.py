@@ -96,6 +96,12 @@ def load_luna_candidate(
     source = manifest.get("model")
     if not isinstance(source, dict):
         raise ValueError("Missing Luna model configuration")
+    if (
+        source.get("rate_status") != "verified"
+        or not isinstance(source.get("source_url"), str)
+        or not source["source_url"].startswith("https://")
+    ):
+        raise ValueError("Luna rate verification source is missing")
     fields = Candidate.__dataclass_fields__
     values: dict[str, Any] = {key: source[key] for key in fields if key in source}
     for key in values:

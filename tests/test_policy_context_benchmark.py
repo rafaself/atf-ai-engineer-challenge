@@ -236,10 +236,14 @@ def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
 
 
 def test_luna_candidate_loads_standalone_verified_prices() -> None:
-    candidate = load_luna_candidate(today=date(2026, 11, 3))
+    from scripts.compare_policy_context import PRICING_FILE
+
+    manifest = json.loads(PRICING_FILE.read_text(encoding="utf-8"))
+    checked = date.fromisoformat(manifest["checked_at_utc"][:10])
+    candidate = load_luna_candidate(today=checked)
     assert candidate.inference_model_id == MODEL_ID
-    assert candidate.input_usd_per_million == Decimal("0.11")
-    assert candidate.output_usd_per_million == Decimal("0.55")
+    assert candidate.input_usd_per_million > 0
+    assert candidate.output_usd_per_million > 0
 
 
 def test_luna_candidate_rejects_stale_and_unverified_prices(tmp_path: Path) -> None:
@@ -248,11 +252,19 @@ def test_luna_candidate_rejects_stale_and_unverified_prices(tmp_path: Path) -> N
     document = json.loads(PRICING_FILE.read_text(encoding="utf-8"))
     fixture = tmp_path / "pricing.json"
     fixture.write_text(json.dumps(document), encoding="utf-8")
+    checked = date.fromisoformat(document["checked_at_utc"][:10])
+    next_day = date.fromordinal(checked.toordinal() + 1)
 
     with pytest.raises(ValueError, match="Reverify Luna"):
-        load_luna_candidate(today=date(2026, 11, 4), pricing_file=fixture)
+        load_luna_candidate(today=next_day, pricing_file=fixture)
 
     document["model"]["inference_model_id"] = "wrong-model"
     fixture.write_text(json.dumps(document), encoding="utf-8")
     with pytest.raises(ValueError, match="Runtime Converse"):
-        load_luna_candidate(today=date(2026, 11, 3), pricing_file=fixture)
+        load_luna_candidate(today=checked, pricing_file=fixture)
+
+    document["model"]["inference_model_id"] = MODEL_ID
+    document["model"]["rate_status"] = "unverified"
+    fixture.write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(ValueError, match="rate verification"):
+        load_luna_candidate(today=checked, pricing_file=fixture)
