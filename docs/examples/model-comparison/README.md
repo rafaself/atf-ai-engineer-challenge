@@ -92,10 +92,10 @@ Use repeated `--model-key` options to select a subset of candidates and
 required baseline.
 
 ```sh
-uv run --group benchmark --directory apps/backend --locked \
+uv run --extra policy-rag --project apps/api --locked \
   python -m scripts.compare_models \
   --live --max-cost-usd 1.00 \
-  --output ../../docs/examples/model-comparison/new-capture.json
+  --output docs/examples/model-comparison/new-capture.json
 ```
 
 The command requires separate approval for any new paid run. Choose a fresh

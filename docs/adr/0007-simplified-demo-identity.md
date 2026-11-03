@@ -1,8 +1,10 @@
 # ADR-0007: Simplified demo identity for local evaluation
 
-> Storage update: paths are now fixed under PROJECT_ROOT/data. Stop the server
-> and move an older history database aside before creating its replacement;
-> earlier configurable-path guidance below is historical.
+> Historical storage note: this decision originally used a fixed project-root
+> path. Issue #76 now selects source and runtime data through
+> `EMPORIO_MUSIC_DATA_DIR`; see [current architecture](../architecture.md).
+> Stop the server and move an older history database aside before creating its
+> replacement; earlier configurable-path guidance below is historical.
 
 Status: Accepted — reviewed and verified offline on 2026-11-01.
 

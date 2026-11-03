@@ -38,7 +38,7 @@ in boto3's default credential chain, and provider construction is explicit.
 The opt-in probe incurs real model requests:
 
 ```bash
-uv run --env-file .env --project apps/backend --locked python -m emporio_music_backend.agent.smoke --live
+uv run --env-file .env --project apps/api --extra policy-rag --locked python -m emporio_music.agent.smoke --live
 ```
 
 It must observe a fresh verification tool call/result and that code in the final

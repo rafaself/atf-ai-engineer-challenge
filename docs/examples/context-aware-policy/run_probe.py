@@ -11,20 +11,20 @@ from time import perf_counter
 
 import httpx
 
-import emporio_music_backend.agent.factory as factory
-from emporio_music_backend.agent.orders import create_store_agent
-from emporio_music_backend.agent.policies import LocalPolicySearch
-from emporio_music_backend.agent.settings import AgentSettings
-from emporio_music_backend.api.app import create_app
-from emporio_music_backend.application.chat import ChatService
-from emporio_music_backend.infrastructure.conversations import (
+import emporio_music.agent.factory as factory
+from emporio_music.agent.orders import create_store_agent
+from emporio_music.policies.search import LocalPolicySearch
+from emporio_music.agent.settings import AgentSettings
+from emporio_music_api.app import create_app
+from emporio_music.application.chat import ChatService
+from emporio_music.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
-from emporio_music_backend.infrastructure.sqlite_orders import SQLiteOrderRepository
-from emporio_music_backend.infrastructure.sqlite_repository import (
+from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
+from emporio_music.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
-from emporio_music_backend.paths import (
+from emporio_music.paths import (
     CATALOG_DATABASE_PATH,
     OPERATIONS_DATABASE_PATH,
 )

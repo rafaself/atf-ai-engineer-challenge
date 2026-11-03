@@ -60,7 +60,7 @@ against the local policy corpus and index. This loads the `sentence-transformers
 dependency, verifies the corpus/index fingerprint and collection contents, and
 loads the cached E5 model with downloads disabled. A missing dependency, model,
 or index blocks the run with `blocked_retrieval_readiness`, records the cause,
-and exits before model inference. The explicit `--group benchmark` run command
+and exits before model inference. The explicit `--extra policy-rag` run command
 installs the local embedding dependencies; the repository README describes how
 to prepare the cached model and index.
 

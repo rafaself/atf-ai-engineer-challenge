@@ -27,16 +27,14 @@ turn, including failures. Do not rewrite verdicts or add enforcement to manufact
 
 Reuse all six conversation IDs and twelve Portuguese turns from the preceding
 approved post-#43 sample (PR #73 / commit `3b0c3a3`), which themselves reuse #40.
-Use its one-off caller and the existing US-18 recorder, not a new harness:
+Use the preserved one-off caller and the existing US-18 recorder, not a new harness:
 
 ```sh
-git show 3b0c3a3:docs/examples/issue-43-review/run_approved_probe.py \
-  > /tmp/grounding-approved-probe.py
-PYTHONPATH="$PWD/apps/backend" \
+PYTHONPATH="$PWD/packages/emporio_music/src:$PWD/apps/api/src" \
 HF_HOME="$PWD/data/benchmark-cache/hf" HF_HUB_OFFLINE=1 \
 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
-uv run --project apps/backend --extra policy-rag --locked \
-  python /tmp/grounding-approved-probe.py --live \
+uv run --project apps/api --extra policy-rag --locked \
+  python docs/examples/issue-43-review/run_approved_probe.py --live \
   --output docs/examples/grounding-followups/qwen-after.json
 ```
 

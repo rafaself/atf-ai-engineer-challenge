@@ -62,10 +62,7 @@ three-way merge without conflicts. No business freight rule is encoded here.
 From the repository root on 2026-11-02:
 
 ```sh
-uv run --directory apps/backend --locked pytest
-uv run --directory apps/backend --locked ruff check .
-uv run --directory apps/backend --locked ruff format --check .
-uv run --directory apps/backend --locked mypy src tests scripts
+make check-python
 ```
 
 The full offline suite passed: 347 tests in 7.74 seconds on the combined A+B version. Ruff lint/format passed,

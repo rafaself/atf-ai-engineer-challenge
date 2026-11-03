@@ -103,7 +103,7 @@ Nova captures and verdicts remain unchanged.
 - [Completed model traces](nemotron-capture-2026-11-02-retry.json)
 - [Initial preflight](nemotron-preflight-2026-11-02.json)
 - [Pricing manifest](nemotron-pricing.json)
-- [Focused runner](../../../apps/backend/scripts/evaluate_nemotron_holidays.py)
+- [Focused runner](../../../scripts/evaluate_nemotron_holidays.py)
 
 The completed retry records the full prompt/evidence/answer traces and per-turn
 HTTP timings; the interrupted first attempt preserves only its available attempt

@@ -121,19 +121,19 @@ coverage. No previous assertion or verdict was weakened.
 Commands from repository root:
 
 ```sh
-uv run --directory apps/backend --locked pytest
-uv run --directory apps/backend --locked ruff check .
-uv run --directory apps/backend --locked ruff format --check .
-uv run --directory apps/backend --locked mypy src tests scripts
+uv run --project apps/api --locked pytest tests
+uv run --project apps/api --locked ruff check .
+uv run --project apps/api --locked ruff format --check .
+make check-python
 ```
 
 Any future paid reproduction needs new approval and a fresh output directory:
 
 ```sh
-PYTHONPATH="$PWD/apps/backend" \
+PYTHONPATH="$PWD/packages/emporio_music/src:$PWD/apps/api/src" \
 HF_HOME="$PWD/data/benchmark-cache/hf" HF_HUB_OFFLINE=1 \
 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 \
-uv run --project apps/backend --extra policy-rag --locked \
+uv run --project apps/api --extra policy-rag --locked \
   python docs/examples/context-aware-policy/run_probe.py --live \
   --output-dir /tmp/new-approved-context-comparison
 ```
