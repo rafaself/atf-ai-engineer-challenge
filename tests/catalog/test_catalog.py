@@ -22,6 +22,8 @@ from emporio_music.infrastructure.sqlite_repository import (
 )
 from emporio_music.ports.catalog import ProductRepository
 
+from tests._support import REPOSITORY_ROOT
+
 
 def write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, str]]) -> None:
     with path.open("w", encoding="utf-8-sig", newline="") as stream:
@@ -66,7 +68,7 @@ def sources(
 
 
 def test_supplied_snapshot_and_grounded_searches(tmp_path: Path) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     products, categories = data / "products.csv", data / "categories.csv"
     hashes = [
         hashlib.sha256(path.read_bytes()).digest() for path in (products, categories)

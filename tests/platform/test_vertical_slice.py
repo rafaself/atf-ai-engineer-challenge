@@ -31,7 +31,7 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from tests._support import run_async
+from tests._support import REPOSITORY_ROOT, run_async
 
 INVENTORY_NOTICE = (
     "Preços e estoque refletem uma fotografia importada do catálogo; "
@@ -86,14 +86,14 @@ INVENTORY_NOTICE = (
 def test_snapshot_facts_survive_http_agent_tool_pipeline(
     tmp_path: Path,
     conversations: SQLiteConversationRepository,
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
     tool_name: str,
     arguments: dict[str, object],
     total: int,
     price: int | None,
     stock: int | None,
 ) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
         data / "products.csv",
@@ -121,9 +121,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
     )
     with TestClient(create_app(ChatService(executor, conversations))) as client:
-        response = client.post(
-            "/api/chat", json={**demo_customer, "message": "Consulta de integração"}
-        )
+        response = client.post("/api/chat", json={"message": "Consulta de integração"})
     assert response.status_code == 200
     if total > 10:
         assert response.json()["answer"].startswith(answer)
@@ -158,6 +156,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
 def test_customer_budget_supports_comparison_or_clarification_without_echoing_amount(
     operational_database: Path,
     conversations: SQLiteConversationRepository,
+    fixed_demo_identity: CustomerIdentity,
     lookup_product: bool,
 ) -> None:
     answer = (
@@ -208,7 +207,7 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
     tmp_path: Path,
     conversations: SQLiteConversationRepository,
 ) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
         data / "products.csv",

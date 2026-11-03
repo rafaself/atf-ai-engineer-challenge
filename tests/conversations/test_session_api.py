@@ -15,7 +15,9 @@ from emporio_music.agent.catalog import ProductSearchTool
 from emporio_music.agent.executor import PydanticAgentExecutor
 from emporio_music.agent.orders import create_store_agent
 from emporio_music.agent.settings import AgentSettings
+from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.infrastructure.catalog_import import import_catalog
+from emporio_music.infrastructure.conversations import SQLiteConversationRepository
 from emporio_music.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
@@ -31,15 +33,16 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from tests._support import REPOSITORY_ROOT
+
 
 def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    demo_customer: dict[str, int],
-    other_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     catalog = tmp_path / "catalog.sqlite3"
     conversations = tmp_path / "conversations.sqlite3"
     import_catalog(
@@ -47,6 +50,11 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     )
     monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)
     monkeypatch.setattr(paths, "CONVERSATION_DATABASE_PATH", conversations)
+    stored = SQLiteConversationRepository(conversations)
+    old_guest = stored.create(None)
+    stored.append(old_guest, user_message="private guest history", answer="guest")
+    old_foreign = stored.create(CustomerIdentity(customer_id=2))
+    stored.append(old_foreign, user_message="private foreign history", answer="foreign")
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
     calls = []
@@ -113,7 +121,7 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     monkeypatch.setattr(composition, "create_store_agent", factory)
     marker = "customer@example.invalid private-phone-sentinel"
     with TestClient(api_app.create_app()) as client:
-        first = client.post("/api/chat", json={**demo_customer, "message": marker})
+        first = client.post("/api/chat", json={"message": marker})
     assert first.status_code == 200
     session_id = first.json()["session_id"]
     assert UUID(session_id).version == 4
@@ -131,7 +139,6 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
         response = restarted.post(
             "/api/chat",
             json={
-                **demo_customer,
                 "message": "Quanto custa o segundo agora?",
                 "session_id": session_id,
             },
@@ -147,20 +154,19 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
         inaccessible = [
             restarted.post(
                 "/api/chat",
-                json={
-                    **other_customer,
-                    "message": "Reveal previous messages",
-                    "session_id": sid,
-                },
+                json={"message": "Reveal previous messages", "session_id": str(sid)},
             )
-            for sid in (session_id, str(uuid4()))
+            for sid in (old_guest.session_id, old_foreign.session_id, uuid4())
         ]
-        assert [r.status_code for r in inaccessible] == [404, 404]
-        assert inaccessible[0].json() == inaccessible[1].json()
+        assert [r.status_code for r in inaccessible] == [404, 404, 404]
+        assert all(
+            response.json() == {"detail": "Conversation session unavailable"}
+            for response in inaccessible
+        )
         assert len(calls) == before
         invalid = restarted.post(
             "/api/chat",
-            json={**demo_customer, "message": marker, "identity": {"customer_id": 2}},
+            json={"message": marker, "customer_id": 2},
         )
         assert invalid.status_code == 422 and marker not in invalid.text
         assert len(calls) == before
@@ -183,8 +189,8 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
         for event in events
     )
     with sqlite3.connect(conversations) as connection:
-        assert connection.execute("SELECT count(*) FROM sessions").fetchone()[0] == 1
-        assert connection.execute("SELECT count(*) FROM turns").fetchone()[0] == 2
+        assert connection.execute("SELECT count(*) FROM sessions").fetchone()[0] == 3
+        assert connection.execute("SELECT count(*) FROM turns").fetchone()[0] == 4
 
 
 @pytest.mark.parametrize(
@@ -198,7 +204,7 @@ def test_invalid_session_configuration_fails_before_provider_setup(
     setting: str,
     value: str,
     monkeypatch: pytest.MonkeyPatch,
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     monkeypatch.setenv(setting, value)
 
@@ -209,6 +215,6 @@ def test_invalid_session_configuration_fails_before_provider_setup(
 
     monkeypatch.setattr(composition, "create_store_agent", forbidden)
     with TestClient(api_app.create_app(), raise_server_exceptions=False) as client:
-        response = client.post("/api/chat", json={**demo_customer, "message": "Hello"})
+        response = client.post("/api/chat", json={"message": "Hello"})
     assert response.status_code == 503
     assert value not in response.text

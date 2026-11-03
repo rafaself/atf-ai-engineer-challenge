@@ -8,12 +8,16 @@ from typing import Any
 
 import pytest
 from emporio_music.domain.errors import (
+    AmbiguousTrackingCodeError,
     ConfigurationError,
-    CustomerSelectionError,
     OperationalRetrievalError,
 )
 from emporio_music.domain.identity import CustomerIdentity
-from emporio_music.domain.orders import OrderListQuery, OrderLookupQuery
+from emporio_music.domain.orders import (
+    OrderListQuery,
+    OrderLookupQuery,
+    OrderTrackingCodeQuery,
+)
 from emporio_music.infrastructure.operations_import import (
     CUSTOMER_COLUMNS,
     ITEM_COLUMNS,
@@ -24,7 +28,9 @@ from emporio_music.infrastructure.operations_import import (
 from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
 from pydantic import ValidationError
 
-DATA = Path(__file__).resolve().parents[1] / "data"
+from tests._support import REPOSITORY_ROOT
+
+DATA = REPOSITORY_ROOT / "data"
 
 
 def write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, Any]]) -> Path:
@@ -144,7 +150,7 @@ def test_scoped_reads_limits_ordering_and_full_replacement(
         lambda: repository.list_orders(unknown, OrderListQuery()),
         lambda: repository.get_order(unknown, OrderLookupQuery(order_id=1)),
     ):
-        with pytest.raises(CustomerSelectionError):
+        with pytest.raises(ConfigurationError):
             query()
     detail = repository.get_order(alice, OrderLookupQuery(order_id=1))
     assert detail is not None
@@ -176,6 +182,69 @@ def test_scoped_reads_limits_ordering_and_full_replacement(
     assert repository.list_orders(alice, OrderListQuery()).orders == ()
     with sqlite3.connect(operational_database) as conn:
         assert conn.execute("SELECT count(*) FROM products").fetchone()[0] == 0
+
+
+def test_tracking_lookup_returns_only_an_owned_exact_match(
+    operational_database: Path,
+) -> None:
+    repository = SQLiteOrderRepository(operational_database)
+    owner = CustomerIdentity(customer_id=1)
+    foreign_code = "BRJL5544332BR"
+    owned_code = "BRQM7890123BR"
+
+    owned = repository.get_order_by_tracking_code(
+        owner, OrderTrackingCodeQuery(tracking_code=owned_code)
+    )
+    assert owned is not None
+    assert owned == repository.get_order(owner, OrderLookupQuery(order_id=4))
+    assert (
+        repository.get_order_by_tracking_code(
+            owner, OrderTrackingCodeQuery(tracking_code=foreign_code)
+        )
+        is None
+    )
+    assert (
+        repository.get_order_by_tracking_code(
+            owner, OrderTrackingCodeQuery(tracking_code="UNKNOWN-CODE")
+        )
+        is None
+    )
+    assert (
+        repository.get_order_by_tracking_code(
+            owner, OrderTrackingCodeQuery(tracking_code=f" {owned_code} ")
+        )
+        == owned
+    )
+
+
+def test_tracking_lookup_reports_duplicate_owned_codes(
+    operational_database: Path,
+) -> None:
+    with sqlite3.connect(operational_database) as connection:
+        connection.execute(
+            "UPDATE orders SET customer_id = ?, tracking_code = ? WHERE order_id = ?",
+            (1, "BRQM7890123BR", 8),
+        )
+    repository = SQLiteOrderRepository(operational_database)
+
+    with pytest.raises(AmbiguousTrackingCodeError):
+        repository.get_order_by_tracking_code(
+            CustomerIdentity(customer_id=1),
+            OrderTrackingCodeQuery(tracking_code="BRQM7890123BR"),
+        )
+
+
+@pytest.mark.parametrize("tracking_code", ["", "   ", "\n\t", None, 123])
+def test_tracking_query_rejects_blank_or_non_text_codes(
+    tracking_code: object,
+) -> None:
+    with pytest.raises(ValidationError):
+        OrderTrackingCodeQuery.model_validate({"tracking_code": tracking_code})
+
+    with pytest.raises(ValidationError):
+        OrderTrackingCodeQuery.model_validate(
+            {"tracking_code": "ABC", "customer_id": 2}
+        )
 
 
 @pytest.mark.parametrize(
@@ -268,6 +337,11 @@ def test_storage_faults_are_not_empty_and_foreign_databases_are_preserved(
     operational_database.unlink()
     with pytest.raises(OperationalRetrievalError):
         repository.list_orders(CustomerIdentity(customer_id=1), OrderListQuery())
+    with pytest.raises(OperationalRetrievalError):
+        repository.get_order_by_tracking_code(
+            CustomerIdentity(customer_id=1),
+            OrderTrackingCodeQuery(tracking_code="BRQM7890123BR"),
+        )
     assert not operational_database.exists()
 
 

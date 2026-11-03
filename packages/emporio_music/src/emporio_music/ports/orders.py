@@ -8,6 +8,7 @@ from emporio_music.domain.orders import (
     OrderListQuery,
     OrderListResult,
     OrderLookupQuery,
+    OrderTrackingCodeQuery,
 )
 
 
@@ -24,5 +25,15 @@ class OrderRepository(Protocol):
         """Return an owned order; unknown and foreign IDs both return None.
 
         Unknown customers fail authorization. Storage faults never mean no match.
+        """
+        ...
+
+    def get_order_by_tracking_code(
+        self, identity: CustomerIdentity, query: OrderTrackingCodeQuery
+    ) -> OrderDetail | None:
+        """Return one exact owned match; foreign and unknown codes both return None.
+
+        More than one owned match raises AmbiguousTrackingCodeError. Unknown
+        customers and storage faults remain distinct from a code that has no match.
         """
         ...

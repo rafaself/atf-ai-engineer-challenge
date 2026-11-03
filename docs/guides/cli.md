@@ -21,4 +21,10 @@ uv run --env-file .env --project apps/cli -- emporio-music-chat --live
 uv sync --project apps/cli --locked --extra policy-rag
 ```
 
-Choose `g` for guest mode or enter an existing fictional customer ID. Enter `/new` to start another session and choose an identity again; `/exit`, Ctrl-C or EOF exits. Customer identity is fixed within each session and is never inferred from chat text. The CLI does not automatically retry failed messages.
+The CLI uses the same fixed fictional customer ID `1` as the HTTP and React demo.
+It checks that customer against the current operational snapshot for each turn and
+does not prompt for identity. Customer `1` owns order `4`, whose imported tracking
+code `BRQM7890123BR` can be used in the demo. `/new` starts another session under
+the same identity; `/exit`, Ctrl-C or EOF exits. Identity is never inferred from
+chat text, and the CLI does not automatically retry failed messages. This is demo
+context, not authentication.

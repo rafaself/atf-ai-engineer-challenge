@@ -5,11 +5,13 @@ import sys
 import tomllib
 from pathlib import Path
 
+from tests._support import REPOSITORY_ROOT
+
 
 def test_contracts_and_application_import_without_provider_modules(
     tmp_path: Path,
 ) -> None:
-    package_source = Path(__file__).resolve().parents[1] / "packages/emporio_music/src"
+    package_source = REPOSITORY_ROOT / "packages/emporio_music/src"
     environment = {
         key: value for key, value in os.environ.items() if not key.startswith("AWS_")
     }
@@ -36,9 +38,7 @@ def test_contracts_and_application_import_without_provider_modules(
 
 
 def test_core_dependencies_point_inward() -> None:
-    root = (
-        Path(__file__).resolve().parents[1] / "packages/emporio_music/src/emporio_music"
-    )
+    root = REPOSITORY_ROOT / "packages/emporio_music/src/emporio_music"
     allowed = {
         "domain": {"domain"},
         "ports": {"domain", "ports"},
@@ -68,9 +68,7 @@ def test_core_dependencies_point_inward() -> None:
 
 
 def test_package_initializers_have_no_implementations_or_barrel_imports() -> None:
-    root = (
-        Path(__file__).resolve().parents[1] / "packages/emporio_music/src/emporio_music"
-    )
+    root = REPOSITORY_ROOT / "packages/emporio_music/src/emporio_music"
     barrels = {f"emporio_music.{name}" for name in ("domain", "ports", "application")}
     for path in root.rglob("*.py"):
         tree = ast.parse(path.read_text())
@@ -97,7 +95,7 @@ def test_package_initializers_have_no_implementations_or_barrel_imports() -> Non
 
 
 def test_apps_depend_on_the_shared_package_without_cross_imports() -> None:
-    repository_root = Path(__file__).resolve().parents[1]
+    repository_root = REPOSITORY_ROOT
     project_files = {
         "api": repository_root / "apps/api/pyproject.toml",
         "cli": repository_root / "apps/cli/pyproject.toml",

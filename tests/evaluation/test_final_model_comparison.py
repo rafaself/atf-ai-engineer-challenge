@@ -36,6 +36,7 @@ from scripts.final_model_comparison import (
     write_json,
 )
 from scripts.final_model_review import aggregate, prepare_review
+from tests._support import REPOSITORY_ROOT
 
 
 def report() -> dict[str, Any]:
@@ -346,7 +347,7 @@ def test_serialized_converse_tool_roundtrip_is_guarded_without_network(
     operational_database: Path,
 ) -> None:
     """Use real SDK serialization/events and local tools; stub only network I/O."""
-    root = Path(__file__).resolve().parents[1]
+    root = REPOSITORY_ROOT
     catalog = tmp_path / "catalog.sqlite3"
     import_catalog(
         root / "data/products.csv",

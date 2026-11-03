@@ -1,8 +1,6 @@
 import { ChatClientError, type ChatClient, type ChatResponse } from "./chatClient";
 import { readServerSentEvents } from "./sse";
 
-const demoCustomerId = 1;
-
 function isChatResponse(value: unknown): value is ChatResponse {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -39,7 +37,6 @@ export const httpChatClient: ChatClient = {
   async streamMessage(message, sessionId, onDelta) {
     const requestBody = {
       message,
-      customer_id: demoCustomerId,
       ...(sessionId ? { session_id: sessionId } : {}),
     };
 

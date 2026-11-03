@@ -30,7 +30,7 @@ Offline checks use controlled Pydantic AI models and forbid real model requests;
 
 ## Product search (US-05)
 
-`agent.catalog.create_catalog_agent(settings, repository, model=...)` registers `search_available_products` and `get_product_details` against any ProductRepository. The optional model argument is for alternate providers or controlled tests; omit it for the configured Bedrock model. This factory remains an isolated catalog probe. HTTP uses `agent.orders.create_store_agent(settings, products, orders)`, sharing those same product tools and adding `list_my_orders`/`get_my_order`; it requires operational storage and a valid selected fictional customer for orders. Guests may use catalog tools. See [orders](orders.md).
+`agent.catalog.create_catalog_agent(settings, repository, model=...)` registers `search_available_products` and `get_product_details` against any ProductRepository. The optional model argument is for alternate providers or controlled tests; omit it for the configured Bedrock model. This factory remains an isolated catalog probe. HTTP uses `agent.orders.create_store_agent(settings, products, orders)`, sharing those same product tools and adding `list_my_orders`, `get_my_order` and `get_my_order_by_tracking_code`. It requires operational storage and uses the fixed fictional customer ID `1`. See [orders](orders.md).
 
 Recommendation filters are category, partial product_name, inclusive min_price_brl and max_price_brl (reais, not centavos), and limit (1–20). Recommendations always use active/positive-stock availability. get_product_details requires product_name and accepts limit; it includes all statuses/stock levels for named inspection. Prices must be finite, nonnegative, and have exact cents within the SQLite range. Conversion is independent of the caller's Decimal precision. Boolean limits are rejected at the SDK boundary. Availability is owned by each tool rather than exposed as a model-controlled flag.
 
@@ -46,6 +46,11 @@ US-12 extends both product tools with `payment_method="standard"|"pix"` and sear
 
 AgentExecutor.run also requires context, but returns AgentResponse without a persistence claim. The adapter translates application-owned user/assistant text into fresh SDK messages. Identity/session metadata and old tool returns are not sent as messages. ExecutionContext is passed as per-run SDK dependencies; order tools derive customer scope there. SDK direct calls require `deps=ExecutionContext()` for stateless probes, or a trusted owned context for order execution. Current-run message IDs select the output validator's tool evidence, so historical results cannot add new selection notices; corrective retries are still included. The service preserves typed errors, timeout, and caller cancellation. No persistence write runs in a background worker after cancellation. The short SQLite commit cannot be interrupted asynchronously; the current single-process and response-loss limits are in [architecture](../architecture.md).
 
-Guests use empty identity context and can persist catalog conversations. Non-null HTTP customer selection is registry-validated before session/model access; it is local fictional selection, not authentication. SDK dependencies carry selected scope separately from model messages. The smoke module remains an independent provider probe. See [API setup](api.md) and [policy retrieval](policy-retrieval.md).
+Every HTTP and CLI turn uses fixed fictional customer ID `1`, validated against
+the current operational registry before session/model access. The browser sends
+no identity field, and `customer_id` is not accepted by the HTTP request. This is
+demo context, not authentication. SDK dependencies carry trusted scope separately
+from model messages. The smoke module remains an independent provider probe. See
+[API setup](api.md) and [policy retrieval](policy-retrieval.md).
 
 For access keys in .env, remove AWS_PROFILE from the file and unset profile selection in the shell; include AWS_SESSION_TOKEN for temporary credentials. The application does not load .env; uv --env-file does. Existing shell variables take precedence. Tests cleared profile selection only in their own processes.

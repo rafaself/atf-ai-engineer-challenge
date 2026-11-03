@@ -9,8 +9,8 @@ from pydantic import TypeAdapter
 
 from emporio_music.diagnostics import failure, trace
 from emporio_music.domain.errors import (
+    AmbiguousTrackingCodeError,
     ConfigurationError,
-    CustomerSelectionError,
     OperationalRetrievalError,
 )
 from emporio_music.domain.identity import CustomerIdentity
@@ -22,6 +22,7 @@ from emporio_music.domain.orders import (
     OrderListResult,
     OrderLookupQuery,
     OrderSummary,
+    OrderTrackingCodeQuery,
 )
 from emporio_music.infrastructure._operations import validate_schema
 
@@ -77,7 +78,9 @@ class SQLiteOrderRepository:
             ).fetchone()
             is None
         ):
-            raise CustomerSelectionError("Unknown demo customer")
+            raise ConfigurationError(
+                "The fixed demo customer is missing from the snapshot"
+            )
 
     def exists(self, identity: CustomerIdentity) -> bool:
         customer_id = self._customer_id(identity)
@@ -118,33 +121,55 @@ class SQLiteOrderRepository:
         validated = OrderLookupQuery.model_validate(query)
         with self._snapshot() as connection:
             self._require_customer(connection, customer_id)
-            row = connection.execute(
-                f"SELECT {_HEADER}, tracking_code, estimated_delivery FROM orders "
-                "WHERE order_id = ? AND customer_id = ?",
-                (validated.order_id, customer_id),
-            ).fetchone()
-            if row is None:
-                return None
-            # Scope every read independently, including item counts and projections.
-            source = "FROM order_items i JOIN orders o USING (order_id) WHERE o.order_id = ? AND o.customer_id = ?"
-            params = (validated.order_id, customer_id)
-            total = connection.execute(f"SELECT count(*) {source}", params).fetchone()[
-                0
-            ]
-            items = connection.execute(
-                "SELECT i.product_id, p.name AS product_name, i.quantity "
-                "FROM order_items i JOIN orders o USING (order_id) JOIN products p USING (product_id) "
-                "WHERE o.order_id = ? AND o.customer_id = ? ORDER BY i.product_id LIMIT 20",
-                params,
+            return self._order_detail(connection, validated.order_id, customer_id)
+
+    def get_order_by_tracking_code(
+        self, identity: CustomerIdentity, query: OrderTrackingCodeQuery
+    ) -> OrderDetail | None:
+        customer_id = self._customer_id(identity)
+        validated = OrderTrackingCodeQuery.model_validate(query)
+        with self._snapshot() as connection:
+            self._require_customer(connection, customer_id)
+            matches = connection.execute(
+                "SELECT order_id FROM orders WHERE customer_id = ? "
+                "AND tracking_code = ? ORDER BY order_id LIMIT 2",
+                (customer_id, validated.tracking_code),
             ).fetchall()
-            result = OrderDetail.model_validate(
-                {
-                    **dict(row),
-                    "items": tuple(
-                        OrderItem.model_validate(dict(item)) for item in items
-                    ),
-                    "total_items": total,
-                }
-            )
-            trace("operations.result", total_matches=total, returned=len(items))
-            return result
+            if not matches:
+                return None
+            if len(matches) > 1:
+                raise AmbiguousTrackingCodeError(
+                    "Multiple owned orders match the tracking code"
+                )
+            return self._order_detail(connection, matches[0]["order_id"], customer_id)
+
+    @staticmethod
+    def _order_detail(
+        connection: sqlite3.Connection, order_id: int, customer_id: int
+    ) -> OrderDetail | None:
+        row = connection.execute(
+            f"SELECT {_HEADER}, tracking_code, estimated_delivery FROM orders "
+            "WHERE order_id = ? AND customer_id = ?",
+            (order_id, customer_id),
+        ).fetchone()
+        if row is None:
+            return None
+        # Scope every read independently, including item counts and projections.
+        source = "FROM order_items i JOIN orders o USING (order_id) WHERE o.order_id = ? AND o.customer_id = ?"
+        params = (order_id, customer_id)
+        total = connection.execute(f"SELECT count(*) {source}", params).fetchone()[0]
+        items = connection.execute(
+            "SELECT i.product_id, p.name AS product_name, i.quantity "
+            "FROM order_items i JOIN orders o USING (order_id) JOIN products p USING (product_id) "
+            "WHERE o.order_id = ? AND o.customer_id = ? ORDER BY i.product_id LIMIT 20",
+            params,
+        ).fetchall()
+        result = OrderDetail.model_validate(
+            {
+                **dict(row),
+                "items": tuple(OrderItem.model_validate(dict(item)) for item in items),
+                "total_items": total,
+            }
+        )
+        trace("operations.result", total_matches=total, returned=len(items))
+        return result

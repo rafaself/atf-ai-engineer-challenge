@@ -4,7 +4,6 @@ import argparse
 import asyncio
 import sys
 from collections.abc import Callable, Sequence
-from enum import Enum
 
 from emporio_music.domain.chat import ChatRequest
 from emporio_music.domain.conversations import ExecutionContext
@@ -13,23 +12,17 @@ from emporio_music.domain.errors import (
     ApplicationError,
     ConfigurationError,
     ConversationPersistenceError,
-    CustomerSelectionError,
     PolicyRetrievalError,
     ProviderUnavailableError,
     SessionAccessError,
     SessionConflictError,
 )
-from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music.ports.chat import ChatServicePort
 from pydantic import UUID4, ValidationError
 
 InputFunction = Callable[[str], str]
 OutputFunction = Callable[[str], None]
-
-
-class _SelectionCommand(Enum):
-    EXIT = "exit"
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -46,10 +39,8 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _error_message(error: ApplicationError) -> str:
-    if isinstance(error, CustomerSelectionError):
-        return "Cliente fictício desconhecido. Escolha um ID existente."
     if isinstance(error, SessionAccessError):
-        return "Esta conversa não está disponível para o cliente selecionado. Use /new."
+        return "Esta conversa não está disponível. Use /new para iniciar outra."
     if isinstance(error, SessionConflictError):
         return "Já existe uma resposta em andamento nesta conversa."
     if isinstance(error, AgentTimeoutError):
@@ -65,78 +56,47 @@ def _error_message(error: ApplicationError) -> str:
     return "Não foi possível concluir a mensagem. Nenhuma resposta foi confirmada."
 
 
-def _choose_identity(
-    order_repository: SQLiteOrderRepository,
-    input_fn: InputFunction,
-    output_fn: OutputFunction,
-) -> CustomerIdentity | None | _SelectionCommand:
-    from emporio_music.composition import resolve_demo_customer
-
-    while True:
-        selection = input_fn("Cliente fictício (ID) ou convidado [g]: ").strip()
-        command = selection.casefold()
-        if command in {"/exit", "exit", "quit"}:
-            return _SelectionCommand.EXIT
-        if command in {"g", "guest", "convidado"}:
-            output_fn("Modo convidado.")
-            return None
-        try:
-            identity = CustomerIdentity(customer_id=int(selection))
-        except (ValueError, ValidationError):
-            output_fn(
-                "Digite um ID numérico positivo existente, 'g' para convidado ou /exit."
-            )
-            continue
-        try:
-            selected = resolve_demo_customer(identity.customer_id, order_repository)
-        except CustomerSelectionError as error:
-            output_fn(_error_message(error))
-            continue
-        assert selected is not None
-        output_fn(f"Cliente fictício {selected.customer_id} selecionado.")
-        return selected
-
-
 async def _chat_loop(
     chat_service: ChatServicePort,
     order_repository: SQLiteOrderRepository,
     input_fn: InputFunction,
     output_fn: OutputFunction,
 ) -> None:
+    from emporio_music.composition import get_fixed_demo_identity
+
     output_fn("Empório da Música — /new inicia outra conversa; /exit encerra.")
     output_fn(
         "Demonstração com dados fictícios. As consultas simulam os sistemas da loja."
     )
+    output_fn("Atendimento com identidade fictícia fixa.")
+    session_id: UUID4 | None = None
     while True:
-        identity = _choose_identity(order_repository, input_fn, output_fn)
-        if identity is _SelectionCommand.EXIT:
+        message = input_fn("Você: ").strip()
+        command = message.casefold()
+        if command in {"/exit", "exit", "quit"}:
             return
-        session_id: UUID4 | None = None
-        while True:
-            message = input_fn("Você: ").strip()
-            command = message.casefold()
-            if command in {"/exit", "exit", "quit"}:
-                return
-            if command == "/new":
-                output_fn("Nova conversa.")
-                break
-            if not message:
-                continue
-            try:
-                request = ChatRequest(message=message, session_id=session_id)
-            except ValidationError:
-                output_fn("A mensagem deve ter entre 1 e 4000 caracteres.")
-                continue
-            try:
-                response = await chat_service.chat(
-                    request,
-                    context=ExecutionContext(identity=identity),
-                )
-            except ApplicationError as error:
-                output_fn(f"Erro: {_error_message(error)}")
-                continue
-            session_id = response.session_id
-            output_fn(f"Assistente: {response.answer}")
+        if command == "/new":
+            output_fn("Nova conversa.")
+            session_id = None
+            continue
+        if not message:
+            continue
+        try:
+            request = ChatRequest(message=message, session_id=session_id)
+        except ValidationError:
+            output_fn("A mensagem deve ter entre 1 e 4000 caracteres.")
+            continue
+        try:
+            identity = get_fixed_demo_identity(order_repository)
+            response = await chat_service.chat(
+                request,
+                context=ExecutionContext(identity=identity),
+            )
+        except ApplicationError as error:
+            output_fn(f"Erro: {_error_message(error)}")
+            continue
+        session_id = response.session_id
+        output_fn(f"Assistente: {response.answer}")
 
 
 def run_cli(

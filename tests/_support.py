@@ -2,7 +2,10 @@
 
 import asyncio
 from collections.abc import Coroutine
+from pathlib import Path
 from typing import Any
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 def run_async[T](awaitable: Coroutine[Any, Any, T]) -> T:

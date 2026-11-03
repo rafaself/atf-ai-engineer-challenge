@@ -15,13 +15,13 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
-from tests._support import run_async
+from tests._support import REPOSITORY_ROOT, run_async
 
 
 def test_supplied_active_offer_is_quoted_separately_from_original_price(
     tmp_path: Path,
 ) -> None:
-    data = Path(__file__).resolve().parents[1] / "data"
+    data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
         data / "products.csv",
