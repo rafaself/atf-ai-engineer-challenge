@@ -1,6 +1,6 @@
 # Documentation map
 
-Start with the [root README](../README.md) for setup, the evaluator path and links into the current application. The guides below describe current behavior; dated evaluation reports and ADRs preserve evidence for their recorded revisions. Check their stated limits before applying results to the current checkout.
+Start with the [root README](../README.md) for setup, the evaluator path and links into the current application. Guides describe current behavior, ADRs record decisions still in force, and dated evaluation reports retain revision-specific evidence with their stated limits.
 
 ## Run and understand the current application
 
@@ -19,6 +19,6 @@ Start with the [root README](../README.md) for setup, the evaluator path and lin
 - [Final Bedrock Runtime model selection](evaluations/model-selection/README.md): ten-model capture, assessments, cost and execution limits.
 - [Policy-context comparison](evaluations/policy-context/README.md): Luna A/B capture, cost, retrieval diagnostics and pending human review.
 
-## Decisions and delivery history
+## Architecture decisions
 
 - [ADRs](adr/README.md): accepted architecture and provider decisions.

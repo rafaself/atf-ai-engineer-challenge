@@ -55,7 +55,7 @@ customer.
 The trusted per-run `ExecutionContext` scopes every order tool. SQLite queries
 also bind customer ID inside the repository, including exact tracking-code lookup.
 This fixed fictional identity is demo context, not authentication. Run on loopback
-with fictional data. See [ADR-0007](adr/0007-simplified-demo-identity.md).
+with fictional data. See [ADR-0004](adr/0004-simplified-demo-identity.md).
 
 ## Chat history
 

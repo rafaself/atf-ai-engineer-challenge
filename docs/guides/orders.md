@@ -73,7 +73,7 @@ including on output retries; historical returns add no notices.
 
 History preserves conversational references only. The instructions require fresh retrieval for order facts and ownership. Tracking/estimated delivery never establish actual receipt, return eligibility, payment confirmation, or live carrier status. The prompt is not a universal semantic grounding check. Failures propagate through ChatService without saving a completed turn. Diagnostics allow metadata/counts and safe error classes only; no identifiers, credentials, contacts, tracking or tool rows.
 
-See [API setup](api.md) and [ADR-0007](../adr/0007-simplified-demo-identity.md).
+See [API setup](api.md) and [ADR-0004](../adr/0004-simplified-demo-identity.md).
 Controlled models verify wiring and isolation; real Portuguese tool choice,
 follow-ups and adversarial behavior remain opt-in US-13. Catalog-only factories
 and smoke/examples are isolated probes, never an HTTP fallback when operational
