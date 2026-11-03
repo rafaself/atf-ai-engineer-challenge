@@ -11,7 +11,11 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from emporio_music_backend.agent.factory import create_agent
 from emporio_music_backend.agent.settings import AgentSettings
 from emporio_music_backend.contracts.chat import ChatRequest
-from emporio_music_backend.contracts.conversations import ExecutionContext
+from emporio_music_backend.contracts.conversations import (
+    ConversationMessage,
+    ConversationSession,
+    ExecutionContext,
+)
 from emporio_music_backend.contracts.errors import AgentExecutionError
 from scripts.validate_us18 import (
     RecordingAgent,
@@ -43,6 +47,28 @@ def test_failed_probe_retains_messages_and_safe_cause_without_a_final_answer() -
     ]
     assert recorder.evidence["messages"]
     assert all("run_id" not in message for message in recorder.evidence["messages"])
+
+
+def test_recorder_counts_only_current_responses_with_assistant_history() -> None:
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        return ModelResponse(parts=[TextPart("Resposta atual")])
+
+    recorder = RecordingAgent(
+        create_agent(AgentSettings(), model=FunctionModel(respond))
+    )
+    context = ExecutionContext(
+        session=ConversationSession(),
+        history=(
+            ConversationMessage(role="user", content="Pergunta anterior"),
+            ConversationMessage(role="assistant", content="Resposta anterior"),
+        ),
+    )
+    asyncio.run(recorder.run(ChatRequest(message="E agora?"), context=context))
+    assert recorder.evidence["usage"]["requests"] == 1
+    assert len(recorder.evidence["usage"]["responses"]) == 1
+    assert (
+        len([m for m in recorder.evidence["messages"] if m["kind"] == "response"]) == 2
+    )
 
 
 def test_live_probe_refuses_insufficient_budget_before_provider_setup(

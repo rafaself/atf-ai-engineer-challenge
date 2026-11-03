@@ -1,0 +1,351 @@
+{
+  "explanation": "Reported model_calls could include reconstructed assistant history. Observed provider attempts cover evaluation HTTP turns only; separately recorded access/baseline probes are not added here. Zero-usage historical responses do not add token cost. Reconciliation is recorded per model, not assumed. Raw captures and semantic verdicts remain unchanged.",
+  "captures": [
+    {
+      "capture": "capture-context-updated-2026-11-02.json",
+      "sha256": "910a21473573e640b0572a979a0491ee569213665462e95af315e0fe46da5b50",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 108798,
+          "provider_only_output_tokens": 2716,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01794930"
+        },
+        {
+          "model_id": "amazon.nova-lite-v1:0",
+          "reported_model_calls": 47,
+          "observed_provider_attempts": 39,
+          "provider_counters_complete": true,
+          "current_response_records": 39,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 146196,
+          "provider_only_output_tokens": 3861,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.00969840"
+        }
+      ]
+    },
+    {
+      "capture": "capture-effective-data-qwen32-gptoss120-2026-11-03.json",
+      "sha256": "c6411cf3f9f47fc482fbaec35c06f0f7bf9a651768e48b699b7efe1194fbe880",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 95352,
+          "provider_only_output_tokens": 2897,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01604100"
+        },
+        {
+          "model_id": "openai.gpt-oss-120b-1:0",
+          "reported_model_calls": 43,
+          "observed_provider_attempts": 35,
+          "provider_counters_complete": true,
+          "current_response_records": 35,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 80761,
+          "provider_only_output_tokens": 4855,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01502715"
+        }
+      ]
+    },
+    {
+      "capture": "capture-gpt-oss-2026-11-03.json",
+      "sha256": "cb4f7f30130e1b89d13957153f2ac1363793bea5289933e5d1d4bb7cf883a0f2",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 38,
+          "observed_provider_attempts": 30,
+          "provider_counters_complete": true,
+          "current_response_records": 30,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 104565,
+          "provider_only_output_tokens": 2376,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01711035"
+        },
+        {
+          "model_id": "openai.gpt-oss-20b-1:0",
+          "reported_model_calls": 40,
+          "observed_provider_attempts": 33,
+          "provider_counters_complete": true,
+          "current_response_records": 33,
+          "synthetic_history_response_records": 7,
+          "provider_only_input_tokens": 88525,
+          "provider_only_output_tokens": 3134,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.00713695"
+        },
+        {
+          "model_id": "openai.gpt-oss-120b-1:0",
+          "reported_model_calls": 44,
+          "observed_provider_attempts": 36,
+          "provider_counters_complete": true,
+          "current_response_records": 36,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 98713,
+          "provider_only_output_tokens": 4820,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01769895"
+        }
+      ]
+    },
+    {
+      "capture": "capture-gpt-oss-20b-retry-2026-11-03.json",
+      "sha256": "efaf85167fb5af95ac98728e176cedf962eb17b088684c7c7f69cbb1a989abdd",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 40,
+          "observed_provider_attempts": 32,
+          "provider_counters_complete": true,
+          "current_response_records": 32,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 112476,
+          "provider_only_output_tokens": 2565,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01841040"
+        },
+        {
+          "model_id": "openai.gpt-oss-20b-1:0",
+          "reported_model_calls": 41,
+          "observed_provider_attempts": 33,
+          "provider_counters_complete": true,
+          "current_response_records": 33,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 88525,
+          "provider_only_output_tokens": 3750,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.00732175"
+        }
+      ]
+    },
+    {
+      "capture": "capture-prompt-harness-qwen32-gptoss120-2026-11-03.json",
+      "sha256": "c878fd28931a0a8297925b4e0fc8d519acaef654e46931d5c2e38fc7ed31c34f",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 37,
+          "observed_provider_attempts": 29,
+          "provider_counters_complete": true,
+          "current_response_records": 29,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 75249,
+          "provider_only_output_tokens": 2199,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01260675"
+        },
+        {
+          "model_id": "openai.gpt-oss-120b-1:0",
+          "reported_model_calls": 40,
+          "observed_provider_attempts": 32,
+          "provider_counters_complete": true,
+          "current_response_records": 32,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 63521,
+          "provider_only_output_tokens": 3823,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01182195"
+        }
+      ]
+    },
+    {
+      "capture": "capture-qwen-exception-scope-2026-11-02.json",
+      "sha256": "03b1a1497d649642c343413cd68b778b6a76acc30ca4e67265ed811f8a0801ad",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 40,
+          "observed_provider_attempts": 32,
+          "provider_counters_complete": true,
+          "current_response_records": 32,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 115440,
+          "provider_only_output_tokens": 2592,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01887120"
+        }
+      ]
+    },
+    {
+      "capture": "capture-qwen-natal-reasoning-2026-11-02.json",
+      "sha256": "fd5e458afbbb5686f562c6779b42428d9d2e8574610993abeaae3cf97d2e22b5",
+      "models": []
+    },
+    {
+      "capture": "capture-qwen-overlapping-policy-scopes-2026-11-02.json",
+      "sha256": "43d0a87f10e5205cf0031522b369036d405c821b8e8b26d60450a75990ae93a0",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 110970,
+          "provider_only_output_tokens": 2631,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01822410"
+        }
+      ]
+    },
+    {
+      "capture": "capture-qwen-policy-answer-structure-2026-11-02.json",
+      "sha256": "6156333e26b0b449fe3f048c7d7e2af1970c1ba2cb5c91eb5cdc9cb36fd487f0",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 37,
+          "observed_provider_attempts": 29,
+          "provider_counters_complete": true,
+          "current_response_records": 29,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 103414,
+          "provider_only_output_tokens": 2698,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01713090"
+        }
+      ]
+    },
+    {
+      "capture": "capture-qwen-policy-uncertainty-2026-11-02-retry.json",
+      "sha256": "0d0b7f173f2cddb1bb328d0692f281f686af02f4c5e4b7c09a0f86dd3918e8d9",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 123083,
+          "provider_only_output_tokens": 2508,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01996725"
+        }
+      ]
+    },
+    {
+      "capture": "capture-qwen-policy-uncertainty-2026-11-02.json",
+      "sha256": "dfdcf67a161605066dd780005b22b9485c28eb7ad83b4bdd39d65ea6f19ae482",
+      "models": []
+    },
+    {
+      "capture": "capture-remediated-qwen32-gptoss120-2026-11-03.json",
+      "sha256": "8c5de10220ddb3fffce37b9a05c15d9fa4a7b8ec2336f1f2c12749bfaa789100",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 119680,
+          "provider_only_output_tokens": 2507,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01945620"
+        },
+        {
+          "model_id": "openai.gpt-oss-120b-1:0",
+          "reported_model_calls": 43,
+          "observed_provider_attempts": 35,
+          "provider_counters_complete": true,
+          "current_response_records": 35,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 106368,
+          "provider_only_output_tokens": 5449,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01922460"
+        }
+      ]
+    },
+    {
+      "capture": "capture-runtime-2026-11-02.json",
+      "sha256": "58479e52f366aa7ec58d75a59f039c01aa06285a2e6c36cb263d3132851f5b0b",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 30,
+          "observed_provider_attempts": 25,
+          "provider_counters_complete": true,
+          "current_response_records": 25,
+          "synthetic_history_response_records": 5,
+          "provider_only_input_tokens": 81107,
+          "provider_only_output_tokens": 1734,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01320645"
+        },
+        {
+          "model_id": "amazon.nova-micro-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 105107,
+          "provider_only_output_tokens": 3004,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.004099305"
+        },
+        {
+          "model_id": "amazon.nova-lite-v1:0",
+          "reported_model_calls": 42,
+          "observed_provider_attempts": 34,
+          "provider_counters_complete": true,
+          "current_response_records": 34,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 116232,
+          "provider_only_output_tokens": 3099,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.00771768"
+        }
+      ]
+    },
+    {
+      "capture": "capture-structured-return-qwen32-gptoss120-2026-11-03.json",
+      "sha256": "bb5b7b39a0c70bf3dd674057b29ac42a20e439b45154ab2872d2a57c8e173a49",
+      "models": [
+        {
+          "model_id": "qwen.qwen3-32b-v1:0",
+          "reported_model_calls": 39,
+          "observed_provider_attempts": 31,
+          "provider_counters_complete": true,
+          "current_response_records": 31,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 85846,
+          "provider_only_output_tokens": 2591,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01443150"
+        },
+        {
+          "model_id": "openai.gpt-oss-120b-1:0",
+          "reported_model_calls": 41,
+          "observed_provider_attempts": 33,
+          "provider_counters_complete": true,
+          "current_response_records": 33,
+          "synthetic_history_response_records": 8,
+          "provider_only_input_tokens": 70100,
+          "provider_only_output_tokens": 3978,
+          "token_totals_reconcile": true,
+          "recorded_estimated_cost_usd": "0.01290180"
+        }
+      ]
+    }
+  ]
+}

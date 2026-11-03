@@ -22,7 +22,6 @@ from typing import Any
 import boto3  # type: ignore[import-untyped]
 import httpx
 from botocore.config import Config  # type: ignore[import-untyped]
-from botocore.exceptions import ClientError  # type: ignore[import-untyped]
 from dotenv import dotenv_values
 from pydantic_ai.models.bedrock import BedrockConverseModel
 from pydantic_ai.providers.bedrock import BedrockProvider
@@ -45,7 +44,7 @@ from scripts.validate_us18 import RecordingAgent, _write_checkpoint, sanitized
 
 PROJECT_ROOT = paths.PROJECT_ROOT
 SCENARIOS_PATH = (
-    PROJECT_ROOT / "docs/examples/model-comparison/scenarios-current-v4.json"
+    PROJECT_ROOT / "docs/examples/model-comparison/scenarios-current-v7.json"
 )
 PRICING_PATH = PROJECT_ROOT / "docs/examples/model-comparison/pricing.json"
 AWS_ENVIRONMENT_KEYS = (
@@ -63,6 +62,9 @@ EXPECTED_INFERENCE_ENDPOINTS = {
     "nova_lite": ENDPOINT_RUNTIME,
     "gpt_oss_20b": ENDPOINT_RUNTIME,
     "gpt_oss_120b": ENDPOINT_RUNTIME,
+    "gpt6_luna": ENDPOINT_RUNTIME,
+    "gpt6_1_sol": ENDPOINT_RUNTIME,
+    "claude_haiku_5_5": ENDPOINT_RUNTIME,
 }
 EXPECTED_INFERENCE_APIS = {
     "qwen3_32b": "converse",
@@ -70,6 +72,9 @@ EXPECTED_INFERENCE_APIS = {
     "nova_lite": "converse",
     "gpt_oss_20b": "converse",
     "gpt_oss_120b": "converse",
+    "gpt6_luna": "converse",
+    "gpt6_1_sol": "converse",
+    "claude_haiku_5_5": "converse",
 }
 EXPECTED_INFERENCE_MODEL_IDS = {
     "qwen3_32b": "qwen.qwen3-32b-v1:0",
@@ -77,8 +82,20 @@ EXPECTED_INFERENCE_MODEL_IDS = {
     "nova_lite": "amazon.nova-lite-v1:0",
     "gpt_oss_20b": "openai.gpt-oss-20b-1:0",
     "gpt_oss_120b": "openai.gpt-oss-120b-1:0",
+    "gpt6_luna": "us.openai.gpt-6-luna",
+    "gpt6_1_sol": "us.openai.gpt-6.1-sol",
+    "claude_haiku_5_5": "us.anthropic.claude-haiku-5-5",
 }
-OUTPUT_CAP_USD = Decimal("1.00")
+# Owner approved a fresh US$5.00 ceiling for the Qwen/Luna/Sol comparison.
+OUTPUT_CAP_USD = Decimal("5.00")
+# Aggregate input-token ceilings for this bounded v7 benchmark. The per-request
+# limit below keeps every request in its model's standard short-context tier.
+BENCHMARK_INPUT_TOKEN_BUDGETS = {
+    "qwen3_32b": 1_300_000,
+    "gpt6_luna": 1_300_000,
+    "gpt6_1_sol": 1_100_000,
+}
+REQUEST_INPUT_OVERHEAD_TOKENS = 2_048
 EXPECTED_SETTINGS = {
     "request_timeout_seconds": 15.0,
     "max_requests": 6,
@@ -91,6 +108,9 @@ RUN_ORDER = (
     "nova_lite",
     "gpt_oss_20b",
     "gpt_oss_120b",
+    "gpt6_luna",
+    "gpt6_1_sol",
+    "claude_haiku_5_5",
 )
 EXPECTED_MODEL_IDS = {
     "qwen3_32b": "qwen.qwen3-32b-v1:0",
@@ -98,6 +118,9 @@ EXPECTED_MODEL_IDS = {
     "nova_lite": "amazon.nova-lite-v1:0",
     "gpt_oss_20b": "openai.gpt-oss-20b-1:0",
     "gpt_oss_120b": "openai.gpt-oss-120b-1:0",
+    "gpt6_luna": "openai.gpt-6-luna",
+    "gpt6_1_sol": "openai.gpt-6.1-sol",
+    "claude_haiku_5_5": "anthropic.claude-haiku-5-5",
 }
 EXPECTED_CONTEXT_WINDOWS = {
     "qwen3_32b": 32_000,
@@ -105,6 +128,9 @@ EXPECTED_CONTEXT_WINDOWS = {
     "nova_lite": 300_000,
     "gpt_oss_20b": 128_000,
     "gpt_oss_120b": 128_000,
+    "gpt6_luna": 1_050_000,
+    "gpt6_1_sol": 1_000_000,
+    "claude_haiku_5_5": 1_000_000,
 }
 SOURCE_PATHS = (
     "data/SHA256SUMS",
@@ -126,6 +152,9 @@ SOURCE_PATHS = (
     "docs/examples/model-comparison/protocol.md",
     "docs/examples/model-comparison/scenarios-current-v3.json",
     "docs/examples/model-comparison/scenarios-current-v4.json",
+    "docs/examples/model-comparison/scenarios-current-v5.json",
+    "docs/examples/model-comparison/scenarios-return-holdout-v5.json",
+    "docs/examples/model-comparison/scenarios-current-v7.json",
     "docs/examples/model-comparison/scenarios-frozen-v1.json",
 )
 
@@ -141,16 +170,85 @@ class Candidate:
     input_usd_per_million: Decimal
     output_usd_per_million: Decimal
     tool_use_status: str
+    long_context_threshold_tokens: int | None = None
+    long_context_input_usd_per_million: Decimal | None = None
+    long_context_output_usd_per_million: Decimal | None = None
+    cache_write_usd_per_million: Decimal | None = None
+    long_context_cache_write_usd_per_million: Decimal | None = None
 
 
 class RequestCounter:
-    """Count provider HTTP attempts, including SDK retries."""
+    """Count allowed provider calls and bound their serialized input payloads."""
 
     def __init__(self) -> None:
         self.count = 0
+        self.denied_calls = 0
+        self.request_input_upper_bounds: list[int] = []
+        self.run_input_upper_bound = 0
+        self.turn_request_count = 0
+        self.turn_input_upper_bound = 0
+        self.candidate: Candidate | None = None
+        self.max_input_tokens: int | None = None
+        self.max_requests_per_turn: int | None = None
+        self.max_total_requests: int | None = None
 
-    def before_call(self, **_kwargs: object) -> None:
+    def configure(
+        self,
+        candidate: Candidate,
+        *,
+        max_input_tokens: int,
+        max_requests_per_turn: int,
+        max_total_requests: int,
+    ) -> None:
+        self.candidate = candidate
+        self.max_input_tokens = max_input_tokens
+        self.max_requests_per_turn = max_requests_per_turn
+        self.max_total_requests = max_total_requests
+
+    def start_turn(self) -> None:
+        self.turn_request_count = 0
+        self.turn_input_upper_bound = 0
+
+    def before_call(self, **kwargs: object) -> None:
+        if self.candidate is not None:
+            params = kwargs.get("params")
+            body = params.get("body") if isinstance(params, dict) else None
+            if isinstance(body, str):
+                body_bytes = body.encode("utf-8")
+            elif isinstance(body, bytes):
+                body_bytes = body
+            else:
+                self.denied_calls += 1
+                raise RequestBudgetExceeded("Serialized provider request unavailable")
+
+            input_upper_bound = len(body_bytes) + REQUEST_INPUT_OVERHEAD_TOKENS
+            max_request_tokens = min(
+                self.candidate.context_window_tokens,
+                self.candidate.long_context_threshold_tokens
+                or self.candidate.context_window_tokens,
+            )
+            if (
+                self.max_input_tokens is None
+                or self.max_requests_per_turn is None
+                or self.max_total_requests is None
+                or input_upper_bound > max_request_tokens
+                or self.run_input_upper_bound + input_upper_bound
+                > self.max_input_tokens
+                or self.turn_request_count >= self.max_requests_per_turn
+                or self.count >= self.max_total_requests
+            ):
+                self.denied_calls += 1
+                raise RequestBudgetExceeded("Provider request exceeds benchmark budget")
+
+            self.request_input_upper_bounds.append(input_upper_bound)
+            self.run_input_upper_bound += input_upper_bound
+            self.turn_input_upper_bound += input_upper_bound
+            self.turn_request_count += 1
         self.count += 1
+
+
+class RequestBudgetExceeded(RuntimeError):
+    """A Converse request was stopped before network transmission by the budget guard."""
 
 
 def load_project_aws_environment() -> None:
@@ -168,9 +266,11 @@ def _selected_model_keys(model_keys: tuple[str, ...] | None) -> tuple[str, ...]:
         not selected
         or len(set(selected)) != len(selected)
         or any(key not in RUN_ORDER for key in selected)
-        or "qwen3_32b" not in selected
+        or (len(selected) > 1 and "qwen3_32b" not in selected)
     ):
-        raise ValueError("Select unique known models and include the Qwen baseline")
+        raise ValueError(
+            "Select unique known models; multi-model comparisons require the Qwen baseline"
+        )
     return selected
 
 
@@ -242,11 +342,17 @@ def freeze_inputs(scenarios_path: Path = SCENARIOS_PATH) -> dict[str, object]:
 def load_scenarios(path: Path = SCENARIOS_PATH) -> list[dict[str, Any]]:
     document = json.loads(path.read_text(encoding="utf-8"))
     scenarios = document.get("scenarios")
-    if not isinstance(scenarios, list) or len(scenarios) != 9:
-        raise ValueError("The frozen issue #40 set must contain nine scenarios")
-    if sum(len(item.get("turns", [])) for item in scenarios) != 16:
-        raise ValueError("The frozen issue #40 set must contain sixteen turns")
-    if len({item.get("id") for item in scenarios}) != 9:
+    if not isinstance(scenarios, list) or not scenarios:
+        raise ValueError("Scenario fixture must contain conversations")
+    if len(scenarios) != document.get("scenario_count"):
+        raise ValueError("Scenario count differs from the fixture declaration")
+    if any(not item.get("turns") for item in scenarios):
+        raise ValueError("Every conversation needs at least one turn")
+    if sum(len(item["turns"]) for item in scenarios) != document.get(
+        "planned_turns_per_model"
+    ):
+        raise ValueError("Turn count differs from the fixture declaration")
+    if len({item.get("id") for item in scenarios}) != len(scenarios):
         raise ValueError("Scenario IDs must be unique")
     return scenarios
 
@@ -313,6 +419,29 @@ def load_verified_candidates(
                 input_usd_per_million=Decimal(str(entry["input_usd_per_million"])),
                 output_usd_per_million=Decimal(str(entry["output_usd_per_million"])),
                 tool_use_status=tool_use_status,
+                long_context_threshold_tokens=entry.get(
+                    "long_context_threshold_tokens"
+                ),
+                long_context_input_usd_per_million=Decimal(
+                    str(entry["long_context_input_usd_per_million"])
+                )
+                if "long_context_input_usd_per_million" in entry
+                else None,
+                long_context_output_usd_per_million=Decimal(
+                    str(entry["long_context_output_usd_per_million"])
+                )
+                if "long_context_output_usd_per_million" in entry
+                else None,
+                cache_write_usd_per_million=Decimal(
+                    str(entry["cache_write_usd_per_million"])
+                )
+                if "cache_write_usd_per_million" in entry
+                else None,
+                long_context_cache_write_usd_per_million=Decimal(
+                    str(entry["long_context_cache_write_usd_per_million"])
+                )
+                if "long_context_cache_write_usd_per_million" in entry
+                else None,
             )
         )
     if any(
@@ -324,6 +453,29 @@ def load_verified_candidates(
         for candidate in candidates
     ):
         raise ValueError("Context ceilings and verified rates must be positive")
+    for candidate in candidates:
+        threshold = candidate.long_context_threshold_tokens
+        if threshold is not None:
+            rates = (
+                candidate.long_context_input_usd_per_million,
+                candidate.long_context_output_usd_per_million,
+            )
+            if (
+                not isinstance(threshold, int)
+                or not 0 < threshold < candidate.context_window_tokens
+                or any(
+                    rate is None or not rate.is_finite() or rate <= 0 for rate in rates
+                )
+            ):
+                raise ValueError(
+                    "Long-context threshold and rates must be verified and positive"
+                )
+        for rate in (
+            candidate.cache_write_usd_per_million,
+            candidate.long_context_cache_write_usd_per_million,
+        ):
+            if rate is not None and (not rate.is_finite() or rate <= 0):
+                raise ValueError("Cache-write rates must be verified and positive")
     return candidates
 
 
@@ -360,18 +512,133 @@ def turn_reservation_usd(
     *,
     max_requests: int = int(EXPECTED_SETTINGS["max_requests"]),
     max_output_tokens: int = int(EXPECTED_SETTINGS["max_output_tokens"]),
+    input_tokens: int | None = None,
 ) -> Decimal:
-    """Reserve a full input context and output cap for every allowed model request."""
-    input_cost = candidate.context_window_tokens * candidate.input_usd_per_million
-    output_cost = int(max_output_tokens) * candidate.output_usd_per_million
-    return (int(max_requests) * (input_cost + output_cost)) / Decimal(1_000_000)
-
-
-def request_reservation_usd(candidate: Candidate, max_output_tokens: int) -> Decimal:
+    """Reserve bounded input and the output cap for every request in one turn."""
+    if input_tokens is None:
+        return max_requests * request_reservation_usd(candidate, max_output_tokens)
+    input_rate, output_rate, write_rate = _token_rates(candidate, input_tokens)
     return (
-        candidate.context_window_tokens * candidate.input_usd_per_million
-        + max_output_tokens * candidate.output_usd_per_million
+        input_tokens * max(input_rate, write_rate or input_rate)
+        + max_requests * max_output_tokens * output_rate
     ) / Decimal(1_000_000)
+
+
+def _token_rates(
+    candidate: Candidate, input_tokens: int
+) -> tuple[Decimal, Decimal, Decimal | None]:
+    if (
+        candidate.long_context_threshold_tokens is not None
+        and input_tokens > candidate.long_context_threshold_tokens
+    ):
+        assert candidate.long_context_input_usd_per_million is not None
+        assert candidate.long_context_output_usd_per_million is not None
+        return (
+            candidate.long_context_input_usd_per_million,
+            candidate.long_context_output_usd_per_million,
+            candidate.long_context_cache_write_usd_per_million,
+        )
+    return (
+        candidate.input_usd_per_million,
+        candidate.output_usd_per_million,
+        candidate.cache_write_usd_per_million,
+    )
+
+
+def request_reservation_usd(
+    candidate: Candidate,
+    max_output_tokens: int,
+    *,
+    input_tokens: int | None = None,
+) -> Decimal:
+    reserved_input_tokens = (
+        candidate.context_window_tokens if input_tokens is None else input_tokens
+    )
+    input_rate, output_rate, write_rate = _token_rates(candidate, reserved_input_tokens)
+    return (
+        reserved_input_tokens * max(input_rate, write_rate or input_rate)
+        + max_output_tokens * output_rate
+    ) / Decimal(1_000_000)
+
+
+def benchmark_input_token_budget(candidate: Candidate) -> int:
+    """Return the experiment-wide, independently enforced input-token ceiling."""
+    return BENCHMARK_INPUT_TOKEN_BUDGETS.get(
+        candidate.key, candidate.context_window_tokens
+    )
+
+
+def benchmark_turn_input_budget(candidate: Candidate, planned_turns: int) -> int:
+    """Allocate an even-share reservation for the current user turn."""
+    total = benchmark_input_token_budget(candidate)
+    return (total + planned_turns - 1) // planned_turns
+
+
+def benchmark_request_input_limit(candidate: Candidate) -> int:
+    """Keep each request inside the model context and any short-context tier."""
+    return min(
+        candidate.context_window_tokens,
+        candidate.long_context_threshold_tokens or candidate.context_window_tokens,
+    )
+
+
+def benchmark_cost_envelope_usd(
+    candidate: Candidate,
+    *,
+    planned_turns: int,
+    max_requests_per_turn: int,
+    max_output_tokens: int,
+) -> Decimal:
+    """Worst-case token cost under the enforced aggregate input and request limits."""
+    short_context_limit = benchmark_request_input_limit(candidate)
+    input_rate, output_rate, write_rate = _token_rates(candidate, short_context_limit)
+    maximum_requests = planned_turns * max_requests_per_turn
+    return (
+        benchmark_input_token_budget(candidate)
+        * max(input_rate, write_rate or input_rate)
+        + maximum_requests * max_output_tokens * output_rate
+    ) / Decimal(1_000_000)
+
+
+def benchmark_budget_report(
+    candidates: list[Candidate],
+    *,
+    planned_turns: int,
+    max_requests_per_turn: int,
+    max_output_tokens: int,
+) -> dict[str, object]:
+    model_envelopes = {
+        candidate.key: str(
+            benchmark_cost_envelope_usd(
+                candidate,
+                planned_turns=planned_turns,
+                max_requests_per_turn=max_requests_per_turn,
+                max_output_tokens=max_output_tokens,
+            ).quantize(Decimal("0.00000001"))
+        )
+        for candidate in candidates
+    }
+    maximum_cost = sum(map(Decimal, model_envelopes.values()), Decimal(0))
+    return {
+        "input_token_budgets_by_model": {
+            candidate.key: benchmark_input_token_budget(candidate)
+            for candidate in candidates
+        },
+        "request_input_limits_by_model": {
+            candidate.key: benchmark_request_input_limit(candidate)
+            for candidate in candidates
+        },
+        "input_upper_bound_method": (
+            "UTF-8 serialized Converse request body bytes plus "
+            f"{REQUEST_INPUT_OVERHEAD_TOKENS} token overhead"
+        ),
+        "planned_max_requests_per_model": planned_turns * max_requests_per_turn,
+        "max_output_tokens_per_request": max_output_tokens,
+        "maximum_cost_envelope_by_model_usd": model_envelopes,
+        "maximum_combined_cost_envelope_usd": str(
+            maximum_cost.quantize(Decimal("0.00000001"))
+        ),
+    }
 
 
 def estimate_usage_cost(
@@ -380,34 +647,54 @@ def estimate_usage_cost(
     *,
     observed_requests: int,
     max_output_tokens: int,
+    request_input_upper_bounds: tuple[int, ...] = (),
 ) -> tuple[Decimal, dict[str, object]]:
-    """Estimate cost, reserving a full request for every unreported usage record."""
+    """Estimate usage and reserve each unreported request at its bounded input size."""
     usage = evidence.get("usage", {})
     responses = usage.get("responses", [])
-    request_cost_reservation = request_reservation_usd(candidate, max_output_tokens)
     known_cost = Decimal(0)
     complete = 0
     known_input = 0
     known_output = 0
-    for response in responses:
+    missing_usage_requests = 0
+    request_count = max(observed_requests, len(responses))
+    fallback_input_limit = benchmark_request_input_limit(candidate)
+    for index in range(request_count):
+        response = responses[index] if index < len(responses) else {}
         input_tokens = response.get("input_tokens")
         output_tokens = response.get("output_tokens")
         if input_tokens is None or output_tokens is None:
+            input_bound = (
+                request_input_upper_bounds[index]
+                if index < len(request_input_upper_bounds)
+                else fallback_input_limit
+            )
+            known_cost += request_reservation_usd(
+                candidate,
+                max_output_tokens,
+                input_tokens=input_bound,
+            )
+            missing_usage_requests += 1
             continue
         input_count = int(input_tokens)
         output_count = int(output_tokens)
         known_input += input_count
         known_output += output_count
+        input_rate, output_rate, write_rate = _token_rates(candidate, input_count)
+        cache_write_count = int(response.get("cache_write_tokens") or 0)
+        # SDK input totals include cache tokens. Charge reads at full input rates
+        # conservatively; include any documented implicit cache-creation premium.
+        write_premium = cache_write_count * max(
+            Decimal(0), (write_rate or input_rate) - input_rate
+        )
         known_cost += (
-            input_count * candidate.input_usd_per_million
-            + output_count * candidate.output_usd_per_million
+            input_count * input_rate + output_count * output_rate + write_premium
         ) / Decimal(1_000_000)
         complete += 1
 
-    missing_usage_requests = max(0, observed_requests - complete)
-    estimated_cost = known_cost + missing_usage_requests * request_cost_reservation
+    estimated_cost = known_cost
     return estimated_cost, {
-        "requests_observed": observed_requests,
+        "requests_observed": request_count,
         "requests_with_usage": complete,
         "requests_with_missing_usage": missing_usage_requests,
         "input_tokens_reported": known_input if complete else None,
@@ -443,28 +730,59 @@ def _availability_result(response: dict[str, Any], model_id: str) -> dict[str, o
     }
 
 
+class AwsCliControlPlaneError(RuntimeError):
+    def __init__(self, operation: str, error_code: str) -> None:
+        super().__init__(operation)
+        self.operation = operation
+        self.error_code = error_code
+
+
+def _aws_control_plane_json(
+    operation: str, arguments: list[str], settings: AgentSettings
+) -> dict[str, Any]:
+    command = [
+        "aws",
+        "bedrock",
+        operation,
+        *arguments,
+        "--region",
+        settings.aws_region,
+        "--output",
+        "json",
+    ]
+    if settings.aws_profile:
+        command.extend(("--profile", settings.aws_profile))
+    result = subprocess.run(
+        command,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+    if result.returncode:
+        error_code = (
+            "AccessDeniedException"
+            if "AccessDeniedException" in result.stderr
+            else "AwsCliError"
+        )
+        raise AwsCliControlPlaneError(operation, error_code)
+    response = json.loads(result.stdout)
+    if not isinstance(response, dict):
+        raise ValueError("AWS CLI control-plane response was not an object")
+    return response
+
+
 def probe_model_access(
     candidates: list[Candidate], settings: AgentSettings
 ) -> dict[str, Any]:
-    """Use Bedrock's control-plane availability API; this does not invoke models."""
+    """Use read-only AWS CLI control-plane calls; no model inference is sent."""
     results: list[dict[str, object]] = []
-    try:
-        session = boto3.Session(
-            profile_name=settings.aws_profile,
-            region_name="us-east-1",
-        )
-        client = session.client("bedrock")
-    except Exception as exc:
-        return {
-            "status": "blocked",
-            "failure_type": type(exc).__name__,
-            "paid_calls": 0,
-            "models": results,
-        }
     for candidate in candidates:
         try:
-            response = client.get_foundation_model_availability(
-                modelId=candidate.model_id
+            response = _aws_control_plane_json(
+                "get-foundation-model-availability",
+                ["--model-id", candidate.model_id],
+                settings,
             )
         except Exception as exc:
             result: dict[str, object] = {
@@ -473,11 +791,37 @@ def probe_model_access(
                 "paid_calls": 0,
                 "models": results,
             }
-            if isinstance(exc, ClientError):
-                result["aws_operation"] = exc.operation_name
-                result["aws_error_code"] = exc.response.get("Error", {}).get("Code")
+            if isinstance(exc, AwsCliControlPlaneError):
+                result["aws_operation"] = exc.operation
+                result["aws_error_code"] = exc.error_code
             return result
-        results.append(_availability_result(response, candidate.model_id))
+        availability = _availability_result(response, candidate.model_id)
+        if candidate.inference_model_id != candidate.model_id:
+            try:
+                profile = _aws_control_plane_json(
+                    "get-inference-profile",
+                    [
+                        "--inference-profile-identifier",
+                        candidate.inference_model_id,
+                    ],
+                    settings,
+                )
+            except Exception as exc:
+                result = {
+                    "status": "blocked",
+                    "failure_type": type(exc).__name__,
+                    "paid_calls": 0,
+                    "models": results,
+                }
+                if isinstance(exc, AwsCliControlPlaneError):
+                    result["aws_operation"] = exc.operation
+                    result["aws_error_code"] = exc.error_code
+                return result
+            profile_status = profile.get("status")
+            availability["inference_profile_status"] = profile_status
+            if profile_status != "ACTIVE":
+                availability["status"] = "unavailable_or_unconfirmed"
+        results.append(availability)
     return {
         "status": "checked",
         "paid_calls": 0,
@@ -622,12 +966,14 @@ def _turn_cost_and_usage(
     evidence: dict[str, Any],
     observed_requests: int,
     max_output_tokens: int,
+    request_input_upper_bounds: tuple[int, ...] = (),
 ) -> tuple[Decimal, dict[str, object]]:
     cost, usage = estimate_usage_cost(
         candidate,
         evidence,
         observed_requests=observed_requests,
         max_output_tokens=max_output_tokens,
+        request_input_upper_bounds=request_input_upper_bounds,
     )
     cache_read = evidence.get("usage", {}).get("cache_read_tokens")
     cache_write = evidence.get("usage", {}).get("cache_write_tokens")
@@ -636,7 +982,8 @@ def _turn_cost_and_usage(
     usage["cache_write_tokens"] = cache_write
     usage["reasoning_tokens"] = reasoning
     usage["cost_note"] = (
-        "Observed input/output at full standard rates; missing usage reserved at full context."
+        "Observed input/output at applicable standard context tier, with documented implicit cache-write premium; "
+        "cache reads charged at full input rate. Missing usage reserved from serialized request bytes plus tokenization overhead."
     )
     return cost, usage
 
@@ -726,6 +1073,18 @@ def _summary(model_runs: list[dict[str, Any]]) -> list[dict[str, object]]:
                     for item in scenarios
                     for turn in item.get("turns", [])
                 ),
+                "structured_return_outputs": sum(
+                    call.get("name") == "answer_online_return"
+                    for item in scenarios
+                    for turn in item.get("turns", [])
+                    for call in turn.get("tool_calls", [])
+                ),
+                "data_tool_calls": sum(
+                    call.get("name") != "answer_online_return"
+                    for item in scenarios
+                    for turn in item.get("turns", [])
+                    for call in turn.get("tool_calls", [])
+                ),
                 "requests_with_missing_usage": sum(
                     int(turn.get("usage", {}).get("requests_with_missing_usage", 0))
                     for item in scenarios
@@ -733,6 +1092,16 @@ def _summary(model_runs: list[dict[str, Any]]) -> list[dict[str, object]]:
                 ),
                 "request_count_unknown_turns": model.get(
                     "request_count_unknown_turns", 0
+                ),
+                "provider_http_attempts": sum(
+                    int(turn.get("provider_request_counter", 0))
+                    for item in scenarios
+                    for turn in item.get("turns", [])
+                ),
+                "current_model_responses": sum(
+                    int(turn.get("model_response_count", 0))
+                    for item in scenarios
+                    for turn in item.get("turns", [])
                 ),
                 "model_calls": model.get("model_calls", 0),
                 "input_tokens": model.get("input_tokens"),
@@ -855,9 +1224,12 @@ def _load_resume_capture(
     if set(by_id) != set(expected_by_id):
         raise ValueError("Resume capture model set differs from the current matrix")
 
-    qwen = by_id.get(EXPECTED_MODEL_IDS["qwen3_32b"])
-    if not isinstance(qwen, dict) or int(qwen.get("model_calls", 0)) <= 0:
-        raise ValueError("Resume capture does not contain a successful Qwen baseline")
+    if any(candidate.key == "qwen3_32b" for candidate in expected_by_id.values()):
+        qwen = by_id.get(EXPECTED_MODEL_IDS["qwen3_32b"])
+        if not isinstance(qwen, dict) or int(qwen.get("model_calls", 0)) <= 0:
+            raise ValueError(
+                "Resume capture does not contain a successful Qwen baseline"
+            )
     expected_scenario_ids = {str(item["id"]) for item in scenarios}
     for model_id, candidate in expected_by_id.items():
         model = by_id[model_id]
@@ -909,9 +1281,10 @@ async def run_comparison(
         or max_cost_usd <= 0
         or max_cost_usd > OUTPUT_CAP_USD
     ):
-        raise ValueError("The approved issue #40 spend cap is US$1.00")
+        raise ValueError("The approved issue #40 spend cap is US$5.00")
     selected = _selected_model_keys(model_keys)
     scenarios = load_scenarios(scenarios_path)
+    planned_turns = sum(len(item["turns"]) for item in scenarios)
     settings = load_agent_settings()
     _validate_agent_limits(settings)
     chat_timeout, history_limits = _runtime_chat_settings()
@@ -920,6 +1293,7 @@ async def run_comparison(
     with output.open("x", encoding="utf-8") as stream:
         report: dict[str, Any] = {
             "issue": 40,
+            "accounting_version": 3,
             "status": "running",
             "phase": "preflight",
             "region": "us-east-1",
@@ -932,7 +1306,7 @@ async def run_comparison(
             "candidate_keys": list(selected),
             "scenario_file": scenarios_path.relative_to(PROJECT_ROOT).as_posix(),
             "scenario_count": len(scenarios),
-            "planned_turns_per_model": 16,
+            "planned_turns_per_model": planned_turns,
             "model_runs": [],
         }
         _write_checkpoint(stream, report)
@@ -945,6 +1319,23 @@ async def run_comparison(
             report["pricing_verification"] = "pending"
             report["pricing_failure_type"] = type(exc).__name__
             report["status"] = "blocked_pricing_verification"
+            report["phase"] = "preflight_blocked"
+            report["finished_at_utc"] = datetime.now(UTC).isoformat()
+            _write_checkpoint(stream, report)
+            return report
+
+        budget_report = benchmark_budget_report(
+            candidates,
+            planned_turns=planned_turns,
+            max_requests_per_turn=settings.max_requests,
+            max_output_tokens=settings.max_output_tokens,
+        )
+        report["benchmark_budget"] = budget_report
+        maximum_envelope = Decimal(
+            str(budget_report["maximum_combined_cost_envelope_usd"])
+        )
+        if maximum_envelope > max_cost_usd:
+            report["status"] = "blocked_budget_envelope"
             report["phase"] = "preflight_blocked"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
             _write_checkpoint(stream, report)
@@ -1026,6 +1417,8 @@ async def run_comparison(
             elif access.get("failure_type") == "AccessDeniedException":
                 report["account_preflight_resolution"] = (
                     "availability_api_denied_use_approved_baseline_probe"
+                    if "qwen3_32b" in selected
+                    else "availability_api_denied_use_selected_model_setup_check"
                 )
                 _write_checkpoint(stream, report)
             else:
@@ -1036,28 +1429,25 @@ async def run_comparison(
                 return report
 
             baseline = next(
-                candidate for candidate in candidates if candidate.key == "qwen3_32b"
+                (candidate for candidate in candidates if candidate.key == "qwen3_32b"),
+                None,
             )
-            baseline_id = next(
-                candidate.model_id
-                for candidate in candidates
-                if candidate.key == "qwen3_32b"
-            )
-            if (
-                availability is not None
-                and availability.get(baseline_id) != "available"
-            ):
-                report["status"] = "blocked_baseline_unavailable"
-                report["phase"] = "preflight_blocked"
-                report["finished_at_utc"] = datetime.now(UTC).isoformat()
-                _write_checkpoint(stream, report)
-                return report
-            if baseline.tool_use_status != "verified":
-                report["status"] = "blocked_baseline_tool_compatibility"
-                report["phase"] = "preflight_blocked"
-                report["finished_at_utc"] = datetime.now(UTC).isoformat()
-                _write_checkpoint(stream, report)
-                return report
+            if baseline is not None:
+                if (
+                    availability is not None
+                    and availability.get(baseline.model_id) != "available"
+                ):
+                    report["status"] = "blocked_baseline_unavailable"
+                    report["phase"] = "preflight_blocked"
+                    report["finished_at_utc"] = datetime.now(UTC).isoformat()
+                    _write_checkpoint(stream, report)
+                    return report
+                if baseline.tool_use_status != "verified":
+                    report["status"] = "blocked_baseline_tool_compatibility"
+                    report["phase"] = "preflight_blocked"
+                    report["finished_at_utc"] = datetime.now(UTC).isoformat()
+                    _write_checkpoint(stream, report)
+                    return report
             price_by_key = {candidate.key: candidate for candidate in candidates}
             aggregate_cost = Decimal(str(report.get("estimated_spend_usd", "0")))
             stop_all = False
@@ -1076,6 +1466,30 @@ async def run_comparison(
                     "inference_model_id": candidate.inference_model_id,
                     "inference_api": candidate.inference_api,
                     "context_window_tokens": candidate.context_window_tokens,
+                    "benchmark_input_token_budget": benchmark_input_token_budget(
+                        candidate
+                    ),
+                    "long_context_threshold_tokens": candidate.long_context_threshold_tokens,
+                    "long_context_input_usd_per_million": str(
+                        candidate.long_context_input_usd_per_million
+                    )
+                    if candidate.long_context_input_usd_per_million is not None
+                    else None,
+                    "long_context_output_usd_per_million": str(
+                        candidate.long_context_output_usd_per_million
+                    )
+                    if candidate.long_context_output_usd_per_million is not None
+                    else None,
+                    "cache_write_usd_per_million": str(
+                        candidate.cache_write_usd_per_million
+                    )
+                    if candidate.cache_write_usd_per_million is not None
+                    else None,
+                    "long_context_cache_write_usd_per_million": str(
+                        candidate.long_context_cache_write_usd_per_million
+                    )
+                    if candidate.long_context_cache_write_usd_per_million is not None
+                    else None,
                     "input_usd_per_million": str(candidate.input_usd_per_million),
                     "output_usd_per_million": str(candidate.output_usd_per_million),
                 }
@@ -1122,17 +1536,23 @@ async def run_comparison(
                     ]
                     _write_checkpoint(stream, report)
                     continue
-                if candidate.tool_use_status != "verified":
+                if candidate.tool_use_status == "unsupported":
                     model_report["status"] = (
-                        "excluded_endpoint_tool_compatibility_unverified"
+                        "excluded_endpoint_tool_compatibility_unsupported"
                     )
                     model_report["scenarios"] = [
-                        _not_executed(item, "endpoint_tool_compatibility_unverified")
+                        _not_executed(item, "endpoint_tool_compatibility_unsupported")
                         for item in scenarios
                     ]
                     _write_checkpoint(stream, report)
                     continue
                 counter = RequestCounter()
+                counter.configure(
+                    candidate,
+                    max_input_tokens=benchmark_input_token_budget(candidate),
+                    max_requests_per_turn=settings.max_requests,
+                    max_total_requests=planned_turns * settings.max_requests,
+                )
                 model_settings = AgentSettings(
                     model_id=candidate.inference_model_id,
                     aws_region="us-east-1",
@@ -1187,6 +1607,7 @@ async def run_comparison(
                         base_url="http://issue40.local",
                     ) as client:
                         stop_model = False
+                        model_input_budget_exhausted = False
                         existing_scenarios = {
                             case.get("scenario_id"): index
                             for index, case in enumerate(model_report["scenarios"])
@@ -1223,10 +1644,14 @@ async def run_comparison(
                             session_id: str | None = None
                             scenario_failed = False
                             for index, prompt in enumerate(scenario["turns"], start=1):
+                                counter.start_turn()
                                 reservation = turn_reservation_usd(
                                     candidate,
                                     max_requests=settings.max_requests,
                                     max_output_tokens=settings.max_output_tokens,
+                                    input_tokens=benchmark_turn_input_budget(
+                                        candidate, planned_turns
+                                    ),
                                 )
                                 if aggregate_cost + reservation > max_cost_usd:
                                     case["status"] = "not_executed_budget_cap"
@@ -1251,6 +1676,8 @@ async def run_comparison(
                                 if hasattr(recorder, "evidence"):
                                     recorder.evidence = {}
                                 count_before = counter.count
+                                bounds_before = len(counter.request_input_upper_bounds)
+                                denials_before = counter.denied_calls
                                 request_started = perf_counter()
                                 payload: dict[str, Any] = {"message": prompt["message"]}
                                 if session_id is not None:
@@ -1311,25 +1738,36 @@ async def run_comparison(
                                 api_requests = max(
                                     observed_api_requests, response_count
                                 )
+                                request_input_upper_bounds = tuple(
+                                    counter.request_input_upper_bounds[bounds_before:]
+                                )
+                                budget_denials = counter.denied_calls - denials_before
                                 turn_cost, usage_summary = _turn_cost_and_usage(
                                     candidate,
                                     evidence,
                                     api_requests,
                                     settings.max_output_tokens,
+                                    request_input_upper_bounds,
                                 )
                                 counter_unavailable = (
-                                    response is None and observed_api_requests == 0
+                                    response is None
+                                    and observed_api_requests == 0
+                                    and budget_denials == 0
                                 )
                                 if counter_unavailable:
-                                    turn_cost = reservation
+                                    turn_cost = turn_reservation_usd(
+                                        candidate,
+                                        max_requests=settings.max_requests,
+                                        max_output_tokens=settings.max_output_tokens,
+                                    )
                                     report["provider_request_count_unknown_turns"] += 1
                                     model_report["request_count_unknown_turns"] += 1
                                     usage_summary["requests_with_missing_usage"] = (
                                         settings.max_requests
                                     )
                                     usage_summary["cost_note"] = (
-                                        "No provider request count was available; the full HTTP-turn "
-                                        "reservation is held against the cap."
+                                        "No provider request count was available; the full-context "
+                                        "HTTP-turn reservation is held against the cap."
                                     )
                                 aggregate_cost += turn_cost
                                 report["paid_calls"] += api_requests
@@ -1372,6 +1810,13 @@ async def run_comparison(
                                     "end_to_end_latency_seconds": elapsed,
                                     "model_api_requests": api_requests,
                                     "provider_request_counter": observed_api_requests,
+                                    "provider_budget_denials": budget_denials,
+                                    "request_input_upper_bound_tokens": sum(
+                                        request_input_upper_bounds
+                                    ),
+                                    "model_input_upper_bound_tokens": (
+                                        counter.run_input_upper_bound
+                                    ),
                                     "model_response_count": response_count,
                                     "reservation_upper_usd": str(
                                         reservation.quantize(Decimal("0.00000001"))
@@ -1392,6 +1837,8 @@ async def run_comparison(
 
                                 if turn_status == "failed":
                                     scenario_failed = True
+                                    if budget_denials:
+                                        model_input_budget_exhausted = True
                                     case["execution_failure"] = {
                                         "category": _execution_failure_category(
                                             response.status_code
@@ -1413,8 +1860,12 @@ async def run_comparison(
                                             index + 1, len(scenario["turns"]) + 1
                                         )
                                     )
-                                    if response is not None and _provider_unavailable(
-                                        response.status_code, evidence
+                                    if (
+                                        response is not None
+                                        and _provider_unavailable(
+                                            response.status_code, evidence
+                                        )
+                                        and not budget_denials
                                     ):
                                         stop_model = True
                                     break
@@ -1424,6 +1875,22 @@ async def run_comparison(
                             case["status"] = (
                                 "failed" if scenario_failed else "completed"
                             )
+                            if model_input_budget_exhausted:
+                                model_report["status"] = "stopped_at_input_budget"
+                                model_report["budget_stop_reason"] = (
+                                    "serialized_request_input_bound_exceeded"
+                                )
+                                for remaining_scenario in scenarios[
+                                    len(model_report["scenarios"]) :
+                                ]:
+                                    model_report["scenarios"].append(
+                                        _not_executed(
+                                            remaining_scenario,
+                                            "model_input_budget_exhausted",
+                                        )
+                                    )
+                                _write_checkpoint(stream, report)
+                                break
                             if stop_model:
                                 case["reason"] = "provider_unavailable"
                                 for remaining_scenario in scenarios[
@@ -1490,10 +1957,19 @@ async def run_comparison(
                 _write_checkpoint(stream, report)
 
             report["summary"] = _summary(report["model_runs"])
-            report["status"] = report.get("status", "completed")
             if report["status"] == "running":
-                report["status"] = "completed"
-            if report["status"] != "stopped_provider_failure":
+                report["status"] = (
+                    "completed_with_budget_stops"
+                    if any(
+                        item.get("status") == "stopped_at_input_budget"
+                        for item in report["model_runs"]
+                    )
+                    else "completed"
+                )
+            if report["status"] not in {
+                "stopped_provider_failure",
+                "stopped_at_budget_cap",
+            }:
                 report["phase"] = "completed"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
             _write_checkpoint(stream, report)
@@ -1526,12 +2002,13 @@ def preflight_report(
     with output.open("x", encoding="utf-8") as stream:
         report: dict[str, Any] = {
             "issue": 40,
+            "accounting_version": 3,
             "status": "preflight_running",
             "region": "us-east-1",
             "paid_calls": 0,
             "approved_cost_cap_usd": str(OUTPUT_CAP_USD),
             "scenario_count": len(scenarios),
-            "planned_turns_per_model": 16,
+            "planned_turns_per_model": sum(len(item["turns"]) for item in scenarios),
             "pricing_file": pricing_path.relative_to(PROJECT_ROOT).as_posix(),
             "scenario_file": scenarios_path.relative_to(PROJECT_ROOT).as_posix(),
             "candidate_keys": list(selected),
@@ -1581,6 +2058,13 @@ def preflight_report(
                     for key in selected
                     for entry in [by_key[key]]
                 ]
+            if report["pricing_verification"] == "verified_today":
+                report["benchmark_budget"] = benchmark_budget_report(
+                    candidates,
+                    planned_turns=sum(len(item["turns"]) for item in scenarios),
+                    max_requests_per_turn=settings.max_requests,
+                    max_output_tokens=settings.max_output_tokens,
+                )
             try:
                 validate_endpoint_tool_manifest(pricing_path)
                 report["endpoint_tool_manifest_freshness"] = "current"
@@ -1604,23 +2088,39 @@ def preflight_report(
                 }
                 for candidate in candidates
             }
-            if report["account_preflight"]["status"] != "checked":
-                report["status"] = "blocked_preflight"
-            elif {
+            model_availability = {
                 str(item["model_id"]): item["status"]
                 for item in report["account_preflight"]["models"]
-            }.get("qwen.qwen3-32b-v1:0") != "available":
-                report["status"] = "blocked_baseline_unavailable"
+            }
+            if report["account_preflight"]["status"] != "checked":
+                report["status"] = "blocked_preflight"
+            elif (
+                report.get("benchmark_budget")
+                and Decimal(
+                    str(
+                        report["benchmark_budget"]["maximum_combined_cost_envelope_usd"]
+                    )
+                )
+                > OUTPUT_CAP_USD
+            ):
+                report["status"] = "blocked_budget_envelope"
+            elif any(
+                model_availability.get(candidate.model_id) != "available"
+                for candidate in candidates
+            ):
+                report["status"] = "blocked_model_unavailable"
             elif report["endpoint_tool_manifest_freshness"] != "current":
                 report["status"] = "blocked_endpoint_tool_verification"
             elif any(
-                candidate.model_id == "qwen.qwen3-32b-v1:0"
-                and candidate.tool_use_status != "verified"
-                for candidate in candidates
+                candidate.tool_use_status == "unsupported" for candidate in candidates
             ):
-                report["status"] = "blocked_baseline_tool_compatibility"
+                report["status"] = "blocked_selected_model_tool_compatibility"
             elif report["pricing_verification"] != "verified_today":
                 report["status"] = "blocked_pricing_verification"
+            elif any(
+                candidate.tool_use_status == "unverified" for candidate in candidates
+            ):
+                report["status"] = "ready_tool_use_unverified"
             else:
                 report["status"] = "ready_no_paid_calls"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
@@ -1656,13 +2156,16 @@ def main() -> None:
     )
     parser.add_argument("--max-cost-usd", type=_decimal_argument)
     parser.add_argument("--pricing-file", type=Path, default=PRICING_PATH)
+    parser.add_argument(
+        "--profile", help="Explicit AWS profile, overriding dotenv AWS_PROFILE"
+    )
     parser.add_argument("--scenarios-file", type=Path, default=SCENARIOS_PATH)
     parser.add_argument(
         "--model-key",
         choices=RUN_ORDER,
         action="append",
         dest="model_keys",
-        help="Select a model; repeat to select multiple (Qwen is required as baseline)",
+        help="Select a model; Qwen is required when selecting multiple models",
     )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument(
@@ -1685,7 +2188,10 @@ def main() -> None:
         scenarios_path.relative_to(PROJECT_ROOT)
     except (ValueError, OSError) as exc:
         parser.error(str(exc))
-    load_project_aws_environment()
+    if args.profile:
+        os.environ["AWS_PROFILE"] = args.profile
+    else:
+        load_project_aws_environment()
     if args.live:
         report = asyncio.run(
             run_comparison(

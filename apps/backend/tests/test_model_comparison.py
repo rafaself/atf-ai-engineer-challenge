@@ -12,6 +12,7 @@ from emporio_music_backend.agent.settings import AgentSettings
 from scripts.compare_models import (
     Candidate,
     RequestCounter,
+    SOURCE_PATHS,
     _check_local_retrieval_readiness,
     _copy_policy_inputs,
     _execution_failure_category,
@@ -34,8 +35,12 @@ from scripts.compare_models import (
 def test_frozen_comparison_contains_nine_scenarios_and_sixteen_turns() -> None:
     scenarios = load_scenarios()
 
-    assert len(scenarios) == 9
-    assert sum(len(scenario["turns"]) for scenario in scenarios) == 16
+    assert len(scenarios) == 12
+    assert sum(len(scenario["turns"]) for scenario in scenarios) == 20
+
+
+def test_source_manifest_hashes_the_active_scenario_fixture() -> None:
+    assert "docs/examples/model-comparison/scenarios-current-v7.json" in SOURCE_PATHS
 
 
 def test_local_retrieval_readiness_loads_the_existing_index_and_cached_model(
@@ -92,6 +97,7 @@ def test_scenario_tool_expectations_match_the_registered_agent_tools() -> None:
     registered_tools = {
         "search_available_products",
         "get_product_details",
+        "find_product_by_name",
         "list_my_orders",
         "get_my_order",
         "search_store_policies",
@@ -105,7 +111,7 @@ def test_scenario_tool_expectations_match_the_registered_agent_tools() -> None:
 
     assert required_tools <= registered_tools
     no_match = next(s for s in scenarios if s["id"] == "no-match")
-    assert no_match["expected"]["required_tools"] == ["get_product_details"]
+    assert no_match["expected"]["required_tools"] == ["find_product_by_name"]
 
 
 def test_current_benchmark_fixture_uses_approved_freight_and_updated_expectations() -> (
@@ -187,6 +193,8 @@ def test_verified_rates_and_routes_load_from_the_current_manifest() -> None:
         "nova_lite",
         "gpt_oss_20b",
         "gpt_oss_120b",
+        "gpt6_luna",
+        "claude_haiku_5_5",
     ]
     assert candidates[0].inference_endpoint == "bedrock-runtime"
     assert candidates[0].inference_model_id == "qwen.qwen3-32b-v1:0"
@@ -204,6 +212,75 @@ def test_verified_candidates_can_select_only_qwen_and_nova_lite() -> None:
         "qwen3_32b",
         "nova_lite",
     ]
+
+
+def test_new_cross_region_candidates_preserve_profile_routes_and_tiered_reserve() -> (
+    None
+):
+    candidates = load_verified_candidates(
+        today=_manifest_review_date(),
+        model_keys=("qwen3_32b", "gpt6_luna", "claude_haiku_5_5"),
+    )
+    luna, haiku = candidates[1:]
+    assert luna.inference_model_id == "us.openai.gpt-6-luna"
+    assert haiku.inference_model_id == "us.anthropic.claude-haiku-5-5"
+    assert luna.inference_api == haiku.inference_api == "converse"
+    assert turn_reservation_usd(haiku) == Decimal("3.316896")
+    cost, _ = estimate_usage_cost(
+        haiku,
+        {"usage": {"responses": [{"input_tokens": 100001, "output_tokens": 1000}]}},
+        observed_requests=1,
+        max_output_tokens=1024,
+    )
+    assert cost == Decimal("0.05775055")
+    cost, _ = estimate_usage_cost(
+        luna,
+        {
+            "usage": {
+                "responses": [
+                    {
+                        "input_tokens": 200000,
+                        "output_tokens": 1000,
+                        "cache_write_tokens": 100000,
+                    }
+                ]
+            }
+        },
+        observed_requests=1,
+        max_output_tokens=1024,
+    )
+    assert cost == Decimal("0.02530")
+
+
+def test_new_candidates_reject_incomplete_context_tiers(tmp_path: Path) -> None:
+    data = json.loads(
+        (paths.PROJECT_ROOT / "docs/examples/model-comparison/pricing.json").read_text()
+    )
+    entry = next(item for item in data["models"] if item["key"] == "claude_haiku_5_5")
+    entry.pop("long_context_output_usd_per_million")
+    manifest = tmp_path / "pricing.json"
+    manifest.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="Long-context"):
+        load_verified_candidates(
+            manifest,
+            today=_manifest_review_date(),
+            model_keys=("qwen3_32b", "claude_haiku_5_5"),
+        )
+
+
+def test_explicit_aws_profile_takes_precedence_over_dotenv(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    environment = SimpleNamespace(
+        environ={"AWS_PROFILE": "towelbooks-management-admin"}
+    )
+    monkeypatch.setattr("scripts.compare_models.os", environment)
+    monkeypatch.setattr(
+        "scripts.compare_models.dotenv_values",
+        lambda *args, **kwargs: {"AWS_PROFILE": "another-profile"},
+    )
+    load_project_aws_environment()
+    assert environment.environ["AWS_PROFILE"] == "towelbooks-management-admin"
 
 
 def test_project_aws_environment_load_is_silent_and_limited_to_aws_keys(
@@ -262,6 +339,8 @@ def test_verified_candidates_use_model_card_endpoint_and_api_combinations() -> N
         "qwen3_32b": ("bedrock-runtime", "converse"),
         "gpt_oss_20b": ("bedrock-runtime", "converse"),
         "gpt_oss_120b": ("bedrock-runtime", "converse"),
+        "gpt6_luna": ("bedrock-runtime", "converse"),
+        "claude_haiku_5_5": ("bedrock-runtime", "converse"),
     }
 
 
@@ -355,8 +434,8 @@ def test_paid_runner_rejects_budget_above_approved_cap_before_output(
 ) -> None:
     output = tmp_path / "capture.json"
 
-    with pytest.raises(ValueError, match=r"US\$1.00"):
-        asyncio.run(run_comparison(output=output, max_cost_usd=Decimal("1.01")))
+    with pytest.raises(ValueError, match=r"US\$4.00"):
+        asyncio.run(run_comparison(output=output, max_cost_usd=Decimal("4.01")))
 
     assert not output.exists()
 
@@ -407,6 +486,8 @@ def test_live_runner_uses_baseline_probe_when_availability_permission_is_denied(
     assert report["paid_calls"] == 0
     assert report["model_runs"][0]["status"] == "excluded_provider_setup_failure"
     assert [item["status"] for item in report["model_runs"][1:]] == [
+        "not_executed_provider_failure",
+        "not_executed_provider_failure",
         "not_executed_provider_failure",
         "not_executed_provider_failure",
         "not_executed_provider_failure",
@@ -542,3 +623,21 @@ def test_summary_separates_execution_failures_from_semantic_verdicts() -> None:
     assert result["median_end_to_end_latency_seconds"] == 2.0
     assert result["maximum_end_to_end_latency_seconds"] == 2.5
     assert result["cost_per_fully_successful_conversation_usd"] == "0.30000000"
+
+
+def test_focused_fixture_uses_its_declared_counts_and_rejects_mismatch(
+    tmp_path: Path,
+) -> None:
+    fixture = (
+        paths.PROJECT_ROOT
+        / "docs/examples/model-comparison/scenarios-return-holdout-v5.json"
+    )
+    scenarios = load_scenarios(fixture)
+    assert len(scenarios) == 3
+    assert sum(len(scenario["turns"]) for scenario in scenarios) == 4
+    document = json.loads(fixture.read_text())
+    document["scenario_count"] = 4
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text(json.dumps(document))
+    with pytest.raises(ValueError, match="Scenario count"):
+        load_scenarios(invalid)

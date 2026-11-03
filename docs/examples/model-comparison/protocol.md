@@ -1,6 +1,21 @@
 # Issue #40: Bedrock model comparison protocol
 
-The current default is [v4](scenarios-current-v4.json), with semantic verdicts
+The latest [scoped harness evaluation](scoped-harness-qwen32-gptoss120-2026-11-03.md) records the 12-conversation v7 run, corrected historical call accounting, and the rejected structured-return output experiment.
+
+The current default is [v7](scenarios-current-v7.json): the nine regression
+conversations and three return holdout conversations, 20 HTTP turns per model.
+Product payment choices and lookup contracts are explicit. Return assessments
+must use current scoped policy evidence. Invented actionable contacts/procedures
+are high severity. The v5/v6 bounded-output experiment was rejected after HTTP
+failures; original semantic requirements remain in v7, while a requirement to
+call the rejected output function is removed. Historical captures are unchanged.
+
+See the [accounting erratum](accounting-erratum-2026-11-03.md) before comparing
+historical model-call totals. Version 2 separates current responses, provider
+attempts, data tools and structured output functions.
+
+
+The preceding default was [v4](scenarios-current-v4.json), with semantic verdicts
 separate from tool compliance, efficiency and presentation. The
 [effective-data report](effective-data-qwen32-gptoss120-2026-11-03.md) records the
 implementation and cumulative spending under the approved US$1.00. Older default

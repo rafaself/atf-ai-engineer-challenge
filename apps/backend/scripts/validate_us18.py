@@ -177,7 +177,13 @@ class RecordingAgent:
                     current = current.__cause__
                 raise
             finally:
-                responses = [m for m in messages if isinstance(m, ModelResponse)]
+                # The executor reconstructs prior assistant text with no run_id.
+                # Preserve it in the trace, but never count it as new inference.
+                responses = [
+                    m
+                    for m in messages
+                    if isinstance(m, ModelResponse) and m.run_id is not None
+                ]
                 response_usage: list[dict[str, int | None]] = []
                 for response in responses:
                     usage = response.usage
