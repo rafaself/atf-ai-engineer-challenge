@@ -189,12 +189,13 @@ conversation review. A source list does not certify generated claims.
 Temporary SQLite/Chroma indexes and controlled models verify domain rules, ownership,
 persistence, bounded policy retrieval wiring and failures. They do not establish live
 language understanding, tool selection or policy-answer quality. The frozen
-[retrieval benchmark](benchmarks/results.md) met none of its full target sets;
+[historical retrieval benchmark](https://github.com/rafaself/atf-ai-engineer-challenge/blob/9f6dcadb4981cc3dfaa6ef480576f88218fb2640/docs/benchmarks/results.md) met none of its full target sets;
 retrieval metrics do not establish answer quality. The [final model-selection
 benchmark](benchmarks/final-model-comparison/README.md) contains a bounded,
 unblinded AI assessment; it does not establish general model quality.
 
-Policy search takes no arguments. It combines the current user question with the
+Policy search takes a model-selected policy scope, but no model-authored search
+query. For general-scope retrieval it combines the current question with the
 latest prior user question when the combined text is at most 256 characters; assistant
 answers and tool results stay out of the retrieval query. The bounded local E5 check
 missed section 4.1 for “E se eu já usei o instrumento?” alone and returned it when
