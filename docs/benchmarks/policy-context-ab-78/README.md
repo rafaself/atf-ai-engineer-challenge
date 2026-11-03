@@ -1,0 +1,27 @@
+# Luna policy-context A/B benchmark
+
+Issue #78 compares the current policy-RAG path with the same Luna agent given the entire reviewed policy corpus in its system instructions. It runs 12 paired Portuguese conversations (24 executions, 36 planned chat turns) against frozen local catalog/order snapshots. No other generator is included.
+
+The final recommendation follows manual review under [protocol.md](protocol.md). The live capture includes full customer-facing answers, model/tool messages, actual policy evidence, errors, request usage, cost reservations, and HTTP latencies. [retrieval-metrics.json](retrieval-metrics.json) records independent RAG top-five diagnostics and evidence coverage of the context actually returned at runtime. Review forms are shuffled and blinded by arm until primary scores are frozen.
+
+The paid run is capped at US$1.00, including preflight. The runner reserves serialized request bytes plus a fixed token margin before every Runtime Converse request, limits output to 1,024 tokens and turns to six requests, retains unknown-usage reservations, and stops before a request that would exceed the cap. The $1 cap was explicitly approved for issue #78. Production source, prompts and model defaults are not modified by the benchmark.
+
+Current status: protocol and fixture frozen; live capture and required human review pending. See the issue-linked run artifacts in this directory once they are created.
+
+Run readiness from the repository root:
+
+```bash
+uv run --extra policy-rag --project apps/api --locked \
+  python -m scripts.compare_policy_context --work-dir /tmp/policy-context-ab-78
+```
+
+After checking readiness and confirming the frozen inputs, the authorized run is:
+
+```bash
+uv run --extra policy-rag --project apps/api --locked \
+  python -m scripts.compare_policy_context --work-dir /tmp/policy-context-ab-78 \
+  --live --max-cost-usd 1.00 \
+  --approval-note '2026-11-03: owner approved issue #78 paid inference, US$1.00 cap'
+```
+
+A separate work directory is required for a new run. Final captures are exclusive and never overwritten. The runner does not retry failed calls.
