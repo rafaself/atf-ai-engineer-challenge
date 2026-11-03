@@ -35,7 +35,7 @@ from huggingface_hub import snapshot_download
 from pydantic_ai.models.bedrock import BedrockConverseModel
 from pydantic_ai.providers.bedrock import BedrockProvider
 
-from scripts.compare_models import (
+from scripts.benchmark_support import (
     Candidate,
     _code_freeze,
     _copy_policy_inputs,

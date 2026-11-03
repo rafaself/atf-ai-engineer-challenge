@@ -78,4 +78,4 @@ concurrent customers, forged scope, removed token mappings, empty accounts, fail
 turn integrity and safe diagnostics. Two regressions were observed failing before
 fixes: identity without required operational storage and missing order notices.
 Other new tests were checked after implementation; they are not claimed as failing
-baselines. See [operational guide](../orders.md) and [actual checks](../validation.md).
+baselines. See the [operational guide](../guides/orders.md).

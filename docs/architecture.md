@@ -153,7 +153,7 @@ excluded. Copied product references and historical totals survive catalog change
 Deadline lookups reuse that customer-scoped repository. Stored purchase dates and
 estimated delivery are distinct from dispatch, actual receipt and request dates;
 deadline calculations preserve those distinctions and do not reprice orders.
-See [catalog](catalog.md) and [orders](orders.md).
+See [catalog](guides/catalog.md) and [orders](guides/orders.md).
 
 Tools own exact unit/cart calculations, payable-price filtering, numeric comparisons,
 qualified deadlines and customer-scoped reads.
@@ -188,40 +188,21 @@ conversation review. A source list does not certify generated claims.
 
 Temporary SQLite/Chroma indexes and controlled models verify domain rules, ownership,
 persistence, bounded policy retrieval wiring and failures. They do not establish live
-language understanding, tool selection or policy-answer quality. [US-13 live evidence](examples/sprint-2/README.md)
-records catalog/context, promotion/PIX and order behavior, including two failed
-attempts and focused instruction corrections; those Sprint 2 runs did not cover
-policy lookup. US-16 integrates policy search. US-17 reviewed four paired real
-Portuguese conversations; the [results](examples/us-17/results.md) preserve one RAG
-HTTP 500, failures in both arms on tool selection for a mixed order/return question,
-and unsupported claims. This evidence does not establish general model quality or
-that provisional retrieval is adequate.
+language understanding, tool selection or policy-answer quality. The frozen
+[historical retrieval benchmark](https://github.com/rafaself/atf-ai-engineer-challenge/blob/9f6dcadb4981cc3dfaa6ef480576f88218fb2640/docs/benchmarks/results.md) met none of its full target sets;
+retrieval metrics do not establish answer quality. The [final model-selection
+benchmark](benchmarks/final-model-comparison/README.md) contains a bounded,
+unblinded AI assessment; it does not establish general model quality.
 
-[US-18 evidence](examples/us-18/README.md) preserves the former validator failures
-and the subsequent simplification. The source footer uses only successful current-run
-policy returns; it lists consulted sections/pages and does not claim entailment.
-The latest saved live mixed case called both tools and retained order status but
-failed the former citation grammar. A controlled HTTP replay now accepts its generated
-candidate without an output retry. This verifies delivery, not correction of its
-policy-applicability omissions or general model quality.
-
-Policy search takes no arguments. It combines the current user question with the
+Policy search takes a model-selected policy scope, but no model-authored search
+query. For general-scope retrieval it combines the current question with the
 latest prior user question when the combined text is at most 256 characters; assistant
 answers and tool results stay out of the retrieval query. The bounded local E5 check
 missed section 4.1 for “E se eu já usei o instrumento?” alone and returned it when
 the previous return question was included. An unrelated prior hours question added
-section 2 to a return query, so this limited context can add irrelevant evidence.
-These are retrieval observations, not answer-quality results. Broader retrieval
-optimization remains deferred; sprint completion does not require RAG to beat Full
-Context.
-
-The [simplification review](examples/simplification-review.md) preserves an earlier
-offline-only delivery. Subsequent [closing evidence](examples/sprint-2/closure/README.md)
-records the final Qwen conversations, failed Nova comparisons and a combined
-correction message that preserves the same single-retry limit. Order snapshot
-limits were explicit when asked, but not repeated in every answer.
-The former source-only monetary-output gate has been retired; budget references
-no longer cause output retries. The captured conversations remain historical evidence.
+section 2 to a return query, so this limited context can add irrelevant evidence. These are retrieval
+observations, not answer-quality results. Broader retrieval optimization remains
+deferred; sprint completion does not require RAG to beat Full Context.
 
 [Issue #32](https://github.com/rafaself/atf-ai-engineer-challenge/issues/32) records the
 approved simplification. Earlier [ADRs](adr/README.md) preserve the implementation

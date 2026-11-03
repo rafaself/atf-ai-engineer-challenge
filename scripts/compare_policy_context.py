@@ -12,7 +12,7 @@ import random
 import statistics
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from time import perf_counter
@@ -50,11 +50,7 @@ from pydantic_ai import Agent, RunContext, Tool
 from pydantic_ai.models.bedrock import BedrockConverseModel
 from pydantic_ai.providers.bedrock import BedrockProvider
 
-from scripts.compare_models import (
-    Candidate,
-    load_project_aws_environment,
-    load_verified_candidates,
-)
+from scripts.benchmark_support import Candidate, load_project_aws_environment
 from scripts.evaluation_support import RecordingAgent, sanitized, write_checkpoint
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,6 +73,68 @@ CACHE_READ_USD_PER_MILLION = Decimal("0.011")
 PREFLIGHT_PROMPT = (
     "Consulte o catálogo e informe o preço e o estoque do Yamaha C40 Nylon Natural."
 )
+
+
+PRICING_FILE = ROOT / "scripts/benchmark_pricing.json"
+
+
+def load_luna_candidate(
+    *, today: date | None = None, pricing_file: Path = PRICING_FILE
+) -> Candidate:
+    """Validate standalone Luna rates; never load the retired model benchmark."""
+    manifest = json.loads(pricing_file.read_text(encoding="utf-8"))
+    if (
+        manifest.get("region") != REGION
+        or manifest.get("currency") != "USD"
+        or manifest.get("service_tier") != "standard"
+        or manifest.get("verified") is not True
+    ):
+        raise ValueError("Luna pricing manifest is not verified for this region")
+    checked = date.fromisoformat(str(manifest["checked_at_utc"])[:10])
+    if checked != (today or datetime.now(UTC).date()):
+        raise ValueError("Reverify Luna prices on the day of any new run")
+    source = manifest.get("model")
+    if not isinstance(source, dict):
+        raise ValueError("Missing Luna model configuration")
+    if (
+        source.get("rate_status") != "verified"
+        or not isinstance(source.get("source_url"), str)
+        or not source["source_url"].startswith("https://")
+    ):
+        raise ValueError("Luna rate verification source is missing")
+    fields = Candidate.__dataclass_fields__
+    values: dict[str, Any] = {key: source[key] for key in fields if key in source}
+    for key in values:
+        if key.endswith("usd_per_million"):
+            values[key] = Decimal(str(values[key]))
+    candidate = Candidate(**values)
+    if (
+        candidate.key != MODEL_KEY
+        or candidate.model_id != "openai.gpt-6-luna"
+        or candidate.inference_model_id != MODEL_ID
+        or candidate.inference_endpoint != "bedrock-runtime"
+        or candidate.inference_api != "converse"
+        or candidate.tool_use_status != "verified"
+        or candidate.context_window_tokens <= 0
+    ):
+        raise ValueError("Luna Runtime Converse configuration is invalid")
+    rates = (
+        candidate.input_usd_per_million,
+        candidate.output_usd_per_million,
+        candidate.cache_write_usd_per_million,
+        candidate.long_context_input_usd_per_million,
+        candidate.long_context_output_usd_per_million,
+        candidate.long_context_cache_write_usd_per_million,
+    )
+    if any(rate is None or not rate.is_finite() or rate <= 0 for rate in rates):
+        raise ValueError("Luna pricing rates must be finite and positive")
+    if (
+        candidate.long_context_threshold_tokens is None
+        or not 0 < candidate.long_context_threshold_tokens
+        < candidate.context_window_tokens
+    ):
+        raise ValueError("Invalid Luna context-tier threshold")
+    return candidate
 
 
 def sha256_file(path: Path) -> str:
@@ -110,12 +168,10 @@ def input_paths() -> list[Path]:
         ROOT / "packages/emporio_music/pyproject.toml",
         ROOT / "apps/api/pyproject.toml",
         ROOT / "apps/cli/pyproject.toml",
-        ROOT / "scripts/compare_models.py",
+        ROOT / "scripts/benchmark_support.py",
+        ROOT / "scripts/benchmark_pricing.json",
         ROOT / "scripts/evaluation_support.py",
         ROOT / "scripts/compare_policy_context.py",
-        ROOT / "docs/examples/model-comparison/pricing.json",
-        ROOT / "docs/examples/model-comparison/scenarios-current-v7.json",
-        ROOT / "docs/benchmarks/expansion/questions.json",
         DIRECTORY / "README.md",
         DIRECTORY / "protocol.md",
         DIRECTORY / "scenarios.json",
@@ -1632,9 +1688,7 @@ async def execute(
         max_tool_calls=5,
         max_output_tokens=OUTPUT_LIMIT,
     )
-    candidate = next(
-        item for item in load_verified_candidates() if item.key == MODEL_KEY
-    )
+    candidate = load_luna_candidate()
     frozen, _corpus, embedded_json, embedded_hash, _embedder, rag_search, products = (
         prepare_local(require_clean=True)
     )

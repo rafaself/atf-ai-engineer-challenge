@@ -1,0 +1,226 @@
+# Data processing decisions and implementation
+
+Recorded: 2026-11-03. Implementation updated: 2026-11-03. Related work: issue #43 and the model-comparison experiments.
+
+Status: canonical policy preparation, simulation presentation, product-ID follow-ups,
+category-derived alternatives and pricing explanations are implemented locally.
+These implementation choices do not establish general reliability of arbitrary
+generated prose.
+
+This document explains the processing applied to the supplied data and why it is
+needed. Dated evaluations below report observed behavior; they do not establish
+general reliability of generated answers.
+
+## Purpose and source boundaries
+
+The challenge permits cleaning, transformation and indexing of the supplied
+data. Processing should present coherent, useful evidence to the agent while
+preserving the supplied CSV/PDF bytes and their original checksums.
+
+Keep the original sources, approved business clarifications and derived effective
+rules distinguishable in internal provenance. Customer answers should communicate
+the effective store rule without explaining ingestion history. Unknown schedules,
+contacts, customer facts and procedures must remain unknown unless a source or
+explicit business decision resolves them.
+
+## Existing processing
+
+| Data | Processing already present | Reason |
+| --- | --- | --- |
+| Catalog CSVs | Validate records/references; convert prices to exact integer centavos; normalize lookup names; preserve source fields and expose structured specifications | Reliable search, exact prices, and evidence for product characteristics |
+| Promotions | Calculate final quotes with promotion precedence and non-stacking PIX rules | Keep authoritative monetary calculations outside model prose |
+| Order CSVs | Validate and import customer-scoped order/item projections; preserve historical totals | Simulate operational lookups without reconstructing historical prices from current catalog prices |
+| Policy PDF | Extract with Poppler; normalize layout, tables and sections; preserve source sections/pages; build the local E5 index | Make policy evidence searchable and readable |
+| Freight | Apply the owner-approved inclusive R$500 rule to one effective section, retaining both source references internally | Resolve the PDF's equality gap using an approved business decision |
+| Natal | Generate one canonical schedule with the exception in the holiday label and all three special dates | Preserve the special-date qualification alongside the general holiday rule |
+| Online returns | Prepare structured section 4.1 metadata with deadline, zero wait, required customer facts and section 4.4 exclusions | Reduce confusion between a deadline and a waiting period |
+
+Preparation lives in
+`packages/emporio_music/src/emporio_music/policies/corpus.py`; runtime policy-tool
+handling lives in `packages/emporio_music/src/emporio_music/agent/policies.py`.
+The earlier Natal representation combined the original schedule with an appended
+interpretation; preparation now replaces it with the canonical schedule below.
+
+## Implemented canonical opening-hours evidence
+
+Prepare one coherent model-facing schedule in place of the original schedule plus
+an appended explanation. Retain internal provenance to manual section 2, page 2.
+
+Current model-facing Portuguese evidence:
+
+> **Segunda a sexta-feira:** 09h às 18h.
+>
+> **Sábado:** 09h às 13h.
+>
+> **Domingos e feriados, com exceções de datas especiais:** fechado no horário
+> regular; veja a regra de datas especiais abaixo.
+>
+> **Datas especiais — Natal, Black Friday e aniversário da loja:** pode haver
+> atendimento em horário especial ou estendido. Os horários especiais de cada
+> ocorrência não estão informados. Para um Natal específico, o manual não confirma
+> abertura nem fechamento. Alterações são comunicadas previamente nas redes sociais
+> e no atendimento via WhatsApp.
+>
+> O atendimento via WhatsApp segue os horários da loja, com respostas automáticas
+> fora do expediente.
+
+The exception is visible in the holiday label itself, and the special-date rule
+starts with the possibility of service. Natal, Black Friday and the anniversary
+are all retained because the source names all three; this does not classify all
+three as public holidays. Possible special service is an interpretation of the
+manual's extended-hours clause, not confirmation that the store will open.
+No opening time, universal holiday exception, or Monday reopening is inferred.
+
+## Implemented effective freight evidence
+
+During preparation, apply the already-approved clarification directly to the
+effective section 5.1 presented to the model:
+
+| Delivery area | Total | Fee |
+| --- | --- | --- |
+| Região Metropolitana de Campo Grande | Below R$500.00 | R$35.00 |
+| Região Metropolitana de Campo Grande | R$500.00 or more | Free |
+
+Preserve the source's delivery estimate and other applicable clauses. Retain the
+original PDF and separate approval record internally. Avoid returning the original
+ambiguous threshold as a competing active rule. Remove the automatic customer
+notice explaining the equality clarification; customer-facing references must
+still describe the processed policy truthfully rather than attribute amended
+wording literally to the original PDF.
+
+## Implemented return-rule preparation
+
+Move the existing structured projection from retrieval-time code to prepared
+policy evidence. Retain the text and provenance, the online-purchase scope, actual
+receipt basis, calendar-day deadline, packaging/use/accessory/manual conditions,
+and applicable exclusions from section 4.4. Distinguish core conditions from a
+complete eligibility determination. A product having been used does not by itself
+establish signs of use; original packaging does not imply sealed packaging.
+
+Do not add return labels, addresses, notification features or return-initiation
+capabilities absent from the sources and tools. Preparation cannot help a turn
+that never retrieves the relevant policy; tool-choice failures remain separate.
+
+## Implemented simulation and presentation semantics
+
+Treat successful catalog/order lookups as authoritative current results inside
+the fictional simulation. Explain the simulation once in the demo interface or
+startup message and document it in the README. Give the model the same internal
+context, replacing repeated snapshot explanations in prompts/tool guidance.
+
+Remove automatic per-answer inventory/order snapshot footers and the repeated
+promotion-snapshot footer. Preserve meaningful limits: an estimated delivery date
+is not actual receipt, an order status does not supply a missing receipt timestamp,
+and missing promotion validity dates must not be invented. The local simulation
+does not imply an actual external carrier request. Keep customer isolation,
+historical totals, fresh operational lookups, and partial-list indicators.
+
+## Related partial errors to address
+
+- Product-name drift: use returned product IDs for detail follow-ups.
+- Invented budgets: alternative searches should derive the category and remain
+  broad unless the customer provided a budget.
+- Invented sound/comfort/suitability: limit claims to supported catalog attributes;
+  consider rendering verified fields directly if the behavior persists.
+- Incorrect discount explanations: derive the explanation from the same pricing
+  fields used for the final amount.
+- Extra successful lookups and repetitive text: measure efficiency/presentation
+  separately from incorrect facts, missed required lookups and customer isolation.
+
+Product-ID follow-ups, the dedicated alternatives tool and generated pricing
+explanations are implemented. Product-characteristic prose still depends on model
+faithfulness: instructions constrain it to verified specs; no semantic prose parser
+is used. These are tool/output changes that embeddings alone cannot enforce.
+The current model instruction already prohibits several of these behaviors;
+repeating that instruction is not a verified solution.
+
+## Completed implementation sequence
+
+1. Preparation adds canonical hours, approved freight clarification and reviewed
+   return evidence while preserving supplied bytes and source provenance.
+2. Corpus metadata, fingerprints and the local embedding index are regenerated
+   together; generated corpus JSON is not hand-edited.
+3. Tools, prompt and presentation follow the simulation contract and effective
+   policy evidence, with superseded notices and duplicate rules removed.
+4. Focused checks cover special dates, freight boundaries/area scope, return
+   deadlines/conditions/exclusions, pricing and customer scoping.
+5. Dated live evaluations review answer faithfulness, necessary tool use,
+   efficiency and presentation separately. Earlier captures retain their original
+   criteria and remain revision-specific.
+
+Earlier experiments preserve failures that motivated these changes. Later
+evaluations report bounded observations, not general reliability; see the linked
+reports for each run's source revision and remaining limits.
+
+## Scoped return follow-up (2026-11-03)
+
+Parser `poppler-scoped-policies-v7` labels online remorse, preference exchange,
+defect and shared exclusions separately. Online returns receive only sections
+4.1 and 4.4, avoiding the stricter condition from preference exchange. Prepared
+refund facts retain the same payment method, ten business days and store-paid
+return freight. No posting instructions, contact details or label generation are
+present, so `documented_next_steps` is empty. Original files remain unchanged.
+
+The final runtime uses these scoped facts as evidence and instructs fresh reads
+on each assessment. It does not force quoted customer-fact extraction through a
+new output schema. That experiment prevented some fabrication, but repeated quote
+omissions, invented schema keys and correction loops caused HTTP failures and
+unnecessary questions in both models. It was removed from the runtime rather
+than treating safe but unusable answers as success. The rejected implementation
+patch and all trial captures remain in model-comparison evidence.
+
+No deterministic prose validator certifies return eligibility, current reads or
+procedures. Scope selection and answer faithfulness remain observed limitations.
+Missing procedure metadata means the prepared rule documents no steps; it does
+not prove that the store has no return service or that no general contact exists.
+
+## Return contact lookup (2026-11-03)
+
+The manual has general contact details, but does not designate a returns SAC.
+The cover and company table list the same phone number with two email spellings;
+the WhatsApp section lists a different remote-contact number. Keep all values
+verbatim and describe them as general contacts. The online-remorse rule gives
+product-condition requirements and refund facts, but no label, posting steps or
+additional paperwork checklist. This lookup exposes the relevant source records
+directly and attaches short typed guidance about those distinctions. It uses the
+existing prepared corpus records; original PDF bytes and embedding inputs are
+unchanged. Absence from this manual is not a claim that the store lacks a
+separate process.
+
+
+## Reviewed return information (v9, 2026-11-03)
+
+The complete eight-page manual was reviewed against its unchanged SHA-256
+`b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7`.
+Section 4.1 has product conditions and refund facts; sections 5.2/5.3 describe
+outgoing shipments/tracking, 7.3 complaint handling, and 10 consultation with
+management. None provides return paperwork, label issuance/posting steps, a
+dedicated returns contact, or the event starting the refund deadline.
+
+Preparation replaces v7's empty next-step list with explicit
+`not_specified_in_manual` / `not_identified_in_manual` statuses in the existing
+online-return rule, with full-review scope and source hash. Unknown is not an empty
+requirement list or an unavailable service. Contact entries are extracted verbatim
+from cover, 1.2 and 7, with roles, sections and pages. Both email spellings remain
+unresolved. Section 7's primary remote WhatsApp designation remains supported;
+the different company phone/WhatsApp entry does not erase it or prove either
+number invalid. A different source requires a new full review before inheriting
+these negative findings.
+
+Raw PDF/CSV bytes and every excerpt text/page remain unchanged. Derived metadata
+participates in the existing corpus fingerprint; corpus/freeze and the ignored
+local E5 index were regenerated together. Existing eligibility/exclusions
+interpretation was retained. No new semantic validator, inference stage,
+dependency, agent, or corrective workflow was introduced.
+
+The attempted unified scope and rewritten instructions were rejected after the
+controlled paired evaluation did not improve grounding and regressed Qwen's
+follow-ups. Original prompting/routing was restored for a source-only ablation.
+Do not interpret the richer evidence contract as proof of faithful model answers.
+The source-only comparison and retain decision are in the v9 report.
+
+The focused history test establishes that prior assistant claims remain
+conversation text and do not become source evidence. Actual resistance to those
+claims is evaluated in real multi-turn conversations, not established by the
+fake model. Frozen v9 criteria review factual correctness, necessary tool use,
+refusals, usefulness and execution separately.
