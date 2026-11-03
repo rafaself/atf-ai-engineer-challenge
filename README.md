@@ -161,11 +161,13 @@ snapshots; the model never builds SQL or chooses the selected customer.
   default. One service rejects overlapping turns on the same session. Independent
   chats can run concurrently. Failed/cancelled calls save no completed turn.
 
-Bedrock Qwen 3 (`qwen.qwen3-32b-v1:0`) in `us-east-1` is the default model,
-selected after the bounded comparison reproduced invalid PIX answers with Nova
-Micro/Lite and Qwen passed the final conversations. Pydantic AI provides typed
-function calling; straightforward Python/SQL handles the small structured dataset.
-Existing `.env` files should set `BEDROCK_MODEL_ID=qwen.qwen3-32b-v1:0` to use this selection.
+GPT-6 Luna (`us.openai.gpt-6-luna`) through Bedrock Runtime's US cross-Region
+profile in `us-east-1` is the runtime default. The owner selected it after the
+full v7 benchmark: Luna scored 11 Pass / 1 Partial / 0 Fail with lower cost and
+median latency than GPT-6.1 Sol, whose perfect 12/0/0 result cost about 20.5 times
+more in this sample. See the [reviewed comparison](docs/examples/model-comparison/full-qwen-luna-sol-2026-11-03.md).
+Pydantic AI provides typed function calling; straightforward Python/SQL handles
+the small structured dataset. Set `BEDROCK_MODEL_ID` to override the default.
 Policy retrieval uses embedded ChromaDB and locally cached multilingual E5; SQLite
 remains the operational/history store. The optional `policy-rag` extra provides the
 runtime libraries. Startup and default tests do not download weights, build indexes,

@@ -1,15 +1,19 @@
 # Agent configuration and Bedrock validation
 
-The agent factory uses Pydantic AI 2.64.0 with boto3 1.43.123. The default is
-`qwen.qwen3-32b-v1:0` in `us-east-1`. Three [closing conversations](examples/sprint-2/closure/README.md)
-passed review on the final application code. Nova Micro/Lite produced incorrect
-PIX answers in the bounded comparison, so they were not retained as the default.
-Historical probes/captures remain available; no model is claimed universally correct.
+The agent factory uses Pydantic AI 2.64.0 with boto3 1.43.123. GPT-6 Luna
+(`us.openai.gpt-6-luna`) is the runtime default, invoked through the US
+cross-Region profile from `us-east-1`. The owner selected it for the cost/latency
+balance in the [full v7 comparison](examples/model-comparison/full-qwen-luna-sol-2026-11-03.md):
+Luna scored 11 Pass / 1 Partial / 0 Fail; GPT-6.1 Sol scored 12 / 0 / 0 at about
+20.5 times the estimated cost in that one run. This sample does not establish
+universal model reliability.
 
-The [IAM policy reference](aws/bedrock-invoke-policy.json) retains the five
-existing generator ARNs and includes Titan Text Embeddings V2 in `us-east-1`. The current reference allows streaming as well
-as ordinary invocation for all listed models; the embedding benchmark itself
-only uses `bedrock:InvokeModel`. It needs no catalog-listing or IAM-management rights. The owner applies this policy; the repository never
+The [IAM policy reference](aws/bedrock-invoke-policy.json) retains the existing
+model and embedding permissions and adds least-privilege `bedrock:InvokeModel`
+access for Luna's US profile and its `us-east-1`, `us-east-2`, and `us-west-2`
+destinations. Replace `<AWS_ACCOUNT_ID>` in the profile ARN before applying the
+policy. This Converse-based runtime does not need project, catalog-listing, or
+IAM-management permissions. The owner applies the policy; the repository never
 changes AWS permissions automatically.
 
 The first Titan inference probe was denied; after the owner updated the policy,
@@ -24,7 +28,7 @@ For profile authentication, export:
 ```bash
 export AWS_PROFILE=your-project-profile
 export AWS_DEFAULT_REGION=us-east-1
-export BEDROCK_MODEL_ID=qwen.qwen3-32b-v1:0
+export BEDROCK_MODEL_ID=us.openai.gpt-6-luna
 ```
 
 Do not send or commit keys. The environment example is documentation, not a dotenv

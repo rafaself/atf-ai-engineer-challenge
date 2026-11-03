@@ -15,6 +15,17 @@
         "arn:aws:bedrock:us-east-1::foundation-model/qwen.qwen3-32b-v1:0",
         "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Sid": "GPT6LunaConverse",
+      "Action": "bedrock:InvokeModel",
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:<AWS_ACCOUNT_ID>:inference-profile/us.openai.gpt-6-luna",
+        "arn:aws:bedrock:us-east-1::foundation-model/openai.gpt-6-luna",
+        "arn:aws:bedrock:us-east-2::foundation-model/openai.gpt-6-luna",
+        "arn:aws:bedrock:us-west-2::foundation-model/openai.gpt-6-luna"
+      ]
     }
   ]
 }

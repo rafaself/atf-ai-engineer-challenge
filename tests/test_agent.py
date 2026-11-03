@@ -134,6 +134,16 @@ def test_environment_settings_load_and_explicit_values_override(
     assert AgentSettings(aws_region="eu-west-1").aws_region == "eu-west-1"
 
 
+def test_runtime_model_defaults_to_gpt6_luna_without_environment_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("BEDROCK_MODEL_ID", raising=False)
+
+    settings = AgentSettings()
+
+    assert settings.model_id == "us.openai.gpt-6-luna"
+
+
 def test_configuration_and_placeholder_profile_do_not_require_credentials(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

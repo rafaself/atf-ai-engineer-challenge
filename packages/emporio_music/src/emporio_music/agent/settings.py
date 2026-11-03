@@ -13,7 +13,7 @@ class AgentSettings(BaseSettings):
     )
 
     model_id: NonblankText = Field(
-        default="qwen.qwen3-32b-v1:0", validation_alias="BEDROCK_MODEL_ID"
+        default="us.openai.gpt-6-luna", validation_alias="BEDROCK_MODEL_ID"
     )
     aws_region: NonblankText = Field(
         default="us-east-1",
