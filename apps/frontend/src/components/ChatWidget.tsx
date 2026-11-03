@@ -263,9 +263,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     >
       <div className="chat-panel__surface">
         <header className="chat-header">
-          <div className="assistant-avatar">
-            <Icon name="sparkles" size={20} />
-          </div>
+          <img alt="Lia" className="assistant-avatar" src="/assistant-avatar.webp" />
           <div className="chat-header__identity">
             <h2 id="chat-title">Lia</h2>
             <p>Assistente virtual</p>
