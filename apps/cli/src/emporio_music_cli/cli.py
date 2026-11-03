@@ -1,4 +1,4 @@
-"""Interactive terminal adapter over the backend's persistent ChatService."""
+"""Interactive terminal adapter for the shared chat application."""
 
 import argparse
 import asyncio

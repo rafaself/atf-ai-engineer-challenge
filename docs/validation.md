@@ -544,3 +544,14 @@ package builds, Docker installation and the lock check were run directly with th
 available environment or Docker builder. AWS settings were unset during the
 offline suites, and the default live-model guard remained enabled. The third-party
 lock versions are unchanged.
+
+### Full workflow rerun
+
+After provisioning the locked dependencies with network access, `make check`
+completed from the repository root with exit code 0. Ruff lint and format passed
+across 103 Python files, strict mypy passed for 104 files, the root suite passed
+(**361 tests**), the CLI suite passed (**6 tests**), and source/wheel builds passed
+for all three Python packages. Frontend lint, typecheck and production build passed
+after a fresh `npm ci`; this run did not rely on Docker's cached frontend layer.
+`npm ci` reported 10 moderate audit findings; no dependency or lockfile changes
+were made. No Bedrock request was made.
