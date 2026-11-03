@@ -12,4 +12,6 @@ Record significant boundaries and tradeoffs rather than trivial implementation c
 - [ADR-0005: Authorized operational snapshots](0005-authorized-operational-snapshots.md) records minimal operational import, trusted per-run scope, token validation, bounded order tools, snapshot limitations and safe diagnostics.
 - [ADR-0006: Immutable promotion sources and exact pricing](0006-immutable-promotion-pricing.md) records unchanged promotion data, atomic catalog ingestion, exact non-stacking pricing, payable-price filtering and the offline/live evidence boundary.
 
-- [ADR-0007: Simplified demo identity for local evaluation](0007-simplified-demo-identity.md) accepts guest sessions and direct fictional-customer selection, superseding token authentication and mandatory customer ownership in ADR-0003/0004/0005.
+- [ADR-0007: Fixed demo identity for local evaluation](0007-simplified-demo-identity.md)
+  sets one fixed fictional customer for HTTP, React chat and CLI, superseding the
+  optional guest/customer selector from #33 and the earlier token proposals.

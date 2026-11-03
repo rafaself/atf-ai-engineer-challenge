@@ -16,6 +16,7 @@ from emporio_music.application.deadlines import (
     calculate_deadline as calculate_policy_deadline,
 )
 from emporio_music.diagnostics import trace
+from emporio_music.domain.base import NonblankText
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.deadlines import (
     DeadlineEvent,
@@ -24,10 +25,17 @@ from emporio_music.domain.deadlines import (
     DeliveryDestination,
     DeliveryService,
 )
+from emporio_music.domain.errors import (
+    AmbiguousTrackingCodeError,
+    ConfigurationError,
+)
+from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.domain.orders import (
     DatabaseId,
+    OrderDetail,
     OrderListQuery,
     OrderLookupQuery,
+    OrderTrackingCodeQuery,
 )
 from emporio_music.policies.search import LocalPolicySearch
 from emporio_music.ports.catalog import ProductRepository
@@ -44,17 +52,12 @@ class OrderTools:
         ctx: RunContext[ExecutionContext],
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 5,
     ) -> dict[str, object]:
-        """List orders in the selected demo account, newest first (current simulated API result).
+        """List orders in the fixed demo account, newest first (current simulated API result).
 
         Args:
             limit: Maximum orders to return, 1–20, default 5. Not a customer scope.
         """
-        identity = ctx.deps.identity
-        if identity is None:
-            return {
-                "customer_selection_required": True,
-                "message": "Selecione um cliente fictício da demonstração para consultar pedidos.",
-            }
+        identity = self._identity(ctx)
         trace("tool.called", tool="list_my_orders", limit=limit)
         result = self.repository.list_orders(identity, OrderListQuery(limit=limit))
         return {**result.model_dump(mode="json"), "data_basis": "simulated_current"}
@@ -62,7 +65,7 @@ class OrderTools:
     def get_my_order(
         self, ctx: RunContext[ExecutionContext], order_id: DatabaseId
     ) -> dict[str, object]:
-        """Read an order in the selected demo account, with at most 20 items.
+        """Read an order in the fixed demo account, with at most 20 items.
 
         Call again for follow-up questions about items, quantities, status or tracking,
         using the order_id from the preceding list or conversation. The order record
@@ -73,34 +76,72 @@ class OrderTools:
         Args:
             order_id: Positive order identifier to look up within your account.
         """
-        identity = ctx.deps.identity
-        if identity is None:
-            return {
-                "customer_selection_required": True,
-                "message": "Selecione um cliente fictício da demonstração para consultar pedidos.",
-            }
+        identity = self._identity(ctx)
         trace("tool.called", tool="get_my_order")
         order = self.repository.get_order(identity, OrderLookupQuery(order_id=order_id))
+        return self._order_result(order, "Pedido não encontrado na sua conta.")
+
+    def get_my_order_by_tracking_code(
+        self, ctx: RunContext[ExecutionContext], tracking_code: NonblankText
+    ) -> dict[str, object]:
+        """Read the owned order for an exact tracking code from the current snapshot.
+
+        The stored code and delivery estimate are simulated records, not live carrier
+        status or confirmation of receipt. Foreign and unknown codes have one result.
+        If several owned orders share the code, ask for an order ID instead.
+        Args:
+            tracking_code: Nonblank tracking code supplied by the customer.
+        """
+        identity = self._identity(ctx)
+        trace("tool.called", tool="get_my_order_by_tracking_code")
+        try:
+            order = self.repository.get_order_by_tracking_code(
+                identity,
+                OrderTrackingCodeQuery(tracking_code=tracking_code),
+            )
+        except AmbiguousTrackingCodeError:
+            return {
+                "order": None,
+                "message": (
+                    "Encontramos mais de um pedido com esse código de rastreamento "
+                    "na sua conta. Informe o número do pedido para continuar."
+                ),
+                "data_basis": "simulated_current",
+            }
+        return self._order_result(
+            order,
+            "Não encontramos nenhum pedido com esse código de rastreamento na sua conta.",
+        )
+
+    @staticmethod
+    def _identity(ctx: RunContext[ExecutionContext]) -> CustomerIdentity:
+        identity = ctx.deps.identity
+        if identity is None:
+            raise ConfigurationError("The fixed demo identity is unavailable")
+        return identity
+
+    @staticmethod
+    def _order_result(
+        order: OrderDetail | None, not_found_message: str
+    ) -> dict[str, object]:
+        if order is not None:
+            return {
+                "order": order.model_dump(mode="json"),
+                "message": None,
+                "data_basis": "simulated_current",
+                "answer_guidance": [
+                    "Este é o registro atual da API simulada. A previsão de entrega "
+                    "não confirma o recebimento real. Se a pergunta também envolve "
+                    "políticas, consulte search_store_policies antes de responder. "
+                    "O registro não contém canal de compra, data de recebimento real "
+                    "ou condição física do produto; confirme esses fatos com o cliente "
+                    "antes de avaliar uma devolução."
+                ],
+            }
         return {
-            "order": order.model_dump(mode="json") if order is not None else None,
-            "message": None
-            if order is not None
-            else "Pedido não encontrado na sua conta.",
+            "order": None,
+            "message": not_found_message,
             "data_basis": "simulated_current",
-            **(
-                {
-                    "answer_guidance": [
-                        "Este é o registro atual da API simulada. A previsão de entrega "
-                        "não confirma o recebimento real. Se a pergunta também envolve "
-                        "políticas, consulte search_store_policies antes de responder. "
-                        "O registro não contém canal de compra, data de recebimento real "
-                        "ou condição física do produto; confirme esses fatos com o cliente "
-                        "antes de avaliar uma devolução."
-                    ]
-                }
-                if order is not None
-                else {}
-            ),
         }
 
     def calculate_deadline(
@@ -127,7 +168,7 @@ class OrderTools:
 
         Args:
             deadline_type: delivery, online_return, defect_exchange, refund, or warranty.
-            order_id: Optional order ID to resolve from the selected demo account.
+            order_id: Optional order ID to resolve from the fixed demo account.
             reference_date: A customer-reported purchase, dispatch, or actual receipt date.
             reference_event: Event that the supplied date represents; must match the deadline.
             request_date: Optional return/exchange/warranty request date for window assessment.
@@ -143,10 +184,9 @@ class OrderTools:
             destination=destination,
             delivery_service=delivery_service,
         )
-        identity = ctx.deps.identity
+        identity = self._identity(ctx)
         order = None
-        selection_required = order_id is not None and identity is None
-        if order_id is not None and identity is not None:
+        if order_id is not None:
             trace("tool.called", tool="calculate_deadline", lookup="owned_order")
             order = self.repository.get_order(
                 identity, OrderLookupQuery(order_id=order_id)
@@ -156,8 +196,6 @@ class OrderTools:
         result = calculate_policy_deadline(
             request,
             order=order,
-            order_requested=order_id is not None,
-            customer_selection_required=selection_required,
         )
         trace("tool.result", tool="calculate_deadline", status=result.status)
         return {
@@ -184,6 +222,7 @@ def create_store_agent(
             *product_tools(products),
             Tool(tools.list_my_orders),
             Tool(tools.get_my_order),
+            Tool(tools.get_my_order_by_tracking_code),
             Tool(tools.calculate_deadline),
             *policy_tools(policy_search),
         ],

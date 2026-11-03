@@ -448,7 +448,6 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
     delivery = calculate_deadline(
         DeadlineRequest(deadline_type="delivery", order_id=1),
         order=order,
-        order_requested=True,
     )
     assert delivery.status == "estimated"
     assert delivery.deadline_start_date == date(2025, 10, 25)
@@ -457,7 +456,6 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
     return_without_receipt = calculate_deadline(
         DeadlineRequest(deadline_type="online_return", order_id=1),
         order=order,
-        order_requested=True,
     )
     assert return_without_receipt.status == "missing_reference_date"
     assert return_without_receipt.deadline_end_date is None
@@ -470,7 +468,6 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
             request_date=date(2025, 11, 2),
         ),
         order=order,
-        order_requested=True,
     )
     assert return_with_receipt.deadline_end_date == date(2025, 11, 2)
     assert return_with_receipt.request_status == "within_window"
@@ -483,7 +480,6 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
             request_date=date(2025, 11, 14),
         ),
         order=order,
-        order_requested=True,
     )
     assert exchange.deadline_start_date == date(2025, 10, 15)
     assert exchange.deadline_end_date == date(2025, 11, 14)
@@ -498,7 +494,6 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
             request_date=date(2026, 1, 23),
         ),
         order=order,
-        order_requested=True,
     )
     assert warranty.deadline_start_date == date(2025, 10, 25)
     assert warranty.deadline_end_date == date(2026, 1, 23)
@@ -525,7 +520,6 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
     refund = calculate_deadline(
         DeadlineRequest(deadline_type="refund", order_id=1),
         order=order,
-        order_requested=True,
     )
     assert refund.status == "policy_reference_unspecified"
     assert refund.duration_max_days == 10
@@ -543,7 +537,6 @@ def test_deadline_requires_delivery_service_and_preserves_customer_scope(
     hidden = calculate_deadline(
         DeadlineRequest(deadline_type="delivery", order_id=1),
         order=unknown_order,
-        order_requested=True,
     )
     assert hidden.status == "order_not_found"
 
@@ -571,13 +564,6 @@ def test_deadline_requires_delivery_service_and_preserves_customer_scope(
     assert national.deadline_end_date == date(2026, 1, 20)
     assert national.status == "estimated"
     assert national.calendar_basis == "weekends_only_holidays_unmodeled"
-
-    selection = calculate_deadline(
-        DeadlineRequest(deadline_type="online_return", order_id=1),
-        order_requested=True,
-        customer_selection_required=True,
-    )
-    assert selection.status == "customer_selection_required"
 
     with pytest.raises(ValidationError):
         DeadlineRequest(

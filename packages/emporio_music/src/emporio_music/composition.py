@@ -10,7 +10,6 @@ from emporio_music.diagnostics import trace
 from emporio_music.domain.conversations import HistoryLimits
 from emporio_music.domain.errors import (
     ConfigurationError,
-    CustomerSelectionError,
 )
 from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.infrastructure.conversations import (
@@ -21,25 +20,24 @@ from emporio_music.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
 
+DEMO_CUSTOMER_ID = 1
+
 
 def create_order_repository() -> SQLiteOrderRepository:
     """Open the existing operations snapshot for customer and order access."""
     return SQLiteOrderRepository(paths.OPERATIONS_DATABASE_PATH)
 
 
-def resolve_demo_customer(
-    customer_id: int | None,
+def get_fixed_demo_identity(
     order_repository: SQLiteOrderRepository | None = None,
-) -> CustomerIdentity | None:
-    """Validate an optional fictional customer against the imported registry."""
-    if customer_id is None:
-        return None
-    identity = CustomerIdentity(customer_id=customer_id)
+) -> CustomerIdentity:
+    """Return the fixed fictional demo identity after checking the current snapshot."""
+    identity = CustomerIdentity(customer_id=DEMO_CUSTOMER_ID)
     repository = (
         create_order_repository() if order_repository is None else order_repository
     )
     if not repository.exists(identity):
-        raise CustomerSelectionError("Unknown demo customer")
+        raise ConfigurationError("The fixed demo customer is missing from the snapshot")
     return identity
 
 
@@ -59,6 +57,7 @@ def build_chat_service(
         raise ConfigurationError("Invalid conversation limits") from exc
 
     orders = create_order_repository() if order_repository is None else order_repository
+    get_fixed_demo_identity(orders)
     return ChatService(
         create_store_agent(
             agent_settings,

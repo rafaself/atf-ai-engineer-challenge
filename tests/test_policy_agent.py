@@ -31,6 +31,7 @@ from emporio_music.domain.orders import (
     OrderListQuery,
     OrderListResult,
     OrderLookupQuery,
+    OrderTrackingCodeQuery,
 )
 from emporio_music.domain.policies import PolicySearchResult
 from emporio_music.infrastructure.conversations import (
@@ -85,6 +86,12 @@ class FixedOrders:
             status="pending",
             total_centavos=69900,
         )
+
+    def get_order_by_tracking_code(
+        self, identity: CustomerIdentity, query: OrderTrackingCodeQuery
+    ) -> OrderDetail | None:
+        self.identities.append(identity)
+        return None
 
 
 class FixedPolicySearch:
@@ -213,6 +220,7 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
 
 def test_post_chat_can_answer_policy_question_with_source_reference(
     tmp_path: Path,
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     policy = FixedPolicySearch()
 
@@ -250,6 +258,7 @@ def test_post_chat_can_answer_policy_question_with_source_reference(
 
 def test_follow_up_policy_search_includes_the_latest_prior_user_question(
     tmp_path: Path,
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     policy = FixedPolicySearch()
     previous_question = "Quero saber as condições para devolver um instrumento."

@@ -16,9 +16,15 @@ uv run --env-file .env --project apps/api --extra policy-rag --locked uvicorn em
 
 Policy indexing remains explicit in this path too. To develop the React client against this API, follow the [frontend guide](../../apps/frontend/README.md).
 
-## Guest and fictional-customer requests
+## Fixed fictional demo identity
 
-No credentials are required. Guest catalog/promotion chat:
+No credentials are required. Every chat uses the same server-side fictional
+customer, ID `1`, including catalog questions. The API validates that ID against
+the imported customer registry on every request. If it is missing after data
+preparation or re-import, the service returns 503. The ID owns order `4`, which has
+the imported tracking code `BRQM7890123BR`.
+
+Start a conversation without sending an identity field:
 
 ```bash
 curl --fail-with-body http://127.0.0.1:8000/api/chat \
@@ -26,27 +32,52 @@ curl --fail-with-body http://127.0.0.1:8000/api/chat \
   -d '{"message":"Quais violões custam até R$1.000?"}'
 ```
 
-Select an existing fictional customer for orders:
+Look up the demo order by its tracking code:
 
 ```bash
 curl --fail-with-body http://127.0.0.1:8000/api/chat \
   -H 'Content-Type: application/json' \
-  -d '{"message":"Meus pedidos","customer_id":1}'
+  -d '{"message":"Acompanhe o código BRQM7890123BR"}'
 ```
 
-This is **local fictional demo selection, not authentication**. Anyone using the demo can select any imported customer. Bind to loopback; do not deploy this selector as a public service with real data. Guest order tools return a selection-required message without reading orders. Customer IDs are strict positive 64-bit integers, validated against the current registry on each selected request. Unknown IDs fail explicitly. Omitted or null `customer_id` means guest; no ID is inferred from chat text.
+This is **a fixed fictional demo identity, not authentication**. The request
+model has no `customer_id` field; including it with any value, including `1`,
+returns 422. Bind to loopback and use fictional data. The browser and CLI also use
+the fixed identity. Customer identity never comes from chat text or tool arguments.
+The tracking lookup matches exact codes inside parameterized SQL constrained by
+the trusted customer ID. Foreign and unknown codes both return
+`Não encontramos nenhum pedido com esse código de rastreamento na sua conta.`
+Stored tracking and estimated-delivery values are snapshot records, not live carrier
+updates or proof of receipt.
 
-Success contains `answer` and a UUID4 `session_id`. Repeat that ID and the same customer selection to continue, for example:
+Success contains `answer` and a UUID4 `session_id`. Repeat that ID to continue,
+for example:
 
 ```json
-{"message":"Detalhe o primeiro pedido","customer_id":1,"session_id":"<returned-id>"}
+{"message":"E se houver atraso? Consulte a política.","session_id":"<returned-id>"}
 ```
 
-Omit `session_id` or send null to start another chat. Invalid non-null IDs are rejected. Guest/customer switching and customer changes require a new session; unknown or differently scoped session IDs return the same 404 without model execution. Guest sessions are distinguished only by their IDs: anyone with a guest session ID can resume it. There is no identity protection for individual demo users.
+Omit `session_id` or send null to start another conversation. A session previously
+owned by a guest or another customer returns the same 404 as an unknown session.
+The application does not reassign its history to customer `1`.
 
-The React client uses `POST /api/chat/stream` with the same request fields. It returns `text/event-stream` events named `delta`, `done`, and `error`. A `delta` contains provisional text. `done` contains the authoritative `answer` and `session_id` and is sent only after the complete answer is validated and the user / assistant pair has been committed. `error` contains a sanitized message. Errors before streaming starts use the normal HTTP status and JSON body. If the client disconnects before the commit, cancellation closes the provider stream and the turn is not saved. A connection lost after commit but before `done` may leave a saved turn, so the client reports unknown completion and does not retry. The existing `POST /api/chat` JSON contract remains available.
+Both `POST /api/chat` and `POST /api/chat/stream` use the same `ChatRequest` model
+and server-resolved fixed identity; neither endpoint accepts customer selection.
+The React client uses `POST /api/chat/stream` with the same request fields. It
+returns `text/event-stream` events named `delta`, `done`, and `error`. A `delta`
+contains provisional text. `done` contains the authoritative `answer` and
+`session_id` and is sent only after the complete answer is validated and the user /
+assistant pair has been committed. `error` contains a sanitized message. Errors
+before streaming starts use the normal HTTP status and JSON body. If the client
+disconnects before the commit, cancellation closes the provider stream and the
+turn is not saved. A connection lost after commit but before `done` may leave a
+saved turn, so the client reports unknown completion and does not retry. The
+existing `POST /api/chat` JSON contract remains available.
 
-Nested identity, history, context and payment fields remain forbidden; payment selection comes from conversational text through typed tools. Message length is limited to 4,000 characters. `customer_id` is HTTP-only: the boundary removes it from ChatRequest and passes the validated selection through ExecutionContext. It never becomes a model-generated tool argument or shared mutable customer state.
+Nested identity, history, context and payment fields remain forbidden; payment
+selection comes from conversational text through typed tools. Message length is
+limited to 4,000 characters. The boundary supplies the fixed identity through
+`ExecutionContext`, outside `ChatRequest` and model messages.
 
 History survives restarts. Try promotions followed by `E o segundo no PIX?`. Tools retrieve fresh facts; previous answers are context, not evidence. Docs/OpenAPI require no provider setup.
 
@@ -67,8 +98,8 @@ History survives restarts. Try promotions followed by `E o segundo no PIX?`. Too
 | --- | --- |
 | Unknown/foreign session | 404 |
 | Another turn is active on this session in this service | 409 |
-| Invalid request or unknown selected customer | 422 |
-| Missing configuration or unavailable provider | 503 |
+| Invalid request, including any `customer_id` field | 422 |
+| Missing fixed customer, configuration or unavailable provider | 503 |
 | Deadline/provider timeout | 504 |
 | Retrieval, persistence or execution failure | 500 |
 
@@ -80,11 +111,24 @@ Trusted code imports the defining modules:
 
 ```python
 from emporio_music.application.chat import ChatService
+from emporio_music.composition import get_fixed_demo_identity
 from emporio_music.domain.chat import ChatRequest
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.ports.chat import ChatServicePort
 ```
 
-It calls `ChatService.chat(request, context=ExecutionContext())` for guests or supplies a validated CustomerIdentity as `ExecutionContext(identity=...)` for a selected customer. Direct callers own registry validation at their application boundary; order repositories independently recheck customer existence. The service loads history itself; externally supplied session metadata/history is rejected. The lower-level agent can execute explicitly trusted owned history without saving it. A CustomerIdentity value alone does not authenticate an external caller.
+It resolves `get_fixed_demo_identity()` against the current snapshot and calls
+`ChatService.chat(request, context=ExecutionContext(identity=identity))`. Order
+repositories independently recheck customer existence on every read.
+The service loads history itself; externally supplied session metadata/history is
+rejected. The lower-level agent can execute explicitly trusted owned history
+without saving it. A CustomerIdentity value alone does not authenticate an
+external caller.
 
-`create_app(chat_service=...)` supports controlled tests. HTTP selection always validates non-null IDs against the operational registry. Stop the server before manually resetting conversation storage; removing it makes old session IDs inaccessible. Diagnostics contain counts, timings and safe error classes, not raw messages, answers, identifiers, credentials or tool rows. See [architecture](../architecture.md) and [provider setup](bedrock.md) for remaining execution limits.
+`create_app(chat_service=...)` supports controlled tests. HTTP resolves the fixed
+ID against the operational registry on every request. Stop the server before
+manually resetting conversation storage; removing it makes old session IDs
+inaccessible. Diagnostics contain counts, timings and safe error classes, not raw
+messages, answers, identifiers, credentials or tool rows. See
+[architecture](../architecture.md) and [provider setup](bedrock.md) for remaining
+execution limits.

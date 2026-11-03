@@ -67,16 +67,11 @@ def operational_database(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def demo_customer(
+def fixed_demo_identity(
     monkeypatch: pytest.MonkeyPatch, operational_database: Path
-) -> dict[str, int]:
+) -> CustomerIdentity:
     monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
-    return {"customer_id": 1}
-
-
-@pytest.fixture
-def other_customer(demo_customer: dict[str, int]) -> dict[str, int]:
-    return {"customer_id": 2}
+    return CustomerIdentity(customer_id=1)
 
 
 @pytest.fixture

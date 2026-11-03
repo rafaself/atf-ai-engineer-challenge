@@ -4,7 +4,6 @@ from emporio_music.domain.errors import (
     AgentTimeoutError,
     ApplicationError,
     ConfigurationError,
-    CustomerSelectionError,
     PolicyRetrievalError,
     ProviderUnavailableError,
     SessionAccessError,
@@ -14,8 +13,6 @@ from fastapi.responses import JSONResponse
 
 
 def application_failure_response(exc: ApplicationError) -> tuple[int, str]:
-    if isinstance(exc, CustomerSelectionError):
-        return 422, "Unknown demo customer"
     if isinstance(exc, SessionAccessError):
         return 404, "Conversation session unavailable"
     if isinstance(exc, SessionConflictError):

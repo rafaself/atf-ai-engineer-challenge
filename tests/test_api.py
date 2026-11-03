@@ -9,13 +9,13 @@ from emporio_music.domain.errors import (
     AgentTimeoutError,
     ConfigurationError,
     ConversationPersistenceError,
-    CustomerSelectionError,
     PolicyRetrievalError,
     ProductRetrievalError,
     ProviderUnavailableError,
     SessionAccessError,
     SessionConflictError,
 )
+from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music_api import app as api_app
 from emporio_music_api.app import create_app, get_chat_service_factory
@@ -61,14 +61,12 @@ def test_http_adapter_reuses_lazy_shared_composition_and_service_injection(
 
 
 def test_http_contract_docs_and_dependency_override(
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     app = create_app()
     app.dependency_overrides[get_chat_service_factory] = lambda: lambda: FakeService()
     with TestClient(app) as client:
-        assert client.post(
-            "/api/chat", json={**demo_customer, "message": " Olá "}
-        ).json() == {
+        assert client.post("/api/chat", json={"message": " Olá "}).json() == {
             "answer": "Olá",
             "session_id": "00000000-0000-4000-8000-000000000001",
         }
@@ -86,7 +84,7 @@ def test_http_contract_docs_and_dependency_override(
             {"message": "Olá", "context": {"identity": {"customer_id": 2}}},
             {},
         ):
-            response = client.post("/api/chat", json={**demo_customer, **payload})
+            response = client.post("/api/chat", json=payload)
             assert response.status_code == 422
             assert response.json() == {"detail": "Invalid chat request"}
         assert client.get("/docs").status_code == 200
@@ -96,7 +94,7 @@ def test_http_contract_docs_and_dependency_override(
             "answer",
             "session_id",
         }
-        request_schema = schema["components"]["schemas"]["DemoChatRequest"]
+        request_schema = schema["components"]["schemas"]["ChatRequest"]
         assert request_schema["properties"]["session_id"]["anyOf"] == [
             {"format": "uuid4", "type": "string"},
             {"type": "null"},
@@ -114,18 +112,15 @@ def test_http_contract_docs_and_dependency_override(
 )
 def test_default_docs_and_validation_do_not_initialize_aws(
     monkeypatch: pytest.MonkeyPatch,
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
     variable: str,
     value: str,
 ) -> None:
     monkeypatch.setenv(variable, value)
     with TestClient(create_app(), raise_server_exceptions=False) as client:
         assert client.get("/docs").status_code == 200
-        assert (
-            client.post("/api/chat", json={**demo_customer, "message": " "}).status_code
-            == 422
-        )
-        response = client.post("/api/chat", json={**demo_customer, "message": "Olá"})
+        assert client.post("/api/chat", json={"message": " "}).status_code == 422
+        response = client.post("/api/chat", json={"message": "Olá"})
         assert response.status_code == 503
         assert response.json() == {"detail": "Agent service unavailable"}
         assert value not in response.text
@@ -134,7 +129,6 @@ def test_default_docs_and_validation_do_not_initialize_aws(
 @pytest.mark.parametrize(
     ("error", "status", "detail"),
     [
-        (CustomerSelectionError("private customer"), 422, "Unknown demo customer"),
         (
             SessionAccessError("private session"),
             404,
@@ -160,7 +154,10 @@ def test_default_docs_and_validation_do_not_initialize_aws(
     ],
 )
 def test_http_error_mapping_is_sanitized(
-    error: Exception, status: int, detail: str, demo_customer: dict[str, int]
+    error: Exception,
+    status: int,
+    detail: str,
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     class Service:
         async def chat(
@@ -171,7 +168,7 @@ def test_http_error_mapping_is_sanitized(
     with TestClient(
         create_app(chat_service=Service()), raise_server_exceptions=False
     ) as client:
-        response = client.post("/api/chat", json={**demo_customer, "message": "Olá"})
+        response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == status
     assert response.json() == {"detail": detail}
     assert "private" not in response.text and "Traceback" not in response.text

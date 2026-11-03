@@ -1,25 +1,58 @@
-# ADR-0007: Simplified demo identity for local evaluation
+# ADR-0007: Fixed demo identity for local evaluation
 
-> Historical storage note: this decision originally used a fixed project-root path. Issue #76 now selects source and runtime data through `EMPORIO_MUSIC_DATA_DIR`; see [current architecture](../architecture.md). Stop the server and move an older history database aside before creating its replacement; earlier configurable-path guidance below is historical.
+> Historical storage note: this decision originally used a fixed project-root
+> path. Issue #76 now selects source and runtime data through
+> `EMPORIO_MUSIC_DATA_DIR`; see [current architecture](../architecture.md).
+> Stop the server and move an older history database aside before creating its
+> replacement; earlier configurable-path guidance below is historical.
 
-Status: Accepted — reviewed and verified offline on 2026-11-01.
+Status: Accepted — updated for issue #87 on 2026-11-03.
 
-Related: [#33](https://github.com/rafaself/atf-ai-engineer-challenge/issues/33).
+Related: [#33](https://github.com/rafaself/atf-ai-engineer-challenge/issues/33),
+[#87](https://github.com/rafaself/atf-ai-engineer-challenge/issues/87).
 
 ## Context
 
-ADR-0003/0004/0005 followed the earlier approved requirements: trusted execution context, mandatory customer sessions, server-configured bearer mapping and scoped orders. The owner's later review of the planning/code concluded that token setup, hashing/comparison and resolver plumbing were disproportionate for a local challenge with finite fictional data. This is a scope correction, not an implementation bug. LLM integration, factual tools, conversation context and UX are the evaluation focus.
+Earlier ADRs proposed mandatory customer sessions and bearer-token mapping. Issue
+#33 removed those mechanisms as disproportionate for a local challenge with finite
+fictional data and temporarily used optional customer selection. Issue #87
+supersedes that selector for the demo: all public demo entry points now share one
+fixed fictional customer. LLM integration, factual tools, conversation context and
+UX remain the evaluation focus.
 
 ## Decision
 
-Use optional customer selection at the HTTP boundary. Omitted/null customer_id is guest mode. A non-null ID is a strict positive SQLite-sized integer and must exist in the current imported registry on each selected request. HTTP-only selection is removed from ChatRequest; immutable ExecutionContext carries scope separately from model messages. Remove tokens, mapping configuration, resolver protocols and dead configuration paths; add no authentication replacement or production dependencies.
+Use fixed imported customer ID `1` for HTTP, React chat and CLI. Shared composition
+resolves the identity server-side and validates it against the current operational
+snapshot for each incoming turn. A missing fixed customer is a configuration
+failure. `ChatRequest` has no `customer_id` field; clients that send the removed
+field receive 422. Immutable `ExecutionContext` carries the fixed scope separately
+from model messages. The model has no customer-selection tool argument.
 
-Reuse the existing history store with an optional customer owner: null is guest. Session reads and complete-turn writes compare customer/null explicitly. Customer or mode changes require a new session. Keep bounded complete pairs, transactions, same-session overlap protection, deadlines, cancellation and safe diagnostics. Guest order tools return a selection-required message before querying the repository. Selected tools retain per-run dependencies and parameterized customer-scoped SQL. Chat text and model arguments cannot change the selected customer.
+Keep the existing history schema and owner checks. New demo sessions are owned by
+customer `1`; sessions owned by a guest or another customer fail the same inaccessible
+session response as an unknown ID. Do not reassign their conversation history.
+Conversation schema v2 still represents null owners so pre-existing guest rows can
+be rejected without a migration or rewrite. Keep bounded complete pairs,
+transactions, same-session overlap protection, deadlines, cancellation and safe
+diagnostics. Order tools use per-run identity, and repositories enforce owner scope
+in SQL. Tracking lookup binds customer ID and exact tracking code in the same query.
 
-Conversation schema v2 allows nullable owners. Reject v1 unchanged; configure a fresh path and retain the old file. No automatic deletion, migration or compatibility path is needed for this development-stage demo. Catalog/order sources remain unchanged.
+The chosen fictional customer owns order `4` with tracking code `BRQM7890123BR`,
+providing a reproducible tracking demonstration. Catalog and order source bytes
+remain unchanged. No tokens, dynamic identity configuration, authentication
+replacement or production dependencies are added.
 
 ## Consequences
 
-This is local fictional demo selection, **not authentication**. Any demo user can select any existing customer. Guest IDs permit continuation by possession and do not distinguish individual people; no protection against another demo user choosing the same customer is claimed. Run on loopback with fictional data, not a public service with real customer information. No frontend, distributed guest identity, JWT/OAuth, policy retrieval or paid model evaluation is included.
+This is a fixed fictional demo identity, **not authentication**. Every local demo
+user sees the same fictional customer account; session IDs are not user credentials.
+Anyone who obtains a session ID can continue that session. Run on loopback with
+fictional data, not a public service with real customer information. The React
+client sends no identity field, and the CLI has no identity selector. No dynamic
+customer switching, JWT/OAuth or distributed identity is provided.
 
-Tokens and the no-guest choice in ADR-0003/0004/0005 are superseded by this decision. App-owned context, history integrity, customer-scoped reads and the historical rationale/evidence remain valid. Controlled models and real temporary SQLite verify the implementation; fresh live model quality remains US-13.
+The old optional-selector behavior recorded earlier in #33 is superseded by this
+decision. App-owned context, history integrity, customer-scoped reads and the
+historical rationale remain valid. Controlled models and temporary SQLite verify
+the implementation; live model answer quality remains opt-in.

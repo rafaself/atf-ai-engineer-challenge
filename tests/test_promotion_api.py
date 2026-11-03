@@ -1,4 +1,4 @@
-"""Offline promotion/PIX follow-ups through guest and selected-customer application composition."""
+"""Offline promotion/PIX follow-ups through fixed demo application composition."""
 
 import asyncio
 import logging
@@ -38,11 +38,9 @@ INVENTORY_NOTICE = (
 )
 
 
-@pytest.mark.parametrize("selection", [{}, {"customer_id": 1}])
 def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     tmp_path: Path,
     operational_database: Path,
-    selection: dict[str, int],
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -168,7 +166,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     monkeypatch.setattr(composition, "create_store_agent", factory)
     app = api_app.create_app()
     with TestClient(app) as client:
-        first = client.post("/api/chat", json={**selection, "message": "Promoções?"})
+        first = client.post("/api/chat", json={"message": "Promoções?"})
         assert first.status_code == 200
         answer = first.json()["answer"]
         assert "359,00" in answer and "323,10" in answer and "10%" in answer
@@ -179,7 +177,6 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
         followup = client.post(
             "/api/chat",
             json={
-                **selection,
                 "message": "E o segundo no PIX?",
                 "session_id": session,
             },
@@ -192,7 +189,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
         assert (
             client.post(
                 "/api/chat",
-                json={**selection, "message": "Olá", "payment_method": "pix"},
+                json={"message": "Olá", "payment_method": "pix"},
             ).status_code
             == 422
         )
@@ -205,7 +202,6 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
         refreshed = client.post(
             "/api/chat",
             json={
-                **selection,
                 "message": "E o segundo no PIX?",
                 "session_id": session,
             },
@@ -223,7 +219,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
         ) as client:
             results = await asyncio.gather(
                 *(
-                    client.post("/api/chat", json={**selection, "message": message})
+                    client.post("/api/chat", json={"message": message})
                     for message in ("GD20", "GD20 PIX")
                 )
             )
@@ -235,7 +231,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     with TestClient(app) as client:
         failed = client.post(
             "/api/chat",
-            json={**selection, "message": "Falhar consulta", "session_id": session},
+            json={"message": "Falhar consulta", "session_id": session},
         )
         assert failed.status_code == 500 and failed.json() == {
             "detail": "Conversation failed"
