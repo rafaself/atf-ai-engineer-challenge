@@ -4,7 +4,8 @@ import asyncio
 import json
 from collections.abc import AsyncGenerator, Callable
 from contextlib import aclosing
-from typing import Any, cast
+from pathlib import Path
+from typing import Any
 from uuid import UUID
 
 import emporio_music_api.app as api_app
@@ -23,11 +24,11 @@ from emporio_music.domain.errors import (
 )
 from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.infrastructure.conversations import SQLiteConversationRepository
+from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music.ports.agent import AgentStreamEvent, AgentTextDelta
 from emporio_music.ports.chat import ChatStreamDelta
 from emporio_music_api.app import create_app
-from emporio_music_api.schemas import DemoChatRequest
-from fastapi.routing import APIRoute
+from fastapi.testclient import TestClient
 
 
 async def _agent_response(
@@ -276,65 +277,62 @@ def test_stream_timeout_and_cancellation_release_the_session_and_save_nothing(
 
 
 def test_http_stream_emits_deltas_then_authoritative_done_without_changing_chat(
-    demo_customer: dict[str, int],
+    operational_database: Path,
+    fixed_demo_identity: CustomerIdentity,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session_id = UUID("00000000-0000-4000-8000-000000000001")
+    identities: list[CustomerIdentity | None] = []
 
     class Service:
         async def chat(
             self, request: ChatRequest, *, context: ExecutionContext
         ) -> ChatResponse:
+            identities.append(context.identity)
             return ChatResponse(answer=request.message, session_id=session_id)
 
         async def stream(
             self, request: ChatRequest, *, context: ExecutionContext
         ) -> AsyncGenerator[ChatStreamDelta | ChatResponse, None]:
+            identities.append(context.identity)
             yield ChatStreamDelta(text="Olá ")
             yield ChatStreamDelta(text="mundo")
             yield ChatResponse(answer="Olá mundo final", session_id=session_id)
 
     app = create_app(chat_service=Service())
     monkeypatch.setattr(api_app, "run_in_threadpool", _run_inline)
-    normal_route = cast(
-        APIRoute,
-        next(
-            route for route in app.routes if getattr(route, "path", None) == "/api/chat"
-        ),
+    monkeypatch.setattr(
+        api_app,
+        "create_order_repository",
+        lambda: SQLiteOrderRepository(operational_database),
     )
-    stream_route = cast(
-        APIRoute,
-        next(
-            route
-            for route in app.routes
-            if getattr(route, "path", None) == "/api/chat/stream"
-        ),
-    )
-
-    async def exercise() -> tuple[ChatResponse, str, str | None]:
-        request = DemoChatRequest.model_validate({**demo_customer, "message": "Olá"})
-        normal = await normal_route.endpoint(request, app.state.chat_service_factory)
-        stream = await stream_route.endpoint(request, app.state.chat_service_factory)
-        chunks = [chunk async for chunk in stream.body_iterator]
-        body = "".join(
-            chunk.decode() if isinstance(chunk, bytes) else chunk for chunk in chunks
+    with TestClient(app) as client:
+        normal = client.post("/api/chat", json={"message": "Olá"})
+        stream = client.post("/api/chat/stream", json={"message": "Olá"})
+        forged = client.post(
+            "/api/chat/stream", json={"message": "Olá", "customer_id": 2}
         )
-        return normal, body, stream.media_type
 
-    normal, body, media_type = asyncio.run(exercise())
-
-    assert normal == ChatResponse(answer="Olá", session_id=session_id)
-    assert media_type == "text/event-stream"
+    assert normal.status_code == 200
+    assert normal.json() == ChatResponse(
+        answer="Olá", session_id=session_id
+    ).model_dump(mode="json")
+    assert stream.status_code == 200
+    assert stream.headers["content-type"].startswith("text/event-stream")
+    body = stream.text
     assert [line for line in body.splitlines() if line.startswith("event:")] == [
         "event: delta",
         "event: delta",
         "event: done",
     ]
     assert 'data: {"answer":"Olá mundo final","session_id":"' in body
+    assert forged.status_code == 422
+    assert forged.json() == {"detail": "Invalid chat request"}
+    assert identities == [fixed_demo_identity, fixed_demo_identity]
 
 
 def test_http_stream_sanitizes_service_failures_into_error_events(
-    demo_customer: dict[str, int],
+    operational_database: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class Service:
@@ -352,27 +350,17 @@ def test_http_stream_sanitizes_service_failures_into_error_events(
 
     app = create_app(chat_service=Service())
     monkeypatch.setattr(api_app, "run_in_threadpool", _run_inline)
-    route = cast(
-        APIRoute,
-        next(
-            route
-            for route in app.routes
-            if getattr(route, "path", None) == "/api/chat/stream"
-        ),
+    monkeypatch.setattr(
+        api_app,
+        "create_order_repository",
+        lambda: SQLiteOrderRepository(operational_database),
     )
+    with TestClient(app) as client:
+        response = client.post("/api/chat/stream", json={"message": "Olá"})
 
-    async def exercise() -> tuple[str, str | None]:
-        request = DemoChatRequest.model_validate({**demo_customer, "message": "Olá"})
-        response = await route.endpoint(request, app.state.chat_service_factory)
-        chunks = [chunk async for chunk in response.body_iterator]
-        body = "".join(
-            chunk.decode() if isinstance(chunk, bytes) else chunk for chunk in chunks
-        )
-        return body, response.media_type
-
-    body, media_type = asyncio.run(exercise())
-
-    assert media_type == "text/event-stream"
+    body = response.text
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
     assert "event: error\n" in body
     assert 'data: {"message":"Conversation turn conflicts"}' in body
     assert "private" not in body

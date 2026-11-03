@@ -10,6 +10,7 @@ from emporio_music.diagnostics import failure
 from emporio_music.domain.chat import ChatRequest, ChatResponse
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.errors import ConfigurationError
+from emporio_music.domain.identity import CustomerIdentity
 from emporio_music_api.app import create_app
 from fastapi.testclient import TestClient
 
@@ -34,7 +35,7 @@ def test_token_retrieval_failure_has_a_safe_provider_hint() -> None:
 def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret-for-test-only")
@@ -53,7 +54,7 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
         monkeypatch.setenv("PIPELINE_LOGS", "0")
         assert (
             client.post(
-                "/api/chat", json={**demo_customer, "message": "secret-for-test-only"}
+                "/api/chat", json={"message": "secret-for-test-only"}
             ).status_code
             == 200
         )
@@ -64,7 +65,6 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
             return client.post(
                 "/api/chat",
                 json={
-                    **demo_customer,
                     "message": f"{index} secret-for-test-only\nnext line",
                 },
             ).status_code
@@ -87,7 +87,7 @@ def test_concurrent_http_logs_are_correlated_and_redact_active_credentials(
 def test_failure_logs_show_cause_type_without_raw_exception_body(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
 ) -> None:
     monkeypatch.setenv("PIPELINE_LOGS", "1")
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
@@ -102,12 +102,7 @@ def test_failure_logs_show_cause_type_without_raw_exception_body(
                 raise ConfigurationError("private settings") from exc
 
     with TestClient(create_app(Service()), raise_server_exceptions=False) as client:
-        assert (
-            client.post(
-                "/api/chat", json={**demo_customer, "message": "Olá"}
-            ).status_code
-            == 503
-        )
+        assert client.post("/api/chat", json={"message": "Olá"}).status_code == 503
     entries = [
         json.loads(r.getMessage())
         for r in caplog.records

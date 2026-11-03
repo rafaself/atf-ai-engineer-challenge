@@ -22,9 +22,8 @@ from emporio_music.infrastructure.conversations import (
 )
 from emporio_music.infrastructure.operations_import import import_operations
 from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
-from pydantic import UUID4
-
 from emporio_music_cli.cli import main, run_cli
+from pydantic import UUID4
 
 
 class ControlledAgent:
@@ -64,7 +63,7 @@ def _input(values: list[str]) -> Callable[[str], str]:
     return lambda _prompt: next(remaining)
 
 
-def test_cli_keeps_guest_and_customer_sessions_persisted_and_isolated(
+def test_cli_uses_one_fixed_identity_across_sessions_and_persists_history(
     tmp_path: Path, order_repository: SQLiteOrderRepository
 ) -> None:
     conversations_path = tmp_path / "conversations.sqlite3"
@@ -72,13 +71,17 @@ def test_cli_keeps_guest_and_customer_sessions_persisted_and_isolated(
     agent = ControlledAgent()
     service = ChatService(agent, conversations)
     output: list[str] = []
+    prompts: list[str] = []
+    inputs = iter(["Primeira", "Segunda", "/new", "Terceira", "/exit"])
+
+    def input_fn(prompt: str) -> str:
+        prompts.append(prompt)
+        return next(inputs)
 
     exit_code = run_cli(
         service,
         order_repository,
-        input_fn=_input(
-            ["g", "Primeira", "Segunda", "/new", "999999", "1", "Terceira", "/exit"]
-        ),
+        input_fn=input_fn,
         output_fn=output.append,
     )
 
@@ -89,6 +92,7 @@ def test_cli_keeps_guest_and_customer_sessions_persisted_and_isolated(
         )
         == 1
     )
+    assert prompts == ["Você: "] * 5
     assert len(agent.calls) == 3
     (
         (first_request, first_context),
@@ -103,46 +107,45 @@ def test_cli_keeps_guest_and_customer_sessions_persisted_and_isolated(
     assert first_request.session_id is None
     assert second_request.session_id == first_context.session.session_id
     assert third_request.session_id is None
-    assert first_context.identity is None
-    assert second_context.identity is None
+    fixed_identity = CustomerIdentity(customer_id=1)
+    assert first_context.identity == fixed_identity
+    assert second_context.identity == fixed_identity
     assert len(first_context.history) == 0
     assert [message.content for message in second_context.history] == [
         "Primeira",
         "Resposta: Primeira",
     ]
-    assert third_context.identity == CustomerIdentity(customer_id=1)
+    assert third_context.identity == fixed_identity
     assert third_context.history == ()
-    guest_session_id = first_context.session.session_id
-    customer_session_id = third_context.session.session_id
-    assert guest_session_id != customer_session_id
+    fixed_session_id = first_context.session.session_id
+    new_session_id = third_context.session.session_id
+    assert fixed_session_id != new_session_id
 
     reopened = SQLiteConversationRepository(conversations_path)
-    guest_history = reopened.load(
-        guest_session_id, None, limits=HistoryLimits()
+    first_history = reopened.load(
+        fixed_session_id, fixed_identity, limits=HistoryLimits()
     ).history
-    customer_history = reopened.load(
-        customer_session_id,
-        CustomerIdentity(customer_id=1),
-        limits=HistoryLimits(),
+    new_history = reopened.load(
+        new_session_id, fixed_identity, limits=HistoryLimits()
     ).history
-    assert [message.content for message in guest_history] == [
+    assert [message.content for message in first_history] == [
         "Primeira",
         "Resposta: Primeira",
         "Segunda",
         "Resposta: Segunda",
     ]
-    assert [message.content for message in customer_history] == [
+    assert [message.content for message in new_history] == [
         "Terceira",
         "Resposta: Terceira",
     ]
     with pytest.raises(SessionAccessError):
         asyncio.run(
             service.chat(
-                ChatRequest(message="cross-customer", session_id=customer_session_id),
+                ChatRequest(message="cross-customer", session_id=fixed_session_id),
                 context=ExecutionContext(identity=CustomerIdentity(customer_id=2)),
             )
         )
-    assert any("desconhecido" in line for line in output)
+    assert not any("convidado" in line.lower() for line in output)
 
 
 def test_cli_reports_application_failure_without_leaking_or_resubmitting(
@@ -165,7 +168,7 @@ def test_cli_reports_application_failure_without_leaking_or_resubmitting(
     exit_code = run_cli(
         ChatService(FailingAgent(), conversations),
         order_repository,
-        input_fn=_input(["g", "pergunta", "/exit"]),
+        input_fn=_input(["pergunta", "/exit"]),
         output_fn=output.append,
     )
 
@@ -173,7 +176,11 @@ def test_cli_reports_application_failure_without_leaking_or_resubmitting(
     assert len(calls) == 1
     assert len(failed_sessions) == 1
     assert (
-        conversations.load(failed_sessions[0], None, limits=HistoryLimits()).history
+        conversations.load(
+            failed_sessions[0],
+            CustomerIdentity(customer_id=1),
+            limits=HistoryLimits(),
+        ).history
         == ()
     )
     rendered = "\n".join(output)
@@ -207,6 +214,7 @@ def test_cli_exits_cleanly_on_eof_and_ctrl_c(
     assert output == [
         "Empório da Música — /new inicia outra conversa; /exit encerra.",
         "Demonstração com dados fictícios. As consultas simulam os sistemas da loja.",
+        "Atendimento com identidade fictícia fixa.",
         "\nAté logo.",
     ]
 

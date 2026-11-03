@@ -86,7 +86,7 @@ INVENTORY_NOTICE = (
 def test_snapshot_facts_survive_http_agent_tool_pipeline(
     tmp_path: Path,
     conversations: SQLiteConversationRepository,
-    demo_customer: dict[str, int],
+    fixed_demo_identity: CustomerIdentity,
     tool_name: str,
     arguments: dict[str, object],
     total: int,
@@ -121,9 +121,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
     )
     with TestClient(create_app(ChatService(executor, conversations))) as client:
-        response = client.post(
-            "/api/chat", json={**demo_customer, "message": "Consulta de integração"}
-        )
+        response = client.post("/api/chat", json={"message": "Consulta de integração"})
     assert response.status_code == 200
     if total > 10:
         assert response.json()["answer"].startswith(answer)
@@ -158,6 +156,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
 def test_customer_budget_supports_comparison_or_clarification_without_echoing_amount(
     operational_database: Path,
     conversations: SQLiteConversationRepository,
+    fixed_demo_identity: CustomerIdentity,
     lookup_product: bool,
 ) -> None:
     answer = (

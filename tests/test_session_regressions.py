@@ -1,10 +1,11 @@
-"""US-10 regressions: guest context at the boundary and ignore historical evidence."""
+"""US-10 regressions: fixed identity at the boundary and current evidence only."""
 
 from uuid import UUID
 
 from emporio_music.agent.output import customer_answer
 from emporio_music.domain.chat import ChatRequest, ChatResponse
 from emporio_music.domain.conversations import ExecutionContext
+from emporio_music.domain.identity import CustomerIdentity
 from emporio_music_api.app import create_app
 from fastapi.testclient import TestClient
 from pydantic_ai import RunContext
@@ -15,7 +16,9 @@ from pydantic_ai.usage import RunUsage
 from tests._support import run_async
 
 
-def test_guest_reaches_chat_service_without_customer_metadata() -> None:
+def test_http_omission_uses_fixed_identity_without_customer_metadata(
+    fixed_demo_identity: CustomerIdentity,
+) -> None:
     called = False
 
     class Service:
@@ -24,7 +27,7 @@ def test_guest_reaches_chat_service_without_customer_metadata() -> None:
         ) -> ChatResponse:
             nonlocal called
             called = True
-            assert context.identity is None
+            assert context.identity == CustomerIdentity(customer_id=1)
             assert request.model_dump(exclude_none=True) == {"message": "Olá"}
             return ChatResponse(
                 answer="Resposta",
@@ -32,9 +35,7 @@ def test_guest_reaches_chat_service_without_customer_metadata() -> None:
             )
 
     with TestClient(create_app(Service())) as client:
-        response = client.post(
-            "/api/chat", json={"message": "Olá", "customer_id": None}
-        )
+        response = client.post("/api/chat", json={"message": "Olá"})
     assert response.status_code == 200
     assert called
 

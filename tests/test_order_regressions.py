@@ -18,7 +18,7 @@ from pydantic_ai.usage import RunUsage
 from tests._support import run_async
 
 
-def test_missing_operations_cannot_validate_customer_selection(
+def test_missing_operations_cannot_resolve_fixed_demo_identity(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", tmp_path / "missing.sqlite3")
@@ -34,7 +34,7 @@ def test_missing_operations_cannot_validate_customer_selection(
     with TestClient(create_app(Service())) as client:
         response = client.post(
             "/api/chat",
-            json={"message": "My orders", "customer_id": 999},
+            json={"message": "My orders"},
         )
     assert response.status_code == 503
     assert not called

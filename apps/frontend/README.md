@@ -17,7 +17,7 @@ npm run dev
 
 The development server binds to `127.0.0.1`. The chat is the main interface, centered on desktop and nearly fullscreen on mobile. There is no storefront, overlay, or minimize control.
 
-For API integration, start the backend on `127.0.0.1:8000` using the setup instructions in the [root README](../../README.md). Vite proxies `/api` requests to that local server. The frontend uses fictional customer ID `1` for every turn; this is demo context, not authentication or customer selection.
+For API integration, start the backend on `127.0.0.1:8000` using the setup instructions in the [root README](../../README.md). Vite proxies `/api` requests to that local server. The backend supplies the fixed fictional demo identity; the browser does not send a customer ID. This is demo context, not authentication.
 
 ## Checks and production build
 

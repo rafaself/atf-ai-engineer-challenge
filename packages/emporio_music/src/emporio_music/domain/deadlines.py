@@ -21,7 +21,6 @@ DeadlineStatus = Literal[
     "missing_destination",
     "missing_service",
     "order_not_found",
-    "customer_selection_required",
     "policy_reference_unspecified",
 ]
 RequestStatus = Literal[

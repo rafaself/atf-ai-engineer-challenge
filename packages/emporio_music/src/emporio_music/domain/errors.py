@@ -25,16 +25,16 @@ class OperationalRetrievalError(ApplicationError):
     """Customer/order retrieval failed; never substitute an empty result."""
 
 
+class AmbiguousTrackingCodeError(ApplicationError):
+    """More than one owned order matches an exact tracking code."""
+
+
 class PolicyRetrievalError(ApplicationError):
     """Policy search could not run; this is not evidence that the manual has no rule."""
 
 
 class AgentExecutionError(ApplicationError):
     """Agent execution failed for another reason."""
-
-
-class CustomerSelectionError(ApplicationError):
-    """The selected demo customer is missing or unknown."""
 
 
 class SessionAccessError(ApplicationError):

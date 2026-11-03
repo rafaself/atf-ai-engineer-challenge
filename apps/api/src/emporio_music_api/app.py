@@ -14,7 +14,7 @@ from emporio_music.composition import (
 )
 from emporio_music.composition import (
     create_order_repository,
-    resolve_demo_customer,
+    get_fixed_demo_identity,
 )
 from emporio_music.diagnostics import failure, request_id, trace
 from emporio_music.domain.chat import ChatRequest, ChatResponse
@@ -42,7 +42,6 @@ from emporio_music_api.errors import (
     sanitized_stream_failure,
     unexpected_failure_handler,
 )
-from emporio_music_api.schemas import DemoChatRequest
 
 ChatServiceFactory = Callable[[], ChatServicePort]
 
@@ -65,12 +64,10 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
 
     @lru_cache(maxsize=1)
     def customer_repository() -> SQLiteOrderRepository:
-        return create_order_repository()  ## TODO: verify ask the user
+        return create_order_repository()
 
-    def select_demo_customer(customer_id: int | None) -> CustomerIdentity | None:
-        if customer_id is None:
-            return None
-        return resolve_demo_customer(customer_id, customer_repository())
+    def fixed_demo_identity() -> CustomerIdentity:
+        return get_fixed_demo_identity(customer_repository())
 
     @lru_cache(maxsize=1)
     def build_chat_service() -> ChatServicePort:
@@ -106,7 +103,7 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         "/api/chat",
         response_model=ChatResponse,
         responses={
-            422: {"description": "Invalid request or unknown demo customer"},
+            422: {"description": "Invalid chat request"},
             404: {"description": "Conversation session unavailable"},
             409: {"description": "Conversation turn conflicts"},
             503: {"description": "Agent service unavailable"},
@@ -116,7 +113,7 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
     )
     async def chat(
         chat_request: Annotated[
-            DemoChatRequest,
+            ChatRequest,
             Body(
                 openapi_examples={
                     "catalog": {
@@ -136,16 +133,12 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         started = perf_counter()
         try:
             trace("http.request")
-            identity = await run_in_threadpool(
-                select_demo_customer, chat_request.customer_id
-            )
+            identity = await run_in_threadpool(fixed_demo_identity)
             # SQLite and SDK setup may do I/O; keep it off the event loop.
             chat_service = await run_in_threadpool(chat_service_factory)
             trace("chat.started")
             response = await chat_service.chat(
-                ChatRequest.model_validate(
-                    chat_request.model_dump(exclude={"customer_id"}, exclude_none=True)
-                ),
+                chat_request,
                 context=ExecutionContext(identity=identity),
             )
             trace(
@@ -168,7 +161,7 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         "/api/chat/stream",
         response_class=StreamingResponse,
         responses={
-            422: {"description": "Invalid request or unknown demo customer"},
+            422: {"description": "Invalid chat request"},
             404: {"description": "Conversation session unavailable"},
             409: {"description": "Conversation turn conflicts"},
             503: {"description": "Agent service unavailable"},
@@ -177,7 +170,7 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         },
     )
     async def chat_stream(
-        chat_request: DemoChatRequest,
+        chat_request: ChatRequest,
         chat_service_factory: Annotated[
             ChatServiceFactory, Depends(get_chat_service_factory)
         ],
@@ -187,13 +180,9 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
         started = perf_counter()
         try:
             trace("http.request", streaming=True)
-            identity = await run_in_threadpool(
-                select_demo_customer, chat_request.customer_id
-            )
+            identity = await run_in_threadpool(fixed_demo_identity)
             chat_service = await run_in_threadpool(chat_service_factory)
-            request = ChatRequest.model_validate(
-                chat_request.model_dump(exclude={"customer_id"}, exclude_none=True)
-            )
+            request = chat_request
         except Exception as exc:
             trace(
                 "http.failure",

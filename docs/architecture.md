@@ -5,9 +5,10 @@ The repository is a simple modular monolith. `apps/api` owns FastAPI and serves 
 ```mermaid
 flowchart LR
     React[React chat] --> HTTP
-    CLI[apps/cli] --> Selection
+    CLI[apps/cli] --> Identity
     CLI --> Chat
-    HTTP[apps/api / FastAPI] --> Selection[Optional fictional customer selection]
+    HTTP[apps/api / FastAPI] --> Identity[Fixed fictional customer ID 1]
+    Identity --> Registry[Validate imported customer]
     HTTP --> Chat[ChatService]
     Chat --> History[Conversation SQLite]
     Chat --> Agent[Pydantic AI / Bedrock]
@@ -35,21 +36,38 @@ flowchart LR
 - `apps/api/src/emporio_music_api` owns HTTP schemas, routes, error mapping and frontend serving. `apps/cli/src/emporio_music_cli` owns terminal prompts and error presentation. Neither app imports the other.
 - Repository-only evaluation utilities live in `scripts/`; regression tests live in `tests/`, with CLI-specific checks in `apps/cli/tests/`.
 
-`domain` groups immutable values in focused modules: `chat` for request/response values, `identity` for selected customer scope, `conversations` for owned history and execution context, `catalog` for product search and batch lookup, `pricing` for unit prices, `quotes` and `comparisons` for deterministic product results, `deadlines` for qualified date calculations, and `orders` for order projections. `base` contains shared validation types and the frozen model base; `errors` contains application failures.
+`domain` groups immutable values in focused modules: `chat` for request/response values, `identity` for fixed customer scope, `conversations` for owned history and execution context, `catalog` for product search and batch lookup, `pricing` for unit prices, `quotes` and `comparisons` for deterministic product results, `deadlines` for qualified date calculations, and `orders` for order projections. `base` contains shared validation types and the frozen model base; `errors` contains application failures.
 
 `ports` groups protocols by boundary (`chat`, `agent`, `catalog`, `conversations`, `orders`, `policies`). `ChatServicePort` and its streaming extension live in `ports.chat`; the implementation lives in `application.chat`. The agent streaming port lives in `ports.agent` and keeps provider events out of the application service. `application.pricing` owns unit-price calculation; `application.quotes`, `application.comparisons` and `application.deadlines` own the corresponding pure calculations. Package initializers contain docstrings only; callers import each symbol directly from its defining module, without compatibility re-exports.
 
-`infrastructure` loads CSVs and performs parameterized SQL. The agent factory owns Bedrock configuration; the agent executor translates provider failures. Policy search stays separate from its Pydantic AI tool wrapper. `composition.py` supplies the shared dependency construction and customer validation used by HTTP and CLI. FastAPI retains lazy initialization; the CLI requires `--live` for default agent construction. Neither adapter duplicates application orchestration. Domain, application and port modules do not import FastAPI, CLI, AWS, SQLite or Pydantic AI. Boundary tests import all core modules so minimal initializers cannot hide an accidental dependency.
+`infrastructure` loads CSVs and performs parameterized SQL. The agent factory owns Bedrock configuration; the agent executor translates provider failures. Policy search stays separate from its Pydantic AI tool wrapper. `composition.py` supplies shared dependency construction and fixed identity resolution for HTTP and CLI. FastAPI retains lazy initialization; the CLI requires `--live` for default agent construction. Neither adapter duplicates application orchestration. Domain, application and port modules do not import FastAPI, CLI, AWS, SQLite or Pydantic AI. Boundary tests import all core modules so minimal initializers cannot hide an accidental dependency.
 
-## Local demo selection
+## Fixed demo identity
 
-HTTP accepts optional `customer_id`; omitted/null means guest. Selected IDs must exist in the operational registry on each request. No bearer tokens, resolver protocol, or authentication framework is used. A small HTTP request schema carries the selector; the boundary removes it from the agent request and supplies immutable ExecutionContext dependencies. The model cannot choose scope through text or tools.
+HTTP, React chat and CLI use imported fictional customer ID `1`. Shared composition
+resolves that identity on the server and checks the current operational snapshot on
+each incoming turn. If the customer is absent after preparation or re-import, the
+request fails with a sanitized service-unavailable response. The HTTP contract has
+no `customer_id` field; including one is a 422 validation error. The browser does
+not send identity data, and chat text or tool arguments cannot choose another
+customer.
 
-The selector is not authentication: any demo user may select any fictional customer. Run on loopback with fictional data. Guest order calls return a selection-required message before repository access; selected calls retain parameterized customer scoping. No frontend selector is required. See [ADR-0007](adr/0007-simplified-demo-identity.md).
+The trusted per-run `ExecutionContext` scopes every order tool. SQLite queries
+also bind customer ID inside the repository, including exact tracking-code lookup.
+This fixed fictional identity is demo context, not authentication. Run on loopback
+with fictional data. See [ADR-0007](adr/0007-simplified-demo-identity.md).
 
 ## Chat history
 
-Use one server process and one ChatService instance. The service checks session mode/customer matching, rejects same-session overlap with an in-memory active-ID set, loads a bounded suffix of complete turns and invokes the agent. Session ownership is an optional customer: null denotes guest. Loading/appending compares the selected customer or null explicitly; changing customer/mode requires a new session. Guest continuation relies on possession of the session ID, not individual-user identity. A short SQLite transaction appends a complete pair under the next sequence number. There is no expected revision, compare-and-swap or coordination between separate service instances.
+Use one server process and one ChatService instance. The service checks session
+ownership, rejects same-session overlap with an in-memory active-ID set, loads a
+bounded suffix of complete turns and invokes the agent. New HTTP and CLI sessions
+are owned by fixed customer ID `1`. Existing guest or other-customer sessions fail
+the ownership check with the same 404 as unknown IDs; history is never reassigned.
+The conversation schema still represents null owners so old guest sessions remain
+inaccessible rather than being rewritten. A short SQLite transaction appends a
+complete pair under the next sequence number. There is no expected revision,
+compare-and-swap or coordination between separate service instances.
 
 Conversation schema v2 permits null owners. Older v1 files are rejected untouched; stop the server and move the old file aside before starting a fresh history store at the fixed path. There is no migration or automatic history deletion.
 
@@ -67,7 +85,15 @@ The operational-data preparation command refreshes catalog and operational snaps
 
 Catalog tools share one repository. Search calculates integer-centavo unit prices before payable-price filtering, ordering/counting and limiting. Multi-product quotes and comparisons batch identified product IDs in one read-only transaction, including current promotion and stock data. Active, stocked products may receive one active promotion, otherwise explicit PIX pricing. Inactive/unavailable offers do not apply. Quotes, installment allocation and comparisons use integer centavos. Unsupported freight, mixed-payment and policy-threshold facts remain explicitly unresolved.
 
-Order tools retain a repository, not customer state. Each read validates selected customer existence and scopes order/item/count SQL by customer identity. Foreign and missing orders have the same result. Contacts, notes and payment methods are excluded. Copied product references and historical totals survive catalog changes. Deadline lookups reuse that customer-scoped repository. Stored purchase dates and estimated delivery are distinct from dispatch, actual receipt and request dates; deadline calculations preserve those distinctions and do not reprice orders. See [catalog](guides/catalog.md) and [orders](guides/orders.md).
+Order tools retain a repository, not customer state. Each read validates the fixed
+customer exists and scopes order/item/count SQL by customer identity, including
+exact tracking-code lookup. Foreign and missing orders or tracking codes have the
+same safe result. Contacts, notes and payment methods are excluded. Copied product
+references and historical totals survive catalog changes. Deadline lookups reuse
+that customer-scoped repository. Stored purchase dates and estimated delivery are
+distinct from dispatch, actual receipt and request dates; deadline calculations
+preserve those distinctions and do not reprice orders. See [catalog](guides/catalog.md)
+and [orders](guides/orders.md).
 
 Tools own exact unit/cart calculations, payable-price filtering, numeric comparisons, qualified deadlines and customer-scoped reads. The output layer protects against blank/internal-control output and appends notices from current tool metadata: partial lists and sources consulted. The UI and CLI identify the fictional simulation once; per-answer snapshot/ingestion footers are removed. Fresh operational reads are authoritative within that simulation, while delivery estimates remain distinct from actual receipt dates. It does not parse model prose for citations, compare every currency mention with tool prices, or infer required tool calls from Portuguese keywords. Those gates rejected readable citations, legitimate budget quotes and negated return requests. The model still receives grounding and tool-use instructions; actual compliance requires conversation review. Generated claims, prices and references are not automatically certified by the source list. Diagnostics allow metadata only.
 

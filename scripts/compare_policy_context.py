@@ -130,7 +130,8 @@ def load_luna_candidate(
         raise ValueError("Luna pricing rates must be finite and positive")
     if (
         candidate.long_context_threshold_tokens is None
-        or not 0 < candidate.long_context_threshold_tokens
+        or not 0
+        < candidate.long_context_threshold_tokens
         < candidate.context_window_tokens
     ):
         raise ValueError("Invalid Luna context-tier threshold")
@@ -302,6 +303,10 @@ def replace_once(source: str, old: str, new: str) -> str:
 def embedded_instructions(policy_json: str) -> str:
     instructions = STORE_INSTRUCTIONS
     replacements = (
+        (
+            "- Use list_my_orders para listar pedidos e get_my_order para consultar detalhes de um pedido identificado. Quando a pessoa informar um código de rastreamento sem número do pedido, use get_my_order_by_tracking_code. Atualize o registro do pedido em cada acompanhamento; consulte search_store_policies separadamente quando a pergunta envolver atraso, devolução ou prazo.",
+            "- Use list_my_orders para listar pedidos e get_my_order para consultar detalhes de um pedido identificado. Quando a pessoa informar um código de rastreamento sem número do pedido, use get_my_order_by_tracking_code. Atualize o registro do pedido em cada acompanhamento; consulte o corpus completo de políticas incluído abaixo separadamente quando a pergunta envolver atraso, devolução ou prazo.",
+        ),
         (
             "Em perguntas que combinam pedido/produto com política, consulte as ferramentas necessárias antes de concluir, sem pedir permissão.",
             "Em perguntas que combinam pedido/produto com política, consulte as ferramentas operacionais necessárias e use o corpus completo incluído abaixo antes de concluir.",

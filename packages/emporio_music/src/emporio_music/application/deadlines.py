@@ -61,23 +61,14 @@ def calculate_deadline(
     request: DeadlineRequest,
     *,
     order: OrderDetail | None = None,
-    order_requested: bool = False,
-    customer_selection_required: bool = False,
 ) -> DeadlineResult:
     """Calculate only deadlines whose reference event is supported by evidence."""
     request = DeadlineRequest.model_validate(request)
-    if customer_selection_required:
-        return _missing(
-            request,
-            "customer_selection_required",
-            "Select a demo customer before looking up an order.",
-            source="operational_snapshot",
-        )
-    if order_requested and order is None:
+    if request.order_id is not None and order is None:
         return _missing(
             request,
             "order_not_found",
-            "Order was not found in the selected account.",
+            "Order was not found in the fixed demo account.",
             source="operational_snapshot",
         )
 

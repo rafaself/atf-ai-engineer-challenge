@@ -48,6 +48,11 @@ def test_embedded_policy_arm_contains_corpus_without_rag_tool() -> None:
     assert "Corpus de políticas revisado" in instructions
     assert '{"source":"fixture"}' in instructions
     assert "Contato geral não é automaticamente SAC" in instructions
+    assert "get_my_order_by_tracking_code" in instructions
+    assert (
+        "consulte o corpus completo de políticas incluído abaixo separadamente"
+        in instructions
+    )
 
 
 def test_issue_78_fixture_has_twelve_paired_conversations_and_eighteen_turns() -> None:
