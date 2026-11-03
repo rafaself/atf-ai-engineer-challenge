@@ -26,6 +26,8 @@ index explains SDK trace capture. No separate recorder framework is required.
 The old catalog-only recorder has been retired. The small opt-in
 [provider probe](../bedrock.md) remains available for diagnosing Bedrock tool calling;
 it does not establish customer conversation quality.
+Completed one-off evaluation runners are retained in the
+[scripts archive](../../scripts/archive/README.md).
 
 The [Nemotron holiday follow-up evaluation](grounding-followups/nemotron-benchmark-2026-11-02.md)
 records a two-model smoke comparison through the current chat/RAG harness. It

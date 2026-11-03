@@ -22,6 +22,11 @@ benchmark group adds Sentence Transformers and CPU PyTorch, not CUDA. The chat
 application never imports the benchmark. Default tests do not download models or
 call providers. Model/download caches and generated indexes are Git-ignored.
 
+For application setup, use `make prepare-policy` or the dedicated
+`emporio_music.prepare_policy_index` command. That builds the runtime E5 collection
+without running this benchmark. The benchmark runner below still builds an index
+when `--index` is requested so each embedding configuration can be evaluated.
+
 For each configuration (`e5`, `titan`), first run development only:
 
 ```bash
@@ -44,6 +49,8 @@ Model-catalog and Marketplace subscription permissions are not required.
 Use `--index` once per configuration. To query an existing compatible collection,
 omit `--index`; missing, stale or incomplete indexes fail clearly. `--rebuild`
 requires `--index` and explicitly replaces only that named benchmark collection.
+Benchmark collections default to `data/policy-benchmark-indexes`, separate from the
+runtime E5 index at `data/policy-indexes`; pass `--index-dir` to use another location.
 A failed model request never becomes an empty successful search or score.
 
 After freezing the configuration and query rules, run the untouched validation
@@ -78,7 +85,8 @@ three repeated embedding invocations measure query variability, not a response
 cache. Reports retain timings for every repeat, final rankings, ranking instability,
 and relevant top-five evidence lost by filtering. They separate model-load,
 document-embedding and index-write times. Existing-index runs incur no new indexing
-charges. Index-directory bytes are shared across collections, not per-model sizes.
+charges. Benchmark index-directory bytes are shared across benchmark collections,
+not per-model sizes.
 
 Recall/MRR, multi-group coverage, denominators and frozen gates follow
 [US-14's protocol](../policy-retrieval.md). Unsupported cases receive rankings but
@@ -140,6 +148,8 @@ uv run --project packages/emporio_music --extra policy-rag --group benchmark --l
 uv run --project packages/emporio_music --env-file .env --extra policy-rag --group benchmark --locked python -m scripts.policy_benchmark.context_experiment --generate --retrieval-report docs/benchmarks/expansion/<retrieval-report>.json
 ```
 
-The second command makes paid calls; use it only with explicit approval and the
-recorded experiment budget. Moving these scripts does not alter the frozen rule,
-questions or recorded model outputs.
+This follow-up experiment uses the runtime E5 index in `data/policy-indexes`; prepare
+it with `make prepare-policy` before running the commands above. The second command
+makes paid calls; use it only with explicit approval and the recorded experiment
+budget. Moving these scripts does not alter the frozen rule, questions or recorded
+model outputs.

@@ -22,12 +22,12 @@ flowchart LR
     Agent --> Policy[Bounded policy search]
     Products --> Catalog[Catalog SQLite]
     Orders --> Operations[Operational SQLite]
-    Corpus[Reviewed policy corpus] --> IndexBuild[Explicit index build]
+    Corpus[Reviewed policy corpus] --> IndexBuild[Explicit policy-index preparation]
     IndexBuild --> E5[Local E5 embeddings]
     Policy --> E5
     E5 --> Chroma[Embedded Chroma index]
     Chroma --> Policy
-    Prepare[One preparation command] --> Catalog
+    Prepare[Operational-data preparation] --> Catalog
     Prepare --> Operations
 ```
 
@@ -123,9 +123,10 @@ derive paths from Python source locations.
 
 ## Data and tools
 
-One preparation command refreshes catalog and operational snapshots using the
-supplied files unchanged. Each import validates inputs/references before its own
-transaction; the two database imports are not one cross-file transaction. Storage
+The operational-data preparation command refreshes catalog and operational
+snapshots using the supplied files unchanged. Each import validates
+inputs/references before its own transaction; the two database imports are not one
+cross-file transaction. Storage
 checks cover expected tables/columns and simple markers, without exact SQL-definition
 auditing or source fingerprints. Transactions and schema constraints still protect
 writes. Conversation storage is untouched by preparation.

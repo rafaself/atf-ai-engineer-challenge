@@ -40,7 +40,7 @@ from emporio_music_api.app import create_app
 from pydantic_ai.models.bedrock import BedrockConverseModel
 from pydantic_ai.providers.bedrock import BedrockProvider
 
-from scripts.validate_us18 import RecordingAgent, _write_checkpoint, sanitized
+from scripts.evaluation_support import RecordingAgent, sanitized, write_checkpoint
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SCENARIOS_PATH = (
@@ -1314,19 +1314,19 @@ async def run_comparison(
             "planned_turns_per_model": planned_turns,
             "model_runs": [],
         }
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
 
         try:
             candidates = load_verified_candidates(pricing_path, model_keys=selected)
             report["pricing_verification"] = "verified_today"
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
         except (ValueError, KeyError, TypeError) as exc:
             report["pricing_verification"] = "pending"
             report["pricing_failure_type"] = type(exc).__name__
             report["status"] = "blocked_pricing_verification"
             report["phase"] = "preflight_blocked"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
 
         budget_report = benchmark_budget_report(
@@ -1343,7 +1343,7 @@ async def run_comparison(
             report["status"] = "blocked_budget_envelope"
             report["phase"] = "preflight_blocked"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
 
         try:
@@ -1355,7 +1355,7 @@ async def run_comparison(
             report["status"] = "blocked_endpoint_tool_verification"
             report["phase"] = "preflight_blocked"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
 
         report["endpoint_tool_compatibility"] = {
@@ -1366,7 +1366,7 @@ async def run_comparison(
             }
             for candidate in candidates
         }
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
         if resume_from is not None:
             report = _load_resume_capture(
                 resume_from,
@@ -1395,14 +1395,14 @@ async def run_comparison(
             report["estimated_spend_usd"] = str(
                 Decimal(str(report.get("estimated_spend_usd", "0")))
             )
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
         report["retrieval_readiness"] = _check_local_retrieval_readiness()
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
         if report["retrieval_readiness"]["status"] != "ready":
             report["status"] = "blocked_retrieval_readiness"
             report["phase"] = "preflight_blocked"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
         try:
             if resume_from is not None:
@@ -1412,7 +1412,7 @@ async def run_comparison(
             else:
                 access = probe_model_access(candidates, settings)
             report["account_preflight"] = access
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             availability: dict[str, str] | None = None
             if access["status"] == "checked":
                 availability = {
@@ -1425,12 +1425,12 @@ async def run_comparison(
                     if "qwen3_32b" in selected
                     else "availability_api_denied_use_selected_model_setup_check"
                 )
-                _write_checkpoint(stream, report)
+                write_checkpoint(stream, report)
             else:
                 report["status"] = "blocked_preflight"
                 report["phase"] = "preflight_blocked"
                 report["finished_at_utc"] = datetime.now(UTC).isoformat()
-                _write_checkpoint(stream, report)
+                write_checkpoint(stream, report)
                 return report
 
             baseline = next(
@@ -1445,13 +1445,13 @@ async def run_comparison(
                     report["status"] = "blocked_baseline_unavailable"
                     report["phase"] = "preflight_blocked"
                     report["finished_at_utc"] = datetime.now(UTC).isoformat()
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     return report
                 if baseline.tool_use_status != "verified":
                     report["status"] = "blocked_baseline_tool_compatibility"
                     report["phase"] = "preflight_blocked"
                     report["finished_at_utc"] = datetime.now(UTC).isoformat()
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     return report
             price_by_key = {candidate.key: candidate for candidate in candidates}
             aggregate_cost = Decimal(str(report.get("estimated_spend_usd", "0")))
@@ -1528,7 +1528,7 @@ async def run_comparison(
                             _not_executed(item, stop_reason or "run_stopped")
                             for item in scenarios
                         ]
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     continue
                 if (
                     availability is not None
@@ -1539,7 +1539,7 @@ async def run_comparison(
                         _not_executed(item, "model_unavailable_or_unconfirmed")
                         for item in scenarios
                     ]
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     continue
                 if candidate.tool_use_status == "unsupported":
                     model_report["status"] = (
@@ -1549,7 +1549,7 @@ async def run_comparison(
                         _not_executed(item, "endpoint_tool_compatibility_unsupported")
                         for item in scenarios
                     ]
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     continue
                 counter = RequestCounter()
                 counter.configure(
@@ -1591,7 +1591,7 @@ async def run_comparison(
                         stop_reason = "baseline_provider_setup_failure"
                         report["status"] = "stopped_provider_failure"
                         report["phase"] = "preflight"
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     continue
 
                 with temporary as temporary_path:
@@ -1838,7 +1838,7 @@ async def run_comparison(
                                         transport_failure_type
                                     )
                                 case["turns"].append(turn_record)
-                                _write_checkpoint(stream, report)
+                                write_checkpoint(stream, report)
 
                                 if turn_status == "failed":
                                     scenario_failed = True
@@ -1894,7 +1894,7 @@ async def run_comparison(
                                             "model_input_budget_exhausted",
                                         )
                                     )
-                                _write_checkpoint(stream, report)
+                                write_checkpoint(stream, report)
                                 break
                             if stop_model:
                                 case["reason"] = "provider_unavailable"
@@ -1912,7 +1912,7 @@ async def run_comparison(
                                 report["status"] = "stopped_provider_failure"
                                 report["phase"] = "evaluation"
                                 break
-                            _write_checkpoint(stream, report)
+                            write_checkpoint(stream, report)
 
                 model_total = sum(
                     (
@@ -1959,7 +1959,7 @@ async def run_comparison(
                     break
                 if stop_model:
                     continue
-                _write_checkpoint(stream, report)
+                write_checkpoint(stream, report)
 
             report["summary"] = _summary(report["model_runs"])
             if report["status"] == "running":
@@ -1977,7 +1977,7 @@ async def run_comparison(
             }:
                 report["phase"] = "completed"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
         except BaseException as exc:
             report["status"] = (
@@ -1988,7 +1988,7 @@ async def run_comparison(
             report["phase"] = report.get("phase", "preflight")
             report["failure_type"] = type(exc).__name__
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             raise
 
 
@@ -2020,7 +2020,7 @@ def preflight_report(
             "source_freeze": freeze_inputs(scenarios_path),
             "runtime_settings_verified": True,
         }
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
         try:
             try:
                 candidates = load_verified_candidates(pricing_path, model_keys=selected)
@@ -2077,12 +2077,12 @@ def preflight_report(
                 report["endpoint_tool_manifest_freshness"] = "stale_or_incomplete"
                 report["endpoint_tool_failure_type"] = type(exc).__name__
             report["retrieval_readiness"] = _check_local_retrieval_readiness()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             if report["retrieval_readiness"]["status"] != "ready":
                 report["status"] = "blocked_retrieval_readiness"
                 report["phase"] = "preflight_blocked"
                 report["finished_at_utc"] = datetime.now(UTC).isoformat()
-                _write_checkpoint(stream, report)
+                write_checkpoint(stream, report)
                 return report
             report["account_preflight"] = probe_model_access(candidates, settings)
             report["endpoint_tool_compatibility"] = {
@@ -2129,13 +2129,13 @@ def preflight_report(
             else:
                 report["status"] = "ready_no_paid_calls"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
         except BaseException as exc:
             report["status"] = "blocked_preflight"
             report["failure_type"] = type(exc).__name__
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             return report
 
 

@@ -62,6 +62,11 @@ The second downloaded pinned E5 weights, built Chroma and completed its existing
 local development retrieval checks. It made no Bedrock calls. Image build and
 normal startup performed neither initialization step.
 
+The benchmark-runner command above is historical evidence from before runtime
+index preparation was separated from evaluation. On the current checkout, it
+builds under `data/policy-benchmark-indexes`; prepare the runtime collection with
+`make prepare-policy` instead.
+
 Normal Compose startup completed. Inside the container `/`, `/docs` and
 `/openapi.json` returned 200. However, on this machine, host traffic to the
 published loopback port timed out despite the running Docker proxy and correct

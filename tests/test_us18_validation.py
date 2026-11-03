@@ -17,12 +17,11 @@ from emporio_music.domain.errors import AgentExecutionError
 from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from scripts.evaluation_support import RecordingAgent, write_checkpoint
 from scripts.validate_us18 import (
-    RecordingAgent,
     _probe_status,
     _record_failure,
     _run_status,
-    _write_checkpoint,
     validate,
 )
 
@@ -125,7 +124,7 @@ def test_probe_checkpoint_preserves_partial_trace_on_cancellation(
     }
 
     with output.open("x") as stream:
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
         assert json.loads(output.read_text())["status"] == "running"
         status = _record_failure(
             report,
@@ -134,7 +133,7 @@ def test_probe_checkpoint_preserves_partial_trace_on_cancellation(
             asyncio.CancelledError("private cancellation detail"),
             12.5,
         )
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
 
     saved = json.loads(output.read_text())
     assert status == "interrupted"

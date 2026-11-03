@@ -1,7 +1,5 @@
 """Bounded local search over the frozen store-policy corpus and index."""
 
-import hashlib
-import json
 from pathlib import Path
 from threading import Lock
 from typing import Protocol
@@ -15,29 +13,19 @@ from emporio_music.domain.policies import (
 from emporio_music.infrastructure.policy_embeddings import E5_CONFIG, E5Embedder
 from emporio_music.infrastructure.policy_index import PolicyIndex
 from emporio_music.paths import DATA_DIRECTORY
-from emporio_music.policies.corpus import (
-    FREIGHT_CLARIFICATION_SOURCE,
-    PolicyChunk,
-    PolicyCorpus,
+from emporio_music.policies.corpus import PolicyChunk
+from emporio_music.policies.index_setup import (
+    POLICY_COLLECTION,
+    load_verified_policy_corpus,
+    policy_index_configuration,
 )
 from emporio_music.policies.retrieval import expand, query_families
 
-_EMBEDDING_INPUT = "hierarchy joined by newline + newline + section text"
-_COLLECTION = "policy-e5"
 _SEED_LIMIT = 3
 
 
 class QueryEmbedder(Protocol):
     def embed(self, texts: list[str], *, query: bool) -> list[list[float]]: ...
-
-
-def _canonical_chunks_sha256(corpus: PolicyCorpus) -> str:
-    serialized = json.dumps(
-        [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
-        ensure_ascii=False,
-        sort_keys=True,
-    ).encode()
-    return hashlib.sha256(serialized).hexdigest()
 
 
 class LocalPolicySearch:
@@ -57,40 +45,11 @@ class LocalPolicySearch:
         self._lock = Lock()
 
     def _initialize(self) -> None:
-        policy_directory = self._data_directory / "policies"
-        corpus = PolicyCorpus.model_validate_json(
-            (policy_directory / "corpus.json").read_text()
-        )
-        freeze = json.loads((policy_directory / "freeze.json").read_text())
-        source_path = self._data_directory / corpus.source
-        source_sha256 = hashlib.sha256(source_path.read_bytes()).hexdigest()
-        clarification_path = self._data_directory / FREIGHT_CLARIFICATION_SOURCE
-        freight_clarification_sha256 = hashlib.sha256(
-            clarification_path.read_bytes()
-        ).hexdigest()
-        chunks_sha256 = _canonical_chunks_sha256(corpus)
-        if (
-            source_sha256 != corpus.source_sha256
-            or source_sha256 != freeze["source_sha256"]
-            or freeze["freight_clarification_source"] != FREIGHT_CLARIFICATION_SOURCE
-            or freight_clarification_sha256 != corpus.freight_clarification_sha256
-            or freight_clarification_sha256 != freeze["freight_clarification_sha256"]
-            or chunks_sha256 != freeze["chunks_sha256"]
-            or corpus.parser_version != freeze["parser_version"]
-        ):
-            raise ValueError("Frozen policy source or corpus mismatch")
-
+        corpus, _, chunks_sha256 = load_verified_policy_corpus(self._data_directory)
         chunks = {chunk.id: chunk for chunk in corpus.chunks if chunk.indexable}
-        config = {
-            **E5_CONFIG,
-            "source_sha256": corpus.source_sha256,
-            "freight_clarification_sha256": corpus.freight_clarification_sha256,
-            "corpus_sha256": chunks_sha256,
-            "parser_version": corpus.parser_version,
-            "embedding_input": _EMBEDDING_INPUT,
-        }
+        config = policy_index_configuration(corpus, chunks_sha256, E5_CONFIG)
         index = PolicyIndex(
-            self._data_directory / "policy-indexes", _COLLECTION, config
+            self._data_directory / "policy-indexes", POLICY_COLLECTION, config
         )
         index.open(list(chunks))
 

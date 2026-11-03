@@ -1,6 +1,7 @@
 """Customer-output checks and notices derived from this run's source results."""
 
 import re
+from collections.abc import Mapping
 
 from pydantic_ai import ModelRetry, RunContext
 from pydantic_ai.messages import ToolReturnPart
@@ -13,6 +14,15 @@ _INTERNAL_MARKUP = re.compile(
     r"|<\|(?:im_start|im_end|system|assistant|analysis)\|>",
     re.IGNORECASE,
 )
+
+
+def _truncated_total(
+    content: Mapping[str, object], *, flag: str, total_key: str
+) -> int | None:
+    total = content.get(total_key)
+    if content.get(flag) is True and type(total) is int and total > 0:
+        return total
+    return None
 
 
 def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
@@ -68,22 +78,25 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                 "find_product_by_name",
                 "find_product_alternatives",
             }:
-                if content.get("truncated") is True:
-                    total = content.get("total_matches")
-                    if type(total) is int and total > 0:
-                        totals.add(total)
+                total = _truncated_total(
+                    content, flag="truncated", total_key="total_matches"
+                )
+                if total is not None:
+                    totals.add(total)
             if part.tool_name == "list_my_orders":
-                if content.get("truncated") is True:
-                    total = content.get("total_matches")
-                    if type(total) is int and total > 0:
-                        order_totals.add(total)
+                total = _truncated_total(
+                    content, flag="truncated", total_key="total_matches"
+                )
+                if total is not None:
+                    order_totals.add(total)
             if part.tool_name == "get_my_order":
                 order = content.get("order")
                 if isinstance(order, dict):
-                    if order.get("items_truncated") is True:
-                        total = order.get("total_items")
-                        if type(total) is int and total > 0:
-                            item_totals.add(total)
+                    total = _truncated_total(
+                        order, flag="items_truncated", total_key="total_items"
+                    )
+                    if total is not None:
+                        item_totals.add(total)
     notices = [
         f"Esta é uma seleção das {total} opções encontradas na consulta; "
         "a lista não é completa."

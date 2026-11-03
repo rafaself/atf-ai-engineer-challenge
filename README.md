@@ -47,13 +47,15 @@ make up
 `make prepare-policy` explicitly downloads the pinned CPU E5 model if it is not
 cached and builds the local Chroma index. Run it once for a new data volume. It
 intentionally fails if an index already exists. To rebuild after an intentional policy
-source change, run this explicit command:
+source change, run:
 
 ```bash
-docker compose run --rm app \
-  python -m scripts.policy_benchmark.run --model e5 --index --rebuild \
-  --allow-download --output-dir /tmp/policy-rag-bootstrap
+make rebuild-policy
 ```
+
+Index preparation validates the versioned policy sources and builds only the runtime
+index. Retrieval benchmarking is a separate development workflow in
+[`docs/benchmarks/README.md`](docs/benchmarks/README.md).
 
 Image build and normal startup do not download weights, prepare SQLite snapshots,
 rebuild the index, or call a model provider.
@@ -128,6 +130,7 @@ Install Python 3.12+ and `uv`, then from the repository root run:
 uv sync --project apps/api --locked --extra policy-rag
 test -f .env || cp .env.example .env
 uv run --env-file .env --project apps/api --extra policy-rag --locked python -m emporio_music.prepare
+uv run --project apps/api --extra policy-rag --locked python -m emporio_music.prepare_policy_index --allow-download
 uv run --env-file .env --project apps/api --extra policy-rag --locked uvicorn emporio_music_api.app:create_app --factory --host 127.0.0.1 --port 8000
 ```
 

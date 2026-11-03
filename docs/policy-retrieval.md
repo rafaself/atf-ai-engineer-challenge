@@ -107,23 +107,22 @@ uv sync --project apps/api --locked --extra policy-rag
 ```
 
 The default dependency set remains unchanged. Before answering policy questions,
-explicitly build the ignored E5 Chroma collection using the existing benchmark runner:
+explicitly build the ignored E5 Chroma collection:
 
 ```bash
 uv run --project apps/api --extra policy-rag --locked \
-  python -m scripts.policy_benchmark.run --model e5 --index --allow-download \
-  --output-dir /tmp/policy-rag-bootstrap
+  python -m emporio_music.prepare_policy_index --allow-download
 ```
 
 The freight clarification changes the effective corpus and index fingerprint. Any
-previous `policy-e5` collection is therefore stale; rebuild it with `--index --rebuild`
-before using the updated corpus. Keep `--allow-download` only when you
-intend to fetch the pinned local E5 weights.
+previous `policy-e5` collection is therefore stale; rebuild it with `--rebuild`
+before using the updated corpus. Use `--rebuild` only for an intentional replacement;
+keep `--allow-download` only when you intend to fetch the pinned local E5 weights.
 
 This command may download the pinned `intfloat/multilingual-e5-base` weights after
-the explicit `--allow-download` flag, builds `data/policy-indexes/policy-e5`, and
-stores its development comparison report under `/tmp`. Generated weights and index
-data are ignored. The application never downloads weights or builds/rebuilds the index;
+the explicit `--allow-download` flag and builds `data/policy-indexes/policy-e5`.
+It does not run a retrieval benchmark or write a benchmark report. Generated weights
+and index data are ignored. The application never downloads weights or builds/rebuilds the index;
 on the first policy-tool use it opens the existing collection and loads only cached E5
 weights on CPU (`local_files_only`). A missing or stale corpus, model or index raises a
 retrieval error surfaced through the existing sanitized HTTP 503 contract. It is never

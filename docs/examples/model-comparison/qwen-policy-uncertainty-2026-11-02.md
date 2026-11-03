@@ -161,5 +161,5 @@ not fix the target failure. The prior concise persona wording is restored; the
 focused fixture, runner and capture remain as evaluation evidence.
 
 - Focused fixture: [Natal rationale scenario](scenarios-qwen-natal-reasoning-v1.json)
-- Focused runner: [Qwen rationale evaluation script](../../../scripts/evaluate_qwen_natal_reasoning.py)
+- Archived focused runner: [Qwen rationale evaluation script](../../../scripts/archive/evaluate_qwen_natal_reasoning.py)
 - Focused capture: [Qwen answer and rationale](capture-qwen-natal-reasoning-2026-11-02.json)

@@ -34,7 +34,7 @@ from scripts.compare_models import (
     freeze_inputs,
     load_project_aws_environment,
 )
-from scripts.validate_us18 import RecordingAgent, sanitized
+from scripts.evaluation_support import RecordingAgent, sanitized
 
 PROJECT_ROOT = Path.cwd().resolve()
 PRICING_PATH = PROJECT_ROOT / "docs/examples/grounding-followups/nova2-pricing.json"

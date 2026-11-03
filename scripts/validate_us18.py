@@ -4,23 +4,19 @@ import argparse
 import asyncio
 import json
 import os
-import re
 import sys
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
-from typing import Any, TextIO
+from typing import Any
 
 import httpx
 from emporio_music import paths
-from emporio_music.agent.executor import PydanticAgentExecutor
 from emporio_music.agent.orders import create_store_agent
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.application.chat import ChatService
 from emporio_music.diagnostics import failure
-from emporio_music.domain.chat import AgentResponse, ChatRequest
-from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.infrastructure.conversations import (
     SQLiteConversationRepository,
 )
@@ -29,44 +25,14 @@ from emporio_music.infrastructure.sqlite_repository import (
     SQLiteProductRepository,
 )
 from emporio_music_api.app import create_app
-from pydantic_ai import capture_run_messages
-from pydantic_ai.messages import ModelMessagesTypeAdapter, ModelResponse
+
+from scripts.evaluation_support import RecordingAgent, write_checkpoint
 
 # Frozen historical accounting assumptions, not current invoice prices. Reserve
 # all five requests at the model's 32K input window and 1024 output-token cap,
 # even on failures. No SDK retry or experiment retry beyond the agent's limits.
 CASE_RESERVE_USD = 5 * (32768 * 0.20 + 1024 * 0.80) / 1_000_000
 QWEN_MODEL = "qwen.qwen3-32b-v1:0"
-
-
-def sanitized(value: Any) -> Any:
-    """Drop transient SDK identifiers, retaining actual model/tool evidence."""
-    if isinstance(value, dict):
-        return {
-            key: sanitized(item)
-            for key, item in value.items()
-            if key
-            not in {"timestamp", "run_id", "conversation_id", "provider_response_id"}
-        }
-    if isinstance(value, list):
-        return [sanitized(item) for item in value]
-    return value
-
-
-def _usage_value(usage: Any, details: dict[str, Any], name: str) -> int | None:
-    raw = getattr(usage, name, None)
-    if raw is None:
-        raw = details.get(name)
-    return int(raw) if isinstance(raw, (int, float)) else None
-
-
-def _write_checkpoint(stream: TextIO, report: dict[str, Any]) -> None:
-    """Flush the latest safe report state so interruptions retain progress."""
-    stream.seek(0)
-    stream.truncate()
-    json.dump(report, stream, ensure_ascii=False, indent=2)
-    stream.write("\n")
-    stream.flush()
 
 
 def _progress(event: str, **fields: Any) -> None:
@@ -127,112 +93,6 @@ def _record_failure(
     return status
 
 
-class RecordingAgent:
-    def __init__(self, executor: PydanticAgentExecutor) -> None:
-        self.executor = executor
-        self.evidence: dict[str, Any] = {}
-
-    async def run(
-        self, request: ChatRequest, *, context: ExecutionContext
-    ) -> AgentResponse:
-        self.evidence = {}
-        with capture_run_messages() as messages:
-            try:
-                return await self.executor.run(request, context=context)
-            except Exception as exc:
-                # Cause types/code, never raw exception bodies or credentials.
-                self.evidence["failure"] = failure(exc)
-                current: BaseException | None = exc
-                while current is not None:
-                    response = getattr(current, "response", None)
-                    detail = (
-                        response.get("Error", {}) if isinstance(response, dict) else {}
-                    )
-                    if detail.get("Code") == "AccessDeniedException":
-                        message = str(detail.get("Message", "")).lower()
-                        category = (
-                            "marketplace_subscription_permissions"
-                            if "aws-marketplace" in message or "marketplace" in message
-                            else "anthropic_use_case_registration"
-                            if "use case" in message or "usecase" in message
-                            else "organization_policy"
-                            if "service control policy" in message
-                            else "identity_policy"
-                            if "identity-based policy" in message
-                            else "unclassified_access_denial"
-                        )
-                        self.evidence["access_denial"] = {
-                            "category": category,
-                            "mentioned_actions": sorted(
-                                set(
-                                    re.findall(
-                                        r"(?:bedrock|aws-marketplace):[a-z]+",
-                                        message,
-                                    )
-                                )
-                            ),
-                        }
-                        break
-                    current = current.__cause__
-                raise
-            finally:
-                # The executor reconstructs prior assistant text with no run_id.
-                # Preserve it in the trace, but never count it as new inference.
-                responses = [
-                    m
-                    for m in messages
-                    if isinstance(m, ModelResponse) and m.run_id is not None
-                ]
-                response_usage: list[dict[str, int | None]] = []
-                for response in responses:
-                    usage = response.usage
-                    details = getattr(usage, "details", None)
-                    details = details if isinstance(details, dict) else {}
-
-                    response_usage.append(
-                        {
-                            "input_tokens": _usage_value(
-                                usage, details, "input_tokens"
-                            ),
-                            "output_tokens": _usage_value(
-                                usage, details, "output_tokens"
-                            ),
-                            "cache_read_tokens": _usage_value(
-                                usage, details, "cache_read_tokens"
-                            ),
-                            "cache_write_tokens": _usage_value(
-                                usage, details, "cache_write_tokens"
-                            ),
-                            "reasoning_tokens": _usage_value(
-                                usage, details, "reasoning_tokens"
-                            ),
-                        }
-                    )
-
-                def total(name: str) -> int | None:
-                    value_total = 0
-                    found = False
-                    for item in response_usage:
-                        value = item[name]
-                        if value is not None:
-                            value_total += value
-                            found = True
-                    return value_total if found else None
-
-                self.evidence["messages"] = sanitized(
-                    ModelMessagesTypeAdapter.dump_python(messages, mode="json")
-                )
-                self.evidence["usage"] = {
-                    "requests": len(responses),
-                    "input_tokens": total("input_tokens"),
-                    "output_tokens": total("output_tokens"),
-                    "cache_read_tokens": total("cache_read_tokens"),
-                    "cache_write_tokens": total("cache_write_tokens"),
-                    "reasoning_tokens": total("reasoning_tokens"),
-                    "responses": response_usage,
-                }
-
-
 async def validate(
     output: Path,
     max_cost_usd: float,
@@ -285,7 +145,7 @@ async def validate(
         current_run: dict[str, Any] | None = None
         request_started: float | None = None
         recorder: RecordingAgent | None = None
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
         _progress(
             "probe.started",
             model=settings.model_id,
@@ -306,7 +166,7 @@ async def validate(
             _progress("agent_setup.completed")
 
             report["phase"] = "chat_service_setup"
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             recorder = RecordingAgent(executor)
             service = ChatService(
                 recorder,
@@ -315,7 +175,7 @@ async def validate(
             # Fresh session per case; all calls traverse the normal HTTP validation
             # and customer selection. The operational databases remain read-only.
             report["phase"] = "http_client_setup"
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             _progress("http_client_setup.started")
             async with httpx.AsyncClient(
                 transport=httpx.ASGITransport(
@@ -339,7 +199,7 @@ async def validate(
                     report["phase"] = "http_request"
                     report["current_case_id"] = case["case_id"]
                     report["runs"].append(current_run)
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     _progress("http.request.started", case_id=case["case_id"])
                     request_started = perf_counter()
                     response = await client.post("/api/chat", json=payload)
@@ -364,14 +224,14 @@ async def validate(
                     )
                     report.pop("current_case_id", None)
                     report["phase"] = "between_cases"
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     current_run = None
                     request_started = None
 
             report["status"] = _probe_status(report["runs"])
             report["phase"] = "completed"
             report["finished_at_utc"] = datetime.now(UTC).isoformat()
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             _progress(
                 "probe.completed",
                 case_count=len(cases),
@@ -389,7 +249,7 @@ async def validate(
                 if request_started is not None
                 else None,
             )
-            _write_checkpoint(stream, report)
+            write_checkpoint(stream, report)
             _progress(
                 "probe.stopped",
                 status=status,

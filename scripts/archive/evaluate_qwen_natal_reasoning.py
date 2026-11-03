@@ -35,7 +35,7 @@ from scripts.compare_models import (
     load_verified_candidates,
     turn_reservation_usd,
 )
-from scripts.validate_us18 import RecordingAgent, sanitized
+from scripts.evaluation_support import RecordingAgent, sanitized
 
 PROJECT_ROOT = Path.cwd().resolve()
 FIXTURE_PATH = (

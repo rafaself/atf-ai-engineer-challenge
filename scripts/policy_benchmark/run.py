@@ -12,9 +12,13 @@ from typing import Any
 
 from emporio_music.infrastructure.policy_index import PolicyIndex
 from emporio_music.paths import DATA_DIRECTORY
-from emporio_music.policies.corpus import (
-    FREIGHT_CLARIFICATION_SOURCE,
-    PolicyCorpus,
+from emporio_music.policies.corpus import PolicyCorpus
+from emporio_music.policies.index_setup import (
+    EMBEDDING_INPUT,
+    POLICY_COLLECTION,
+    load_verified_policy_corpus,
+    policy_document_text,
+    policy_index_configuration,
 )
 
 from scripts.policy_benchmark.embeddings import MODELS, RATES, Embedder
@@ -23,46 +27,26 @@ from scripts.policy_benchmark.evaluation import query_families, score, summarize
 
 def load_inputs() -> tuple[PolicyCorpus, list[dict[str, Any]], dict[str, Any]]:
     directory = DATA_DIRECTORY / "policies"
-    corpus = PolicyCorpus.model_validate_json((directory / "corpus.json").read_text())
-    freeze = json.loads((directory / "freeze.json").read_text())
+    corpus, freeze, _ = load_verified_policy_corpus(DATA_DIRECTORY)
     questions_path = directory / freeze["questions_source"]
     questions_bytes = questions_path.read_bytes()
     historical_questions_bytes = (
         directory / freeze["historical_questions_source"]
     ).read_bytes()
-    chunks_hash = hashlib.sha256(
-        json.dumps(
-            [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
-            ensure_ascii=False,
-            sort_keys=True,
-        ).encode()
-    ).hexdigest()
-    pdf_hash = hashlib.sha256(
-        (DATA_DIRECTORY / "store_policies.pdf").read_bytes()
-    ).hexdigest()
-    freight_clarification_hash = hashlib.sha256(
-        (DATA_DIRECTORY / FREIGHT_CLARIFICATION_SOURCE).read_bytes()
-    ).hexdigest()
     if (
-        chunks_hash != freeze["chunks_sha256"]
-        or hashlib.sha256(questions_bytes).hexdigest() != freeze["questions_sha256"]
+        hashlib.sha256(questions_bytes).hexdigest() != freeze["questions_sha256"]
         or hashlib.sha256(historical_questions_bytes).hexdigest()
         != freeze["historical_questions_sha256"]
-        or pdf_hash != corpus.source_sha256
-        or pdf_hash != freeze["source_sha256"]
-        or freeze["freight_clarification_source"] != FREIGHT_CLARIFICATION_SOURCE
-        or freight_clarification_hash != corpus.freight_clarification_sha256
-        or freight_clarification_hash != freeze["freight_clarification_sha256"]
-        or corpus.parser_version != freeze["parser_version"]
     ):
         raise ValueError(
-            "Frozen source/corpus/dataset mismatch; review before benchmarking"
+            "Frozen benchmark dataset mismatch; review before benchmarking"
         )
     dataset = json.loads(questions_bytes)
     ids = {c.id for c in corpus.chunks if c.indexable}
     if (
-        dataset["source_sha256"] != pdf_hash
-        or dataset["freight_clarification_sha256"] != freight_clarification_hash
+        dataset["source_sha256"] != corpus.source_sha256
+        or dataset["freight_clarification_sha256"]
+        != corpus.freight_clarification_sha256
         or any(
             not set(group) <= ids
             for q in dataset["questions"]
@@ -83,7 +67,7 @@ def run(args: argparse.Namespace, report: dict[str, Any]) -> None:
         questions=len(questions),
         chunks=len(chunks),
         validation_policy="No tuning after validation results; frozen query rules v1",
-        embedding_input="hierarchy joined by newline + newline + section text",
+        embedding_input=EMBEDDING_INPUT,
         strategy_rule="query-family-union-v1",
         repeats=args.repeats,
     )
@@ -96,16 +80,12 @@ def run(args: argparse.Namespace, report: dict[str, Any]) -> None:
         budget=args.budget_usd,
     )
     report["model_load_seconds"] = time.perf_counter() - started
-    config = {
-        **embedder.config,
-        "source_sha256": corpus.source_sha256,
-        "freight_clarification_sha256": corpus.freight_clarification_sha256,
-        "corpus_sha256": freeze["chunks_sha256"],
-        "parser_version": corpus.parser_version,
-        "embedding_input": report["embedding_input"],
-    }
+    config = policy_index_configuration(
+        corpus, freeze["chunks_sha256"], embedder.config
+    )
     report["configuration"] = config
-    index = PolicyIndex(args.index_dir, f"policy-{args.model}", config)
+    collection = POLICY_COLLECTION if args.model == "e5" else f"policy-{args.model}"
+    index = PolicyIndex(args.index_dir, collection, config)
     try:
         if args.index:
             if index.exists() and not args.rebuild:
@@ -114,7 +94,7 @@ def run(args: argparse.Namespace, report: dict[str, Any]) -> None:
                 )
             started = time.perf_counter()
             vectors = embedder.embed(
-                ["\n".join(c.hierarchy) + "\n" + c.text for c in chunks], query=False
+                [policy_document_text(chunk) for chunk in chunks], query=False
             )
             report["document_embedding_seconds"] = time.perf_counter() - started
             started = time.perf_counter()
@@ -214,7 +194,7 @@ def main() -> int:
     parser.add_argument("--budget-usd", type=float, default=0.10)
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument(
-        "--index-dir", type=Path, default=DATA_DIRECTORY / "policy-indexes"
+        "--index-dir", type=Path, default=DATA_DIRECTORY / "policy-benchmark-indexes"
     )
     parser.add_argument(
         "--output-dir", type=Path, default=DATA_DIRECTORY.parent / "docs" / "benchmarks"

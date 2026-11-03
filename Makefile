@@ -1,4 +1,5 @@
-.PHONY: build prepare-data prepare-policy up down check check-python check-frontend
+.PHONY: build prepare-data prepare-policy rebuild-policy up down check \
+	check-python check-frontend
 
 build:
 	docker compose build app
@@ -7,7 +8,10 @@ prepare-data:
 	docker compose run --rm app python -m emporio_music.prepare
 
 prepare-policy:
-	docker compose run --rm app python -m scripts.policy_benchmark.run --model e5 --index --allow-download --output-dir /tmp/policy-rag-bootstrap
+	docker compose run --rm app python -m emporio_music.prepare_policy_index --allow-download
+
+rebuild-policy:
+	docker compose run --rm app python -m emporio_music.prepare_policy_index --allow-download --rebuild
 
 up:
 	docker compose up --detach app

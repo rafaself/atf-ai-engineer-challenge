@@ -10,11 +10,8 @@ from pathlib import Path
 from time import perf_counter
 
 import httpx
-
 from emporio_music.agent.orders import create_store_agent
-from emporio_music.policies.search import LocalPolicySearch
 from emporio_music.agent.settings import AgentSettings
-from emporio_music_api.app import create_app
 from emporio_music.application.chat import ChatService
 from emporio_music.infrastructure.conversations import (
     SQLiteConversationRepository,
@@ -27,6 +24,9 @@ from emporio_music.paths import (
     CATALOG_DATABASE_PATH,
     OPERATIONS_DATABASE_PATH,
 )
+from emporio_music.policies.search import LocalPolicySearch
+from emporio_music_api.app import create_app
+
 from scripts.compare_models import (
     _code_freeze,
     load_project_aws_environment,
@@ -34,7 +34,7 @@ from scripts.compare_models import (
     load_verified_candidates,
     turn_reservation_usd,
 )
-from scripts.validate_us18 import RecordingAgent, _write_checkpoint
+from scripts.evaluation_support import RecordingAgent, write_checkpoint
 
 SELECTED = (
     "named-stock-alternative",
@@ -87,7 +87,7 @@ async def run(output: Path) -> None:
         output.open("x") as stream,
         tempfile.TemporaryDirectory(prefix="issue43-probe-") as temp,
     ):
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
         search = LocalPolicySearch()
         search.search("Frete para entrega em Campo Grande de R$ 500?")
         agent = RecordingAgent(
@@ -125,7 +125,7 @@ async def run(output: Path) -> None:
                     row = {"prompt": prompt["message"], "status": "started"}
                     current["turns"].append(row)
                     report["status"] = "running"
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     started = perf_counter()
                     response = await client.post("/api/chat", json=payload)
                     body = response.json()
@@ -137,7 +137,7 @@ async def run(output: Path) -> None:
                         response=body,
                         **agent.evidence,
                     )
-                    _write_checkpoint(stream, report)
+                    write_checkpoint(stream, report)
                     print(
                         json.dumps(
                             {
@@ -151,7 +151,7 @@ async def run(output: Path) -> None:
                     if response.status_code != 200:
                         break  # Preserve the failed turn; do not retry that conversation.
         report["status"] = "finished"
-        _write_checkpoint(stream, report)
+        write_checkpoint(stream, report)
 
 
 if __name__ == "__main__":
