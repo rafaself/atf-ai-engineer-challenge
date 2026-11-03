@@ -83,6 +83,12 @@ def test_cli_keeps_guest_and_customer_sessions_persisted_and_isolated(
     )
 
     assert exit_code == 0
+    assert (
+        output.count(
+            "Demonstração com dados fictícios. As consultas simulam os sistemas da loja."
+        )
+        == 1
+    )
     assert len(agent.calls) == 3
     (
         (first_request, first_context),
@@ -200,6 +206,7 @@ def test_cli_exits_cleanly_on_eof_and_ctrl_c(
     )
     assert output == [
         "Empório da Música — /new inicia outra conversa; /exit encerra.",
+        "Demonstração com dados fictícios. As consultas simulam os sistemas da loja.",
         "\nAté logo.",
     ]
 

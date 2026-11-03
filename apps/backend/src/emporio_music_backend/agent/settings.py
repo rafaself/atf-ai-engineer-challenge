@@ -30,7 +30,7 @@ class AgentSettings(BaseSettings):
         validation_alias="AGENT_REQUEST_TIMEOUT_SECONDS",
     )
     max_requests: int = Field(
-        default=5, ge=1, le=20, strict=True, validation_alias="AGENT_MAX_REQUESTS"
+        default=6, ge=1, le=20, strict=True, validation_alias="AGENT_MAX_REQUESTS"
     )
     max_tool_calls: int = Field(
         default=5, ge=1, le=20, strict=True, validation_alias="AGENT_MAX_TOOL_CALLS"

@@ -168,7 +168,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
         assert "359,00" in answer and "323,10" in answer and "10%" in answer
         assert "549,00" in answer and "439,20" in answer and "20%" in answer
         assert answer.count("323,10") == answer.count("439,20") == 1
-        assert "seleção" in answer and "4" in answer and "fotografia" in answer
+        assert "seleção" in answer and "4" in answer and "fotografia" not in answer
         session = first.json()["session_id"]
         followup = client.post(
             "/api/chat",
@@ -222,10 +222,7 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
                 )
             )
         assert results[0].status_code == results[1].status_code == 200
-        assert (
-            results[0].json()["answer"]
-            == "Consulta atual: 2199.00\n\n" + INVENTORY_NOTICE
-        )
+        assert results[0].json()["answer"] == "Consulta atual: 2199.00"
         assert results[1].json()["answer"].startswith("Consulta atual: 2089.05")
 
     asyncio.run(concurrent())
@@ -262,5 +259,5 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     ):
         assert secret not in caplog.text
     assert all(
-        p["promotion_validity_basis"] == "source_is_active_snapshot" for p in observed
+        p["promotion_validity_basis"] == "current_simulated_catalog" for p in observed
     )

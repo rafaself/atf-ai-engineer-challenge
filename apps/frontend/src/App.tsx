@@ -12,6 +12,7 @@ export function App() {
         <span>Empório da Música</span>
       </div>
       <ChatWidget client={httpChatClient} />
+      <p className="demo-notice">Demonstração com dados fictícios. As consultas simulam os sistemas da loja.</p>
     </main>
   );
 }

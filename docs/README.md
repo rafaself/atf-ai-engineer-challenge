@@ -20,6 +20,8 @@ Issue #33 replaces token identity with guests and direct fictional-customer sele
 - [Follow-up](follow-up.md): policy routing and final submission requirements.
 - [Policy corpus and retrieval](policy-retrieval.md): provenance, runtime setup,
   evaluation and measured limitations.
+- [Data processing decisions](data-processing.md): existing transformations,
+  planned canonical policy evidence, simulation semantics, and their justification.
 
 - [US-15 benchmark](benchmarks/README.md): opt-in setup, methodology, local hardware and provider access.
 - [Retrieval results](benchmarks/results.md): frozen-metric comparison and observed failures.

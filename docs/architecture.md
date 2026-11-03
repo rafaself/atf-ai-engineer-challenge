@@ -120,7 +120,10 @@ See [catalog](catalog.md) and [orders](orders.md).
 
 Tools own exact price calculations, payable-price filtering and customer-scoped reads.
 The output layer protects against blank/internal-control output and appends notices
-from current tool metadata: partial lists, imported snapshots and sources consulted.
+from current tool metadata: partial lists and sources consulted. The UI and CLI
+identify the fictional simulation once; per-answer snapshot/ingestion footers are
+removed. Fresh operational reads are authoritative within that simulation, while
+delivery estimates remain distinct from actual receipt dates.
 It does not parse model prose for citations, compare every currency mention with tool
 prices, or infer required tool calls from Portuguese keywords. Those gates rejected
 readable citations, legitimate budget quotes and negated return requests. The model

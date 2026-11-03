@@ -183,7 +183,7 @@ def test_settings_leave_dotenv_loading_to_launcher(
 ) -> None:
     (tmp_path / ".env").write_text("AGENT_MAX_REQUESTS=0\n")
     monkeypatch.chdir(tmp_path)
-    assert load_agent_settings().max_requests == 5
+    assert load_agent_settings().max_requests == 6
 
 
 def test_live_probe_requires_explicit_opt_in() -> None:

@@ -1,5 +1,10 @@
 # Empório da Música — customer-support agent
 
+This is a fictional demo: catalog and order tools simulate current store-system
+requests using local data. No external fulfillment or carrier service is contacted.
+The interface discloses this once; answers report the simulated system results
+directly. An estimated delivery date still does not establish actual receipt.
+
 Evaluator path: follow the Docker quick start below, open the chat and `/docs`,
 then inspect [four representative Portuguese conversations](docs/examples/submission.md).
 These are historical real-model captures with explicit revision limits. Current
@@ -173,8 +178,8 @@ defines all storage under `PROJECT_ROOT / "data"`: `catalog.sqlite3`,
 the launch directory; no storage-path environment variables or CLI overrides are needed.
 Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not
 distinguish individual guests. Keep the demo on loopback with fictional data; it
-has no authentication. Facts reflect imported snapshots, not live stock or carrier
-status. Only `is_active` establishes promotion validity; the source has
+has no authentication. Each tool read is authoritative within the simulation; local data does not imply
+an external carrier request. Only `is_active` establishes promotion validity; the source has
 no dates. The demo has no cross-process turn coordination or retry deduplication.
 
 ## Development checks

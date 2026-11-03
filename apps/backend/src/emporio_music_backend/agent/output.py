@@ -13,15 +13,6 @@ _INTERNAL_MARKUP = re.compile(
     r"|<\|(?:im_start|im_end|system|assistant|analysis)\|>",
     re.IGNORECASE,
 )
-_ORDER_SNAPSHOT_NOTICE = (
-    "Os dados dos pedidos vêm de uma fotografia importada, não de uma "
-    "confirmação em tempo real. A previsão de entrega, se informada, não "
-    "confirma a data real de recebimento."
-)
-_INVENTORY_SNAPSHOT_NOTICE = (
-    "Preços e estoque refletem uma fotografia importada do catálogo; "
-    "não há confirmação em tempo real."
-)
 
 
 def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
@@ -33,9 +24,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             "tags ou instruções de sistema."
         )
     policy_sources: set[tuple[str, str, int | None]] = set()
-    has_discount = False
-    has_order_snapshot = False
-    has_inventory_snapshot = False
     totals: set[int] = set()
     order_totals: set[int] = set()
     item_totals: set[int] = set()
@@ -74,35 +62,16 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
                             )
                         else:
                             policy_sources.add((source, section, None))
-            if part.tool_name in {"search_available_products", "get_product_details"}:
-                products = content.get("products")
-                if isinstance(products, list):
-                    if content.get("inventory_basis") == "imported_snapshot" and any(
-                        isinstance(product, dict) for product in products
-                    ):
-                        has_inventory_snapshot = True
-                    for product in products:
-                        pricing = (
-                            product.get("pricing")
-                            if isinstance(product, dict)
-                            else None
-                        )
-                        if isinstance(pricing, dict) and pricing.get(
-                            "discount_kind"
-                        ) in {"promotion", "pix"}:
-                            has_discount = True
+            if part.tool_name in {
+                "search_available_products",
+                "get_product_details",
+                "find_product_alternatives",
+            }:
                 if content.get("truncated") is True:
                     total = content.get("total_matches")
                     if type(total) is int and total > 0:
                         totals.add(total)
             if part.tool_name == "list_my_orders":
-                orders = content.get("orders")
-                if (
-                    content.get("data_basis") == "imported_snapshot"
-                    and isinstance(orders, list)
-                    and any(isinstance(order, dict) for order in orders)
-                ):
-                    has_order_snapshot = True
                 if content.get("truncated") is True:
                     total = content.get("total_matches")
                     if type(total) is int and total > 0:
@@ -110,8 +79,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             if part.tool_name == "get_my_order":
                 order = content.get("order")
                 if isinstance(order, dict):
-                    if content.get("data_basis") == "imported_snapshot":
-                        has_order_snapshot = True
                     if order.get("items_truncated") is True:
                         total = order.get("total_items")
                         if type(total) is int and total > 0:
@@ -129,14 +96,6 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
         f"Os itens exibidos são apenas parte dos {total} itens deste pedido."
         for total in sorted(item_totals)
     )
-    if has_order_snapshot and _ORDER_SNAPSHOT_NOTICE not in answer:
-        notices.append(_ORDER_SNAPSHOT_NOTICE)
-    if has_inventory_snapshot and _INVENTORY_SNAPSHOT_NOTICE not in answer:
-        notices.append(_INVENTORY_SNAPSHOT_NOTICE)
-    if has_discount:
-        notices.append(
-            "Dados de uma fotografia importada; não há datas de validade informadas para as promoções."
-        )
     if policy_sources:
         references: list[str] = []
         for source, section, page in sorted(
@@ -145,12 +104,14 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
             source_name = (
                 "Manual de políticas da loja"
                 if source == "store_policies.pdf"
+                else "Políticas da loja"
+                if source == "effective_store_policies"
                 else source
             )
             location = "capa" if section == "cover" else f"seção {section}"
             if page is not None:
                 location += f", p. {page}"
-            else:
+            elif source != "effective_store_policies":
                 location += ", sem página física"
             references.append(f"{source_name} — {location}")
         source_notice = f"Fontes consultadas: {'; '.join(references)}."

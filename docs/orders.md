@@ -87,7 +87,7 @@ Neither tool exposes `customer_id`. Unexpected scope fields and invalid identifi
 fail tool validation. Foreign and nonexistent IDs both return `order: null` and
 `Pedido não encontrado na sua conta.` Known customers with no orders receive a
 successful empty list. Unknown selected customers fail selection validation even when
-calling the repository directly. Results carry `data_basis: imported_snapshot`;
+calling the repository directly. Results carry `data_basis: simulated_current`;
 integer-centavo totals also have an exact two-decimal `total_brl` string. `total_items`
 counts distinct product rows, not summed quantities. No pagination or order changes
 are provided in this story. Current-run truncated lists/items receive deterministic
@@ -105,3 +105,11 @@ See [API setup](api.md), [ADR-0005](adr/0005-authorized-operational-snapshots.md
 real Portuguese tool choice, follow-ups and adversarial behavior remain opt-in US-13.
 Catalog-only factories and smoke/examples are isolated probes, never an HTTP fallback
 when operational storage is missing.
+
+## Current simulation presentation
+
+The startup/interface disclosure explains fictional data once. Successful order
+lookups are the current simulated API records; the application adds no per-answer
+snapshot footer. Delivery estimates still do not establish actual receipt dates,
+and customer-reported return facts remain separate from order records. Earlier
+snapshot-notice descriptions above reflect the prior presentation contract.

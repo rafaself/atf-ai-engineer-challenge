@@ -104,6 +104,9 @@ async def _chat_loop(
     output_fn: OutputFunction,
 ) -> None:
     output_fn("Empório da Música — /new inicia outra conversa; /exit encerra.")
+    output_fn(
+        "Demonstração com dados fictícios. As consultas simulam os sistemas da loja."
+    )
     while True:
         identity = _choose_identity(order_repository, input_fn, output_fn)
         if identity is _SelectionCommand.EXIT:

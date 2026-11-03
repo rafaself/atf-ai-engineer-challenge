@@ -34,7 +34,7 @@ class OrderTools:
         ctx: RunContext[ExecutionContext],
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 5,
     ) -> dict[str, object]:
-        """List orders in the selected demo account, newest first (imported snapshot).
+        """List orders in the selected demo account, newest first (current simulated API result).
 
         Args:
             limit: Maximum orders to return, 1–20, default 5. Not a customer scope.
@@ -47,7 +47,7 @@ class OrderTools:
             }
         trace("tool.called", tool="list_my_orders", limit=limit)
         result = self.repository.list_orders(identity, OrderListQuery(limit=limit))
-        return {**result.model_dump(mode="json"), "data_basis": "imported_snapshot"}
+        return {**result.model_dump(mode="json"), "data_basis": "simulated_current"}
 
     def get_my_order(
         self, ctx: RunContext[ExecutionContext], order_id: DatabaseId
@@ -55,9 +55,11 @@ class OrderTools:
         """Read an order in the selected demo account, with at most 20 items.
 
         Call again for follow-up questions about items, quantities, status or tracking,
-        using the order_id from the preceding list or conversation.
+        using the order_id from the preceding list or conversation. The order record
+        does not contain purchase channel, actual receipt date or product condition;
+        ask the customer for those facts when assessing return eligibility.
         Missing and inaccessible orders have the same not-found response. Tracking
-        and estimated delivery reflect an import, not a live carrier consultation.
+        is the simulated system record; estimated delivery is not an actual receipt date.
         Args:
             order_id: Positive order identifier to look up within your account.
         """
@@ -74,13 +76,16 @@ class OrderTools:
             "message": None
             if order is not None
             else "Pedido não encontrado na sua conta.",
-            "data_basis": "imported_snapshot",
+            "data_basis": "simulated_current",
             **(
                 {
                     "answer_guidance": [
-                        "Os dados são uma fotografia importada. A previsão de entrega "
+                        "Este é o registro atual da API simulada. A previsão de entrega "
                         "não confirma o recebimento real. Se a pergunta também envolve "
-                        "políticas, consulte search_store_policies antes de responder."
+                        "políticas, consulte search_store_policies antes de responder. "
+                        "O registro não contém canal de compra, data de recebimento real "
+                        "ou condição física do produto; confirme esses fatos com o cliente "
+                        "antes de avaliar uma devolução."
                     ]
                 }
                 if order is not None

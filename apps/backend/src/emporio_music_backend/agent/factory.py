@@ -147,7 +147,7 @@ def create_agent(
         deps_type=ExecutionContext,
         instructions=STORE_INSTRUCTIONS,
         tools=tools,
-        retries={"tools": 0, "output": 1},
+        retries={"tools": 1, "output": 1},
         model_settings={
             "max_tokens": settings.max_output_tokens,
             "temperature": 0,

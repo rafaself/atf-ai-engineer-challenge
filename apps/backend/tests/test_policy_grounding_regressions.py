@@ -67,7 +67,9 @@ class SourcePolicySearch:
         return {"status": "evidence_found", "records": self.records}
 
 
-def test_latest_qwen_answer_gets_deterministic_imported_snapshot_notice() -> None:
+def test_historical_qwen_answer_preserves_receipt_uncertainty_without_new_disclosure() -> (
+    None
+):
     run = json.loads(
         (
             DATA_DIRECTORY.parent / "docs/examples/us-18/mixed-final-qwen.json"
@@ -97,12 +99,11 @@ def test_latest_qwen_answer_gets_deterministic_imported_snapshot_notice() -> Non
         "confirma a data real de recebimento."
     )
     accepted = customer_answer(context, answer)
-    assert accepted.startswith(f"{answer}\n\n{notice}")
+    assert accepted.startswith(answer)
+    assert notice not in accepted
     assert "Fontes consultadas:" in accepted
     assert 'O pedido 4 está listado como "entregue"' in accepted
     assert "data real de recebimento não está disponível" in accepted
-    assert "previsão de entrega" in accepted
-    assert "não confirma a data real de recebimento" in accepted
 
     # Replaying an answer that already carries the application notice must not
     # append the same notice twice.
@@ -152,7 +153,7 @@ def test_order_snapshot_notice_requires_nonempty_current_order_data(
         ],
     )
     answer = customer_answer(context, "Aqui estão os pedidos encontrados.")
-    assert ("fotografia importada" in answer) is expected_notice
+    assert "fotografia importada" not in answer
 
 
 def test_order_snapshot_notice_ignores_previous_run_results() -> None:
@@ -267,7 +268,7 @@ def test_mixed_answer_can_correctly_discuss_the_recorded_claims(
     assert "O pedido 4 consta como entregue na fotografia." in answer
     assert "[política 4.1, p. 4]" in answer
     assert "[política 4.3, p. 4]" in answer
-    assert "fotografia importada" in answer
+    assert "fotografia importada" not in answer
     assert requests == 3
 
 

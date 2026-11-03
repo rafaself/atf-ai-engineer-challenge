@@ -100,7 +100,7 @@ def test_legitimate_customer_wording_does_not_require_output_retry(
 @pytest.mark.parametrize(
     "tool_name", ["search_available_products", "get_product_details"]
 )
-def test_current_inventory_snapshot_results_add_notice(tool_name: str) -> None:
+def test_operational_results_do_not_repeat_demo_disclosure(tool_name: str) -> None:
     answer = "Este produto está disponível no catálogo."
     context = RunContext(
         deps=ExecutionContext(),
@@ -123,10 +123,7 @@ def test_current_inventory_snapshot_results_add_notice(tool_name: str) -> None:
         ],
     )
 
-    assert customer_answer(context, answer) == (
-        answer + "\n\nPreços e estoque refletem uma fotografia importada do catálogo; "
-        "não há confirmação em tempo real."
-    )
+    assert customer_answer(context, answer) == answer
 
 
 @pytest.mark.parametrize(
@@ -171,7 +168,7 @@ def test_inventory_notice_requires_current_nonempty_snapshot_results(
     assert customer_answer(context, answer) == answer
 
 
-def test_inventory_snapshot_notice_is_added_once_and_is_idempotent() -> None:
+def test_multiple_operational_results_do_not_add_disclosures() -> None:
     answer = "O produto está disponível."
     result = {
         "products": [{"product_id": 1, "available": True}],
@@ -195,7 +192,7 @@ def test_inventory_snapshot_notice_is_added_once_and_is_idempotent() -> None:
 
     accepted = customer_answer(context, answer)
 
-    assert accepted.count("fotografia importada do catálogo") == 1
+    assert accepted == answer
     assert customer_answer(context, accepted) == accepted
 
 

@@ -1,4 +1,4 @@
-"""Approved prototype scope: basic schema checks and one concise snapshot notice."""
+"""Approved prototype scope: basic schema checks and one-time demo disclosure."""
 
 import os
 import sqlite3
@@ -48,7 +48,7 @@ def test_readers_accept_additional_columns_without_exact_ddl_auditing(
     assert orders.list_orders(identity, OrderListQuery()) == before_orders
 
 
-def test_multiple_discounted_products_share_one_snapshot_notice() -> None:
+def test_discounted_products_do_not_append_demo_disclosures() -> None:
     products = [
         {
             "product_id": n,
@@ -85,7 +85,7 @@ def test_multiple_discounted_products_share_one_snapshot_notice() -> None:
     assert answer.startswith(model_answer)
     assert answer.count("Instrument 1") == answer.count("Instrument 2") == 1
     assert answer.count("10%") == 2
-    assert answer.count("fotografia importada") == 1
+    assert answer == model_answer
 
 
 def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
