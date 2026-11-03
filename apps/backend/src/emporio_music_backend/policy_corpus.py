@@ -10,9 +10,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from emporio_music_backend.contracts.policies import OnlineReturnRule
 from emporio_music_backend.paths import DATA_DIRECTORY
 
-PARSER_VERSION = "poppler-normalized-sections-v4"
+PARSER_VERSION = "poppler-effective-policies-v6"
 FREIGHT_CLARIFICATION_SOURCE = "policies/freight-clarification.json"
 HEADING = re.compile(r"^(\d+(?:\.\d+)?)\.?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ].+)$")
 
@@ -26,6 +27,8 @@ class PolicyChunk(BaseModel):
     text: str = Field(min_length=1)
     indexable: bool
     source: str | None = None
+    source_references: list[str] = Field(default_factory=list)
+    online_return_rule: OnlineReturnRule | None = None
 
 
 class FreightPolicyClarification(BaseModel):
@@ -61,6 +64,13 @@ _TABLES = {
     "3": (("Forma", "Condições", "Observações"), 4),
     "5.2": (("Modalidade", "Prazo Estimado", "Rastreamento", "Seguro"), 3),
 }
+
+_EFFECTIVE_HOURS = """2. Horário de Funcionamento
+Segunda a sexta-feira: 09h às 18h.
+Sábado: 09h às 13h.
+Domingos e feriados, com exceções de datas especiais: fechado no horário regular; veja a regra de datas especiais abaixo.
+Datas especiais — Natal, Black Friday e aniversário da loja: pode haver atendimento em horário especial ou estendido. Os horários especiais de cada ocorrência não estão informados. Para um Natal específico, o manual não confirma abertura nem fechamento. Alterações são comunicadas previamente nas redes sociais e no atendimento via WhatsApp.
+O atendimento via WhatsApp segue os horários da loja, com respostas automáticas fora do expediente."""
 
 
 def normalize_lines(section: str, lines: list[str]) -> str:
@@ -233,39 +243,65 @@ def _format_brl(amount: Decimal) -> str:
     return f"{amount:.2f}".replace(".", ",")
 
 
-def _freight_clarification_chunk(
-    clarification: FreightPolicyClarification,
-) -> PolicyChunk:
-    threshold = _format_brl(clarification.threshold_brl)
-    below_fee = _format_brl(clarification.fee_below_threshold_brl)
-    at_or_above_fee = clarification.fee_at_or_above_threshold_brl
-    if at_or_above_fee == 0:
-        at_or_above = "frete grátis"
-    else:
-        at_or_above = f"taxa de frete de R$ {_format_brl(at_or_above_fee)}"
-    return PolicyChunk(
-        id="policy-v2.1-freight-clarification-v1",
-        section="5.1 (clarificação aprovada)",
-        hierarchy=[
-            "5 Política de Frete e Entregas",
-            "5.1 Entregas na Região Metropolitana de Campo Grande",
-            "Esclarecimento comercial aprovado",
-        ],
-        pages=[],
-        text=(
-            "Esclarecimento comercial aprovado pela proprietária da loja "
-            f"(fonte: {FREIGHT_CLARIFICATION_SOURCE}; referência: "
-            f"{clarification.approval_reference}; registrado em "
-            f"{clarification.recorded_on}). Aplicabilidade: somente para entregas "
-            f"na {clarification.delivery_area}. A redação original do PDF na "
-            f"seção {clarification.manual_section} não define o caso de igualdade; "
-            "esta é uma clarificação comercial nova. Para pedidos com total abaixo "
-            f"de R$ {threshold}, a taxa fixa de frete é R$ {below_fee}. Para pedidos "
-            f"com total igual ou superior a R$ {threshold}, há {at_or_above}."
-        ),
-        indexable=True,
-        source=FREIGHT_CLARIFICATION_SOURCE,
-    )
+def _effective_chunks(
+    chunks: list[PolicyChunk], clarification: FreightPolicyClarification
+) -> list[PolicyChunk]:
+    """Apply reviewed rules once, preserving raw sources and internal provenance."""
+    result: list[PolicyChunk] = []
+    for chunk in chunks:
+        if chunk.section == "2":
+            chunk = chunk.model_copy(update={"text": _EFFECTIVE_HOURS})
+        elif chunk.section == "4.1":
+            rule: OnlineReturnRule = {
+                "request_deadline_calendar_days_after_receipt": 7,
+                "minimum_wait_calendar_days": 0,
+                "required_customer_facts": [
+                    "online_purchase",
+                    "actual_receipt_date",
+                    "original_packaging",
+                    "no_signs_of_use",
+                    "all_accessories",
+                    "all_manuals",
+                ],
+                "excluded_product_conditions": [
+                    "customized_or_custom_setup",
+                    "clearance_explicit_final_sale",
+                    "wind_instrument_mouthpiece",
+                ],
+            }
+            chunk = chunk.model_copy(update={"online_return_rule": rule})
+        elif chunk.section == "5.1":
+            threshold = _format_brl(clarification.threshold_brl)
+            fee = _format_brl(clarification.fee_below_threshold_brl)
+            upper_fee = clarification.fee_at_or_above_threshold_brl
+            upper = (
+                "frete grátis"
+                if upper_fee == 0
+                else f"taxa de frete de R$ {_format_brl(upper_fee)}"
+            )
+            # Retain delivery estimate, carrier and contact clauses verbatim.
+            clauses = chunk.text.splitlines()[3:]
+            chunk = chunk.model_copy(
+                update={
+                    "source": "effective_store_policies",
+                    "pages": [],
+                    "source_references": [
+                        "store_policies.pdf#section=5.1&page=4",
+                        FREIGHT_CLARIFICATION_SOURCE,
+                    ],
+                    "text": "\n".join(
+                        [
+                            "5.1 Entregas na Região Metropolitana de Campo Grande",
+                            f"Aplicabilidade: somente para entregas na {clarification.delivery_area}.",
+                            f"Para pedidos com total abaixo de R$ {threshold}, a taxa fixa de frete é R$ {fee}.",
+                            f"Para pedidos com total igual ou superior a R$ {threshold}, há {upper}.",
+                            *clauses,
+                        ]
+                    ),
+                }
+            )
+        result.append(chunk)
+    return result
 
 
 def prepare(source: Path) -> PolicyCorpus:
@@ -287,7 +323,7 @@ def prepare(source: Path) -> PolicyCorpus:
         check=True,
     )
     chunks = parse_layout(result.stdout)
-    chunks.append(_freight_clarification_chunk(clarification))
+    chunks = _effective_chunks(chunks, clarification)
     return PolicyCorpus(
         source="store_policies.pdf",
         source_sha256=digest,
@@ -303,6 +339,28 @@ def main() -> None:
     destination = DATA_DIRECTORY / "policies" / "corpus.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(corpus.model_dump_json(indent=2, exclude_none=True) + "\n")
+    freeze_path = destination.parent / "freeze.json"
+    freeze = json.loads(freeze_path.read_text())
+    questions_source = "questions-v3.json"
+    freeze.update(
+        version=4,
+        parser_version=corpus.parser_version,
+        extractor_version=corpus.extractor_version,
+        source_sha256=corpus.source_sha256,
+        freight_clarification_sha256=corpus.freight_clarification_sha256,
+        questions_source=questions_source,
+        questions_sha256=hashlib.sha256(
+            (destination.parent / questions_source).read_bytes()
+        ).hexdigest(),
+        chunks_sha256=hashlib.sha256(
+            json.dumps(
+                [chunk.model_dump(exclude_none=True) for chunk in corpus.chunks],
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode()
+        ).hexdigest(),
+    )
+    freeze_path.write_text(json.dumps(freeze, ensure_ascii=False, indent=2) + "\n")
     print(json.dumps({"chunks": len(corpus.chunks), "output": str(destination)}))
 
 

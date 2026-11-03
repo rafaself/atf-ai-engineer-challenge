@@ -59,7 +59,7 @@ def _runtime_data(tmp_path: Path, *, build_index: bool) -> PolicyIndex | None:
     chunks = [chunk for chunk in corpus.chunks if chunk.indexable]
     vectors = [
         [1.0, *([0.0] * 767)]
-        if chunk.section == "2" or chunk.id == "policy-v2.1-freight-clarification-v1"
+        if chunk.section == "2" or chunk.id == "policy-v2.1-s5.1"
         else [0.0, 1.0, *([0.0] * 766)]
         for chunk in chunks
     ]
@@ -109,16 +109,43 @@ def test_runtime_uses_frozen_index_and_returns_source_section_page(
     assert embedder.queries == [(["Qual é o horário de atendimento?"], True)]
 
 
+def test_online_return_evidence_exposes_deadline_not_waiting_period(
+    tmp_path: Path,
+) -> None:
+    index = _runtime_data(tmp_path, build_index=True)
+    assert index is not None and index.collection is not None
+    index.collection.update(
+        ids=["policy-v2.1-s4.1"], embeddings=[[1.0, *([0.0] * 767)]]
+    )
+    result = LocalPolicySearch(
+        data_directory=tmp_path, embedder=FixedEmbedder()
+    ).search("Comprei online e recebi há cinco dias. Posso devolver?")
+    record = next(item for item in result["records"] if item["section"] == "4.1")
+    rule = record["online_return_rule"]
+    assert rule["request_deadline_calendar_days_after_receipt"] == 7
+    assert rule["minimum_wait_calendar_days"] == 0
+    assert rule["required_customer_facts"] == [
+        "online_purchase",
+        "actual_receipt_date",
+        "original_packaging",
+        "no_signs_of_use",
+        "all_accessories",
+        "all_manuals",
+    ]
+    assert record["source"] == "store_policies.pdf"
+    assert "em até 7 (sete) dias corridos" in record["text"]
+
+
 def test_search_store_policies_returns_approved_freight_evidence(
     tmp_path: Path,
 ) -> None:
     index = _runtime_data(tmp_path, build_index=True)
     assert index is not None and index.collection is not None
     indexed = index.collection.get(
-        ids=["policy-v2.1-freight-clarification-v1"],
+        ids=["policy-v2.1-s5.1"],
         include=["metadatas", "documents"],
     )
-    assert indexed["metadatas"][0]["source"] == "policies/freight-clarification.json"
+    assert indexed["metadatas"][0]["source"] == "effective_store_policies"
     assert indexed["metadatas"][0]["pages"] == "[]"
     assert "igual ou superior a R$ 500,00" in indexed["documents"][0]
     search = LocalPolicySearch(data_directory=tmp_path, embedder=FixedEmbedder())
@@ -131,13 +158,11 @@ def test_search_store_policies_returns_approved_freight_evidence(
     result = tools.search_store_policies(context)  # type: ignore[arg-type]
 
     record = next(
-        item
-        for item in result["records"]
-        if item["id"] == "policy-v2.1-freight-clarification-v1"
+        item for item in result["records"] if item["id"] == "policy-v2.1-s5.1"
     )
     assert result["status"] == "evidence_found"
-    assert record["source"] == "policies/freight-clarification.json"
-    assert record["section"] == "5.1 (clarificação aprovada)"
+    assert record["source"] == "effective_store_policies"
+    assert record["section"] == "5.1"
     assert record["pages"] == []
     assert "igual ou superior a R$ 500,00" in record["text"]
     assert "R$ 35,00" in record["text"]

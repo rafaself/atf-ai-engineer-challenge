@@ -16,7 +16,7 @@ def test_manual_tables_cross_pages_and_source_bytes_are_preserved() -> None:
     before = source.read_bytes()
     corpus = prepare(source)
     chunks = {chunk.section: chunk for chunk in corpus.chunks}
-    assert len(corpus.chunks) == 30
+    assert len(corpus.chunks) == 29
     assert chunks["5.2"].pages == [4, 5]
     assert "SEDEX" in chunks["5.2"].text
     assert "2 a 5 dias úteis" in chunks["5.2"].text
@@ -58,33 +58,25 @@ def test_approved_freight_clarification_covers_threshold_edges(
     record = next(
         chunk
         for chunk in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
-        if chunk.id == "policy-v2.1-freight-clarification-v1"
+        if chunk.id == "policy-v2.1-s5.1"
     )
     assert expected_statement in record.text
 
 
 def test_freight_clarification_is_geographically_scoped_and_provenanced() -> None:
     corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
-    record = next(
-        chunk
-        for chunk in corpus.chunks
-        if chunk.id == "policy-v2.1-freight-clarification-v1"
-    )
+    record = next(chunk for chunk in corpus.chunks if chunk.id == "policy-v2.1-s5.1")
 
-    assert record.section == "5.1 (clarificação aprovada)"
+    assert record.section == "5.1"
     assert record.pages == []
-    assert record.source == "policies/freight-clarification.json"
+    assert record.source == "effective_store_policies"
+    assert "policies/freight-clarification.json" in record.source_references
+    assert "store_policies.pdf#section=5.1&page=4" in record.source_references
     assert (
         "somente para entregas na Região Metropolitana de Campo Grande" in record.text
     )
-    assert "a redação original do pdf" in record.text.lower()
-    assert "não define o caso de igualdade" in record.text.lower()
-    assert "GitHub issue #43, Workstream A" in record.text
-    assert "registrado em 2026-11-02" in record.text
-
-    manual_record = next(chunk for chunk in corpus.chunks if chunk.section == "5.1")
-    assert manual_record.pages == [4]
-    assert manual_record.source is None
+    assert "GitHub" not in record.text
+    assert "1 a 3 dias úteis" in record.text
 
 
 def test_changed_source_is_rejected_before_extraction(tmp_path: Path) -> None:
@@ -137,7 +129,7 @@ def test_labels_reference_existing_evidence_and_preserve_frozen_dataset() -> Non
     assert len(questions) == len({q["id"] for q in questions}) == 25
     assert {q["split"] for q in questions} == {"development", "validation"}
     current_q13 = next(q for q in questions if q["id"] == "q13")
-    assert current_q13["evidence_groups"] == [["policy-v2.1-freight-clarification-v1"]]
+    assert current_q13["evidence_groups"] == [["policy-v2.1-s5.1"]]
     assert current_q13["expectation"] == "state_conditions"
     for question in questions:
         for group in question["evidence_groups"]:
@@ -152,8 +144,8 @@ def test_benchmark_runner_loads_current_versioned_questions() -> None:
     _, questions, freeze = load_inputs()
     q13 = next(question for question in questions if question["id"] == "q13")
 
-    assert freeze["questions_source"] == "questions-v2.json"
-    assert q13["evidence_groups"] == [["policy-v2.1-freight-clarification-v1"]]
+    assert freeze["questions_source"] == "questions-v3.json"
+    assert q13["evidence_groups"] == [["policy-v2.1-s5.1"]]
     assert q13["expectation"] == "state_conditions"
 
 

@@ -1,5 +1,14 @@
 # Policy corpus, runtime retrieval and evaluation protocol
 
+Current processing (2026-11-03): `poppler-effective-policies-v6` prepares 29
+records with canonical hours, one effective freight section, and structured
+online-return conditions/exclusions. The original PDF and freight approval remain
+unchanged; effective freight provenance is stored in `source_references`. The
+current labels are `questions-v3.json`; prior label files/captures remain historical.
+The application shows policy references and partial-list notices, with one-time
+simulation disclosure replacing per-answer snapshot and freight-ingestion notices.
+See [data processing decisions](data-processing.md) for the implemented rationale.
+
 Status: US-14 corpus, US-15 retrieval benchmark, US-16 policy tool, and US-17
 paired answer review are complete. US-15 met none of the frozen configurations'
 full target set; US-17 also found answer and tool-selection failures in both
@@ -9,7 +18,7 @@ Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 [US-18](examples/us-18/README.md) records the grounding investigation and output
 simplification. Policy tools return source excerpts without section-specific advice.
 The application appends a “Fontes consultadas” list from successful current-run
-records, alongside snapshot/partial-result notices where relevant. It does not parse
+records, alongside partial-result notices where relevant. It does not parse
 generated citations or currency mentions to decide HTTP success. Generated claims,
 references, price presentation and tool choice still require model-quality review.
 Exact pricing and customer scope remain enforced inside the operational tools.
@@ -39,11 +48,12 @@ uv run --directory apps/backend --locked python -m emporio_music_backend.policy_
 uv run --directory apps/backend --locked pytest tests/test_policy_corpus.py
 ```
 
-The command verifies `data/store_policies.pdf` against `data/SHA256SUMS`, invokes
-Poppler layout extraction, applies the versioned freight clarification and writes
-`data/policies/corpus.json`. `freeze.json` keeps a separate hash for the clarification
-source and a canonical hash for the effective records. The current benchmark reads the
-versioned `questions-v2.json`, whose clarification hash and q13 evidence label include
+The command updates the derived corpus and freeze hashes reproducibly. It verifies `data/store_policies.pdf` against `data/SHA256SUMS`, invokes
+Poppler layout extraction, applies the versioned freight clarification and the
+source-grounded Natal-hours interpretation, then writes `data/policies/corpus.json`.
+`freeze.json` keeps a separate hash for the freight clarification source and a canonical
+hash for the effective records. The current benchmark reads the
+versioned `questions-v3.json`, whose clarification hash and q13 evidence label include
 the approved rule. The original `questions.json` and its hash remain frozen for earlier
 benchmark captures. No credentials, model downloads, network, or new Python dependencies
 are needed.
@@ -170,6 +180,11 @@ hash requiring refresh for every edit.
   this new decision without attributing its wording to the PDF. Historical US-15 and
   benchmark captures remain evidence against the earlier ambiguous source; their
   questions, labels and results are unchanged.
+- Section 2 gives regular Sunday/holiday closure and separately says Natal hours may
+  be extended. Corpus processing makes that relationship explicit: the manual does
+  not establish whether the store is open or closed on a specific Natal; any change
+  is to be announced in advance. This interpretation is derived from the unchanged
+  PDF and retains its section 2, page 2 provenance.
 - Return eligibility needs channel, actual receipt, condition and exclusions;
   imported order status alone does not establish these. Warranty statements are
   manual claims, not independently verified legal advice.
@@ -229,3 +244,15 @@ stated token-rate assumption; this is not an invoice. No Cohere calls were made.
 external processing or paid runs require their own explicit authorization and bounded
 scope. Existing section IDs and gold labels remain unchanged; the cover contact has its
 own ID.
+
+## Structured online-return evidence
+
+Preparation attaches `online_return_rule` to section 4.1: seven calendar days
+is the request deadline after actual receipt, with zero minimum wait. It records
+online purchase, actual receipt, original packaging, no signs of use, accessories,
+and manuals, plus section 4.4 exclusions (customization/setup, explicitly final-sale
+clearance, and wind-instrument mouthpieces). Runtime retrieval passes this prepared
+metadata through with the source text. It is not a customer eligibility decision.
+
+Earlier source/benchmark descriptions in this guide retain their historical scope;
+the current processing contract is documented above and in data-processing.md.

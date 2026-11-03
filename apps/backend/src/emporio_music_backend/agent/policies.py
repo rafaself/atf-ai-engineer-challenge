@@ -140,6 +140,10 @@ class LocalPolicySearch:
                     for chunk_id in selected
                     if (chunk := self._chunks.get(chunk_id)) is not None
                 ]
+                for record in records:
+                    prepared_rule = self._chunks[record["id"]].online_return_rule
+                    if prepared_rule is not None:
+                        record["online_return_rule"] = prepared_rule
             except PolicyRetrievalError:
                 raise
             except Exception as exc:
@@ -159,7 +163,11 @@ class PolicyTools:
     def search_store_policies(
         self, ctx: RunContext[ExecutionContext]
     ) -> PolicySearchResult:
-        """Search policy excerpts with the current and latest prior user question.
+        """Read store hours, shipping and return rules before answering policy questions.
+
+        Use this tool even when the question also names an order or product.
+        Online return evidence includes a request deadline, not a minimum wait;
+        confirm all required customer facts and preserve any retrieved exclusions.
 
         Keep assistant responses, tool results, identity, and evaluation labels
         out of the retrieval query. Long question pairs use the current question only.
