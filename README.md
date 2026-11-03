@@ -97,24 +97,26 @@ Preparing the policy index downloads the embedding model; do this once for each 
 
 ### Provider
 
+I chose Amazon Bedrock primarily because I already have some experience with the platform and have been studying its capabilities. I also have remaining AWS credits, which allow me to experiment without significant cost concerns. Beyond that, Bedrock provides access to foundation models from multiple providers through a unified API, along with services and tools for building AI agents. This makes it a practical choice for experimenting with and developing LLM-powered applications.
 
 ### Model
 
-The application uses GPT-6 Luna through Amazon Bedrock Runtime's US cross-Region inference profile by default. In the retained model-selection evaluation, Luna and GPT-6.1 Sol each scored 16/16 Pass; Luna won the cost tiebreak. This was one unblinded AI assessment without independent human review, so the result is provisional rather than a general quality guarantee. See the [model-selection record](docs/evaluations/model-selection/README.md).
-
-React/Vite is served by FastAPI from the same origin. Pydantic AI makes typed tool calls; deterministic Python and parameterized SQL handle structured catalog, pricing and order facts. Policy answers use local Chroma retrieval with cached multilingual E5 embeddings, and prompts constrain tool use and factual claims. SQLite stores operational snapshots and conversation history. See [architecture](docs/architecture.md), [Bedrock configuration](docs/guides/bedrock.md) and [policy retrieval](docs/guides/policy-retrieval.md) for details.
+I choose the model carefully. I test some models such as Amazon Nova Lite, Amazon Nova Micro, NVIDIA Nemodon 3 Super, etc. At the beginning, I expended a lot of time investing in Qwen3 32B trying to solve some hallucinations, I got good results but not what I wanted. But then, I got access to other models such as Haiku 5.5 and GPT Luna 6. GPT Luna 6 was the model that I had the best results with low cost.
 
 ### UI Interface
 
+For the UI interface I choose React frontend as the main UI for use, I considered that would be a better experience for the user to interact with the agent. But also, I implemented CLI that could be used too.
 
 ### Data Persistence
 
 
 ### Data Processing
 
+I decided to process some data to make the informations retrieved by the model cleaner. One of them was about the holiday.
 
 ## Known limitations and evidence
 
+- I didn't make too much tests in the embedding process, I choose a light and simple approach in this flow.
 - The demo currently depends on Bedrock for live model inference, with the provider integration isolated behind an agent boundary.
 - Answer-quality problems were more evident with lower-performing models such as Qwen3 32B. GPT-6 Luna and GPT-6.1 Sol performed well on the evaluated scenarios, but that does not guarantee they will always answer correctly.
 - Earlier runs showed Qwen misreading a conditional Christmas-hours policy. It passed that specific case in the later benchmark, so describe the issue as an observed failure mode, not a persistent failure.
