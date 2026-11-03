@@ -1,17 +1,8 @@
 # Architecture decisions
 
-Use sequential four-digit numbers and descriptive English filenames. Each ADR records **Context**, **Decision**, and **Consequences**, plus its status and related issue. Status is `Proposed`, `Accepted`, or `Superseded`. Accept a decision only after implementation evidence validates it; reference the successor when superseded.
-
-Record significant boundaries and tradeoffs rather than trivial implementation choices. Keep numbering stable. Link decisions from the corresponding story.
+Keep this directory limited to decisions that still apply. Each ADR records Context, Decision, Consequences, Status, and a related issue. Delete an ADR when its decision is replaced; do not retain superseded ADRs as history. Keep active ADR numbers consecutive; after deleting a decision, renumber the remaining ADRs and update their references. Keep implementation detail in the architecture and guide documents.
 
 - [ADR-0001: Modular monolith and dependency boundaries](0001-modular-monolith-and-dependency-boundaries.md)
-
-- [ADR-0002: LLM provider boundary](0002-llm-provider-boundary.md) records the adapter boundary and bounded customer-output policy, with Sprint 1 live evidence.
-- [ADR-0003: Owned conversation execution context](0003-owned-conversation-execution-context.md) records trusted identity/session/history contracts, direct execution, and the US-10 persistence/identity-resolution handoff.
-- [ADR-0004: Persistent conversation turns](0004-persistent-conversation-turns.md) records demo identity, SQLite ownership, bounded history, commit/cancellation, concurrency, diagnostics, and API behavior.
-- [ADR-0005: Authorized operational snapshots](0005-authorized-operational-snapshots.md) records minimal operational import, trusted per-run scope, token validation, bounded order tools, snapshot limitations and safe diagnostics.
-- [ADR-0006: Immutable promotion sources and exact pricing](0006-immutable-promotion-pricing.md) records unchanged promotion data, atomic catalog ingestion, exact non-stacking pricing, payable-price filtering and the offline/live evidence boundary.
-
-- [ADR-0007: Fixed demo identity for local evaluation](0007-simplified-demo-identity.md)
-  sets one fixed fictional customer for HTTP, React chat and CLI, superseding the
-  optional guest/customer selector from #33 and the earlier token proposals.
+- [ADR-0002: LLM provider boundary](0002-llm-provider-boundary.md)
+- [ADR-0003: Immutable promotion sources and exact pricing](0003-immutable-promotion-pricing.md)
+- [ADR-0004: Fixed demo identity](0004-simplified-demo-identity.md)
