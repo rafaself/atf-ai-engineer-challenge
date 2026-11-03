@@ -11,9 +11,9 @@ from emporio_music import paths
 from emporio_music.agent.settings import AgentSettings
 
 from scripts.compare_models import (
+    SOURCE_PATHS,
     Candidate,
     RequestCounter,
-    SOURCE_PATHS,
     _check_local_retrieval_readiness,
     _copy_policy_inputs,
     _execution_failure_category,
@@ -33,7 +33,7 @@ from scripts.compare_models import (
 )
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-VERIFIED_MANIFEST_DATE = date(2026, 11, 2)
+VERIFIED_MANIFEST_DATE = date(2026, 11, 3)
 
 
 def _freeze_manifest_verification_date(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -42,7 +42,12 @@ def _freeze_manifest_verification_date(monkeypatch: pytest.MonkeyPatch) -> None:
     class FrozenDateTime(datetime):
         @classmethod
         def now(cls, tz: tzinfo | None = None) -> Self:
-            return cls(2026, 11, 2, tzinfo=tz)
+            return cls(
+                VERIFIED_MANIFEST_DATE.year,
+                VERIFIED_MANIFEST_DATE.month,
+                VERIFIED_MANIFEST_DATE.day,
+                tzinfo=tz,
+            )
 
     monkeypatch.setattr("scripts.compare_models.datetime", FrozenDateTime)
 
@@ -194,7 +199,7 @@ def test_usage_estimate_reserves_missing_usage_at_full_request_ceiling() -> None
 
 def _manifest_review_date(key: str = "checked_at_utc") -> date:
     manifest = json.loads(
-        (paths.PROJECT_ROOT / "docs/examples/model-comparison/pricing.json").read_text()
+        (REPOSITORY_ROOT / "docs/examples/model-comparison/pricing.json").read_text()
     )
     return date.fromisoformat(manifest[key][:10])
 
@@ -209,6 +214,7 @@ def test_verified_rates_and_routes_load_from_the_current_manifest() -> None:
         "gpt_oss_20b",
         "gpt_oss_120b",
         "gpt6_luna",
+        "gpt6_1_sol",
         "claude_haiku_5_5",
     ]
     assert candidates[0].inference_endpoint == "bedrock-runtime"
@@ -269,7 +275,7 @@ def test_new_cross_region_candidates_preserve_profile_routes_and_tiered_reserve(
 
 def test_new_candidates_reject_incomplete_context_tiers(tmp_path: Path) -> None:
     data = json.loads(
-        (paths.PROJECT_ROOT / "docs/examples/model-comparison/pricing.json").read_text()
+        (REPOSITORY_ROOT / "docs/examples/model-comparison/pricing.json").read_text()
     )
     entry = next(item for item in data["models"] if item["key"] == "claude_haiku_5_5")
     entry.pop("long_context_output_usd_per_million")
@@ -355,6 +361,7 @@ def test_verified_candidates_use_model_card_endpoint_and_api_combinations() -> N
         "gpt_oss_20b": ("bedrock-runtime", "converse"),
         "gpt_oss_120b": ("bedrock-runtime", "converse"),
         "gpt6_luna": ("bedrock-runtime", "converse"),
+        "gpt6_1_sol": ("bedrock-runtime", "converse"),
         "claude_haiku_5_5": ("bedrock-runtime", "converse"),
     }
 
@@ -449,8 +456,8 @@ def test_paid_runner_rejects_budget_above_approved_cap_before_output(
 ) -> None:
     output = tmp_path / "capture.json"
 
-    with pytest.raises(ValueError, match=r"US\$4.00"):
-        asyncio.run(run_comparison(output=output, max_cost_usd=Decimal("4.01")))
+    with pytest.raises(ValueError, match=r"US\$5.00"):
+        asyncio.run(run_comparison(output=output, max_cost_usd=Decimal("5.01")))
 
     assert not output.exists()
 
@@ -489,7 +496,11 @@ def test_live_runner_uses_baseline_probe_when_availability_permission_is_denied(
         raising=False,
     )
     report = asyncio.run(
-        run_comparison(output=tmp_path / "capture.json", max_cost_usd=Decimal("1.00"))
+        run_comparison(
+            output=tmp_path / "capture.json",
+            max_cost_usd=Decimal("1.00"),
+            model_keys=("qwen3_32b", "gpt6_luna"),
+        )
     )
 
     assert report["status"] == "stopped_provider_failure"
@@ -502,12 +513,7 @@ def test_live_runner_uses_baseline_probe_when_availability_permission_is_denied(
     assert report["paid_calls"] == 0
     assert report["model_runs"][0]["status"] == "excluded_provider_setup_failure"
     assert [item["status"] for item in report["model_runs"][1:]] == [
-        "not_executed_provider_failure",
-        "not_executed_provider_failure",
-        "not_executed_provider_failure",
-        "not_executed_provider_failure",
-        "not_executed_provider_failure",
-        "not_executed_provider_failure",
+        "not_executed_provider_failure"
     ]
 
 
@@ -546,7 +552,11 @@ def test_live_runner_stops_before_provider_access_when_retrieval_is_unavailable(
     monkeypatch.setattr("scripts.compare_models._model_executor", record_model_setup)
 
     report = asyncio.run(
-        run_comparison(output=tmp_path / "blocked.json", max_cost_usd=Decimal("1.00"))
+        run_comparison(
+            output=tmp_path / "blocked.json",
+            max_cost_usd=Decimal("1.00"),
+            model_keys=("qwen3_32b",),
+        )
     )
 
     assert report["status"] == "blocked_retrieval_readiness"
@@ -646,7 +656,7 @@ def test_focused_fixture_uses_its_declared_counts_and_rejects_mismatch(
     tmp_path: Path,
 ) -> None:
     fixture = (
-        paths.PROJECT_ROOT
+        REPOSITORY_ROOT
         / "docs/examples/model-comparison/scenarios-return-holdout-v5.json"
     )
     scenarios = load_scenarios(fixture)
