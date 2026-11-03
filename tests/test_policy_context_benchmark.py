@@ -1,19 +1,22 @@
 """Offline guards for the bounded issue #78 benchmark runner."""
 
 import json
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from scripts.compare_models import Candidate
+from scripts.benchmark_support import Candidate
 from scripts.compare_policy_context import (
     MODEL_ID,
     BudgetStop,
     Ledger,
     embedded_instructions,
     load_scenarios,
+    load_luna_candidate,
+    input_paths,
     operational_metrics,
 )
 
@@ -223,3 +226,34 @@ def test_tool_compliance_does_not_require_rag_policy_tool_in_embedded_arm() -> N
         {"scenario_id": "C01", "turn_index": 0, "tools": ["search_store_policies"]}
     ]
     assert metrics["by_arm"]["embedded"]["missing_required_tool_turns"] == []
+
+
+def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
+    names = [path.as_posix() for path in input_paths()]
+    assert not any("docs/examples/" in path for path in names)
+    assert not any("docs/benchmarks/expansion/" in path for path in names)
+    assert any(path.endswith("/scripts/benchmark_pricing.json") for path in names)
+    assert any(path.endswith("/scripts/benchmark_support.py") for path in names)
+
+
+def test_luna_candidate_loads_standalone_verified_prices() -> None:
+    candidate = load_luna_candidate(today=date(2026, 11, 3))
+    assert candidate.inference_model_id == MODEL_ID
+    assert candidate.input_usd_per_million == Decimal("0.11")
+    assert candidate.output_usd_per_million == Decimal("0.55")
+
+
+def test_luna_candidate_rejects_stale_and_unverified_prices(tmp_path: Path) -> None:
+    from scripts.compare_policy_context import PRICING_FILE
+
+    document = json.loads(PRICING_FILE.read_text(encoding="utf-8"))
+    fixture = tmp_path / "pricing.json"
+    fixture.write_text(json.dumps(document), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Reverify Luna"):
+        load_luna_candidate(today=date(2026, 11, 4), pricing_file=fixture)
+
+    document["model"]["inference_model_id"] = "wrong-model"
+    fixture.write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(ValueError, match="Runtime Converse"):
+        load_luna_candidate(today=date(2026, 11, 3), pricing_file=fixture)
