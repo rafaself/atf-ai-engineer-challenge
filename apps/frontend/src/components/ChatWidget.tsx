@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
+import type { Element, Root, Text } from "hast";
+import type { Parent } from "unist";
+import type { Plugin } from "unified";
 import { ChatClientError, type ChatClient } from "../services/chatClient";
 import { ChatScrollFollower } from "./chatScroll";
 import { Icon } from "./Icon";
@@ -8,6 +11,7 @@ type Message = {
   id: number;
   role: "assistant" | "user";
   text: string;
+  streamRevision?: number;
   status?: "streaming" | "complete" | "partial";
 };
 
@@ -29,6 +33,59 @@ function describeFailure(error: unknown) {
   }
 
   return "Ocorreu um erro inesperado. Não foi possível confirmar a conversa. Inicie uma nova conversa antes de continuar.";
+}
+
+function softenLastText(parent: Parent, revision: number): boolean {
+  for (let index = parent.children.length - 1; index >= 0; index -= 1) {
+    const child = parent.children[index];
+    if (child.type === "text") {
+      const text = child as Text;
+      if (!text.value) {
+        continue;
+      }
+
+      const tailLength = Math.min(12, text.value.length);
+      const prefix = text.value.slice(0, -tailLength);
+      const tail = text.value.slice(-tailLength);
+      const prefixText: Text | undefined = prefix
+        ? { type: "text", value: prefix }
+        : undefined;
+      const tailText: Text = { type: "text", value: tail };
+      const softTail: Element = {
+        type: "element",
+        tagName: "span",
+        properties: {
+          className: [
+            "streaming-text-tail",
+            revision % 2 === 0
+              ? "streaming-text-tail--even"
+              : "streaming-text-tail--odd",
+          ],
+        },
+        children: [tailText],
+      };
+
+      parent.children.splice(
+        index,
+        1,
+        ...(prefixText ? [prefixText] : []),
+        softTail,
+      );
+      return true;
+    }
+
+    if ("children" in child && softenLastText(child as Parent, revision)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function streamingTailPlugin(revision: number): Plugin<[], Root> {
+  return () => (tree) => {
+    softenLastText(tree, revision);
+  };
 }
 
 export function ChatWidget({ client }: ChatWidgetProps) {
@@ -60,7 +117,13 @@ export function ChatWidget({ client }: ChatWidgetProps) {
 
     setMessages((current) =>
       current.map((item) =>
-        item.id === messageId ? { ...item, text: item.text + text } : item,
+        item.id === messageId
+          ? {
+              ...item,
+              text: item.text + text,
+              streamRevision: (item.streamRevision ?? 0) + 1,
+            }
+          : item,
       ),
     );
   }
@@ -253,7 +316,15 @@ export function ChatWidget({ client }: ChatWidgetProps) {
               message.text && (
                 <div className={`message-row message-row--${message.role}`} key={message.id}>
                   <div className="message-bubble">
-                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                    <ReactMarkdown
+                      rehypePlugins={
+                        message.status === "streaming"
+                          ? [streamingTailPlugin(message.streamRevision ?? 0)]
+                          : undefined
+                      }
+                    >
+                      {message.text}
+                    </ReactMarkdown>
                     {message.status === "partial" && (
                       <span className="message-status">Resposta parcial; não foi concluída.</span>
                     )}

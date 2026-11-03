@@ -300,6 +300,24 @@ input:focus-visible {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+.streaming-text-tail--even {
+  animation: streaming-tail-even 150ms ease-out both;
+}
+
+.streaming-text-tail--odd {
+  animation: streaming-tail-odd 150ms ease-out both;
+}
+
+@keyframes streaming-tail-even {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@keyframes streaming-tail-odd {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
 .message-bubble * {
   cursor: text;
 }
