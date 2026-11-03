@@ -40,6 +40,7 @@ def test_supplied_active_offer_is_quoted_separately_from_original_price(
         "final_price_brl": "323.10",
         "discount_percent": 10,
         "discount_kind": "promotion",
+        "explanation": "Promoção de 10%.",
         "promotion_id": 12,
         "promotion_description": "Oferta Especial",
     }
@@ -83,5 +84,5 @@ def test_discount_disclosure_uses_current_run_evidence_only(
     )
     answer = customer_answer(ctx, "Oferta consultada.")
     assert answer.startswith("Oferta consultada.")
-    assert ("fotografia" in answer) == (discount_kind == "promotion")
+    assert "fotografia" not in answer
     assert "Historical offer" not in answer and "Kalani" not in answer

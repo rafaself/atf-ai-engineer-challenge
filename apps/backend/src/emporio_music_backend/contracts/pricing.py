@@ -53,3 +53,16 @@ class ProductPricing(ContractModel):
         return (
             f"{self.final_price_centavos // 100}.{self.final_price_centavos % 100:02d}"
         )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def explanation(self) -> str:
+        if self.discount_kind == "promotion":
+            return (
+                f"Promoção de {self.discount_percent}%; não há desconto PIX adicional."
+                if self.payment_method == "pix"
+                else f"Promoção de {self.discount_percent}%."
+            )
+        if self.discount_kind == "pix":
+            return "Desconto PIX de 5%; sem promoção aplicada."
+        return "Preço de tabela, sem desconto aplicado."

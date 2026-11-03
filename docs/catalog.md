@@ -68,6 +68,12 @@ bounds, sorts by final price then product ID, counts and limits (default 10, max
 Counts and products therefore share the same snapshot during concurrent import. Frozen
 ProductSummary values and tuple results derive availability and truncation.
 
+Product results include the imported structured `specs` object, which is the
+catalog evidence for instrument characteristics. Free-form product descriptions
+remain stored but are not exposed through these tools. An empty `specs` object
+means the catalog has no structured details to report; the model must not infer
+characteristics from names, categories, brands, prices, or other products.
+
 The importer uses the default SQLite journal mode. Tests additionally exercise a
 concurrent replacement in WAL mode to prove read consistency; no WAL management,
 pooling, retries, environment loader, server, or agent tooling is introduced.
@@ -99,10 +105,9 @@ true selects eligible active promotions, excluding PIX-only discounts. Budget
 bounds use payable price for that payment choice. `price_centavos`/`price_brl`
 remain the original price; `pricing` contains payment method, final centavo/BRL
 price, applied percentage, discount kind (`none`, `promotion`, `pix`) and optional
-promotion ID/description. Results identify `computed_snapshot_quote` price basis
-and `source_is_active_snapshot` promotion validity. The model presents the original
-price, percentage and final price from those fields; application output adds one
-snapshot notice for discounted results, without repeating every quote. History
+promotion ID/description. Results identify `computed_quote` price basis and `current_simulated_catalog`
+promotion validity. `pricing.explanation` describes the actual applied discount. The model presents the original
+price, percentage and final price from those fields; the demo interface explains the simulation once. History
 never supplies current pricing evidence. The notice does not validate generated claims.
 
 The supplied four final promotional prices are 32310, 43920, 196718 and 551908
@@ -119,3 +124,13 @@ The expected supplied snapshot has 65 products, nine categories, and 12 availabl
 violões priced at most 100000 centavos. Takamine GD20 costs 219900 centavos with
 stock five; active Giannini GF-3D has zero stock and must not be recommended as
 available. All values reflect the imported CSV snapshot, not a live inventory.
+
+## Product references and alternatives
+
+Product results expose `product_id`. Initial detail lookups accept a literal
+`product_name`; follow-ups use `product_id`, with exactly one selector per call.
+Customer answers include product codes so references survive the text-only history.
+`find_product_alternatives(product_id, limit)` derives the original category,
+excludes the original product, and searches available products without invented
+price restrictions. Explicit customer budget searches remain available through
+`search_available_products`. Tool results are current simulated store records.

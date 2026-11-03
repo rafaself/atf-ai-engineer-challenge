@@ -35,11 +35,11 @@ SCHEMA = {
 
 
 def normalize_lookup(value: str) -> str:
-    return "".join(
-        char
-        for char in unicodedata.normalize("NFD", value.strip().casefold())
-        if not unicodedata.combining(char)
+    normalized = unicodedata.normalize("NFD", value.strip().casefold())
+    normalized = "".join(
+        "-" if unicodedata.category(char) == "Pd" else char for char in normalized
     )
+    return "".join(char for char in normalized if not unicodedata.combining(char))
 
 
 def validate_schema(

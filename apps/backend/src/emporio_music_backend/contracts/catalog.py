@@ -24,6 +24,8 @@ class ProductSearchQuery(ContractModel):
     disable available_only to inspect unavailable catalog entries.
     """
 
+    product_id: Annotated[PositiveInt, Field(le=2**63 - 1)] | None = None
+    exclude_product_id: Annotated[PositiveInt, Field(le=2**63 - 1)] | None = None
     category: NonblankText | None = None
     product_name: NonblankText | None = None
     min_price_centavos: NonnegativeInt | None = None
@@ -52,6 +54,7 @@ class ProductSummary(ContractModel):
     price_centavos: PositiveInt
     stock_quantity: NonnegativeInt
     status: ProductStatus
+    specs: dict[NonblankText, NonblankText] = Field(default_factory=dict)
     pricing: ProductPricing
 
     @computed_field  # type: ignore[prop-decorator]  # mypy cannot type decorated properties.

@@ -1,5 +1,6 @@
 """Read-only SQLite implementation of the product repository port."""
 
+import json
 import sqlite3
 from contextlib import closing
 from pathlib import Path
@@ -39,6 +40,12 @@ class SQLiteProductRepository:
                 else:
                     clauses.append(expression)
                     parameters.append(normalized)
+        if query.product_id is not None:
+            clauses.append("p.product_id = ?")
+            parameters.append(query.product_id)
+        if query.exclude_product_id is not None:
+            clauses.append("p.product_id <> ?")
+            parameters.append(query.exclude_product_id)
         if query.available_only:
             clauses.append("p.status = 'active' AND p.stock_quantity > 0")
         where = " AND ".join(clauses) if clauses else "1"
@@ -55,7 +62,7 @@ class SQLiteProductRepository:
                 validate_schema(connection)
                 rows = connection.execute(
                     "SELECT p.product_id, p.category_id, p.name, c.name AS category_name, "
-                    "p.price_centavos, p.stock_quantity, p.status, m.promotion_id, "
+                    "p.price_centavos, p.stock_quantity, p.status, p.specs, m.promotion_id, "
                     f"m.discount_percent, m.description AS promotion_description {source}",
                     parameters,
                 ).fetchall()
@@ -96,7 +103,7 @@ class SQLiteProductRepository:
                                 "status",
                             )
                         }
-                        | {"pricing": pricing}
+                        | {"pricing": pricing, "specs": json.loads(row["specs"])}
                     )
                     price = pricing.final_price_centavos
                     if query.promotions_only and pricing.discount_kind != "promotion":
