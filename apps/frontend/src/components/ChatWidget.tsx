@@ -41,8 +41,41 @@ export function ChatWidget({ client }: ChatWidgetProps) {
   const messageInputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const scrollFollowerRef = useRef<ChatScrollFollower | null>(null);
+  const pendingStreamTextRef = useRef("");
+  const streamFrameRef = useRef<number | null>(null);
   const nextMessageId = useRef(1);
   const sessionIdRef = useRef<string | null>(null);
+
+  function flushStreamText(messageId: number) {
+    if (streamFrameRef.current !== null) {
+      window.cancelAnimationFrame(streamFrameRef.current);
+      streamFrameRef.current = null;
+    }
+
+    const text = pendingStreamTextRef.current;
+    pendingStreamTextRef.current = "";
+    if (!text) {
+      return;
+    }
+
+    setMessages((current) =>
+      current.map((item) =>
+        item.id === messageId ? { ...item, text: item.text + text } : item,
+      ),
+    );
+  }
+
+  function queueStreamText(messageId: number, text: string) {
+    pendingStreamTextRef.current += text;
+    if (streamFrameRef.current !== null) {
+      return;
+    }
+
+    streamFrameRef.current = window.requestAnimationFrame(() => {
+      streamFrameRef.current = null;
+      flushStreamText(messageId);
+    });
+  }
 
   useEffect(() => {
     if (messages.length > 0 && !isSending) {
@@ -69,6 +102,10 @@ export function ChatWidget({ client }: ChatWidgetProps) {
       thread.removeEventListener("scroll", follower.handleScroll);
       follower.dispose();
       scrollFollowerRef.current = null;
+      if (streamFrameRef.current !== null) {
+        window.cancelAnimationFrame(streamFrameRef.current);
+        streamFrameRef.current = null;
+      }
     };
   }, []);
 
@@ -104,16 +141,9 @@ export function ChatWidget({ client }: ChatWidgetProps) {
       const response = await client.streamMessage(
         message,
         sessionIdRef.current ?? undefined,
-        (text) => {
-          setMessages((current) =>
-            current.map((item) =>
-              item.id === assistantMessageId
-                ? { ...item, text: item.text + text }
-                : item,
-            ),
-          );
-        },
+        (text) => queueStreamText(assistantMessageId, text),
       );
+      flushStreamText(assistantMessageId);
       sessionIdRef.current = response.session_id;
       setMessages((current) =>
         current.map((item) =>
@@ -123,6 +153,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
         ),
       );
     } catch (error) {
+      flushStreamText(assistantMessageId);
       const failureMessage = describeFailure(error);
       setMessages((current) =>
         current.flatMap((item) => {
