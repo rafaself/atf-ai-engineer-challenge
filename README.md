@@ -6,64 +6,67 @@
   A Portuguese-language AI customer-support demo for a fictional music store.
 </p>
 
-Use the React chat to explore products, orders and store policies. Product,
-order and delivery data are local simulations, with no external fulfillment
-or carrier calls.
+## Summary
+
+- [Overview](#overview)
+- [Technologies](#technologies)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Configure AWS and the model](#configure-aws-and-the-model)
+- [Instalação](#instalação)
+- [Configuração](#configuração)
+- [Como Executar](#como-executar)
+- [Testes](#testes)
+- [Licença](#licença)
+
+## Overview
+
+Empório da Música is an AI-powered customer support application for a fictional musical instrument store. Built with Python, FastAPI, React, and Pydantic AI, it combines structured SQL queries with Retrieval-Augmented Generation (RAG) to answer questions about products, pricing, availability, orders, and store policies. Powered by Amazon Bedrock, the application focuses on accurate, context-aware responses through a conversational interface.
+
+## Technologies
+
+- **Backend:** Python, FastAPI, Pydantic AI
+- **Frontend:** React, TypeScript, Vite
+- **LLM:** GPT-6 Luna (Recommended model) or Qwen-3 32b (Default model) via **Amazon Bedrock**
+- **RAG:** ChromaDB, Multilingual E5 Embeddings
+- **Database:** SQLite
+- **Infrastructure:** Docker, Docker Compose
+- **Package Management:** uv, npm
+- **Testing:** Pytest
 
 ## Getting Started
 
-### Prerequisites
+### Requirements
 
-- Docker Engine on Linux, or Docker Desktop 4.34+ with host networking enabled,
-  Docker Compose v2 and GNU Make. See Docker's [host networking setup](https://docs.docker.com/engine/network/drivers/host/).
-- An AWS account and credentials authorized to invoke an Amazon Bedrock model.
-- Internet access during the first policy-index preparation to download the
-  pinned CPU E5 embedding model.
+- Docker Engine and Docker Compose. Docker Desktop requires version 4.34+ with host networking enabled.
+- AWS credentials authorized to invoke the configured Bedrock model. Credentials are needed to chat, and model requests may incur charges.
+- Internet access the first time you prepare the policy index.
 
-### Configure AWS and the model
+### Configure AWS
 
-From the repository root, create the ignored local environment file and edit it:
+From the repository root, create `.env` from the example if it doesn’t already exist:
 
 ```bash
 test -f .env || cp .env.example .env
 ```
 
-The defaults are `AWS_DEFAULT_REGION=us-east-1` and
-`BEDROCK_MODEL_ID=us.openai.gpt-6-luna`. For Docker, put temporary
-`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` credentials
-in `.env` using your approved AWS credential workflow. Compose passes them to the
-container at runtime; `.env` is Git-ignored and excluded from the Docker build context.
-Compose does not mount your host `~/.aws` directory, so a host `AWS_PROFILE` or
-SSO session alone is not available in the container. The chat can start without
-AWS credentials, but sending a message makes a real Bedrock request and may incur
-usage charges.
+For Docker, put your AWS credentials in `.env`; Docker Compose does not mount your host AWS profile. Uncomment these lines and replace the placeholders with credentials issued for your AWS account:
 
-GPT-6 Luna remains the default. **If Luna cannot be invoked in your account,
-Qwen3 32B is the recommended alternative for evaluation.** In `.env`, change
-`BEDROCK_MODEL_ID` to `qwen.qwen3-32b-v1:0`; the repository's example region,
-`us-east-1`, supports this Bedrock Runtime model in-region. The current [Qwen3
-32B model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-qwen-qwen3-32b.html)
-lists the other supported Runtime regions: `us-east-2`, `us-west-2`,
-`eu-central-1`, `eu-north-1`, `eu-south-1`, `eu-west-1`, `eu-west-2`,
-`ap-northeast-1`, `ap-south-1`, `ap-southeast-2`, `ap-southeast-3` and
-`sa-east-1`. Qwen also requires valid credentials, model access and
-`bedrock:InvokeModel` permission. There is no automatic model fallback.
+```dotenv
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+# AWS_SESSION_TOKEN=your-session-token
+```
 
-> **Note:** Bedrock invocation can depend on the account, IAM permissions, AWS
-> Region and model-access requirements. A model appearing in discovery results
-> does not prove that the current account can invoke it; verify with an actual
-> request. See AWS's current [model access and authorization
-> guidance](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
-> In one development account, Luna appeared in discovery but initial inference
-> failed. After requesting Claude Haiku 5.5 access, completing an additional AWS
-> verification step and receiving approval, Luna and other previously failing
-> models became callable. This sequence suggests account authorization or
-> verification may have been involved, but did not establish the cause; Haiku
-> access is not a general Luna prerequisite.
+Uncomment and set `AWS_SESSION_TOKEN` when using temporary credentials. Use short-lived credentials with Bedrock invoke permissions when possible. Keep `.env` private and never commit it.
 
-### Build, prepare data and start the chat
+Confirm that `AWS_DEFAULT_REGION` and `BEDROCK_MODEL_ID` in `.env` point to a model your account can invoke. See [Bedrock setup](docs/bedrock.md) for credential and permission details.
 
-Run these commands from the repository root on a fresh checkout:
+### Build, prepare, and start
+
+Run these commands from the repository root. Choose either option.
+
+**Using Make** (requires GNU Make):
 
 ```bash
 make build
@@ -72,28 +75,26 @@ make prepare-policy
 make up
 ```
 
-`make prepare-data` creates the operational SQLite snapshots from the supplied
-data. `make prepare-policy` explicitly downloads the pinned E5 model if needed
-and creates the local Chroma index; it is required once for a new data volume.
-If an index already exists, preparation fails rather than silently replacing it;
-use `make rebuild-policy` only when intentionally rebuilding after a policy-source
-change. Image build and normal startup do not prepare snapshots, download weights,
-create or rebuild the index, or call Bedrock.
+**Using Docker Compose** (does not require Make):
 
-Open the React chat at [http://127.0.0.1:8000](http://127.0.0.1:8000). The API
-docs are at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Both are
-served by the single Compose `app` service in host network mode. Uvicorn binds to
-`127.0.0.1:8000`, so the app remains local; host mode avoids the Docker bridge
-path, which some VPN or firewall policies may block. Host mode shares the host's
-network namespace, and Docker Desktop requires version 4.34+ with host networking
-enabled. Its named data volume persists snapshots, chat history, the policy
-index and E5 cache; `make down` keeps that data. Only run
-`docker compose down --volumes` when you intend to delete it. The demo has no
-authentication, so use fictional data.
+```bash
+docker compose build app
+docker compose run --rm app python -m emporio_music.prepare
+docker compose run --rm app python -m emporio_music.prepare_policy_index --allow-download
+docker compose up --detach app
+```
 
-The standalone CLI is optional; see the [CLI guide](docs/cli.md). For local
-API and frontend development, see [API setup](docs/api.md) and the
-[frontend guide](apps/frontend/README.md).
+Open the chat at [http://127.0.0.1:8000](http://127.0.0.1:8000). The API docs are at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
+
+Preparing the policy index downloads the embedding model; do this once for each new data volume. The demo has no authentication, so use fictional data. Stop the app with `make down` or `docker compose down`.
+
+## Architecture
+
+The Docker setup runs a local FastAPI service that serves the React chat. The API uses the shared `emporio_music` Python package to manage conversations and call a Bedrock-backed agent; the optional CLI uses the same package directly. SQLite stores product, order, and conversation data. Store policies are indexed locally with E5 embeddings and Chroma. See the [architecture details](docs/architecture.md).
+
+## Tests
+
+Instructions to run tests.
 
 ## Model and technical choices
 
