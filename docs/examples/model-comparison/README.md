@@ -147,7 +147,8 @@ only AWS settings silently and never writes credential values to a capture.
 Use repeated `--model-key` options to select candidates and `--scenarios-file` to
 provide a separately versioned fixture. A single-model diagnostic can select one
 model; multi-model comparisons require Qwen as the baseline. The runner defaults
-to [current v4](scenarios-current-v4.json).
+to [current v7](scenarios-current-v7.json), with 12 conversations and 20 planned
+HTTP turns per model.
 
 ```sh
 uv run --extra policy-rag --project apps/api --locked \
