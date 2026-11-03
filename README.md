@@ -141,12 +141,13 @@ These costs are benchmark estimates, not invoices. See the [full benchmark resul
 
 I chose React as the primary user interface because I believed it would provide a better experience for interacting with the agent. I also implemented a CLI for users who prefer working in the terminal.
 
-### Data Persistence
+### Chat History / Data Persistence
+
 
 
 ### Data Processing
 
-I decided to process some data to make the informations retrieved by the model cleaner. One of them was about the holiday.
+I prepared the supplied catalog and policy data so the agent can retrieve structured evidence and handle exact business calculations. Catalog ingestion validates records, normalizes product names for search, and converts prices to integer centavos. Policy processing organizes PDF sections and tables while preserving their source references. For holidays, I made the distinction between regular closures and possible special hours explicit. The manual does not specify hours for Natal, Black Friday, or the store anniversary, so the prepared policy preserves that uncertainty instead of inventing a schedule. The original CSV and PDF files remain unchanged.
 
 ## Known limitations and evidence
 
@@ -172,11 +173,3 @@ Repository guidance helped make this process repeatable. `AGENTS.md` documented 
 I've made some mistakes in the beginning, the project was going into a unnecessary complexity, I had to go back and review the codebase in order to change and proceed with a clearer direction. Also I took too much time trying to improve the quality using only Qwen-3 32B, although it's a very good model, it hallucinates in some ambiguos or not too much clear context. That was one of the reason that I proceeded with data processing, some points in the policits was not too clear such as the time context related to "Natal" and "Feriados".
 
 The usual cycle was to define the goal and boundaries, plan the work, delegate where it made sense, review the changes, and validate the result. I used delegation where it reduced execution time, while keeping coordination overhead, rework, and unnecessary complexity under control.
-
-## Architecture
-
-The Docker setup runs a local FastAPI service that serves the React chat. The API uses the shared `emporio_music` Python package to manage conversations and call a Bedrock-backed agent; the optional CLI uses the same package directly. SQLite stores product, order, and conversation data. Store policies are indexed locally with E5 embeddings and Chroma. See the [architecture details](docs/architecture.md).
-
-## Tests
-
-From the repository root, run `make check` for the documented project checks.
