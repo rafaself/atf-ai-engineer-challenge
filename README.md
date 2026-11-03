@@ -43,7 +43,15 @@ Empório da Música is an AI-powered customer support application for a fictiona
 - AWS credentials authorized to invoke the configured Bedrock model. Credentials are needed to chat, and model requests may incur charges.
 - Internet access the first time you prepare the policy index.
 
-To run the application directly on your machine without Docker, see [Run locally without Docker](docs/guides/run-without-docker.md).
+>
+>**Ask your agent to run this project with the following prompt**
+>Clone this project from https://github.com/rafaself/atf-ai-engineer-challenge, then set it up and run it with Docker Compose. Read the README and Compose configuration first. Check that Docker Engine, Compose, and host networking are available (Docker Desktop 4.34+). Do not overwrite an existing .env file; if it is missing, create it from .env.example. Configure Docker-compatible Bedrock credentials without printing or exposing secrets. Build the app, prepare the demo data and policy index, and start it using the documented Compose workflow. Keep it bound to localhost and use fictional data. If credentials or Docker support are missing, stop and tell me what to configure. Report the chat and API docs URLs when it is running.
+>
+
+> 
+> **Note**
+>To run the application directly on your machine without Docker, see [Run locally without Docker](docs/guides/run-without-docker.md).
+>
 
 ### Configure AWS
 

@@ -46,3 +46,11 @@ Open [http://127.0.0.1:5173](http://127.0.0.1:5173) for the chat. Vite forwards 
 To serve the built frontend and API from one origin instead, build the frontend with `npm --prefix apps/frontend ci` and `npm --prefix apps/frontend run build`, then start the API. The default `EMPORIO_MUSIC_FRONTEND_DIR=apps/frontend/dist` in `.env.example` points the API to the built files; open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 Keep the API bound to loopback and use only fictional demo data; the application has no authentication.
+
+## Run it with a coding agent
+
+Give your coding agent this prompt:
+
+```text
+Clone this project from https://github.com/rafaself/atf-ai-engineer-challenge, then set it up and run it locally without Docker. Follow docs/guides/run-without-docker.md. Check for Python 3.12+, uv, Node.js 20.19+ or 22.12+, and npm. Do not overwrite an existing .env file; if it is missing, create it from .env.example. Use the documented host AWS credential setup without printing or exposing secrets. Install project dependencies, prepare the demo data and policy index, then start the API and frontend as documented. Keep the API bound to localhost and use fictional data. If credentials or required tools are missing, stop and tell me what to configure. Report the chat and API docs URLs when it is running.
+```
