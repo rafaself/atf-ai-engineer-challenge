@@ -1,3 +1,18 @@
+# Benchmarks
+
+## Featured: final Bedrock Runtime Converse model comparison
+
+The [final-model-comparison](final-model-comparison/README.md) directory contains
+the frozen protocol, 16-conversation/26-turn fixture, and ten-model manifest for
+the final end-to-end model-selection evaluation. All candidates use the **same
+Bedrock Runtime Converse integration** and current RAG application. This is
+separate from the RAG-versus-embedded-policy experiment (#78).
+
+**Status:** documented and frozen for implementation review; no new paid run or
+human-reviewed results have been produced.
+
+---
+
 # US-15 policy retrieval benchmark
 
 US-15 implementation, issue #52 / parent #49. No agent integration or generation
