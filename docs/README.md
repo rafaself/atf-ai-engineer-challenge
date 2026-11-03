@@ -2,9 +2,8 @@
 
 Start with the [root README](../README.md) for setup, the evaluator path and
 links into the current application. The guides below describe current behavior;
-dated validation reports, ADRs and conversation captures preserve evidence for
-their recorded revisions. Check their stated limits before applying results to
-the current checkout.
+dated benchmark reports and ADRs preserve evidence for their recorded revisions.
+Check their stated limits before applying results to the current checkout.
 
 ## Run and understand the current application
 
@@ -20,16 +19,10 @@ the current checkout.
 - [Data processing](guides/data-processing.md): source handling, derived policy evidence
   and simulation semantics.
 
-## Validation and evaluation evidence
+## Evaluation evidence
 
-- [Validation record](validation.md): current output behavior followed by
-  revision-specific implementation checks.
-- [Sprint 4 validation](archive/sprints/sprint-4-validation.md): recorded package checks, runtime
-  evidence and environment limits for that delivery.
-- [Representative conversations and evaluation index](examples/README.md):
-  curated transcripts, failures and replay guidance.
-- [Bedrock model comparisons](examples/model-comparison/README.md): dated,
-  manually reviewed live runs and their source-revision/cost limits.
+- [Final Bedrock Runtime model comparison](benchmarks/final-model-comparison/README.md):
+  ten-model capture, assessments, cost and execution limits.
 - [Policy retrieval benchmark](benchmarks/README.md): opt-in setup, methodology,
   local hardware and provider access.
 - [Retrieval results](benchmarks/results.md): frozen-metric comparison and observed failures.
@@ -37,5 +30,3 @@ the current checkout.
 ## Decisions and delivery history
 
 - [ADRs](adr/README.md): accepted architecture and provider decisions.
-- [Sprint 3](archive/sprints/sprint-3.md): integration branch, story sequence and approved scope.
-- [Follow-up](follow-up.md): policy routing and submission-related notes.

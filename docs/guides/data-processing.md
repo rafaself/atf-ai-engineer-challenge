@@ -4,9 +4,8 @@ Recorded: 2026-11-03. Implementation updated: 2026-11-03. Related work: issue #4
 
 Status: canonical policy preparation, simulation presentation, product-ID follow-ups,
 category-derived alternatives and pricing explanations are implemented locally.
-The [effective-data evaluation](../examples/model-comparison/effective-data-qwen32-gptoss120-2026-11-03.md)
-records the observed improvements and remaining return/tool-compliance failures.
-These results do not establish general reliability of arbitrary generated prose.
+These implementation choices do not establish general reliability of arbitrary
+generated prose.
 
 This document explains the processing applied to the supplied data and why it is
 needed. Dated evaluations below report observed behavior; they do not establish
@@ -71,11 +70,6 @@ are all retained because the source names all three; this does not classify all
 three as public holidays. Possible special service is an interpretation of the
 manual's extended-hours clause, not confirmation that the store will open.
 No opening time, universal holiday exception, or Monday reopening is inferred.
-
-Observed motivation: Qwen retrieved the earlier explicit Natal interpretation and
-still asserted closure. This is an answer-faithfulness failure. The current
-representation removes competing emphasis. The [effective-data evaluation](../examples/model-comparison/effective-data-qwen32-gptoss120-2026-11-03.md)
-reports sampled behavior and remaining limitations.
 
 ## Implemented effective freight evidence
 

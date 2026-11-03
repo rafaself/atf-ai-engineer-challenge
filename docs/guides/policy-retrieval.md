@@ -10,28 +10,21 @@ The application shows policy references and partial-list notices, with one-time
 simulation disclosure replacing per-answer snapshot and freight-ingestion notices.
 See [data processing decisions](data-processing.md) for the implemented rationale.
 
-Status: US-14 corpus, US-15 retrieval benchmark, US-16 policy tool, and US-17
-paired answer review are complete. US-15 met none of the frozen configurations'
-full target set; US-17 also found answer and tool-selection failures in both
-retrieval and full-policy-context runs. See the [US-17 results](../examples/us-17/results.md).
+Status: US-14 corpus, US-15 retrieval benchmark, and US-16 policy tool are complete.
+US-15 met none of the frozen configurations' full target set; see the
+[retrieval results](../benchmarks/results.md).
 Related: US-14 #50, US-15 #52, US-16 #55, parent #49.
 
-[US-18](../examples/us-18/README.md) records the grounding investigation and output
-simplification. That version returned source excerpts without section-specific advice;
-the current return-contact scope additionally returns reviewed interpretation guidance.
 The application appends a “Fontes consultadas” list from successful current-run
 records, alongside partial-result notices where relevant. It does not parse
 generated citations or currency mentions to decide HTTP success. Generated claims,
 references, price presentation and tool choice still require model-quality review.
 Exact pricing and customer scope remain enforced inside the operational tools.
 
-The policy tool requires an explicit scope. The retained routing is the baseline:
+The policy tool requires an explicit scope:
 `online_return` selects 4.1/4.4; `return_contact` selects those sections plus
 cover, 1.2 and 7; `preference_exchange` selects 4.3/4.4; `defect` selects
-4.2 and 8.1–8.3. The attempted unified scope and shorter instructions were not
-retained after controlled runs failed to improve grounding and regressed Qwen
-follow-ups. See the v9 comparison below rather than treating simplification as
-proven improvement.
+4.2 and 8.1–8.3.
 
 The retained source improvement replaces an empty next-step list with explicit
 `procedure` documentation statuses, bound to a full-manual review and its PDF
@@ -53,12 +46,6 @@ so this limited context can introduce irrelevant sections. These checks assess
 retrieval only, not generated answers or live Qwen behavior. Frozen US-15 targets
 remain unmet; sprint closure does not require RAG to outperform Full Context.
 
-The latest approved current-code batch stopped at its first mixed turn: both tools
-returned evidence, but the citation-format retry was exhausted and HTTP 500 resulted.
-The five remaining planned turns were not run. See the
-[batch review](../examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch)
-for partial grounding and citation-format findings.
-
 ## Full-source return review (2026-11-03)
 
 The reviewed v9 metadata supersedes v7's empty next-step list. The v8 routing
@@ -72,9 +59,7 @@ before those facts can be regenerated. No claim is made that those services or
 requirements cannot exist outside this manual.
 
 The metadata participates in the existing corpus fingerprint. The local index
-must be rebuilt even though the embedding text itself did not change. See the
-[controlled v9 comparison](../examples/model-comparison/grounding-v9-2026-11-03.md)
-for separate correctness, tool-use and UX results.
+must be rebuilt even though the embedding text itself did not change.
 
 ## Reproduce offline
 
@@ -160,9 +145,9 @@ configuration meeting every frozen target, so E5 with metadata filtering and thi
 expansion remain provisional. The prior full-policy-context comparison did not establish
 reliable answers either. US-17 reviewed four real conversations in both modes. The RAG arm
 returned one HTTP 500, and both modes missed a required policy-tool call in the mixed-order
-case. Full details, including failures, are in the [paired results](../examples/us-17/results.md).
-These controls, offline tests and eight observed route calls do not establish future
-generated-answer quality.
+case. Retrieval metrics and offline tests do not establish future generated-answer
+quality. See the [frozen retrieval results](../benchmarks/results.md) for the
+retrieval-only evidence.
 
 ## Preparation decisions
 

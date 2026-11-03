@@ -41,8 +41,6 @@ tool invocation/result/final-answer chain when a real profile is configured.
 
 The SDK/boto3 dependencies are isolated, with targeted missing-stub import annotations.
 Changing providers requires a different Model construction, not an application rewrite.
-Live Nova Micro evidence is stored under docs/examples/: original failures in
-live/, a passing fresh-code probe, and reviewed remediation runs in live-recheck/.
 
 ## Live-evidence revision — 2026-10-31
 

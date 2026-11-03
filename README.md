@@ -98,12 +98,10 @@ API and frontend development, see [API setup](docs/guides/api.md) and the
 ## Model and technical choices
 
 The application uses GPT-6 Luna through Amazon Bedrock Runtime's US cross-Region
-inference profile by default. The selected model followed a dated 12-conversation
-comparison: Luna scored 11 Pass / 1 Partial / 0 Fail at lower cost and median
-latency than GPT-6.1 Sol, which scored 12 / 0 / 0 at about 20.5 times the cost in
-that sample. The capture came from a dirty source tree, so it is historical
-evidence, not a quality validation of this checkout; see the
-[reviewed comparison](docs/examples/model-comparison/full-qwen-luna-sol-2026-11-03.md).
+inference profile by default. In the final model-selection benchmark, Luna and
+GPT-6.1 Sol each received 16/16 Pass; Luna won the unchanged cost tiebreak. This
+was an unblinded AI assessment without independent human review, not a general
+quality guarantee. See the [final benchmark](docs/benchmarks/final-model-comparison/README.md).
 
 React/Vite is served by FastAPI from the same origin. Pydantic AI makes typed
 tool calls; deterministic Python and parameterized SQL handle structured
@@ -116,22 +114,19 @@ and [policy retrieval](docs/guides/policy-retrieval.md) for details.
 ## Known limitations and evidence
 
 Retrieved sources and typed tools do not guarantee faithful generated prose.
-Recorded model runs include unsupported policy conclusions and failed mixed
-order/return conversations; review their revision and limits before relying on
-them. Start with the [representative Portuguese conversations](docs/examples/submission.md),
-the [dated model-evaluation index](docs/examples/model-comparison/README.md),
-and the [US-18 failure report](docs/examples/us-18/README.md). Offline checks
-verify application behavior, not current model-answer quality. Current follow-up
-areas and prior decisions are recorded in [docs/follow-up.md](docs/follow-up.md).
+The final model-selection benchmark is bounded evidence: five failed conversations
+were not semantically scored, and no independent human review has occurred. See
+the [benchmark analysis](docs/benchmarks/final-model-comparison/analysis.md) for
+its scope and limitations. Offline checks verify application behavior, not current
+model-answer quality.
 
 For deterministic project checks, install Python 3.12+, `uv`, and Node.js 20.19+
-or 22.12+, then run `make check` from the repository root. See the
-[validation record](docs/validation.md) for scope and results.
+or 22.12+, then run `make check` from the repository root.
 
 ## AI-assisted development
 
 OpenAI Codex assisted with analysis, implementation, tests, review and the
-GitHub workflow. Project changes and controlled checks were reviewed; live model
-captures are retained separately with their source revisions and are not
-presented as current-checkout quality evidence. The [documentation index](docs/README.md)
-links to implementation guides, decisions and evaluation records.
+GitHub workflow. Project changes and controlled checks were reviewed; benchmark
+captures are revision-specific and are not presented as current-checkout quality
+evidence. The [documentation index](docs/README.md) links to implementation guides,
+decisions and the retained benchmark records.
