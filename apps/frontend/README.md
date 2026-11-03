@@ -6,9 +6,7 @@ A React + TypeScript + Vite customer-support chat for US-19, US-20, and issue #8
 
 Use Node.js 20.19+ or 22.12+ and npm.
 
-For the complete packaged application, follow the Docker quick start in the
-[root README](../../README.md). The commands below run the frontend separately for
-development.
+For the complete packaged application, follow the Docker quick start in the [root README](../../README.md). The commands below run the frontend separately for development.
 
 From `apps/frontend`:
 

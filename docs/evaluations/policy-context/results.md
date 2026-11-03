@@ -19,8 +19,7 @@ No semantic verdict or architecture recommendation is included. Human review is 
 | rag | 12 | 12 | 18 | 39 | 99886 | 3289 | 0.00719744 | 0.00018455 | 4.804 | 11.772296 |
 | embedded | 12 | 12 | 18 | 27 | 201681 | 3867 | 0.01402996 | 0.00051963 | 4.098 | 13.439175 |
 
-Cache-read and cache-write usage are separate token categories. See [cost-reconciliation.json](cost-reconciliation.json) for the raw token totals, per-request bounds, official-rate estimate, and protocol-conservative estimate.
-Per-turn tool compliance is reconciled using each arm's available tools in [operational-reconciliation.json](operational-reconciliation.json).
+Cache-read and cache-write usage are separate token categories. See [cost-reconciliation.json](cost-reconciliation.json) for the raw token totals, per-request bounds, official-rate estimate, and protocol-conservative estimate. Per-turn tool compliance is reconciled using each arm's available tools in [operational-reconciliation.json](operational-reconciliation.json).
 
 Retrieval ranking metrics have 5 eligible actual general-scope query calls. The per-query metrics and returned-record coverage are in [retrieval-metrics.json](retrieval-metrics.json).
 

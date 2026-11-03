@@ -54,7 +54,7 @@ from scripts.benchmark_support import Candidate, load_project_aws_environment
 from scripts.evaluation_support import RecordingAgent, sanitized, write_checkpoint
 
 ROOT = Path(__file__).resolve().parents[1]
-DIRECTORY = ROOT / "docs/benchmarks/policy-context-ab-78"
+DIRECTORY = ROOT / "docs/evaluations/policy-context"
 SCENARIOS_FILE = DIRECTORY / "scenarios.json"
 IDENTITY = "issue-78-luna-policy-context-ab-v1"
 MODEL_KEY = "gpt6_luna"

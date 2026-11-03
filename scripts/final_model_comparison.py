@@ -51,7 +51,7 @@ from scripts.benchmark_support import (
 from scripts.evaluation_support import RecordingAgent, sanitized
 
 ROOT = Path(__file__).resolve().parents[1]
-DIRECTORY = ROOT / "docs/benchmarks/final-model-comparison"
+DIRECTORY = ROOT / "docs/evaluations/model-selection"
 IDENTITY = "standalone-final-model-comparison-82-v1"
 KEYS = (
     "nova_micro",

@@ -232,7 +232,9 @@ def test_tool_compliance_does_not_require_rag_policy_tool_in_embedded_arm() -> N
 def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
     names = [path.as_posix() for path in input_paths()]
     assert not any("docs/examples/" in path for path in names)
-    assert not any("docs/benchmarks/expansion/" in path for path in names)
+    assert any(
+        path.endswith("/docs/evaluations/policy-context/README.md") for path in names
+    )
     assert any(path.endswith("/scripts/benchmark_pricing.json") for path in names)
     assert any(path.endswith("/scripts/benchmark_support.py") for path in names)
 

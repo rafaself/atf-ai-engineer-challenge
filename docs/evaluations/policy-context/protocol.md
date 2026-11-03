@@ -1,9 +1,6 @@
 # Luna policy-context A/B protocol
 
-**Issue:** [#78](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78)
-**Protocol:** v1.0, frozen before paid inference, 2026-11-03
-**Generator:** GPT-6 Luna only (`us.openai.gpt-6-luna`, us-east-1 Runtime Converse)
-**Budget:** explicit US$1.00 total approval, including both arms' preflight
+**Issue:** [#78](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78) **Protocol:** v1.0, frozen before paid inference, 2026-11-03 **Generator:** GPT-6 Luna only (`us.openai.gpt-6-luna`, us-east-1 Runtime Converse) **Budget:** explicit US$1.00 total approval, including both arms' preflight
 
 ## Question and comparison
 

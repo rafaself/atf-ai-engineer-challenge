@@ -1,4 +1,4 @@
-# Luna policy-context A/B benchmark
+# Luna policy-context comparison (#78)
 
 Issue #78 compares the current policy-RAG path with the same Luna agent given the entire reviewed policy corpus in its system instructions. It runs 12 paired Portuguese conversations (24 executions, 36 planned chat turns) against frozen local catalog/order snapshots. No other generator is included.
 
@@ -14,14 +14,14 @@ Run readiness from the repository root:
 
 ```bash
 uv run --extra policy-rag --project apps/api --locked \
-  python -m scripts.compare_policy_context --work-dir /tmp/policy-context-ab-78
+  python -m scripts.compare_policy_context --work-dir /tmp/emporio-policy-context-78
 ```
 
 After checking readiness and confirming the frozen inputs, the authorized run is:
 
 ```bash
 AWS_PROFILE=your-authorized-profile uv run --extra policy-rag --project apps/api --locked \
-  python -m scripts.compare_policy_context --work-dir /tmp/policy-context-ab-78 \
+  python -m scripts.compare_policy_context --work-dir /tmp/emporio-policy-context-78 \
   --live --max-cost-usd 1.00 \
   --approval-note '2026-11-03: owner approved issue #78 paid inference, US$1.00 cap'
 ```
