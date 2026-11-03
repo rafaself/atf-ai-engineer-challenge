@@ -43,6 +43,8 @@ Empório da Música is an AI-powered customer support application for a fictiona
 - AWS credentials authorized to invoke the configured Bedrock model. Credentials are needed to chat, and model requests may incur charges.
 - Internet access the first time you prepare the policy index.
 
+To run the application directly on your machine without Docker, see [Run locally without Docker](docs/guides/run-without-docker.md).
+
 ### Configure AWS
 
 From the repository root, create `.env` from the example if it doesn’t already exist:
