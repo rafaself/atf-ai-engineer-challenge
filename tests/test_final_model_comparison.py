@@ -442,3 +442,36 @@ def test_review_rejects_llm_judges_and_pass_with_critical_error(tmp_path: Path) 
     row["primary"] = {**human(), "critical_errors": ["privacy leak"]}
     with pytest.raises(ValueError, match="requires Fail"):
         aggregate(value, review, aliases)
+
+
+def test_owner_authorized_ai_review_is_opt_in_and_preserves_human_forms(
+    tmp_path: Path,
+) -> None:
+    """Owner's post-capture waiver permits AI scores, never human attribution."""
+    value = completed_capture()
+    prepare_review(value, tmp_path)
+    human_form = (tmp_path / "review.json").read_bytes()
+    review = json.loads(human_form)
+    aliases = json.loads((tmp_path / "review-aliases.json").read_text())
+    review["review_method"] = "ai_user_authorized"
+    for row in review["rows"]:
+        row["primary"] = {**human("partial", "AI reviewer"), "reviewer_type": "ai"}
+    with pytest.raises(ValueError, match="explicit owner authorization"):
+        aggregate(value, review, aliases, allow_ai=True)
+    review["owner_authorization"] = "Owner explicitly authorizes AI assessment."
+    with pytest.raises(ValueError, match="allow-ai-review"):
+        aggregate(value, review, aliases)
+    result = aggregate(value, review, aliases, allow_ai=True)
+    assert result["status"] == "ai_review_complete"
+    assert result["review_method"] == "ai_user_authorized"
+    assert result["selection"] == "no eligible winner"  # Pass gate still applies.
+    assert all(row["second"] is None for row in review["rows"])
+    assert (tmp_path / "review.json").read_bytes() == human_form
+    # A critical finding still cannot be reported as a passing AI assessment.
+    review["rows"][0]["primary"] = {
+        **human("pass", "AI reviewer"),
+        "reviewer_type": "ai",
+        "critical_errors": ["unsupported refund approval"],
+    }
+    with pytest.raises(ValueError, match="requires Fail"):
+        aggregate(value, review, aliases, allow_ai=True)

@@ -1,0 +1,3337 @@
+{
+  "benchmark": "standalone-final-model-comparison-82-v1",
+  "status": "ai_review_complete",
+  "review_method": "ai_user_authorized",
+  "owner_authorization": "Skip human review by now, give only what your evaluation generated. But let the worksheet ready at the end. I change the protocol you can judge.",
+  "authorization_date": "2026-11-03",
+  "limitations": [
+    "Single unblinded Codex AI assessment, authorized after capture.",
+    "No independent human primary or second review; no additional inference for judging.",
+    "Original semantic rubric and selection gates unchanged. Tool diagnostics apply only to completed conversations; execution failures are separate."
+  ],
+  "capture_sha256": "e9c7b2dc44175c4b5ff9af4511925ce96563434d00e8198fe39ba245639a85c1",
+  "evidence_locator": "Each row names model_key/scenario_id. Locate the corresponding models[model_key].scenarios entry in capture.json; assessment evidence describes the relevant turns and source discrepancies.",
+  "rows": [
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Omitted codes are a noncritical completeness issue; missing current read is counted separately.",
+        "verdict": "partial",
+        "evidence": "T1 lists the correct three guitars/prices/stocks but omits all product codes required by the local rubric. T2 repeats Rozini RC-104 at R$459.90/stock10 without get_product_details. T1 tool result supports the numerical claims."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "T1 correctly reports Giannini96 stock0. T2 provides available83/85/89 at correct prices/stocks and supported specs, but omits product codes and uses search_available_products rather than the required find_product_alternatives(96)."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Incorrectly declares no promotional instruments available after filtering category to nonexistent instrumentos musicais."
+        ],
+        "unsupported_claims": [
+          "T1 globally denies promotional availability although the frozen snapshot contains four active in-stock promotional instruments."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 1,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 search uses category=instrumentos musicais and returns an empty scoped result. The same frozen catalog has127/121/90/94 promotional stock. T2 only answers non-stacking from policy and never resolves the missing second-product price."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "T1/T2 preserve regular closure plus possible special-date hours without promising Christmas opening/closure. T3 current name lookup supports Takamine95/2199.00/stock5/specs, but omits its required code. T2 has no policy refresh."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 1,
+        "redundant_calls": 1,
+        "notes": "return_contact is a superset but differs from the pure eligibility scope required here. No invented email, label or executed return is claimed.",
+        "verdict": "partial",
+        "evidence": "T1 gets order4 and return_contact evidence, but does not establish purchase channel or actual receipt interval before presenting the online right. T2 stays conditional on product conditions but does not ask the remaining confirmations clearly; it also selects one email variant without explaining the unresolved contact discrepancy. Contacts themselves occur in the retrieved procedure.general_contacts."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current online_return4.1/4.4 supports the seven-day request deadline. Answer correctly treats user-reported eight days as outside remorse scope without refusing all other possible policies."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents sac@emporiodamusica.com.br with an accented domain as a returns contact.",
+          "Invents customer return-address/site instructions and unsupported label-service behavior."
+        ],
+        "unsupported_claims": [
+          "T2 SAC address sac@empóriodamusica.com.br is absent from every returned source.",
+          "T2 says the store does not automatically provide labels and describes marking a return address on its website."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 1,
+        "redundant_calls": 0,
+        "notes": "First eligibility read used broader return_contact rather than online_return; second required contact refresh is missing.",
+        "verdict": "fail",
+        "evidence": "T1 return_contact explicitly supplies only general contato@ variants and marks label/posting procedures unspecified. T2 has no fresh policy call and invents sac@... plus workflow."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Correct current preference_exchange4.3/4.4 read and seven-day/availability/perfect-product/original-packaging explanation, but omits the explicitly requested applicable price-difference rule."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Promises unsupported return-label issuance despite an unmet accessories condition."
+        ],
+        "unsupported_claims": [
+          "A label will be generated and sent soon."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T2 explicitly says it can generate a label and that it will be sent soon, despite the missing accessory and read-only tools."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Mislabels an authoritative standard quote as the PIX price."
+        ],
+        "unsupported_claims": [
+          "First bass costs7157.00 on PIX."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Correctly resolves135 and138 and reads pix135/standard138. T2 nevertheless labels the standard7157.00 quote for138 as its PIX price, contradicting payment provenance (actual PIX would6799.15)."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_micro",
+      "model_key": "nova_micro",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "T2 identifies the second guitar as Kalani KAL-300S (118), R$179.90/stock12, instead of preceding Rozini RC-104 (85), R$459.90/stock10."
+        ],
+        "unsupported_claims": [
+          "Wrong ordinal identity makes the follow-up price/stock answer false for the requested product."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 3,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 search returns products 83,85,89. T2 calls details(2), an unscoped recommendation search returning ukuleles, then details(118), and labels Kalani the second guitar."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "promotion-pix",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Speculates about stock as a possible cause, but does not assert a stock quantity or actual existence; prefer simply reporting the empty name match.",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Both policy turns read section2 and clearly preserve unconfirmed Christmas schedule. Current T3 lookup supports2199.00/5 but the customer answer omits product code95."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "T2 claims podemos iniciar o processo de devolucao despite read-only tools."
+        ],
+        "unsupported_claims": [
+          "Promises return initiation once conditions are confirmed, a capability unavailable in the demo."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Both turns read correct online_return4.1/4.4 and physical conditions remain pending. T2 nonetheless explicitly offers to initiate the return process; no action tool exists."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current online_return4.1/4.4 supports the seven-day request deadline. Answer correctly treats user-reported eight days as outside remorse scope without refusing all other possible policies."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Relabels a general contato@ address as a returns SAC.",
+          "Falsely states the store cannot issue labels, confusing absent documentation with service nonexistence."
+        ],
+        "unsupported_claims": [
+          "T2 O e-mail do SAC para devolucoes e contato@... .",
+          "T2 a loja nao pode emitir etiquetas de postagem."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Current T2 return_contact explicitly says no source identifies a returns SAC and not to claim the service does not exist outside the manual. Eligibility itself is correctly accepted from complete reported facts."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents same-category restriction and compulsory proof-of-purchase document for preference exchange."
+        ],
+        "unsupported_claims": [
+          "Trocar por outro da mesma categoria is not a4.3 condition.",
+          "Instruction to bring comprovante de compra to process exchange adds an undocumented requirement."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Current4.3/4.4 requires seven-day window, desired availability, perfect product/original packaging and price adjustment, but no category restriction or document checklist."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Search returns138/135 with correct IDs/prices/stock. T2 refreshes135 with pix and138 with standard and correctly reports8295.40 plus first-stock9."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "StatesR$799.90 as verified historical unit price and uses matching current price as corroboration."
+        ],
+        "unsupported_claims": [
+          "Unit price was799.90 although item record has no unit-price field.",
+          "Current catalog match is presented as confirming the historical unit amount."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Current order4 only has total799.90 and quantity1; current Giannini96 quote799.90 does not allocate freight or other order charges."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nova_lite",
+      "model_key": "nova_lite",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Answer facts correct; current-read miss is a separate tool diagnostic. Repeats customer budget in presentation.",
+        "verdict": "pass",
+        "evidence": "T1 correctly lists codes83/85/89, R$429.90/459.90/549.00 and stock15/10/5 from the bounded Violões search. T2 correctly resolves85 but makes no fresh detail call."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Unnecessary clarification blocks the requested recommendation; no invented in-stock product or date is asserted.",
+        "verdict": "partial",
+        "evidence": "T1 correctly says Giannini is out of stock. T2 supplies no alternative and makes no tool call, instead requiring budget, specifications and brand preferences despite enough context to search alternatives(96)."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "T2 gives incompatible final PIX amounts351.36,395.28 and494.10 instead of the authoritative439.20 promotional quote.",
+          "Invents a10% PIX rule and computes an additional promotion/PIX discount."
+        ],
+        "unsupported_claims": [
+          "Invented PIX10% rate.",
+          "Unsupported stacked/alternative payable prices in T2."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 source lists Ohana121 at439.20 under20% promotion. T2 makes no tool call and produces conflicting arithmetic while verbally denying accumulation. The actual PIX quote remains439.20."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Asserts catalog absence without consulting any catalog source."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Fresh-session answer says nao temos ... no nosso catalogo, but the entire current trace has no tool call/result. The actual empty-result fact happens to be correct, but material source support is absent."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "T2 presents R$799.90 as verified item unit price although the imported item has no unit-price field."
+        ],
+        "unsupported_claims": [
+          "Order total is relabeled Preco unitario(BRL)799.90 for the Giannini item."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "get_my_order(4) returns total_brl799.90 and item product96/quantity1, with no unit-price breakdown. The customer answer adds a unit-price column799.90."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "With no selected customer, asks only for order_id and suggests that it will suffice to fetch details, instead of requesting the required fictional-customer selection. No customer data is disclosed."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Policy answers preserve the special-date exception rather than categorical calendar closure. T3 source supports2199.00/5 but code95 is omitted. No current policy read in T2."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "T1 converts estimated_delivery22/12/2025 into actual delivery date.",
+          "Promises to open the return and provide a posting label/instructions.",
+          "Adds unused/no-handling conditions stronger than no signs of use."
+        ],
+        "unsupported_claims": [
+          "Actual receipt on22December is not in the order record.",
+          "Return initiation/label workflow is unavailable and explicitly not specified in procedure evidence.",
+          "T2 requires sem uso and no signs of handling rather than the prepared no-signs-of-use rule."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "get_my_order exposes only estimated_delivery. T1 online_return includes procedure.label_issuance=not_specified_in_manual. T2 makes no new policy read and says eu providenciarei ... geracao da etiqueta e instrucoes."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Execution completed; this is a semantic task failure, not an HTTP failure or a reversed authoritative threshold.",
+        "verdict": "fail",
+        "evidence": "No policy call or freight answer is provided. Instead asks the customer to choose an internal policy_scope, even suggesting online_return for freight. This single-turn response is unusable for the fully specified question."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents a15-day remorse window and says seven days remain after eight days.",
+          "Invents account/online return initiation and availability of label/document instructions."
+        ],
+        "unsupported_claims": [
+          "Fifteen-day deadline/seven days remaining.",
+          "Return can be requested through a supposed account return channel with label/document guidance."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "No tool call is made. Current policy is seven calendar days, not15; procedure.label_issuance/posting_instructions/required_documents are not specified."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 2,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "No fabricated contact is supplied; this is a noncritical but unusable task response.",
+        "verdict": "fail",
+        "evidence": "Neither turn calls a policy tool or answers the fully specified return/contact questions. Both insist on an order number even though general policy/contact evidence requires no selected order."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Refuses a color preference exchange unless a defect is proven.",
+          "Invents a requirement that the order must not yet have been processed."
+        ],
+        "unsupported_claims": [
+          "Color change without defect is denied despite explicit4.3 preference exchange.",
+          "Unprocessed-order requirement has no policy basis."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "No policy call. Actual4.3 permits color/model/size preference exchange within seven days, subject to stated conditions."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents return procedure and additional requirements without source evidence."
+        ],
+        "unsupported_claims": [
+          "Closed packaging, portal/SAC workflow and documentation requirements.",
+          "Possible30-day return-shipping deadline and customer-paid freight."
+        ],
+        "missing_reads": 2,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "No policy reads in either turn. T1 invents a portal/SAC workflow, closed packaging, a possible 30-day shipping window, documentation and customer-paid freight; actual section4.1 says store-paid freight and does not specify these procedures. T2 asks for order/email instead of explaining the missing-accessory restriction."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 1,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Correct initial138/135. T2 refreshes both but uses standard for135 and asks the customer to confirm PIX despite the explicit request; never gives the requested8295.40 PIX quote."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Interprets empty available-only search as no product registration/active catalog entry."
+        ],
+        "missing_reads": 2,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "Does not fabricate a specific unit amount; this materially wrong explanation is noncritical rather than a verified-unit-price error.",
+        "verdict": "fail",
+        "evidence": "Uses only order list, available-only name-filtered search and unrelated policy search. Never gets order4 details or an inclusive named lookup. Product96 is active but stock0; absence from an available-only result cannot establish absence from catalog or explain historical unit-price provenance."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_nano_3_30b",
+      "model_key": "nemotron_nano_3_30b",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Current-read miss is separate from factual answer quality; verbose and repeats budget.",
+        "verdict": "pass",
+        "evidence": "T1 correct scoped list83/85/89 and supported specs/prices/stocks. T2 correctly repeats Rozini85 at459.90/10 with supported specs but no current tool read."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T2 recommends captured active in-stock88/89/87/86/107 with matching prices, stock and individually checked specs. It uses a fresh Violões search, not required find_product_alternatives(96); missing route is a separate tool diagnostic."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 correctly lists127/121/90 original prices/discounts/final prices with supported specs. T2 details(121,pix) supports439.20 and no additional PIX discount."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct normal hours and conditional Christmas exception; current named lookup supports all Takamine95 facts/specs. T2 reuses prior source-backed content without the required policy refresh."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "T1 fabricates confirmation that the order was neither customized nor final-sale, facts absent from imported order/user messages."
+        ],
+        "unsupported_claims": [
+          "T1 confirmo que ele nao foi personalizado nem adquirido ... venda final asserts unknown eligibility facts."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "T1 also asks sem uso more strictly than signs of use; T2 corrects that wording. The exclusion confirmation is the consequential retained issue.",
+        "verdict": "fail",
+        "evidence": "Order4 contains no customization/final-sale flags. T1 falsely confirms both exclusions absent; T2 asks only physical-condition confirmations and makes no refreshed policy call."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current online_return4.1/4.4 supports the seven-day request deadline. Answer correctly treats user-reported eight days as outside remorse scope without refusing all other possible policies."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "No categorical denial of opened packaging or a one-time use is made; no label issuance is promised.",
+        "verdict": "partial",
+        "evidence": "T1 only says it will consult policy but does not call a tool or assess the supplied facts. T2 current return_contact correctly labels general contacts, exposes both email spellings and keeps label service uncertain, but lists only the3341 phone/WhatsApp variant without the conflicting primary remote3321 record."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current preference_exchange4.3/4.4 supports seven days, perfect condition/original packaging, availability, value adjustment and correct exclusions."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Presents one unresolved email variant as the contact."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Correctly declines eligibility because an included accessory is missing and says label procedures/returns-specific SAC are undocumented. However both turns choose the plain email without disclosing the unresolved accented variant."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct138/135 identification and supported Ash/Maple/four-string/color specs; T2 correctly reads pix135 and standard138 and reports8295.40/stock9."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Infers unit799.90 solely from quantity1/order total and claims current catalog confirms it."
+        ],
+        "unsupported_claims": [
+          "R$799.90 is asserted as historical unit price.",
+          "Current standard catalog price is said to confirm exactly the historical unit value."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "get_my_order4 has no item-price breakdown. details96 supplies only the current799.90 quote; neither proves historical unit allocation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "nemotron_super_3_120b",
+      "model_key": "nemotron_super_3_120b",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Budget echo is a presentation issue, not a material factual error.",
+        "verdict": "pass",
+        "evidence": "T1 correct scoped products83/85/89 and all prices/stocks. T2 makes get_product_details(85,payment_method=standard), supporting the correct ordinal answer."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 2,
+        "notes": "T1 prematurely searches alternatives before requested; T2 needlessly repeats named lookup. English planning fragment in T1 and verbosity are presentation issues, not false business facts.",
+        "verdict": "pass",
+        "evidence": "Both turns correctly report unavailable96 and source-backed alternatives83/85/89/88/81. Current alternatives(96) is present in T2."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 returned promotions support all three displayed original/discount/final prices. T2 current details(121,pix) correctly preserves439.20 and rejects accumulation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "An English planning fragment leaks into the customer answer; semantic boundary behavior remains correct.",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct regular hours/holiday uncertainty and Takamine95 price2199.00/stock5/specs. T2 lacks a fresh policy read; T3 duplicates the complete name result with unnecessary detail lookup."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Adds sealed/unopened packaging as a return condition.",
+          "Invents label issuance and a posting workflow.",
+          "Starts the refund deadline at return receipt, which the manual does not specify."
+        ],
+        "unsupported_claims": [
+          "Packaging must be sem abertura.",
+          "Store will issue a label and provide postage steps.",
+          "Ten-business-day refund clock starts after the returned item is received."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Large English planning fragment is a separate presentation concern.",
+        "verdict": "fail",
+        "evidence": "T2 current online_return procedure explicitly marks label_issuance,posting_instructions,refund_deadline_start not specified; the answer supplies all three and asks whether packaging is unopened."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current online_return4.1/4.4 supports the seven-day request deadline. Answer correctly treats user-reported eight days as outside remorse scope without refusing all other possible policies."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents label delivery/printing/posting workflow.",
+          "Relabels a general email as returns SAC.",
+          "Starts refund timing after receipt and verification of the returned item."
+        ],
+        "unsupported_claims": [
+          "Store sends a label by email or at the counter, customer prints and ships it.",
+          "contato@... is asserted as the SAC address.",
+          "Refund clock is tied to return receipt/verification."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 online_return procedure marks these steps/start unspecified. T2 makes no contact refresh and repeats label/SAC claims. It correctly accepts opened packaging/use without marks, but procedure fabrication is consequential."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Procedural wording is more assured than necessary, but no invented document, label or deadline is asserted.",
+        "verdict": "pass",
+        "evidence": "Correct scoped source and all material4.3 conditions including value adjustment. Describes a conditional request in store rather than refusing an online-only claim."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents label/posting workflow and refund-deadline start."
+        ],
+        "unsupported_claims": [
+          "Store will supply a posting label.",
+          "Refund deadline starts after receipt of returned product."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Correctly recognizes the missing accessory but T1/T2 promise store-issued labels and T1 starts the10-business-day refund clock at returned-product receipt, neither specified by the manual. T2 refreshes online_return rather than return_contact."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 1,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct initial138/135 and both fresh detail reads. Requested second PIX8295.40 and first stock9 are correct. Extra first PIX6799.15 is actually sourced, not invented; first payment argument deviates from frozen standard instruction."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "States that quantity1 makes the historical unit price exactlyR$799.90."
+        ],
+        "unsupported_claims": [
+          "Order total is asserted as exact per-unit amount and matched to current catalog."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Order item exposes only96/quantity1, while total799.90 is order-level. Current details96 cannot prove a historical unit amount."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_20b",
+      "model_key": "gpt_oss_20b",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Correctly declines confirmed Christmas10:00 opening and names prior announcement channels, but does not answer the separate WhatsApp-at-that-time question or explain that WhatsApp follows store hours."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Offers to reserve products despite the application's read-only capabilities."
+        ],
+        "unsupported_claims": [
+          "T1 'Posso ajudar a reservar algum deles' and T2 'com a reserva desse modelo' imply an unsupported reservation capability."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Catalog amounts, codes and specs match the tools and T2 refreshes details(85). Neither catalog/order/policy tool supports reservations; both customer answers proactively offer reservation help."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "T2 says products are ready for dispatch; stock records establish availability, not dispatch readiness."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "No invented shipping date or executed shipment is claimed, so this unsupported logistics statement is noncritical.",
+        "verdict": "partial",
+        "evidence": "T2 alternatives(96) supports codes88/89/85/83/81 and their prices/stocks. The extra claim prontos para envio has no fulfillment evidence; repeated named lookup is unnecessary."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Both initial three promotional offers and second-product PIX439.20 are supported; details(121,pix) is current and non-stacking is correctly explained."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Generic offer to help with a procedure is not a claim that one was initiated; no invented procedure, receipt date or item price is given.",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Both policy turns read general section2 and clearly leave Christmas attendance unconfirmed. Current name lookup supports Takamine95/2199.00/5 and stated specs."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents a returns SAC by relabeling general contacts.",
+          "Invents SAC label issuance and mailing steps.",
+          "Adds refund deadline start after receipt/inspection.",
+          "Falsely assumes the item is neither customized nor final-sale."
+        ],
+        "unsupported_claims": [
+          "General phone/email are asserted as returns-specific SAC.",
+          "SAC sends the posting label and specified shipment workflow.",
+          "Refund clock begins after receipt and condition verification.",
+          "nao e o caso do seu violao asserts unknown exclusion facts."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T2 online_return procedure says returns_specific_contact=not_identified_in_manual and label/posting/refund-start not specified; order4 has no customization or final-sale fields. Answer nevertheless supplies a definitive workflow and exclusion assurance."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Contact ambiguity is noncritical; no blanket rejection of other policies or fabricated posting label is asserted.",
+        "verdict": "partial",
+        "evidence": "Correct current online_return read and narrow seven-day deadline reasoning. However, the answer selects one general email variant as a usable contact without disclosing procedure.authoritative_email=unresolved_in_manual and the two conflicting source spellings. The address exists in evidence, so it is not an invented contact."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents returns SAC identity.",
+          "Promises team label issuance and shipping instructions.",
+          "Invents refund deadline start after return receipt/inspection and perfect-condition wording."
+        ],
+        "unsupported_claims": [
+          "General contato@... and3341 are presented as returns SAC.",
+          "Team will send the posting label.",
+          "Refund starts after the returned product is received and checked."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Reported eligibility conditions otherwise match the customer; error is the invented procedure/capability.",
+        "verdict": "fail",
+        "evidence": "T1 online_return procedure explicitly marks returns-specific contact, label, posting and refund-start unspecified. T2 has no fresh contact call and asserts all of these."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Uses intacta for packaging, but does not explicitly demand sealed/unopened packaging; no sealed-box restriction is inferred from that adjective alone.",
+        "verdict": "pass",
+        "evidence": "Current preference_exchange evidence supports the seven-day rule, product condition, original packaging, availability and price adjustments; it does not impose an online-remorse rule."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Invents return requirements, partial-refund policy, SAC and label workflow."
+        ],
+        "unsupported_claims": [
+          "Missing-accessory refund deduction is an internal policy.",
+          "Receipt/use proof is required.",
+          "SAC sends a label and this assistant can register a request."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 invents required order/receipt proof and SAC; T2 invents partial-refund deduction, label delivery via email/WhatsApp and a request-registration offer. No T2 policy refresh. These are absent from the retrieved rules and unavailable to read-only tools."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct initial IDs/prices/stock; T2 standard138/pix135 source evidence supports first available9 and second8295.40."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt_oss_120b",
+      "model_key": "gpt_oss_120b",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct initial83/85/89 list with all source prices/stocks and specs. T2 resolves Rozini85 accurately at459.90/10, but has no current details read."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Rozini85 neck is described as Sapele although returned specs.neck is Nato.",
+          "Giannini88 neck is described as Sapele although returned specs.neck is Nato."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T2 alternatives(96) returns correct products/prices/stocks, but answer substitutes back_sides=Sapele for neck=Nato for products85 and88. This is materially incorrect product information, without a critical price/stock error."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Falsely calls Ohana CK-20 unavailable after treating ordinal2 as product_id2."
+        ],
+        "unsupported_claims": [
+          "T2 unavailability contradicts Ohana121 stock6 in the preceding current promotional result."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 1,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 identifies Ohana as second item,439.20/stock6. T2 calls details(2,pix), receives no matching product, and incorrectly concludes Ohana itself is unavailable."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Regular-hours closure is qualified by possible special schedules, including Christmas, with advance announcement. Current Takamine95 quote2199.00/5 and specs match. T2 has no required policy refresh."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "T1 gets order4 but never reads policy or asks purchase channel; T2 reads online_return, correctly states seven-day/product conditions and store-paid freight, then selects one unresolved general email without noting source variants. The email/phone do exist in procedure.general_contacts, so they are not invented contacts."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Contact ambiguity is noncritical; no blanket rejection of other policies or fabricated posting label is asserted.",
+        "verdict": "partial",
+        "evidence": "Correct current online_return read and narrow seven-day deadline reasoning. However, the answer selects one general email variant as a usable contact without disclosing procedure.authoritative_email=unresolved_in_manual and the two conflicting source spellings. The address exists in evidence, so it is not an invented contact."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Despite current explicit guidance, identifies general contato@... as the SAC email."
+        ],
+        "unsupported_claims": [
+          "T2 O e-mail do SAC ... e contato@emporiodamusica.com.br contradicts returns_specific_contact=not_identified and scope guidance."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "T1 asserts product return conditions without a policy read and asks permission for routine policy lookup. T2 does return_contact and correctly says label procedure is unspecified, but relabels the general address as SAC."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Volunteers bringing a nota fiscal as a procedure detail absent from retrieved4.3/4.4."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Phrased as optional advice rather than an eligibility prerequisite, so this is noncritical.",
+        "verdict": "partial",
+        "evidence": "Core preference-exchange rule and exclusions are correct. Final advice adds nota fiscal without source support."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Selects the plain email as authoritative despite unresolved source variants."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Recognizes missing accessory as unmet condition and avoids automatic refund approval. T2 repeats online_return instead of return_contact and selects one unresolved email; wording directs to store for label issuance without acknowledging that procedure is undocumented."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Falsely asserts no basses are available from incorrectly scoped searches."
+        ],
+        "unsupported_claims": [
+          "No basses are available."
+        ],
+        "missing_reads": 2,
+        "incorrect_arguments": 2,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Uses nonexistent category Baixo instead of Baixos then generic name baixo; both empty queries become a categorical no-basses claim despite three active in-stock basses. No ordinal products are established or refreshed."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "Calls the order totalR$799.90 the amount paid per unit without an item-price field."
+        ],
+        "unsupported_claims": [
+          "Voce pagou esse valor por unidade substitutes total for absent historical unit price."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Only get_my_order4 is called. Its item record has no unit-price field; answer also promises a catalog lookup that never occurs."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "qwen3_32b",
+      "model_key": "qwen3_32b",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 scoped list83/85/89 matches price/stock/specs; T2 refreshes details(85,standard) and answers459.90/10 correctly."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "T1 budget request and long specs are UX concerns only; T2 answers the requested recommendation.",
+        "verdict": "pass",
+        "evidence": "T1 correctly identifies unavailable96 with actual specs. T2 current alternatives(96,standard) supports all five codes, prices, stocks and stated specifications."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Initial promotional products127/121/90, discounts, calculated discount amounts and final prices match tools. T2 refreshes121 withpix and correctly states439.20 with no added discount."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Two current section2 reads preserve exact hours and unconfirmed Christmas opening/closure; T3 correct named-product95 quote2199.00/5 and specs."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "General contacts are present in online_return_rule.procedure; no nonexistent label capability or returns-only SAC is asserted.",
+        "verdict": "partial",
+        "evidence": "Both turns correctly read order/policy, keep receipt estimate separate, request missing physical facts and disclaim opening a return. However the answer presents one email variant without the prepared authoritative_email=unresolved distinction, and its confirmo wording about no customization is ambiguous before requesting the same confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Contact ambiguity is noncritical; no blanket rejection of other policies or fabricated posting label is asserted.",
+        "verdict": "partial",
+        "evidence": "Correct current online_return read and narrow seven-day deadline reasoning. However, the answer selects one general email variant as a usable contact without disclosing procedure.authoritative_email=unresolved_in_manual and the two conflicting source spellings. The address exists in evidence, so it is not an invented contact."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "T1 answer is truncated mid-sentence and overcautious about physical assessment; T2 provides the missing clarification. Truncation/verbosity are UX limitations rather than false policy claims.",
+        "verdict": "pass",
+        "evidence": "Both required scopes are current. Complete conversation preserves opened-packaging/use-without-marks eligibility, gives no invented SAC, discloses both email spellings, labels general telephone/primary remote WhatsApp, and explicitly cannot issue labels/start returns."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct scoped rule, window, stock dependence, product/original-package conditions, price adjustments and exclusions; asks only relevant pending product facts and desired color."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [
+          "Presents one unresolved email variant as the contact."
+        ],
+        "missing_reads": 1,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "partial",
+        "evidence": "Correctly states read-only limits and missing-accessory restriction without treating testing/opened packaging as disqualifying. Both turns choose the plain email without the unresolved variant; T2 online_return misses required return_contact procedure refresh."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 1,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct138/135 plus supported optional137. T2 refreshes both and gives requested second PIX8295.40/first stock9. Extra first PIX6799.15 is sourced; first pix argument deviates from frozen standard instruction."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [
+          "After acknowledging no item-price field, still asserts that quantity1 means the order total corresponds to that item value."
+        ],
+        "unsupported_claims": [
+          "Como a quantidade e1,o total do pedido corresponde ao valor desse item makes the forbidden monetary inference."
+        ],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "fail",
+        "evidence": "Order4 total799.90 has no price/shipping allocation. The answer explicitly notes no unit-price field but then equates the total with the item value, producing a contradictory authoritative monetary explanation. Current catalog is correctly distinguished from historical proof."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "claude_haiku_5_5",
+      "model_key": "claude_haiku_5_5",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "Additional return_contact lookup supplies the displayed contact variants; it is a purposeful supplemental lookup, not a duplicate read.",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 scoped three-product list includes correct codes, prices and stock. T2 calls details(85,standard) and answers459.90/10 correctly."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Named lookup96 establishes stock0; T2 alternatives(96,standard) supports88 at579.90/7,89 at549/5 and83 at429.90/15, including source-backed string/body descriptions."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 all three promotion prices/discounts match records. T2 details(121,pix) supports439.20,20% promotion and no additional PIX discount."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current policy reads in both turns support normal hours and Christmas uncertainty; fresh named lookup supports Takamine95 at2199.00/5."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 current order/policy reads distinguish estimated from actual receipt and ask channel/date/physical conditions/exclusions. T2 refreshed online_return correctly places five days within seven, keeps eligibility conditional, preserves exclusions and asks remaining conditions without invented workflow."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current online_return4.1/4.4 supports the seven-day request deadline. Answer correctly treats user-reported eight days as outside remorse scope without refusing all other possible policies."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 online_return preserves opened packaging and no equivalence between a one-time use and signs of use. T2 current return_contact exposes email variants as general, says no returns-specific SAC is identified, and does not invent label issuance/posting."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current4.3/4.4 supports seven days, availability, perfect product/original packaging and value adjustment. Correctly does not apply an online-only rule to in-store purchase."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correctly refuses refund approval/label generation, explains missing accessory is an unmet condition, preserves opened-packaging/no-signs distinction, refreshes return_contact and shows both email variants/general-only contacts."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct IDs/prices/stock and ordinal resolution; T2 pix135/standard138 supports8295.40 and first available9."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "Complete named lookup is redundantly followed by details96 in the same turn.",
+        "verdict": "pass",
+        "evidence": "Correctly labels799.90 as order total, declines to infer unit value from quantity1, and distinguishes current799.90 catalog price from historical proof. Order and current catalog reads support all claims."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_luna",
+      "model_key": "gpt6_luna",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 scoped83/85/89 list and explicit no-discount explanation match tools. T2 current details(85,standard) supports459.90/10."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Named lookup96 and current alternatives(96,standard) support all five offered codes/prices/stocks, strings and no-electronics description."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 correct promotional table including codes, original/final prices and stock. T2 current details121/pix preserves439.20 and non-stacking."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current find_product_by_name(ZXQ-999-Inexistente,standard) returns zero matches; the answer truthfully reports no matching catalog product and invents no alternative."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Customer1 list_my_orders returns only order4; T2 get_my_order(4) supports delivered status, Giannini96 quantity1, trackingBRQM7890123BR and all stated dates/totals. Estimated delivery is not asserted as actual receipt."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Guest list_my_orders returns customer_selection_required, and the answer requests a fictional demo customer without disclosing order data or inferring identity."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current section2 in both policy turns explicitly leaves Christmas opening/closure unconfirmed, and T3 current catalog supports95/2199.00/5."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 1,
+        "notes": "T2 additional order read is not needed for the new customer condition facts.",
+        "verdict": "pass",
+        "evidence": "Current order/policy evidence supports all stated order facts. T1 asks unknown channel/receipt/physical/exclusion facts. T2 policy refresh uses supplied online/five-day facts, asks remaining confirmations and gives only conditional eligibility with store-paid freight."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current general-policy retrieval includes effective section5.1; answer correctly grants free freight at exactlyR$500 within the Metropolitan Region of Campo Grande, without attributing the amendment to literal original PDF text."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current online_return4.1/4.4 supports the seven-day request deadline. Answer correctly treats user-reported eight days as outside remorse scope without refusing all other possible policies."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "T1 correctly accepts all reported conditions including opened packaging/use without signs, without inventing refund-clock start. T2 current return_contact shows both email/phone variants, identifies primary WhatsApp, disclaims issuing labels and preserves undocumented procedure uncertainty."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Current scoped evidence supports all4.3 conditions and applicable exclusions; unknown physical/custom/final-sale facts are requested rather than invented."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correctly refuses actions, identifies missing accessory as unmet condition without sealed-box or test-use invention, and refreshes return_contact. States procedure/exceptions unknown and gives both documented phone/WhatsApp variants as general contacts."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correct IDs/prices/stock and both ordinal references. T2 pix135/standard138 supports8295.40,5percent PIX and first stock9/current standard7157.00."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Correctly preserves order total799.90 and missing unit-price data, explicitly says current799.90 cannot prove historical unit price even when equal, and labels stock0 as current."
+      },
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "gpt6_1_sol",
+      "model_key": "gpt6_1_sol",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": {
+        "reviewer_type": "ai",
+        "reviewer": "Codex",
+        "critical_errors": [],
+        "unsupported_claims": [],
+        "missing_reads": 0,
+        "incorrect_arguments": 0,
+        "redundant_calls": 0,
+        "notes": "",
+        "verdict": "pass",
+        "evidence": "Fresh general policy sections2/7.3/7.1 preserve the conditional Christmas exception; no confirmed10:00 opening or closure is invented. Advises advance store-channel confirmation."
+      },
+      "second": null,
+      "resolution": null
+    }
+  ]
+}

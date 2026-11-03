@@ -1,0 +1,1293 @@
+{
+  "benchmark": "standalone-final-model-comparison-82-v1",
+  "status": "pending_human_review",
+  "instructions": {
+    "primary": "Human reviewer, verdict pass/partial/fail, critical_errors, unsupported_claims, missing_reads, incorrect_arguments, redundant_calls, evidence and notes.",
+    "second": "Independent human assessment with the same fields and a different reviewer; required for any Partial/Fail/critical finding by either reviewer.",
+    "resolution": "For disagreements: resolved assessment plus exact evidence; all original judgments remain preserved.",
+    "blinding": "Give reviewers review-worksheet.json, not the capture or alias map. Freeze primary judgments before revealing aliases.",
+    "tool_counts": "Nonnegative integer counts; critical_errors and unsupported_claims are evidence-linked lists."
+  },
+  "rows": [
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "promotion-pix",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "failed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "outside-online-window",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "final-bass-two-references",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "in-store-preference-scope",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 07",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "no-match",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "used-without-marks-and-procedure",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "catalog-budget-ordinal",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "selected-orders-list-detail",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 06",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "policy-hours-context-topic-change",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "final-christmas-conditional-hours",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 10",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 04",
+      "scenario_id": "freight-exact-threshold",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 08",
+      "scenario_id": "final-online-return-missing-accessory",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 09",
+      "scenario_id": "mixed-order-return-followup",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 01",
+      "scenario_id": "named-stock-alternative",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 02",
+      "scenario_id": "guest-order-request",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 03",
+      "scenario_id": "final-order-total-vs-unit",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    },
+    {
+      "candidate": "Candidate 05",
+      "scenario_id": "promotion-pix",
+      "execution_status": "completed",
+      "primary": null,
+      "second": null,
+      "resolution": null
+    }
+  ]
+}

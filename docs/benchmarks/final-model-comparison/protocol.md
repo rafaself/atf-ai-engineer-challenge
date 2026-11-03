@@ -1,6 +1,6 @@
 # Final model-selection benchmark — frozen protocol v1.2
 
-**Status:** methodological specification frozen on 2026-11-03; runner implemented under issue #82; paid run and human review not started.
+**Status:** measurement protocol v1.2 frozen on 2026-11-03 and executed under issue #82. Post-capture review amendment v1.3 below authorizes an explicitly labeled AI assessment; human forms remain blank.
 **Scope:** Empório da Música customer-support agent, application-level Bedrock Runtime Converse.
 **Source fixtures:** `scenarios.json` and `models.json` in this directory.
 **Baseline:** the current runtime architecture, not a model-only prompt exercise.
@@ -168,3 +168,38 @@ Deliver under this **exclusive highlighted directory**, without overwriting old 
 No RAG-vs-embedded comparison, prompt/model tuning, new embedding methods, vendor API differences, alternate decoding configurations, long-context stress test, statistical hypothesis test, production default change, hidden retries or synthetic "perfect" scores. Preserve all historical benchmarks and discuss them only as non-comparable context.
 
 **Frozen design changes require a new protocol version and new capture names before another main run.**
+
+## 11. Owner amendment v1.3 — after capture, 2026-11-03
+
+After all 260 main HTTP turns had been attempted, the owner explicitly changed
+the review requirement:
+
+> Skip human review by now, give only what your evaluation generated. But let the worksheet ready at the end. I change the protocol you can judge.
+
+This supersedes §6's human-primary, independent-human-second and no-LLM-judge
+requirements **for the present report only**. The published semantic evaluation
+is one **unblinded Codex AI assessment**, authorized after seeing the operational
+capture, without independent human review. It is not a preregistered human or
+blinded evaluation. No additional paid inference is used for judging.
+
+The 16 scenarios, source authority, critical-error definitions, Pass/Partial/Fail
+rubric, execution-failure separation and §8 eligibility/tiebreak rules are
+unchanged. `ai-review.json` preserves evidence-linked assessments separately
+from the original, blank `review.json` and `review-worksheet.json`. The reporting
+tool requires both recorded owner authorization and `--allow-ai-review` to apply
+AI assessments and labels the result `ai_review_complete`. Its default human
+workflow still requires independent second reviews. The resulting selection is
+a provisional AI finding, available for later human verification.
+
+No measurement was repeated after this amendment. `capture.json` remains the
+byte-identical completed v1.2 capture; its source manifest points to the original
+measurement commit, not the later reporting edits. Original v1.2 text is available
+at that commit, recorded in the capture.
+
+Separately, the owner waived a clean-tree interruption caused by their concurrent
+README edit: “Ignore this clean-tree guard, it was me. Just keep going!” The run
+continued from the identical clean measurement commit in an isolated checkout
+after exact source/data/index/E5 equality checks. Every attempted case remained
+untouched, including the interrupted case. The original capture and carried
+spend are preserved in `capture-interrupted.json` and
+`capture.json.resolved_control_stops`; this was a resume, not a new experiment.

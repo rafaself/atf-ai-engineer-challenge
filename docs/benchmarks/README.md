@@ -9,9 +9,12 @@ Bedrock Runtime Converse integration** and current RAG application. This is
 independent of previous model benchmarks and the RAG-versus-embedded-policy
 experiment (#78), with its own rubric, spending approval and run artifacts.
 
-**Status:** standalone measurement and human-review tooling implemented under
-[#82](https://github.com/rafaself/atf-ai-engineer-challenge/issues/82); no new paid
-run or human-reviewed results have been produced.
+**Status (2026-11-03):** all 260 main turns attempted; 255 completed, leaving
+155 completed conversations assessed by AI under the owner's post-capture
+review amendment. [Results](final-model-comparison/results.md) provisionally
+select Luna (16/16 Pass), retaining the runtime default. Total estimated spend:
+US$0.5954445075 against the approved US$10 cap. Human review has not occurred;
+blank worksheets are ready. See [execution and assessment notes](final-model-comparison/analysis.md).
 
 ---
 

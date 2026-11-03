@@ -1,4 +1,4 @@
-"""Prepare blinded human worksheets and aggregate submitted issue #82 reviews."""
+"""Prepare human worksheets and aggregate explicitly labeled issue #82 reviews."""
 
 from __future__ import annotations
 
@@ -97,17 +97,19 @@ def prepare_review(capture: dict[str, Any], directory: Path) -> None:
     )
 
 
-def assessment(value: Any) -> dict[str, Any] | None:
+def assessment(value: Any, *, reviewer_type: str = "human") -> dict[str, Any] | None:
     if value is None:
         return None
     if (
         not isinstance(value, dict)
-        or value.get("reviewer_type") != "human"
+        or value.get("reviewer_type") != reviewer_type
         or not str(value.get("reviewer", "")).strip()
     ):
-        raise ValueError("Assessments must identify an actual human reviewer")
+        raise ValueError(
+            f"Assessments must identify an actual {reviewer_type} reviewer"
+        )
     if value.get("verdict") not in {"pass", "partial", "fail"}:
-        raise ValueError("Human verdict must be pass, partial or fail")
+        raise ValueError("Review verdict must be pass, partial or fail")
     for field in ("critical_errors", "unsupported_claims"):
         if not isinstance(value.get(field), list):
             raise ValueError(f"Missing review list: {field}")
@@ -123,8 +125,14 @@ def assessment(value: Any) -> dict[str, Any] | None:
     return value
 
 
-def reviewed_value(row: dict[str, Any]) -> dict[str, Any] | None:
-    primary = assessment(row.get("primary"))
+def reviewed_value(
+    row: dict[str, Any], *, ai_authorized: bool = False
+) -> dict[str, Any] | None:
+    primary = assessment(
+        row.get("primary"), reviewer_type="ai" if ai_authorized else "human"
+    )
+    if ai_authorized:
+        return primary  # Owner waived human review; never fabricate a second reviewer.
     second = assessment(row.get("second"))
     if primary is None:
         return None
@@ -148,10 +156,23 @@ def reviewed_value(row: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def aggregate(
-    capture: dict[str, Any], review: dict[str, Any], aliases: dict[str, str]
+    capture: dict[str, Any],
+    review: dict[str, Any],
+    aliases: dict[str, str],
+    *,
+    allow_ai: bool = False,
 ) -> dict[str, Any]:
     if capture.get("benchmark") != IDENTITY or review.get("benchmark") != IDENTITY:
         raise ValueError("Capture and review must belong to this independent benchmark")
+    method = review.get("review_method", "human")
+    if method not in {"human", "ai_user_authorized"}:
+        raise ValueError("Unknown review method")
+    ai_authorized = method == "ai_user_authorized"
+    if ai_authorized and (not allow_ai or not review.get("owner_authorization")):
+        raise ValueError(
+            "AI assessment requires explicit owner authorization and --allow-ai-review"
+        )
+    pending_label = "pending_ai_review" if ai_authorized else "pending_human_review"
     if set(aliases) != set(KEYS) or len(set(aliases.values())) != 10:
         raise ValueError("Alias map must identify all ten candidates uniquely")
     expected = {
@@ -205,10 +226,13 @@ def aggregate(
         for case in cases:
             verdict = case["status"]
             if verdict == "completed":
-                result = reviewed_value(rows[(aliases[key], case["scenario_id"])])
+                result = reviewed_value(
+                    rows[(aliases[key], case["scenario_id"])],
+                    ai_authorized=ai_authorized,
+                )
                 if result is None:
                     pending = True
-                    verdict = "pending_human_review"
+                    verdict = pending_label
                 else:
                     reviewed += 1
                     verdict = result["verdict"]
@@ -312,10 +336,13 @@ def aggregate(
     )
     return {
         "benchmark": IDENTITY,
-        "status": "pending_human_review" if pending else "review_complete",
-        "selection": "pending_human_review"
+        "review_method": method,
+        "status": pending_label
         if pending
-        else winner or "no eligible winner",
+        else "ai_review_complete"
+        if ai_authorized
+        else "review_complete",
+        "selection": pending_label if pending else winner or "no eligible winner",
         "estimated_total_usd": capture["estimated_spend_usd"],
         "models": summaries,
         "matrix": matrix,
@@ -332,7 +359,9 @@ def markdown_report(result: dict[str, Any]) -> str:
         "",
         f"Estimated total including preflight and unknown-usage reservations: **US${result['estimated_total_usd']}**.",
         "",
-        "Semantic verdicts require actual human reviews. Pending cells are not passes or failures.",
+        "Semantic verdicts are a user-authorized, unblinded AI assessment without independent human review. Human worksheets remain available."
+        if result.get("review_method") == "ai_user_authorized"
+        else "Semantic verdicts require actual human reviews. Pending cells are not passes or failures.",
         "",
         "| Model | Pass / Partial / Fail | Reviewed / completed / 16 | HTTP success / attempted / 26 | Main / preflight USD | Input / output tokens | Provider attempts / missing usage | Median / max latency (s) |",
         "| --- | --- | --- | --- | --- | --- | --- | --- |",
@@ -357,7 +386,12 @@ def markdown_report(result: dict[str, Any]) -> str:
         "",
         "## Limits",
         "",
-        "One targeted regression pass, not a statistical superiority claim or a blind holdout. Fixed RAG and unchanged production agent; no prompt tuning or model substitution. Execution failures and unexecuted turns remain in reliability counts. Costs are conservative estimates, not invoices. Tool/grounding/UX judgments and a final recommendation require the protocol's completed human reviews.",
+        "One targeted regression pass, not a statistical superiority claim or a blind holdout. Fixed RAG and unchanged production agent; no prompt tuning or model substitution. Execution failures and unexecuted turns remain in reliability counts. Costs are conservative estimates, not invoices. "
+        + (
+            "The owner waived human/independent second review after capture. Semantic judgments and selection are provisional AI findings; the original blank human forms remain available for later review."
+            if result.get("review_method") == "ai_user_authorized"
+            else "Tool/grounding/UX judgments and a final recommendation require the protocol's completed human reviews."
+        ),
         "",
     ]
     return "\n".join(lines)
@@ -368,17 +402,34 @@ def main() -> None:
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--prepare", action="store_true")
     parser.add_argument(
+        "--review-file",
+        type=Path,
+        help="Separate submitted assessment file; human worksheet stays untouched",
+    )
+    parser.add_argument(
+        "--aliases-file",
+        type=Path,
+        help="Assessment's candidate mapping; defaults to private human aliases",
+    )
+    parser.add_argument(
+        "--allow-ai-review",
+        action="store_true",
+        help="Apply an explicitly owner-authorized AI assessment, labeled separately from human review",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
-        help="Fresh report directory after human judgments change",
+        help="Fresh report directory after submitted judgments change",
     )
     args = parser.parse_args()
     capture = json.loads((args.run_dir / "capture.json").read_text())
     if args.prepare:
         prepare_review(capture, args.run_dir)
-    review = json.loads((args.run_dir / "review.json").read_text())
-    aliases = json.loads((args.run_dir / "review-aliases.json").read_text())
-    result = aggregate(capture, review, aliases)
+    review = json.loads((args.review_file or args.run_dir / "review.json").read_text())
+    aliases = json.loads(
+        (args.aliases_file or args.run_dir / "review-aliases.json").read_text()
+    )
+    result = aggregate(capture, review, aliases, allow_ai=args.allow_ai_review)
     output = args.output_dir or args.run_dir
     output.mkdir(parents=True, exist_ok=True)
     write_json(output / "summary.json", result, exclusive=True)

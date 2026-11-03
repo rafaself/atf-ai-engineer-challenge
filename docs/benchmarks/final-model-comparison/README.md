@@ -1,83 +1,103 @@
 # Final Bedrock Runtime Converse model benchmark
 
-**Status (2026-11-03): standalone runner and human-review tooling implemented under [#82](https://github.com/rafaself/atf-ai-engineer-challenge/issues/82); paid preflight, main execution and human verdicts have not occurred.**
+**Completed 2026-11-03 under [#82](https://github.com/rafaself/atf-ai-engineer-challenge/issues/82): ten live tool preflights passed; all 260 main HTTP turns attempted, 255 completed; 155 completed conversations assessed. Estimated total US$0.5954445075, including preflight and missing-usage reservations, within the explicitly approved US$10 cap.**
 
-This is the **dedicated, prominently documented final model-selection experiment** for Empório da Música. It compares the same production-like agent stack across **ten** Bedrock models, all using **non-streaming Bedrock Runtime Converse**. It is distinct from [RAG versus embedded policies (#78)](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78): the retrieval architecture remains fixed here.
+The [AI-assessed results](results.md) provisionally select **GPT-6 Luna**:
+Luna and Sol each have 16/16 Pass and zero observed critical errors, with Luna
+winning the unchanged cost tiebreak. The runtime default remains unchanged.
+This is one **unblinded Codex AI assessment**, authorized by the owner **after
+capture**. No independent human review has occurred. The owner amended the
+human-review requirement in [protocol §11](protocol.md#11-owner-amendment-v13--after-capture-2026-11-03);
+the original blank human worksheets are ready for later use.
 
-The benchmark is independent of all previous runs: this directory owns its fixture, current-application rubric, budget, captures and selection rule. Historical question text is provenance only; old expectations, approvals, verdicts and resume state are not inputs to this experiment.
+This is the dedicated final model-selection experiment for Empório da Música.
+All ten candidates use the same unchanged application and non-streaming Bedrock
+Runtime Converse integration. The experiment owns its fixture, rubric, budget,
+captures and selection rule, independently of previous runs and
+[RAG versus embedded policies (#78)](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78).
 
-## Fixed workload
+## Read the delivery
 
-| Property | Frozen value |
+| Artifact | Purpose |
 | --- | --- |
-| Candidates | 10 (including Qwen and incumbent GPT-6 Luna) |
-| Scenarios | 16 Portuguese conversations |
-| Turns per candidate | 26 |
-| Total planned | 160 conversations / 260 HTTP chat turns |
-| Source | 16 locally frozen scenarios; 12 reuse historical question text with independently defined expectations |
-| Interface | `POST /api/chat` → `ChatService` → Pydantic AI → Bedrock Runtime Converse → local tools |
-| Data | Frozen effective policies, E5/Chroma index and fictional SQLite snapshots |
-| Evaluation | Manual Pass/Partial/Fail + grounding, critical errors, tools, reliability, tokens, cost, latency |
-| Selection | Zero critical errors; ≥14/16 Pass; 26/26 successful turns; deterministic tiebreak rules |
-| Budget | Hard proposed maximum US$10.00 **subject to separate explicit paid-run approval** |
+| [Results](results.md) | All-model scores, cost/latency and complete scenario matrix |
+| [Analysis and execution notes](analysis.md) | Provisional recommendation, grounding/tool diagnostics, five execution failures, spend and resume reconciliation, judgment limits |
+| [Summary JSON](summary.json) | Reproducible aggregate metrics and selection |
+| [AI assessments](ai-review.json) | 155 evidence-linked AI judgments; five execution failures left unscored |
+| [Final capture](capture.json) | Immutable answers, source/tool results, usage, settings, latency, failures and source freeze |
+| [Interrupted capture](capture-interrupted.json) | Original partial capture retained without alteration |
+| [Preflight](preflight.json) / [readiness](readiness.json) | Actual routes/tool roundtrips and source/data/index/E5 controls |
+| [Human form](review.json) / [blinded evidence worksheet](review-worksheet.json) | 160 blank primary/second/resolution rows, including failed cases marked separately |
+| [Checksums](SHA256SUMS) | Published JSON/evidence checksums |
+| [Protocol](protocol.md) / [scenarios](scenarios.json) / [models](models.json) | Frozen v1.2 measurement design and separate v1.3 owner review amendment |
 
-## Primary artifacts
+The operator's human candidate map is excluded from Git. Supply reviewers only
+the blinded worksheet and frozen rubric, and freeze primary judgments before
+revealing identities. Published raw answers and AI results can permit deblinding;
+do not claim a blind review if a later reviewer has seen them. `review.json`
+remains entirely blank; AI findings are never attributed to humans.
 
-- [Protocol and precommitted selection rule](protocol.md)
-- [Exact questions, conversation turns and expected behavior](scenarios.json)
-- [Exact ten model routes and rate assumptions](models.json)
-- [Historical question provenance](../../examples/model-comparison/scenarios-current-v7.json) — not this experiment's rubric
-- [Standalone measurement runner](../../../scripts/final_model_comparison.py)
-- [Blinded review and reporting tool](../../../scripts/final_model_review.py)
+## Fixed workload and limits
 
-The results artifacts `preflight.json`, `capture.json`, `review.json` and `results.md` **do not exist yet** and must not be fabricated. The implementing runner must write sanitized immutable captures under this directory and keep previous reports untouched.
+| Property | Value |
+| --- | --- |
+| Candidates | 10, including Qwen and incumbent GPT-6 Luna |
+| Scenarios / turns | 16 Portuguese conversations / 26 HTTP turns per candidate |
+| Planned / completed | 160 / 155 conversations; 260 / 255 HTTP turns |
+| Interface | POST /api/chat → ChatService → Pydantic AI → Runtime Converse → local tools |
+| Measurement commit | `fb13623b6e0b161db05c671044705c9b6b4ff891` |
+| Selection gates | Zero critical errors; ≥14/16 Pass; 26/26 successful turns |
+| Approved / estimated spend | US$10.00 / US$0.5954445075 |
+| Bounded full-run envelope | US$9.81175456 |
 
-## Execution checklist
+One targeted engineering regression pass does not establish statistical
+superiority. Five failed conversations have no semantic verdict. One was a
+source-guard interruption caused by the owner's concurrent README edit, not a
+model failure. The isolated resume preserved all previous attempts and spending;
+no failed conversation was retried. No prompts, production code, model defaults
+or dependencies changed as a result of the findings.
 
-1. Run the offline checks and commit a clean source revision. This runner owns the ten-model configuration and accounting, without historical restrictions or resume state.
-2. Validate the clean code revision and input/index hashes, exact dataset counts, current model routes, price assumptions, model/provider request parameters, and budget guard **without inference**.
-3. Obtain fresh explicit user approval for a paid cap not exceeding US$10.00. Run the fixed tool-using Converse preflight for all candidates and record preflight costs.
-4. Run one model-interleaved, seeded pass of all 16 scenarios, capturing every attempt/failure and preserving all model/operational tool evidence.
-5. Blind model names for manual review, obtain the stipulated second review for all Partial/Fail/critical cases, reconcile reported spend and publish the model comparison using the **already-frozen** decision rule.
+## Reproduce reporting without inference
 
-This is a **bounded engineering regression benchmark**, not proof of statistical superiority. A candidate with an inaccessible route is marked blocked rather than silently replaced. A missing review/turn cannot be counted as a pass. The benchmark does not change the production default model.
-
-## Commands from the repository root
-
-Run `make check` first. Readiness uses the existing local E5 cache and a temporary copy of the policy index; it does not download weights or invoke a model. Keep working output outside the checkout so the selected revision stays clean:
-
-```bash
-uv run --extra policy-rag --project apps/api --locked \
-  python -m scripts.final_model_comparison --work-dir /tmp/emporio-final-82
-```
-
-`readiness.json` records source/data/index/weight hashes, effective limits, cold initialization and the **US$9.81175456** conservative full-run envelope. The same 2,000,000-token aggregate input ceiling is enforced for every candidate, including preflight; the request guard rejects higher-cost tiers and stops globally on accounting faults.
-
-Only after separate explicit approval of the proposed US$10 cap, run:
+From the repository root, render the published AI assessments to a **fresh**
+directory; this neither invokes a model nor alters the human worksheet:
 
 ```bash
 uv run --extra policy-rag --project apps/api --locked \
-  python -m scripts.final_model_comparison --work-dir /tmp/emporio-final-82 \
-  --live --max-cost-usd 10.00 --approval-note '<exact user approval and date>'
+  python -m scripts.final_model_review \
+  --run-dir docs/benchmarks/final-model-comparison \
+  --review-file docs/benchmarks/final-model-comparison/ai-review.json \
+  --aliases-file docs/benchmarks/final-model-comparison/ai-review-aliases.json \
+  --allow-ai-review --output-dir /tmp/emporio-final-82-report
 ```
 
-The checkpoint reserves each request before transmission and retains missing-usage bounds. `--resume` accepts only this experiment's checkpoint, the same approval/cap and exact frozen inputs; it skips every attempted conversation. Final `capture.json` and `preflight.json` are created exclusively and never overwritten. Preserve the original run directory for interruptions; a fresh directory is a new experiment, requiring a new approval.
+Human review remains the default. Once actual human judgments are supplied in a
+copy of `review.json`, use `--review-file` with that copy and `--aliases-file`
+with the private operator map, without `--allow-ai-review`. Every human
+Partial/Fail/critical case still needs an independent second assessment;
+disagreements require an evidence-linked resolution preserving both originals.
 
-Prepare human forms and a preliminary operational report after capture:
+## Measurement commands
+
+The completed run used the standalone runner, cached E5 and an explicitly
+rebuilt, reviewed policy index. Readiness does not invoke a model or download
+weights. Keep working output outside the checkout and use a clean source commit:
 
 ```bash
+make check
 uv run --extra policy-rag --project apps/api --locked \
-  python -m scripts.final_model_review --run-dir /tmp/emporio-final-82 --prepare
+  python -m scripts.final_model_comparison --work-dir /tmp/new-final-run
 ```
 
-Give reviewers `review-worksheet.json` and the frozen rubric; keep `review-aliases.json` and raw model identities with the operator until primary judgments are frozen. `review.json` starts with empty assessments. Each assessment identifies `reviewer_type: human` and `reviewer`, a `verdict` (`pass`, `partial` or `fail`), evidence-linked `critical_errors` and `unsupported_claims` lists, integer `missing_reads`, `incorrect_arguments` and `redundant_calls` counts, and `evidence`/`notes`. Every Partial/Fail/critical case needs a different human's `second` assessment; disagreements require an evidence-linked `resolution` preserving both originals.
+A new live experiment requires its own approval; the completed run's approval
+does not authorize rerunning this workload. With explicit approval, the live
+command additionally takes `--live --max-cost-usd 10.00` and
+`--approval-note '<exact owner approval and date>'`. Source/input hashes,
+bounded request reservations and serialized settings are captured. `--resume`
+requires matching inputs, cap and approval, and skips attempted conversations.
+Final captures are created exclusively, without overwriting existing evidence.
 
-After actual human judgments are supplied, render into a fresh report directory:
-
-```bash
-uv run --extra policy-rag --project apps/api --locked \
-  python -m scripts.final_model_review --run-dir /tmp/emporio-final-82 \
-  --output-dir /tmp/emporio-final-82-reviewed
-```
-
-The tool reports `pending_human_review` while required judgments are missing. It never invents scores or presents unreviewed models as having no critical errors. Publish the sanitized capture/preflight, frozen human review, summary and report here after reconciling spend; never commit the temporary policy index or conversation databases.
+For a future capture, `python -m scripts.final_model_review --run-dir <run> --prepare`
+creates blank human forms and an operational report. It never generates semantic
+scores automatically. AI aggregation is an explicit, separately labeled opt-in
+requiring recorded owner authorization.
