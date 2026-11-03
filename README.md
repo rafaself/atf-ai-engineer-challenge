@@ -162,6 +162,7 @@ I prepared the supplied catalog and policy data so the agent can retrieve struct
 ## Known limitations and evidence
 
 - I didn't make too much tests in the embedding process, I choose a light and simple approach in this flow. So it could be tested better as well, but I got good results though.
+- This project is considered a prototype to run better locally, so it's not a production-ready project.
 - The demo currently depends on Bedrock for live model inference, with the provider integration isolated behind an agent boundary.
 - Answer-quality problems were more evident with lower-performing models such as Qwen3 32B. GPT-6 Luna and GPT-6.1 Sol performed well on the evaluated scenarios, but that does not guarantee they will always answer correctly.
 - Earlier runs showed Qwen misreading a conditional Christmas-hours policy. It passed that specific case in the later benchmark, so describe the issue as an observed failure mode, not a persistent failure.
