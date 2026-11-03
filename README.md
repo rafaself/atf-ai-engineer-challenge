@@ -111,4 +111,8 @@ For deterministic project checks, install Python 3.12+, `uv`, and Node.js 20.19+
 
 ## AI-assisted development
 
-OpenAI Codex assisted with analysis, implementation, tests, review and the GitHub workflow. Project changes and controlled checks were reviewed; live model captures are retained separately with their source revisions and are not presented as current-checkout quality evidence. The [documentation index](docs/README.md) links to implementation guides, decisions and evaluation records.
+My workflow was developed based on AI Agents orchestration with my supervision and coding as well. I used ChatGPT to go deeper in some approaches, plan implementations, struct tasks and elaborate more technical prompts to refine my goals, while Codex and their subagents stay most responsible for the execution, refactor and tests. Sometimes, I used Codex as well to plan and discuss about topics since they have more access to the project.
+
+I have adopted a iterative planning process, delegation, review and validation, giving more importance to simplicity, code quality, maintenance and fundamental technical decisions. I kept control over architectural decisions, using IA as critical helper and not only code generator. So big part of decisions, analysis, approach suggestions and planning was made by me. So AI Agents was more as assistants guided.
+
+The main point was to balance the benefits of the delegation with the coordination cost, avoiding excessive decisions, rework and unnecessary complexity.
