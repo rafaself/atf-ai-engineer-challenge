@@ -1,27 +1,41 @@
 # Documentation map
 
-Start with the [root README](../README.md). Architecture and API guides describe
-the current demo. ADRs, validation logs and live captures preserve historical
-evidence; issue #32 retires their cross-instance coordination/provenance details.
-Issue #33 replaces token identity with guests and direct fictional-customer selection.
+Start with the [root README](../README.md) for setup, the evaluator path and
+links into the current application. The guides below describe current behavior;
+dated validation reports, ADRs and conversation captures preserve evidence for
+their recorded revisions. Check their stated limits before applying results to
+the current checkout.
 
-- [Root README](../README.md): installation, import and quality commands.
-- [Architecture](architecture.md): implemented boundaries and retrieval/prompt rationale.
-- [Catalog](catalog.md): validation, atomic replacement, snapshot and search semantics.
-- [Orders](orders.md): required import, fictional provenance, customer scoping and snapshot limits.
-- [Bedrock](bedrock.md): explicit configuration, limits and opt-in live probe.
+## Run and understand the current application
+
+- [Root README](../README.md): recommended Docker setup, model configuration, checks and entry points.
+- [Architecture](architecture.md): implemented boundaries, storage and runtime behavior.
 - [Local API](api.md): startup, curl, dependency injection and HTTP failures.
 - [Interactive CLI](cli.md): direct local conversations without an HTTP server.
-- [ADRs](adr/README.md): accepted architecture/provider boundaries.
-- [Validation](validation.md): reproducibility results and remaining live checks.
-- [Sprint 4 validation](sprint-4-validation.md): final package checks, runtime evidence and limits.
-- [Examples](examples/README.md): reviewed real conversations, failures and replay guidance.
-- [Sprint 3](sprint-3.md): integration branch, story sequence and approved scope.
-- [Follow-up](follow-up.md): policy routing and final submission requirements.
+- [Catalog](catalog.md): validation, atomic replacement, snapshot and search semantics.
+- [Orders](orders.md): import, fictional provenance, customer scoping and snapshot limits.
+- [Bedrock](bedrock.md): configuration, request limits and opt-in provider probe.
 - [Policy corpus and retrieval](policy-retrieval.md): provenance, runtime setup,
-  evaluation and measured limitations.
-- [Data processing decisions](data-processing.md): existing transformations,
-  planned canonical policy evidence, simulation semantics, and their justification.
+  retrieval behavior and measured limits.
+- [Data processing](data-processing.md): source handling, derived policy evidence
+  and simulation semantics.
 
-- [US-15 benchmark](benchmarks/README.md): opt-in setup, methodology, local hardware and provider access.
+## Validation and evaluation evidence
+
+- [Validation record](validation.md): current output behavior followed by
+  revision-specific implementation checks.
+- [Sprint 4 validation](sprint-4-validation.md): recorded package checks, runtime
+  evidence and environment limits for that delivery.
+- [Representative conversations and evaluation index](examples/README.md):
+  curated transcripts, failures and replay guidance.
+- [Bedrock model comparisons](examples/model-comparison/README.md): dated,
+  manually reviewed live runs and their source-revision/cost limits.
+- [Policy retrieval benchmark](benchmarks/README.md): opt-in setup, methodology,
+  local hardware and provider access.
 - [Retrieval results](benchmarks/results.md): frozen-metric comparison and observed failures.
+
+## Decisions and delivery history
+
+- [ADRs](adr/README.md): accepted architecture and provider decisions.
+- [Sprint 3](sprint-3.md): integration branch, story sequence and approved scope.
+- [Follow-up](follow-up.md): policy routing and submission-related notes.

@@ -1,229 +1,126 @@
 # Empório da Música — customer-support agent
 
-This is a fictional demo: catalog and order tools simulate current store-system
-requests using local data. No external fulfillment or carrier service is contacted.
-The interface discloses this once; answers report the simulated system results
-directly. An estimated delivery date still does not establish actual receipt.
+Empório da Música is a fictional Portuguese-language store-support demo. The
+React chat is the recommended interface; product, order and delivery data are
+local simulations, with no external fulfillment or carrier calls.
 
-Evaluator path: follow the Docker quick start below, open the chat and `/docs`,
-then inspect [four representative Portuguese conversations](docs/examples/submission.md).
-These are historical real-model captures with explicit revision limits. Current
-offline checks verify application behavior, not current generated-answer quality.
+## Getting Started
 
-A local Python customer-support agent for the Artefact AI Engineer challenge.
-React chat, FastAPI and a standalone Python CLI share the reusable
-`emporio-music` package, Bedrock agent and persistent SQLite history. It answers product, price,
-availability, promotion, order and policy questions in Portuguese using the
-supplied fictional data.
+### Prerequisites
 
-The demo uses typed catalog/order tools and local E5/Chroma policy retrieval.
-Model weights and indexes require explicit preparation. It has no authentication:
-keep it on loopback and use fictional customer data. The frontend selects customer
-1; the API and CLI also support guests and other fictional customers.
+- Docker Engine or Docker Desktop with Docker Compose v2, plus GNU Make.
+- An AWS account and credentials authorized to invoke an Amazon Bedrock model.
+- Internet access during the first policy-index preparation to download the
+  pinned CPU E5 embedding model.
 
-The [recorded conversations](docs/examples/submission.md) include successes and
-failures from earlier revisions. Generated prices, tool choices and policy claims
-still require review; a source footer records consulted material without certifying
-an answer. [Sprint 3 closure](docs/sprint-3.md) and the
-[US-18 report](docs/examples/us-18/README.md) explain the remaining grounding and
-retrieval limits, including failed mixed order/return cases. Controlled replays
-and offline tests do not establish current real-model quality. New paid Bedrock
-evaluations require separate explicit approval.
+### Configure AWS and the model
 
-## Run the complete demo with Docker
-
-Install Docker Engine or Docker Desktop with Compose, and GNU Make. From the
-repository root, configure Bedrock credentials for runtime use, then run:
+From the repository root, create the ignored local environment file and edit it:
 
 ```bash
 test -f .env || cp .env.example .env
-# Edit .env with your local Bedrock configuration.
+```
+
+The defaults are `AWS_DEFAULT_REGION=us-east-1` and
+`BEDROCK_MODEL_ID=us.openai.gpt-6-luna`. For Docker, put temporary
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_SESSION_TOKEN` credentials
+in `.env` using your approved AWS credential workflow. Compose passes them to the
+container at runtime; `.env` is Git-ignored and excluded from the Docker build context.
+Compose does not mount your host `~/.aws` directory, so a host `AWS_PROFILE` or
+SSO session alone is not available in the container. The chat can start without
+AWS credentials, but sending a message makes a real Bedrock request and may incur
+usage charges.
+
+GPT-6 Luna remains the default. **If Luna cannot be invoked in your account,
+Qwen3 32B is the recommended alternative for evaluation.** In `.env`, change
+`BEDROCK_MODEL_ID` to `qwen.qwen3-32b-v1:0`; the repository's example region,
+`us-east-1`, supports this Bedrock Runtime model in-region. The current [Qwen3
+32B model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-qwen-qwen3-32b.html)
+lists the other supported Runtime regions: `us-east-2`, `us-west-2`,
+`eu-central-1`, `eu-north-1`, `eu-south-1`, `eu-west-1`, `eu-west-2`,
+`ap-northeast-1`, `ap-south-1`, `ap-southeast-2`, `ap-southeast-3` and
+`sa-east-1`. Qwen also requires valid credentials, model access and
+`bedrock:InvokeModel` permission. There is no automatic model fallback.
+
+> **Note:** Bedrock invocation can depend on the account, IAM permissions, AWS
+> Region and model-access requirements. A model appearing in discovery results
+> does not prove that the current account can invoke it; verify with an actual
+> request. See AWS's current [model access and authorization
+> guidance](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html).
+> In one development account, Luna appeared in discovery but initial inference
+> failed. After requesting Claude Haiku 5.5 access, completing an additional AWS
+> verification step and receiving approval, Luna and other previously failing
+> models became callable. This sequence suggests account authorization or
+> verification may have been involved, but did not establish the cause; Haiku
+> access is not a general Luna prerequisite.
+
+### Build, prepare data and start the chat
+
+Run these commands from the repository root on a fresh checkout:
+
+```bash
 make build
 make prepare-data
 make prepare-policy
 make up
 ```
 
-`make prepare-policy` explicitly downloads the pinned CPU E5 model if it is not
-cached and builds the local Chroma index. Run it once for a new data volume. It
-intentionally fails if an index already exists. To rebuild after an intentional policy
-source change, run:
+`make prepare-data` creates the operational SQLite snapshots from the supplied
+data. `make prepare-policy` explicitly downloads the pinned E5 model if needed
+and creates the local Chroma index; it is required once for a new data volume.
+If an index already exists, preparation fails rather than silently replacing it;
+use `make rebuild-policy` only when intentionally rebuilding after a policy-source
+change. Image build and normal startup do not prepare snapshots, download weights,
+create or rebuild the index, or call Bedrock.
 
-```bash
-make rebuild-policy
-```
+Open the React chat at [http://127.0.0.1:8000](http://127.0.0.1:8000). The API
+docs are at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). Both are
+served by the single Compose `app` service on loopback. Its named data volume
+persists snapshots, chat history, the policy index and E5 cache; `make down` keeps
+that data. Only run `docker compose down --volumes` when you intend to delete it.
+The demo has no authentication, so keep it on loopback and use fictional data.
 
-Index preparation validates the versioned policy sources and builds only the runtime
-index. Retrieval benchmarking is a separate development workflow in
-[`docs/benchmarks/README.md`](docs/benchmarks/README.md).
+The standalone CLI is optional; see the [CLI guide](docs/cli.md). For local
+API and frontend development, see [API setup](docs/api.md) and the
+[frontend guide](apps/frontend/README.md).
 
-Image build and normal startup do not download weights, prepare SQLite snapshots,
-rebuild the index, or call a model provider.
-`make prepare-data` imports 65 products, 25 promotions, 50 customers, 20 orders and
-22 item rows from the supplied files; it never rewrites the CSV or PDF inputs.
+## Model and technical choices
 
-Open the chat at [http://127.0.0.1:8000](http://127.0.0.1:8000) or the API docs at
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). The UI, static assets and
-existing API share one FastAPI process and origin. The port is published on loopback
-only. The Compose data volume persists SQLite files, the Chroma index and the
-Hugging Face cache across container restarts; `make down` keeps that volume.
+The application uses GPT-6 Luna through Amazon Bedrock Runtime's US cross-Region
+inference profile by default. The selected model followed a dated 12-conversation
+comparison: Luna scored 11 Pass / 1 Partial / 0 Fail at lower cost and median
+latency than GPT-6.1 Sol, which scored 12 / 0 / 0 at about 20.5 times the cost in
+that sample. The capture came from a dirty source tree, so it is historical
+evidence, not a quality validation of this checkout; see the
+[reviewed comparison](docs/examples/model-comparison/full-qwen-luna-sol-2026-11-03.md).
 
-For checks, install Python 3.12+, [uv](https://docs.astral.sh/uv/getting-started/installation/),
-and Node.js 20.19+ or 22.12+ with npm, then run `make check`. The Docker build also
-checks that the installed shared package reads its configured `/app/data` source
-directory and can write runtime state there.
+React/Vite is served by FastAPI from the same origin. Pydantic AI makes typed
+tool calls; deterministic Python and parameterized SQL handle structured
+catalog, pricing and order facts. Policy answers use local Chroma retrieval with
+cached multilingual E5 embeddings, and prompts constrain tool use and factual
+claims. SQLite stores operational snapshots and conversation history. See
+[architecture](docs/architecture.md), [Bedrock configuration](docs/bedrock.md)
+and [policy retrieval](docs/policy-retrieval.md) for details.
 
-For Docker chat, put temporary credentials from your approved AWS credential source
-in the Git-ignored `.env`: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and
-`AWS_SESSION_TOKEN`, along with `AWS_DEFAULT_REGION`. Remove `AWS_PROFILE` from
-`.env`; Compose passes these values to the container, but does not mount the host's
-`~/.aws` directory, so a host profile or SSO login is unavailable there. Keep the
-credentials temporary and narrowly scoped. The UI and docs can start without AWS
-credentials, but the agent cannot answer. `.env` and local AWS files are excluded
-from the Docker build context and image. The policy-RAG runtime includes CPU PyTorch
-and uses additional disk for model weights, cache and index data.
+## Known limitations and evidence
 
-The named volume is initialized from `/app/data` in the image when first created.
-Rebuilding the image does not refresh source files already in an existing volume.
-To intentionally update the source data while keeping saved chat history, start the
-app, copy the source files from the updated checkout into its existing volume, then
-refresh the SQLite snapshots:
+Retrieved sources and typed tools do not guarantee faithful generated prose.
+Recorded model runs include unsupported policy conclusions and failed mixed
+order/return conversations; review their revision and limits before relying on
+them. Start with the [representative Portuguese conversations](docs/examples/submission.md),
+the [dated model-evaluation index](docs/examples/model-comparison/README.md),
+and the [US-18 failure report](docs/examples/us-18/README.md). Offline checks
+verify application behavior, not current model-answer quality. Current follow-up
+areas and prior decisions are recorded in [docs/follow-up.md](docs/follow-up.md).
 
-```bash
-make up
-docker compose cp data/categories.csv app:/app/data/categories.csv
-docker compose cp data/products.csv app:/app/data/products.csv
-docker compose cp data/promotions.csv app:/app/data/promotions.csv
-docker compose cp data/customers.csv app:/app/data/customers.csv
-docker compose cp data/orders.csv app:/app/data/orders.csv
-docker compose cp data/order_items.csv app:/app/data/order_items.csv
-docker compose cp data/store_policies.pdf app:/app/data/store_policies.pdf
-docker compose cp data/policies/. app:/app/data/policies/
-docker compose stop app
-make prepare-data
-# If policy sources changed, run the explicit --rebuild command above here.
-make up
-```
+For deterministic project checks, install Python 3.12+, `uv`, and Node.js 20.19+
+or 22.12+, then run `make check` from the repository root. See the
+[validation record](docs/validation.md) for scope and results.
 
-`make prepare-data` replaces only the catalog and operations snapshots; it preserves
-the conversation database. These steps leave the persistent volume in place. Do not
-run `docker compose down --volumes` when you need to retain conversations or other
-persistent runtime data.
+## AI-assisted development
 
-If catalog/order requests fail because SQLite snapshots are missing, run
-`make prepare-data`. Policy retrieval requires both the E5 cache and index; missing
-resources are service errors, not “no policy found.”
-
-Use `make down` to stop the app without deleting its data. Removing the named volume
-requires an explicit `docker compose down --volumes`.
-
-If Docker starts but the published port times out on Linux, check host bridge
-networking. The [validation report](docs/sprint-4-validation.md#clean-docker-setup-and-runtime)
-records the observed limitation and a tested loopback-only host-network workaround.
-It also distinguishes controlled interface checks from historical model evidence.
-
-## Run without Docker for development
-
-Install Python 3.12+ and `uv`, then from the repository root run:
-
-```bash
-uv sync --project apps/api --locked --extra policy-rag
-test -f .env || cp .env.example .env
-uv run --env-file .env --project apps/api --extra policy-rag --locked python -m emporio_music.prepare
-uv run --project apps/api --extra policy-rag --locked python -m emporio_music.prepare_policy_index --allow-download
-uv run --env-file .env --project apps/api --extra policy-rag --locked uvicorn emporio_music_api.app:create_app --factory --host 127.0.0.1 --port 8000
-```
-
-The frontend can run separately with the commands in
-[`apps/frontend/README.md`](apps/frontend/README.md). Vite proxies `/api` to the
-local FastAPI server. The frontend uses fictional customer ID `1`; this is demo
-context, not authentication or customer selection. For guest API requests, omit
-`customer_id`; for orders, repeat the same fictional customer ID on every follow-up.
-See [API details](docs/api.md) for request examples and errors.
-
-For direct terminal conversations without the HTTP server, prepare and run the
-standalone Python CLI using [these commands](docs/cli.md). Its `--live` flag is
-required before it constructs the Bedrock-backed agent.
-
-## How it works
-
-FastAPI calls a small chat service, which loads owned history, runs the agent and
-saves one complete user/assistant turn. Tools retrieve facts from read-only SQLite
-snapshots; the model never builds SQL or chooses the selected customer.
-
-- **Catalog:** literal name/category lookup, active/stock checks and bounded results.
-- **Pricing:** integer-centavo half-up arithmetic; an eligible active promotion
-  takes priority, otherwise explicitly requested PIX receives 5%. Discounts never
-  stack. Budget filters use final prices, while original prices remain intact.
-- **Orders:** validated fictional customer selection and parameterized scope checks.
-  Historical totals stay unchanged; current catalog prices never reconstruct purchase prices.
-- **Policies:** the existing agent retrieves three E5 ranking seeds plus direct
-  related conditions, capped at eight excerpts. Answers include section/page citations;
-  missing or stale local search resources fail as service errors instead of policy no-matches.
-- **History:** persisted text pairs, bounded to six turns/24,000 characters by
-  default. One service rejects overlapping turns on the same session. Independent
-  chats can run concurrently. Failed/cancelled calls save no completed turn.
-
-GPT-6 Luna (`us.openai.gpt-6-luna`) through Bedrock Runtime's US cross-Region
-profile in `us-east-1` is the runtime default. The owner selected it after the
-full v7 benchmark: Luna scored 11 Pass / 1 Partial / 0 Fail with lower cost and
-median latency than GPT-6.1 Sol, whose perfect 12/0/0 result cost about 20.5 times
-more in this sample. See the [reviewed comparison](docs/examples/model-comparison/full-qwen-luna-sol-2026-11-03.md).
-Pydantic AI provides typed function calling; straightforward Python/SQL handles
-the small structured dataset. Set `BEDROCK_MODEL_ID` to override the default.
-Policy retrieval uses embedded ChromaDB and locally cached multilingual E5; SQLite
-remains the operational/history store. The optional `policy-rag` extra provides the
-runtime libraries. Startup and default tests do not download weights, build indexes,
-or call an embedding provider. See [policy retrieval setup and limitations](docs/policy-retrieval.md).
-
-Three SQLite files separate replaceable catalog/order snapshots from chat history.
-`EMPORIO_MUSIC_DATA_DIR` selects the source-data and persistent runtime directory.
-Its default is `data` relative to the process working directory; the documented
-local commands run from the repository root, preserving
-`data/catalog.sqlite3`, `data/operations.sqlite3` and
-`data/conversations.sqlite3`. Compose sets `/app/data` on its persistent volume.
-The API uses `EMPORIO_MUSIC_FRONTEND_DIR` for built React assets and defaults to
-`apps/frontend/dist` from the repository root.
-Guests cannot retrieve orders. Session IDs let guests resume a chat; they do not
-distinguish individual guests. Keep the demo on loopback with fictional data; it
-has no authentication. Each tool read is authoritative within the simulation; local data does not imply
-an external carrier request. Only `is_active` establishes promotion validity; the source has
-no dates. The demo has no cross-process turn coordination or retry deduplication.
-
-## Development checks
-
-From the repository root:
-
-```bash
-make check-python
-uv build --project packages/emporio_music
-uv build --project apps/api
-uv build --project apps/cli
-```
-
-Default tests use temporary SQLite and controlled models; real model requests are
-forbidden. Paid Bedrock probes require explicit opt-in. See [validation](docs/validation.md),
-[real examples](docs/examples/README.md) and [provider setup](docs/bedrock.md).
-
-## Documentation and remaining work
-
-Domain contracts and ports are grouped by responsibility. Import definitions directly
-(for example, `domain.chat.ChatRequest`, `ports.chat.ChatServicePort` and
-`application.chat.ChatService`); package initializers hold no implementation.
-
-Start here; use the [documentation index](docs/README.md) for implementation details
-and historical decisions. Three Sprint 2 conversations and four US-17 paired
-policy scenarios are descriptive evidence, not a guarantee of future answers. See
-the [US-17 results](docs/examples/us-17/results.md) for grounding, uncertainty,
-tool-selection and full-context findings.
-The [React frontend](apps/frontend/README.md) uses the existing chat API with a
-fixed fictional customer and session context. The Docker package remains limited
-to local loopback use; public deployment is out of scope. The recruiting email
-determines the submission cutoff.
-
-OpenAI Codex assisted with analysis, implementation, tests, review and GitHub delivery.
-Scoped commits and PRs record that workflow; controlled test answers are not claimed
-as live model-quality evidence. Preserve source bytes and reference the related issue
-in every commit body. See [working agreements](AGENTS.md).
-
-See [policy corpus, runtime retrieval and evaluation protocol](docs/policy-retrieval.md) for setup, provenance and measured limitations.
+OpenAI Codex assisted with analysis, implementation, tests, review and the
+GitHub workflow. Project changes and controlled checks were reviewed; live model
+captures are retained separately with their source revisions and are not
+presented as current-checkout quality evidence. The [documentation index](docs/README.md)
+links to implementation guides, decisions and evaluation records.
