@@ -43,11 +43,13 @@ class ProductQuoteTools:
 
         Use product IDs from a current catalog result. Standard pricing applies an
         active promotion; PIX uses the existing 5% rule only when no promotion
-        applies. Compare returns both alternatives. Credit returns supported
-        installment plans. Split requires an explicit PIX amount and reports the
-        policy's unresolved mixed-PIX discount separately. Missing, unavailable,
-        or insufficient-stock items prevent a cart total. Shipping is reported
-        separately and only when its policy basis is supported.
+        applies. Compare returns both alternatives and installment plans for the
+        standard credit total. Credit returns installment plans. Plans affected by
+        conflicting minimum rules are marked policy_ambiguous. Split requires an
+        explicit PIX amount and reports the policy's unresolved mixed-PIX discount
+        separately. Missing, unavailable, or insufficient-stock items prevent a
+        cart total. Unresolved shipping is excluded from merchandise-only
+        installment calculations and reported separately.
 
         Args:
             items: One to ten distinct product IDs and requested quantities.

@@ -63,6 +63,7 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
         max_price_centavos=100000,
         available_only=True,
         limit=20,
+        sort_order="price_asc",
     )
     assert result["total_matches"] == 0 and result["truncated"] is False
     expected = repository.query
@@ -86,6 +87,14 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
     with pytest.raises(ValidationError):
         tool.search_available_products(payment_method="standard", limit=21)
     assert repository.query is expected
+
+
+def test_search_tool_forwards_price_descending_order() -> None:
+    repository = RecordingRepository()
+    ProductSearchTool(repository).search_available_products(
+        payment_method="standard", sort_order="price_desc"
+    )
+    assert repository.query == ProductSearchQuery(sort_order="price_desc")
 
 
 @pytest.mark.parametrize("bound", ["minimum", "maximum"])

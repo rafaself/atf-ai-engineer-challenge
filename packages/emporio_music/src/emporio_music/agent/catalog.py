@@ -13,7 +13,7 @@ from emporio_music.agent.quotes import quote_tools
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.diagnostics import trace
 from emporio_music.domain.base import NonblankText
-from emporio_music.domain.catalog import ProductSearchQuery
+from emporio_music.domain.catalog import ProductSearchQuery, ProductSortOrder
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.pricing import PaymentMethod
 from emporio_music.ports.catalog import ProductRepository
@@ -32,6 +32,7 @@ class ProductSearchTool:
         max_price_brl: BRLAmount | None = None,
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10,
         promotions_only: StrictBool = False,
+        sort_order: ProductSortOrder = "price_asc",
     ) -> dict[str, object]:
         """Find available instruments for requested recommendations, by category, budget or partial name.
 
@@ -41,7 +42,8 @@ class ProductSearchTool:
         For alternatives, use the category and customer-requested budget; omit
         product_name unless the customer explicitly restricts alternatives by name.
         Keeping the unavailable model name would exclude other products.
-        Use the payable-price order for open-ended cheapest/most-expensive questions.
+        Use price_asc for cheapest questions and price_desc for most-expensive
+        questions. Both sort by payable price with product ID as a stable tie-breaker.
         Use calculate_quote for exact totals and compare_products only after products
         have been identified.
 
@@ -53,6 +55,7 @@ class ProductSearchTool:
             limit: Maximum returned products, 1–20. Total count includes omitted matches.
             payment_method: standard unless the customer explicitly requests pix pricing.
             promotions_only: Return only eligible active promotional products, not PIX-only discounts.
+            sort_order: Sort by payable price ascending or descending; ties use product ID.
         """
         trace(
             "tool.called",
@@ -68,6 +71,7 @@ class ProductSearchTool:
             payment_method=payment_method,
             promotions_only=promotions_only,
             limit=limit,
+            sort_order=sort_order,
         )
         return self._search(query)
 

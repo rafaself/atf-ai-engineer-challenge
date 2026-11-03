@@ -8,6 +8,7 @@ from emporio_music.domain.pricing import PaymentMethod, ProductPricing, Promotio
 from emporio_music.domain.quotes import (
     InstallmentMinimumRule,
     InstallmentPlan,
+    InstallmentTotalScope,
     QuoteCalculationStatus,
     QuoteLine,
     QuoteRequest,
@@ -33,8 +34,10 @@ def _checked_product_total(amounts: Sequence[int]) -> int:
 
 def calculate_installment_options(total_centavos: int) -> tuple[InstallmentPlan, ...]:
     """Return policy-eligible, exact-centavo credit allocations for a total."""
-    if type(total_centavos) is not int or not 0 < total_centavos <= _MAX_CENTAVOS:
-        raise ValueError("Installment total must be positive supported centavos")
+    if type(total_centavos) is not int or not 0 <= total_centavos <= _MAX_CENTAVOS:
+        raise ValueError("Installment total must be nonnegative supported centavos")
+    if total_centavos == 0:
+        return ()
 
     plans: list[InstallmentPlan] = []
     for count in range(1, 13):
@@ -57,6 +60,9 @@ def calculate_installment_options(total_centavos: int) -> tuple[InstallmentPlan,
         plans.append(
             InstallmentPlan(
                 count=count,
+                eligibility=(
+                    "policy_ambiguous" if min(amounts) < 10_000 else "eligible"
+                ),
                 amounts_centavos=amounts,
                 total_centavos=total_centavos,
                 minimum_rule=minimum_rule,
@@ -291,6 +297,7 @@ def calculate_quote(
             unavailable_product_ids=tuple(unavailable_ids),
             insufficient_stock=tuple(insufficient_stock),
             quoted_total_scope="not_calculated",
+            installment_total_scope="not_calculated",
             requested_installments=request.requested_installments,
             requested_installment_status=(
                 "not_calculated"
@@ -349,35 +356,64 @@ def calculate_quote(
         quoted_total = None
         quoted_total_scope = "shipping_unresolved"
 
+    installment_options: tuple[InstallmentPlan, ...]
+    requested_options: tuple[InstallmentPlan, ...]
+    installment_total_scope: InstallmentTotalScope
     if request.payment_intent == "split":
         installment_total = (
             split.credit_amount_centavos if split.status == "eligible" else None
         )
-    elif request.payment_intent == "credit":
-        installment_total = quoted_total
+        installment_options = ()
+        requested_options = split.credit_installment_options
+        installment_total_scope = "not_applicable"
+    elif request.payment_intent in {"credit", "compare"}:
+        installment_total = (
+            quoted_total
+            if quoted_total is not None
+            else standard_total
+            if request.payment_intent == "compare"
+            else selected_merchandise_total
+        )
+        installment_options = (
+            calculate_installment_options(installment_total)
+            if installment_total is not None
+            else ()
+        )
+        requested_options = installment_options
+        installment_total_scope = (
+            "includes_supported_shipping"
+            if request.destination is not None and shipping.status == "supported"
+            else "merchandise_only"
+        )
     else:
         installment_total = None
-    installment_options = (
-        calculate_installment_options(installment_total)
-        if installment_total is not None
-        else ()
-    )
+        installment_options = ()
+        requested_options = ()
+        installment_total_scope = "not_applicable"
     requested_status: RequestedInstallmentStatus = "not_requested"
     if request.requested_installments is not None:
-        requested_status = (
-            "not_calculated"
-            if installment_total is None
-            else "eligible"
-            if any(
-                plan.count == request.requested_installments
-                for plan in installment_options
+        if installment_total is None:
+            requested_status = "not_calculated"
+        else:
+            requested_plans = tuple(
+                plan
+                for plan in requested_options
+                if plan.count == request.requested_installments
             )
-            else "below_minimum"
-        )
+            if any(plan.eligibility == "eligible" for plan in requested_plans):
+                requested_status = "eligible"
+            elif requested_plans:
+                requested_status = "policy_ambiguous"
+            else:
+                requested_status = "below_minimum"
 
     notes: tuple[str, ...] = (
-        "Installment eligibility follows the specific per-range terms in policy section 3.1; section 3 also states a general R$ 100,00 minimum, so the source wording is not fully consistent.",
+        "Policy section 3.1 permits some installments below R$ 100,00, while section 3 states a general R$ 100,00 minimum. Affected plans are marked policy_ambiguous rather than treated as confirmed.",
     )
+    if request.destination is not None and shipping.status != "supported":
+        notes += (
+            "Installment amounts use the known merchandise total only; unresolved shipping is excluded.",
+        )
     if request.payment_intent == "split":
         notes += (
             "Mixed payment is eligible only when both original and standard payable merchandise totals are above R$ 2.000,00; policy does not identify which total controls.",
@@ -394,8 +430,22 @@ def calculate_quote(
         quoted_total_centavos=quoted_total,
         quoted_total_scope=quoted_total_scope,
         selected_installment_options=installment_options,
+        installment_total_scope=installment_total_scope,
         max_installments=max(
-            (plan.count for plan in installment_options), default=None
+            (
+                plan.count
+                for plan in requested_options
+                if plan.eligibility == "eligible"
+            ),
+            default=None,
+        ),
+        uncertain_max_installments=max(
+            (
+                plan.count
+                for plan in requested_options
+                if plan.eligibility == "policy_ambiguous"
+            ),
+            default=None,
         ),
         requested_installments=request.requested_installments,
         requested_installment_status=requested_status,

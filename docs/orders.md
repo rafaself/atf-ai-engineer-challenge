@@ -127,10 +127,12 @@ without inventing a due date.
 
 Delivery uses an owned order's stored estimate when present. Otherwise it requires
 a dispatch date and destination scope; outside Campo Grande it also requires PAC,
-SEDEX or Jadlog. Published windows are returned as estimates after the supplied
-dispatch date. Business-day arithmetic excludes weekends only because no holiday
-calendar is available, and the result says that explicitly. Missing dates, service
-or policy start events produce a qualified status rather than a guessed date.
+SEDEX or Jadlog. Applying the published window after the supplied dispatch date is
+a conditional estimate because the manual does not explicitly establish dispatch
+as the start event. Business-day arithmetic excludes weekends only because no
+holiday calendar is available, and the result says that explicitly. Missing dates,
+service or policy start events produce a qualified status rather than a guessed
+date.
 Order ownership is enforced by the existing read-only repository, and deadline
 lookups do not change order history or totals.
 

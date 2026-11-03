@@ -13,6 +13,7 @@ from emporio_music.domain.base import (
 from emporio_music.domain.pricing import PaymentMethod, ProductPricing
 
 ProductStatus = Literal["active", "discontinued", "coming_soon"]
+ProductSortOrder = Literal["price_asc", "price_desc"]
 
 
 class ProductSearchQuery(ContractModel):
@@ -20,8 +21,9 @@ class ProductSearchQuery(ContractModel):
 
     Repositories normalize case/accents and match names by literal substring.
     Unknown filters yield no matches, never an unrestricted search. Results are
-    ordered by payable price ascending, then product ID. Named queries can explicitly
-    disable available_only to inspect unavailable catalog entries.
+    ordered by payable price in the selected direction, then product ID. Named
+    queries can explicitly disable available_only to inspect unavailable catalog
+    entries.
     """
 
     product_id: Annotated[PositiveInt, Field(le=2**63 - 1)] | None = None
@@ -32,6 +34,7 @@ class ProductSearchQuery(ContractModel):
     max_price_centavos: NonnegativeInt | None = None
     available_only: StrictBool = True
     payment_method: PaymentMethod = "standard"
+    sort_order: ProductSortOrder = "price_asc"
     promotions_only: StrictBool = False
     limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10
 

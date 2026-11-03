@@ -86,6 +86,7 @@ def _catalog(tmp_path: Path) -> Path:
         12: 119_999,
         13: 120_000,
         14: 50_000,
+        15: 50_000,
     }
     with products.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=PRODUCT_COLUMNS)
@@ -129,6 +130,13 @@ def _catalog(tmp_path: Path) -> Path:
                     "discount_percent": "50",
                     "description": "Inactive fixture",
                     "is_active": "0",
+                },
+                {
+                    "promotion_id": "4",
+                    "product_id": "15",
+                    "discount_percent": "100",
+                    "description": "Zero-total fixture",
+                    "is_active": "1",
                 },
             ]
         )
@@ -191,6 +199,12 @@ def test_multi_product_quote_uses_one_real_sqlite_snapshot_and_nonstacking_prici
     assert result.original_total_centavos == 1_271_800
     assert result.standard_total_centavos == 1_264_620
     assert result.pix_total_centavos == 1_204_620
+    assert result.selected_installment_options
+    assert (
+        result.selected_installment_options[0].total_centavos
+        == result.standard_total_centavos
+    )
+    assert result.installment_total_scope == "merchandise_only"
     promo, regular = result.lines
     assert promo.standard_subtotal_centavos == 64_620
     assert promo.pix_subtotal_centavos == 64_620
@@ -200,7 +214,7 @@ def test_multi_product_quote_uses_one_real_sqlite_snapshot_and_nonstacking_prici
     assert regular.standard_subtotal_centavos == 1_200_000
     assert regular.pix_subtotal_centavos == 1_140_000
     assert result.standard_total_brl == "12646.20"
-    assert result.max_installments is None
+    assert result.max_installments == 12
 
     pix = calculate_quote(
         QuoteRequest(items=request.items, payment_intent="pix"),
@@ -227,6 +241,7 @@ def test_multi_product_quote_uses_one_real_sqlite_snapshot_and_nonstacking_prici
 def test_installment_options_use_confirmed_ranges_and_centavo_exact_allocations() -> (
     None
 ):
+    assert calculate_installment_options(0) == ()
     assert calculate_installment_options(4_999) == ()
     assert [plan.count for plan in calculate_installment_options(5_000)] == [1, 2, 3]
     assert 4 not in {plan.count for plan in calculate_installment_options(31_999)}
@@ -264,6 +279,45 @@ def test_installment_options_use_confirmed_ranges_and_centavo_exact_allocations(
     assert sum(three.amounts_centavos) == 100_001
 
 
+def test_installment_policy_conflicts_are_reported_as_uncertain(
+    tmp_path: Path,
+) -> None:
+    repository = SQLiteProductRepository(_catalog(tmp_path))
+    result = _quote(repository, (10,), "credit", quantities=(1,))
+
+    four = next(
+        option for option in result.selected_installment_options if option.count == 4
+    )
+    assert four.eligibility == "policy_ambiguous"
+    assert result.max_installments == 3
+    assert result.uncertain_max_installments == 4
+
+    requested = calculate_quote(
+        QuoteRequest(
+            items=(QuoteItemInput(product_id=10, quantity=1),),
+            payment_intent="credit",
+            requested_installments=4,
+        ),
+        repository.lookup_many(
+            ProductBatchLookupQuery(product_ids=(10,), payment_method="standard")
+        ),
+    )
+    assert requested.requested_installment_status == "policy_ambiguous"
+
+
+def test_zero_value_promotion_produces_quote_without_installments(
+    tmp_path: Path,
+) -> None:
+    repository = SQLiteProductRepository(_catalog(tmp_path))
+    result = _quote(repository, (15,), "credit")
+
+    assert result.standard_total_centavos == 0
+    assert result.quoted_total_centavos == 0
+    assert result.selected_installment_options == ()
+    assert result.max_installments is None
+    assert result.uncertain_max_installments is None
+
+
 def test_freight_and_mixed_payment_boundaries_preserve_unresolved_basis(
     tmp_path: Path,
 ) -> None:
@@ -284,6 +338,8 @@ def test_freight_and_mixed_payment_boundaries_preserve_unresolved_basis(
     )
     assert crossed_freight_threshold.shipping.status == "basis_ambiguous"
     assert crossed_freight_threshold.quoted_total_centavos is None
+    assert crossed_freight_threshold.selected_installment_options
+    assert crossed_freight_threshold.installment_total_scope == "merchandise_only"
 
     exact_2_000 = _quote(repository, (4,), "split", pix_amount=100_000)
     assert exact_2_000.split_payment.status == "not_eligible_at_threshold"
@@ -293,6 +349,14 @@ def test_freight_and_mixed_payment_boundaries_preserve_unresolved_basis(
     assert above_2_000.split_payment.credit_amount_brl == "1000.01"
     assert above_2_000.split_payment.pix_amount_brl == "1000.00"
     assert above_2_000.split_payment.pix_discount_applied == "policy_ambiguous"
+    assert above_2_000.max_installments == 10
+    assert above_2_000.uncertain_max_installments is None
+    split_with_conflicting_minimum = _quote(
+        repository, (6,), "split", pix_amount=150_001
+    )
+    assert split_with_conflicting_minimum.split_payment.credit_amount_centavos == 50_000
+    assert split_with_conflicting_minimum.max_installments == 5
+    assert split_with_conflicting_minimum.uncertain_max_installments == 6
     crossed_split_threshold = _quote(repository, (5,), "split", pix_amount=100_000)
     assert crossed_split_threshold.split_payment.status == "eligibility_basis_ambiguous"
 
@@ -303,6 +367,9 @@ def test_freight_and_mixed_payment_boundaries_preserve_unresolved_basis(
     assert unsupported.shipping.status == "unsupported_destination"
     assert unsupported.shipping.charge_centavos is None
     assert unsupported.quoted_total_centavos is None
+    assert unsupported.selected_installment_options
+    assert unsupported.selected_installment_options[0].total_centavos == 50_000
+    assert unsupported.installment_total_scope == "merchandise_only"
 
 
 def test_quote_does_not_return_a_total_for_missing_unavailable_or_insufficient_items(
@@ -449,6 +516,11 @@ def test_deadlines_use_correct_event_and_qualify_missing_receipt_and_holidays(
     assert business_days.deadline_start_date == date(2026, 1, 5)
     assert business_days.deadline_end_date == date(2026, 1, 7)
     assert business_days.calendar_basis == "weekends_only_holidays_unmodeled"
+    assert "conditional" in business_days.note
+    assert (
+        "does not explicitly establish dispatch as the start event"
+        in business_days.note
+    )
 
     refund = calculate_deadline(
         DeadlineRequest(deadline_type="refund", order_id=1),

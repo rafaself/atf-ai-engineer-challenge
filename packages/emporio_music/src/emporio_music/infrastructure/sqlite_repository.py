@@ -129,7 +129,8 @@ class SQLiteProductRepository:
                     matched.append(product)
                 matched.sort(
                     key=lambda product: (
-                        product.pricing.final_price_centavos,
+                        product.pricing.final_price_centavos
+                        * (-1 if query.sort_order == "price_desc" else 1),
                         product.product_id,
                     )
                 )

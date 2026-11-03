@@ -120,8 +120,10 @@ class OrderTools:
         receipt. Online-return and legal-warranty calculations require the actual
         receipt event/date. Defect exchange uses the stored purchase date. Refund
         timing can only be stated as up to ten business days because the manual
-        does not define its starting event. Business-day estimates exclude weekends
-        and explicitly do not model holidays.
+        does not define its starting event. Delivery windows applied after a
+        supplied dispatch date are conditional estimates; the manual does not
+        explicitly establish dispatch as the start event. Business-day estimates
+        exclude weekends and explicitly do not model holidays.
 
         Args:
             deadline_type: delivery, online_return, defect_exchange, refund, or warranty.

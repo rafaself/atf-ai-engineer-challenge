@@ -138,8 +138,10 @@ def calculate_deadline(
             order_id=order.order_id if order is not None else request.order_id,
             policy_source=source,
             note=(
-                "This is a policy estimate after the supplied dispatch date, excluding "
-                "weekends but not public holidays; it is not a carrier confirmation."
+                "This is a conditional policy estimate that applies the published "
+                "window after the supplied dispatch date; the policy does not "
+                "explicitly establish dispatch as the start event. It excludes "
+                "weekends but not public holidays and is not a carrier confirmation."
             ),
         )
 

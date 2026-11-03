@@ -18,8 +18,19 @@ QuoteTotalScope = Literal[
     "comparison_only",
     "not_calculated",
 ]
+InstallmentEligibility = Literal["eligible", "policy_ambiguous"]
+InstallmentTotalScope = Literal[
+    "not_calculated",
+    "not_applicable",
+    "merchandise_only",
+    "includes_supported_shipping",
+]
 RequestedInstallmentStatus = Literal[
-    "not_requested", "not_calculated", "eligible", "below_minimum"
+    "not_requested",
+    "not_calculated",
+    "eligible",
+    "policy_ambiguous",
+    "below_minimum",
 ]
 InstallmentMinimumRule = Literal[
     "total_at_least_50", "each_at_least_80", "each_at_least_100"
@@ -105,6 +116,7 @@ class QuoteLine(ContractModel):
 
 class InstallmentPlan(ContractModel):
     count: Annotated[int, Field(strict=True, ge=1, le=12)]
+    eligibility: InstallmentEligibility
     amounts_centavos: Annotated[
         tuple[Centavos, ...], Field(min_length=1, max_length=12)
     ]
@@ -190,7 +202,11 @@ class QuoteResult(ContractModel):
     quoted_total_centavos: Centavos | None = None
     quoted_total_scope: QuoteTotalScope
     selected_installment_options: tuple[InstallmentPlan, ...] = ()
+    installment_total_scope: InstallmentTotalScope
     max_installments: Annotated[int, Field(strict=True, ge=1, le=12)] | None = None
+    uncertain_max_installments: (
+        Annotated[int, Field(strict=True, ge=1, le=12)] | None
+    ) = None
     requested_installments: Annotated[int, Field(strict=True, ge=1, le=12)] | None = (
         None
     )

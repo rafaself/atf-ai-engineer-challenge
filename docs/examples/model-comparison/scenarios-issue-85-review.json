@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "issue": 85,
+  "scenario_count": 4,
+  "planned_turns_per_model": 4,
+  "scenarios": [
+    {
+      "id": "most-expensive-catalog-search",
+      "turns": [
+        {
+          "message": "Qual é o violão disponível mais caro? Informe o nome, o código e o preço final."
+        }
+      ],
+      "expected": {
+        "required_tools": ["search_available_products"],
+        "facts": [
+          "The catalog search uses sort_order=price_desc and payment_method=standard.",
+          "The answer identifies the highest payable-price product returned by the descending search and uses its exact catalog code and pricing fields.",
+          "No availability, stock, promotion, or price claim is added beyond the current catalog result."
+        ],
+        "critical_errors": [
+          "ascending search used for a most-expensive request",
+          "invented or misreported product price or availability"
+        ]
+      }
+    },
+    {
+      "id": "compare-payment-and-credit-installments",
+      "turns": [
+        {
+          "message": "Quanto custa o Takamine GD20 no crédito e no PIX? Mostre também as opções de parcelamento no crédito."
+        }
+      ],
+      "expected": {
+        "required_tools": ["find_product_by_name", "calculate_quote"],
+        "facts": [
+          "The quote uses the product_id returned by the current catalog lookup and payment_intent=compare.",
+          "Credit and PIX totals and credit installment amounts match the calculation tool result.",
+          "Plans marked policy_ambiguous are described as uncertain; the answer does not present the uncertain maximum as confirmed."
+        ],
+        "critical_errors": [
+          "unsupported payment total or installment calculation",
+          "presenting policy-ambiguous installment eligibility as confirmed"
+        ]
+      }
+    },
+    {
+      "id": "installments-with-unresolved-national-freight",
+      "turns": [
+        {
+          "message": "Quero comprar o Takamine GD20 com entrega para São Paulo. Quanto ficaria no crédito e quais parcelas consigo fazer?"
+        }
+      ],
+      "expected": {
+        "required_tools": ["find_product_by_name", "calculate_quote"],
+        "facts": [
+          "The quote uses the identified product and credit intent with destination=other_city.",
+          "Credit installment amounts use the known merchandise total and are labeled as excluding shipping.",
+          "The answer says national freight remains unquoted because destination CEP, weight, and dimensions are not available."
+        ],
+        "critical_errors": [
+          "withholding calculable merchandise installments because freight is unresolved",
+          "inventing an all-in total or national freight amount"
+        ]
+      }
+    },
+    {
+      "id": "conditional-dispatch-deadline-estimate",
+      "turns": [
+        {
+          "message": "Se meu pedido for despachado em 04/11/2026 para Campo Grande, qual seria a estimativa de entrega?"
+        }
+      ],
+      "expected": {
+        "required_tools": ["calculate_deadline"],
+        "facts": [
+          "The deadline tool receives the supplied date as reference_event=dispatch and destination=campo_grande_metro.",
+          "The answer identifies the returned dates as a conditional estimate because policy does not explicitly establish dispatch as the start event.",
+          "The answer preserves that weekends are excluded, public holidays are not modeled, and no carrier confirmation is available."
+        ],
+        "critical_errors": [
+          "presenting the estimated date as a carrier commitment",
+          "omitting the conditional dispatch-start assumption"
+        ]
+      }
+    }
+  ]
+}

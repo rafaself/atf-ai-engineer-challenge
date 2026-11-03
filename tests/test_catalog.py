@@ -101,6 +101,29 @@ def test_supplied_snapshot_and_grounded_searches(tmp_path: Path) -> None:
     ] == hashes
 
 
+def test_search_order_can_descend_by_payable_price_with_stable_id_ties(
+    tmp_path: Path,
+) -> None:
+    products, categories, database = sources(
+        tmp_path,
+        [
+            item(3, price_brl="20.00"),
+            item(2, price_brl="20.00"),
+            item(1, price_brl="10.00"),
+        ],
+    )
+    import_catalog(products, categories, tmp_path / "promotions.csv", database)
+    repository = SQLiteProductRepository(database)
+
+    descending = repository.search(
+        ProductSearchQuery(sort_order="price_desc", limit=20)
+    )
+    ascending = repository.search(ProductSearchQuery(limit=20))
+
+    assert [product.product_id for product in descending.products] == [2, 3, 1]
+    assert [product.product_id for product in ascending.products] == [1, 2, 3]
+
+
 def test_reimport_replaces_snapshot_and_removes_absent_categories(
     tmp_path: Path,
 ) -> None:
