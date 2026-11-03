@@ -1,6 +1,6 @@
-# Final model-selection benchmark — frozen protocol v1.1
+# Final model-selection benchmark — frozen protocol v1.2
 
-**Status:** methodological specification frozen on 2026-11-03; implementation and paid run not started.
+**Status:** methodological specification frozen on 2026-11-03; runner implemented under issue #82; paid run and human review not started.
 **Scope:** Empório da Música customer-support agent, application-level Bedrock Runtime Converse.
 **Source fixtures:** `scenarios.json` and `models.json` in this directory.
 **Baseline:** the current runtime architecture, not a model-only prompt exercise.
@@ -59,6 +59,8 @@ Use the **same frozen live application** for all candidates:
 | Temperature requested | `0` (only where supported; **record actual serialized setting**) |
 | Top-p, reasoning-effort override, explicit prompt caching | none |
 | Max output tokens/model request | `1024` |
+| Aggregate input upper bound per candidate | `2,000,000`, including preflight; identical for all ten candidates |
+| Input bound per provider request | serialized UTF-8 request bytes + `2048`; at most the smaller of the model context and short-context tier limit |
 | Agent request limit / tool-call limit per chat turn | `6` / `5` |
 | Provider read timeout | `15 seconds` |
 | Chat-service timeout | `60 seconds` |
@@ -81,6 +83,8 @@ Before the first paid request:
 2. Check source hashes, local SQLite, verified effective policy index and E5 cache, dependencies, runtime config and unique output path **without inference**.
 3. Simulate maximum accounting for **26 turns/model × up to six model requests/turn** plus one bounded tool-call preflight per model. Reserve conservatively using actual request bounds, provider-supported rate tiers, cache-write premiums and full output ceilings; block before any call that could exceed the approved cap. Never treat reserved spend as an invoice.
 4. Preflight all candidates using the same short, predeclared **catalog tool-use prompt**: `Confira no catálogo o preço e o estoque do Yamaha C40 Nylon Natural.` Check at least one actual local tool call, successful tool result, follow-up Converse response, usage capture and correct response shape. Preflight responses are **not** scored as benchmark cases; include their costs in global spend accounting.
+
+The implementation freezes the same aggregate input bound of **2,000,000 tokens per candidate**, including preflight, and at most **162 provider requests per candidate** (27 chat turns × 6 requests). Each request stays in the standard short-context tier. At the manifest rates, reserving all input at the greater of the uncached-input and cache-write rates plus all 162 × 1,024 output tokens gives a combined maximum of **US$9.81175456**. This is an enforced envelope, not expected spend. Exceeding an input bound or encountering usage above a reservation stops all inference; bounds are never silently raised. Before-call reservations are checkpointed durably before transmission; missing usage retains the reservation. An interrupted attempted conversation is not replayed on resume.
 
 A confirmed incompatible or inaccessible candidate is `excluded_preflight` with exact error category and 26 `not_executed` main turns; proceed to the other candidates if safe. If any live chat turn fails, capture the HTTP response and sanitized exception category, stop that scenario for that candidate and preserve subsequent turns as `not_executed`; do not assign a semantic quality verdict. Continue independent scenarios for that candidate unless its model route is unavailable or a budget safety condition requires a stop. A global budget/accounting fault stops **all** further inference immediately. No automatic benchmark-level retries or prompt repair. A resumed run must skip previously attempted turns and carry forward their entire cost.
 
@@ -144,7 +148,7 @@ This is an **engineering selection rule**, not statistical evidence that one mod
 
 ## 9. Implementation contract and deliverables
 
-Keep implementation in `scripts/` and tests in `tests/`. Reuse `scripts/compare_models.py` and `scripts/evaluation_support.py` helpers where appropriate, but **do not change production agent code, add providers/adapters or create a generic benchmark framework**. The existing runner hardcodes eight candidates and historical experiment constraints, so it cannot execute this protocol unchanged. The final run must use this directory's fixture, model manifest, fresh approval, accounting and resume identity; do not inherit old candidate restrictions, budget caps or checkpoint state. Historical artifacts remain untouched. The runner must support the ten frozen candidates, model-interleaved seeded schedule, full-run accounting and the existing route. Add targeted offline tests for fixture counts, all routes, sanitized captures, spending guard, score aggregation and error classification.
+Keep implementation in `scripts/` and tests in `tests/`. `scripts/final_model_comparison.py` is the standalone entry point; it reuses accounting/capture helpers from `scripts/compare_models.py` and `scripts/evaluation_support.py` without inheriting historical runner restrictions. `scripts/final_model_review.py` prepares blinded human worksheets and aggregates submitted judgments. **Do not change production agent code, add providers/adapters or create a generic benchmark framework.** The final run uses this directory's fixture, model manifest, fresh approval, accounting and resume identity. Historical artifacts remain untouched. Offline tests cover the ten frozen candidates, schedule, sanitized captures, spending guard, resume, actual SDK serialization with stubbed network I/O, review gates and selection aggregation.
 
 Deliver under this **exclusive highlighted directory**, without overwriting old benchmark results:
 

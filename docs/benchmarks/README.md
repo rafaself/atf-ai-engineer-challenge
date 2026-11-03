@@ -9,8 +9,9 @@ Bedrock Runtime Converse integration** and current RAG application. This is
 independent of previous model benchmarks and the RAG-versus-embedded-policy
 experiment (#78), with its own rubric, spending approval and run artifacts.
 
-**Status:** documented and frozen for implementation review; no new paid run or
-human-reviewed results have been produced.
+**Status:** standalone measurement and human-review tooling implemented under
+[#82](https://github.com/rafaself/atf-ai-engineer-challenge/issues/82); no new paid
+run or human-reviewed results have been produced.
 
 ---
 
