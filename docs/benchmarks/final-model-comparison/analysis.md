@@ -29,6 +29,29 @@ unchanged rubric are in [protocol §11](protocol.md#11-owner-amendment-v13--afte
 No judging API calls, prompt tuning, substitution or additional paid reruns
 were performed. Later human review may change the judgments.
 
+## Average cost per interaction
+
+A **model interaction** here is one captured model response to a prompt,
+including tool-call responses. A user chat turn can require several such
+interactions. The first average is estimated main-run USD divided by captured
+model responses; the second divides the same cost by 26 attempted chat turns.
+Both exclude preflight and include failed-call costs and unknown-usage
+reservations, amortized across the denominator. These are observed workload
+averages, not fixed prices for future prompts.
+
+| Model | USD per model interaction (prompt + response) | USD per attempted chat turn |
+| --- | ---: | ---: |
+| nova_micro | 0.00015637 | 0.00036086 |
+| nova_lite | 0.00026907 | 0.00068302 |
+| nemotron_nano_3_30b | 0.00025071 | 0.00041463 |
+| nemotron_super_3_120b | 0.00065027 | 0.00130054 |
+| gpt_oss_20b | 0.00022581 | 0.00048637 |
+| gpt_oss_120b | 0.00047980 | 0.00095959 |
+| qwen3_32b | 0.00055973 | 0.00105488 |
+| claude_haiku_5_5 | 0.00072791 | 0.00148382 |
+| gpt6_luna | 0.00035265 | 0.00074599 |
+| gpt6_1_sol | 0.00693718 | 0.01467480 |
+
 ## Capture integrity, interruption and accounting
 
 Measurement ran 2026-11-03, from 15:48:21 to 16:12:30 UTC, against clean commit

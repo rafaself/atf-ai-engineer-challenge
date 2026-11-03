@@ -5,6 +5,8 @@
 The [AI-assessed results](results.md) provisionally select **GPT-6 Luna**:
 Luna and Sol each have 16/16 Pass and zero observed critical errors, with Luna
 winning the unchanged cost tiebreak. The runtime default remains unchanged.
+See [average USD per prompt/response and chat turn](analysis.md#average-cost-per-interaction)
+for a simple per-model cost comparison.
 This is one **unblinded Codex AI assessment**, authorized by the owner **after
 capture**. No independent human review has occurred. The owner amended the
 human-review requirement in [protocol §11](protocol.md#11-owner-amendment-v13--after-capture-2026-11-03);
