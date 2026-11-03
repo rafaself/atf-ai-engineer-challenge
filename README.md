@@ -105,9 +105,11 @@ React/Vite is served by FastAPI from the same origin. Pydantic AI makes typed to
 
 ## Known limitations and evidence
 
-Retrieved sources and typed tools do not guarantee faithful generated prose. The [model-selection record](docs/evaluations/model-selection/README.md) is a bounded, unblinded AI assessment. The [policy-context comparison](docs/evaluations/policy-context/README.md) still awaits human semantic review. Offline checks verify application behavior, not current model-answer quality. The [documentation index](docs/README.md) links to current guides, decisions and evaluation evidence.
+- The demo currently depends on Bedrock for live model inference, with the provider integration isolated behind an agent boundary.
+- Answer-quality problems were more evident with lower-performing models such as Qwen3 32B. GPT-6 Luna and GPT-6.1 Sol performed well on the evaluated scenarios, but that does not guarantee they will always answer correctly.
+- Earlier runs showed Qwen misreading a conditional Christmas-hours policy. It passed that specific case in the later benchmark, so describe the issue as an observed failure mode, not a persistent failure.
+- The application enforces structured business rules and customer scoping, and checks for blank responses or internal markup. It does not comprehensively verify every generated claim or screen every answer for sensitive content.
 
-For deterministic project checks, install Python 3.12+, `uv`, and Node.js 20.19+ or 22.12+, then run `make check` from the repository root.
 
 ## AI-assisted development
 
@@ -120,5 +122,7 @@ I planned work from the challenge requirements and project goals, turning them i
 For larger or parallel tasks, I used separate branches and Git worktrees to isolate changes and let work proceed against a specific repository state. I delegated independent, well-bounded tasks to subagents, giving each a clear objective, scope or file ownership, constraints, and expected deliverables. I kept dependent work sequenced, then integrated and reviewed the results centrally to catch conflicts and check them against the original requirements.
 
 Repository guidance helped make this process repeatable. `AGENTS.md` documented project-wide working agreements and constraints; repository skills under `.agents/skills/` provided focused workflows for tasks such as implementing work items, domain testing, and architecture audits. These instructions helped align agent work with the project’s scope, quality expectations, and validation practices.
+
+I've made some mistakes in the beginning, the project was going into a unnecessary complexity, I had to go back and review the codebase in order to change and proceed with a clearer direction. Also I took too much time trying to improve the quality using only Qwen-3 32B, although it's a very good model, it hallucinates in some ambiguos or not too much clear context. That was one of the reason that I proceeded with data processing, some points in the policits was not too clear such as the time context related to "Natal" and "Feriados".
 
 The usual cycle was to define the goal and boundaries, plan the work, delegate where it made sense, review the changes, and validate the result. I used delegation where it reduced execution time, while keeping coordination overhead, rework, and unnecessary complexity under control.
