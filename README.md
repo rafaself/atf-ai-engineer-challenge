@@ -99,13 +99,28 @@ Preparing the policy index downloads the embedding model; do this once for each 
 
 I chose Amazon Bedrock primarily because I already have some experience with the platform and have been studying its capabilities. I also have remaining AWS credits, which allow me to experiment without significant cost concerns. Beyond that, Bedrock provides access to foundation models from multiple providers through a unified API, along with services and tools for building AI agents. This makes it a practical choice for experimenting with and developing LLM-powered applications.
 
-### Model
+### Model Selection
 
-I choose the model carefully. I test some models such as Amazon Nova Lite, Amazon Nova Micro, NVIDIA Nemodon 3 Super, etc. At the beginning, I expended a lot of time investing in Qwen3 32B trying to solve some hallucinations, I got good results but not what I wanted. But then, I got access to other models such as Haiku 5.5 and GPT Luna 6. GPT Luna 6 was the model that I had the best results with low cost.
+I compared ten models using a fixed benchmark of 16 Portuguese conversations and 26 HTTP turns per model. GPT-6 Luna and GPT-6.1 Sol were the only candidates to pass all selection gates: both received Pass on all 16 assessed conversations, completed all 26 HTTP turns, and had zero observed critical errors. I provisionally recommend GPT-6 Luna because the two models tied on these quality and reliability measures, while Luna's estimated main-run cost was about 19.7 times lower than Sol's (US$0.0194 versus US$0.3815). Sol had a lower median latency (4.82 seconds versus 5.41 seconds), but I judged Luna's cost advantage the stronger tradeoff for this project. The recommendation is based on one unblinded AI assessment without independent human review, so it is provisional and does not establish general model superiority. The runtime default remains unchanged.
 
-### UI Interface
+| Model | Pass / Partial / Fail | Reviewed / completed / 16 | HTTP success / attempted / 26 | Main / preflight estimated USD | Input / output tokens | Provider attempts / missing usage | Median / max latency (s) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Amazon Nova Micro | 6 / 5 / 4 | 15 / 15 / 16 | 25 / 26 / 26 | 0.009382380 / 0.000413350 | 220340 / 6585 | 61 / 1 | 2.5087865000000003 / 5.576448 |
+| Amazon Nova Lite | 7 / 1 / 5 | 13 / 13 / 16 | 23 / 26 / 26 | 0.01775856 / 0.00067110 | 246303 / 7327 | 67 / 1 | 3.6289095 / 7.44033 |
+| NVIDIA Nemotron Nano 3 30B | 2 / 5 / 9 | 16 / 16 / 16 | 26 / 26 / 26 | 0.01078050 / 0.00047280 | 156615 / 5765 | 43 / 0 | 2.5202999999999998 / 6.607463 |
+| NVIDIA Nemotron Super 3 120B | 12 / 2 / 2 | 16 / 16 / 16 | 26 / 26 / 26 | 0.03381415 / 0.00111445 | 197105 / 6536 | 52 / 0 | 3.2001939999999998 / 9.075601 |
+| GPT-OSS 20B | 11 / 1 / 4 | 16 / 16 / 16 | 26 / 26 / 26 | 0.01264563 / 0.00036444 | 144069 / 8536 | 56 / 0 | 4.6813555000000004 / 9.911643 |
+| GPT-OSS 120B | 9 / 2 / 4 | 15 / 15 / 16 | 25 / 26 / 26 | 0.02494935 / 0.00078765 | 130609 / 8930 | 52 / 0 | 3.205159 / 7.575956 |
+| Qwen3 32B | 7 / 4 / 5 | 16 / 16 / 16 | 26 / 26 / 26 | 0.02742675 / 0.00101745 | 165021 / 4456 | 49 / 0 | 2.7865955 / 4.618212 |
+| Claude Haiku 5.5 | 12 / 3 / 1 | 16 / 16 / 16 | 26 / 26 / 26 | 0.03857942 / 0.00121814 | 278687 / 14407 | 53 / 0 | 5.554346499999999 / 8.731618 |
+| GPT-6 Luna | 16 / 0 / 0 | 16 / 16 / 16 | 26 / 26 / 26 | 0.0193957775 / 0.000631510 | 140704 / 4936 | 55 / 0 | 5.405984500000001 / 20.982316 |
+| GPT-6.1 Sol | 16 / 0 / 0 | 16 / 16 / 16 | 26 / 26 / 26 | 0.38154490 / 0.0124762 | 142760 / 3906 | 55 / 0 | 4.8178465 / 10.057997 |
 
-For the UI interface I choose React frontend as the main UI for use, I considered that would be a better experience for the user to interact with the agent. But also, I implemented CLI that could be used too.
+These costs are benchmark estimates, not invoices. See the [full benchmark results](docs/evaluations/model-selection/results.md) for the scenario matrix and evaluation limits.
+
+### User Interface
+
+I chose React as the primary user interface because I believed it would provide a better experience for interacting with the agent. I also implemented a CLI for users who prefer working in the terminal.
 
 ### Data Persistence
 
@@ -116,7 +131,7 @@ I decided to process some data to make the informations retrieved by the model c
 
 ## Known limitations and evidence
 
-- I didn't make too much tests in the embedding process, I choose a light and simple approach in this flow.
+- I didn't make too much tests in the embedding process, I choose a light and simple approach in this flow. So it could be tested better as well, but I got good results though.
 - The demo currently depends on Bedrock for live model inference, with the provider integration isolated behind an agent boundary.
 - Answer-quality problems were more evident with lower-performing models such as Qwen3 32B. GPT-6 Luna and GPT-6.1 Sol performed well on the evaluated scenarios, but that does not guarantee they will always answer correctly.
 - Earlier runs showed Qwen misreading a conditional Christmas-hours policy. It passed that specific case in the later benchmark, so describe the issue as an observed failure mode, not a persistent failure.
