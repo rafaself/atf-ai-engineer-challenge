@@ -55,7 +55,15 @@ There is no paid inference without the recorded explicit issue #78 approval. The
 
 Freeze the commit, app source hash, scenario file, original seven supplied CSV/PDF bytes, generated SQLite snapshots, corpus, freeze manifest, freight overlay, E5 weights and Chroma index before preflight. Recheck the freeze before each request. Generated databases/indexes and credentials are not committed. Historical benchmark files/captures remain unchanged.
 
-Artifacts in this directory: `protocol.md`, `scenarios.json`, `embedded-policy.json`, `readiness.json`, `preflight.json`, immutable `capture.json`, `retrieval-metrics.json`, empty human `review.json`, blinded `review-worksheet-primary.json`, `review-worksheet-second.json` for required independent second reviews, `results.md`, and `SHA256SUMS`. The human candidate-arm map is private until reviews are frozen. Selection/recommendation waits for actual human review; no unreviewed AI recommendation is emitted.
+Artifacts in this directory: `protocol.md`, `scenarios.json`, `embedded-policy.json`, `readiness.json`, `preflight.json`, immutable `capture.json`, `cost-reconciliation.json`, `operational-reconciliation.json`, `retrieval-metrics.json`, empty human `review.json`, blinded `review-worksheet-primary.json`, `review-worksheet-second.json` for required independent second reviews, `results.md`, and `SHA256SUMS`. The human candidate-arm map is private until reviews are frozen. Selection/recommendation waits for actual human review; no unreviewed AI recommendation is emitted.
+
+### Post-run accounting amendment — 2026-11-03
+
+The live capture is preserved unchanged. Auditing the returned token fields showed that Converse reports uncached `inputTokens` separately from `cacheReadInputTokens` and `cacheWriteInputTokens`; the in-run formula omitted cache-read input and the cache-write base rate. Its provisional input-token and cost fields therefore undercounted usage. [cost-reconciliation.json](cost-reconciliation.json) recalculates all requests from raw usage and records both the AWS model-card estimate and the protocol-conservative estimate. AWS documents the separate token categories and GPT-6 Luna short-context prices in its [Converse usage documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference.html) and [GPT-6 Luna model card](https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-luna.html).
+
+The initial operational summary also treated the RAG-only `search_store_policies` call as required in the embedded arm. [operational-reconciliation.json](operational-reconciliation.json) recalculates required-tool misses against each arm's actual tool set. Its per-turn operational checks are deterministic; semantic answer review remains human-only.
+
+All 66 provider requests remained within their serialized input and output bounds. The sum of worst-case pre-transmission reservations was US$0.26700768, below the approved US$1.00 cap. The AWS-rate estimate is US$0.02122740; the protocol-conservative estimate is US$0.04014324. This amendment corrects cost reporting only; prompts, execution order, and human review gates are unchanged.
 
 ## Acceptance gates
 

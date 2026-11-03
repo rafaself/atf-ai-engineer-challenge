@@ -71,6 +71,9 @@ INPUT_LIMIT = 4_500_000
 INPUT_OVERHEAD = 2_048
 SHORT_CONTEXT_LIMIT = 272_000
 CAP = Decimal("1.00")
+# Official GPT-6 Luna US Geo short-context cache-read price. Converse reports
+# these tokens separately from `inputTokens`.
+CACHE_READ_USD_PER_MILLION = Decimal("0.011")
 PREFLIGHT_PROMPT = (
     "Consulte o catálogo e informe o preço e o estoque do Yamaha C40 Nylon Natural."
 )
@@ -464,10 +467,15 @@ class Ledger:
             self.stop("invalid_cache_usage")
         input_tokens = usage["inputTokens"]
         output_tokens = usage["outputTokens"]
+        total_input_tokens = input_tokens + cache_read + cache_write
+        cache_write_rate = self.candidate.cache_write_usd_per_million
+        if cache_write_rate is None:
+            self.stop("verified_cache_write_price_unavailable")
         actual = (
-            Decimal(input_tokens) * Decimal("0.11")
-            + Decimal(cache_write) * Decimal("0.0275")
-            + Decimal(output_tokens) * Decimal("0.55")
+            Decimal(input_tokens) * self.candidate.input_usd_per_million
+            + Decimal(cache_read) * CACHE_READ_USD_PER_MILLION
+            + Decimal(cache_write) * cache_write_rate
+            + Decimal(output_tokens) * self.candidate.output_usd_per_million
         ) / Decimal(1_000_000)
         attempt.update(
             status="returned",
@@ -476,10 +484,11 @@ class Ledger:
                 "output_tokens": output_tokens,
                 "cache_read_tokens": cache_read,
                 "cache_write_tokens": cache_write,
+                "total_input_tokens": total_input_tokens,
             },
         )
         if (
-            input_tokens > attempt["input_upper_bound"]
+            total_input_tokens > attempt["input_upper_bound"]
             or output_tokens > OUTPUT_LIMIT
             or actual > Decimal(attempt["reserved_usd"])
         ):
@@ -489,6 +498,168 @@ class Ledger:
             self.stop("provider_usage_exceeded_reservation")
         attempt["accounted_usd"] = str(actual)
         self.save()
+
+
+def reconcile_provider_costs(
+    report: dict[str, Any], candidate: Candidate
+) -> dict[str, Any]:
+    """Recalculate cost from raw Converse token categories, preserving reservations."""
+    input_rate = candidate.input_usd_per_million
+    cache_read_rate = CACHE_READ_USD_PER_MILLION
+    cache_write_rate = candidate.cache_write_usd_per_million
+    output_rate = candidate.output_usd_per_million
+    if cache_write_rate is None:
+        raise ValueError("Verified Luna cache-write pricing is required")
+    rates = {
+        "input": input_rate,
+        "cache_read": cache_read_rate,
+        "cache_write": cache_write_rate,
+        "output": output_rate,
+    }
+    attempts: list[dict[str, Any]] = []
+    by_arm: dict[str, dict[str, Any]] = {
+        arm: {
+            "provider_requests": 0,
+            "known_input_tokens": 0,
+            "known_cache_read_tokens": 0,
+            "known_cache_write_tokens": 0,
+            "known_output_tokens": 0,
+            "unknown_usage_requests": 0,
+            "aws_rate_estimated_cost_usd": Decimal(0),
+            "protocol_conservative_cost_usd": Decimal(0),
+            "pretransmission_reservations_usd": Decimal(0),
+        }
+        for arm in ("rag", "embedded")
+    }
+    input_bound_violations: list[int] = []
+    output_bound_violations: list[int] = []
+    billed_cost_over_reservation: list[int] = []
+    conservative_cost_over_reservation: list[int] = []
+    total_billed = Decimal(0)
+    total_conservative = Decimal(0)
+    total_reserved = Decimal(0)
+
+    for index, attempt in enumerate(report["provider_attempts"]):
+        arm = attempt["arm"]
+        if arm not in by_arm:
+            raise ValueError(f"Unexpected arm in provider attempt: {arm}")
+        arm_summary = by_arm[arm]
+        arm_summary["provider_requests"] += 1
+        reserved = Decimal(attempt["reserved_usd"])
+        total_reserved += reserved
+        arm_summary["pretransmission_reservations_usd"] += reserved
+        usage = attempt.get("usage")
+        if not isinstance(usage, dict):
+            billed_cost = conservative_cost = reserved
+            arm_summary["unknown_usage_requests"] += 1
+            total_input_tokens = output_tokens = None
+        else:
+            input_tokens = int(usage.get("input_tokens", 0))
+            cache_read_tokens = int(usage.get("cache_read_tokens", 0))
+            cache_write_tokens = int(usage.get("cache_write_tokens", 0))
+            output_tokens = int(usage.get("output_tokens", 0))
+            total_input_tokens = input_tokens + cache_read_tokens + cache_write_tokens
+            arm_summary["known_input_tokens"] += total_input_tokens
+            arm_summary["known_cache_read_tokens"] += cache_read_tokens
+            arm_summary["known_cache_write_tokens"] += cache_write_tokens
+            arm_summary["known_output_tokens"] += output_tokens
+            billed_cost = (
+                Decimal(input_tokens) * input_rate
+                + Decimal(cache_read_tokens) * cache_read_rate
+                + Decimal(cache_write_tokens) * cache_write_rate
+                + Decimal(output_tokens) * output_rate
+            ) / Decimal(1_000_000)
+            # The frozen protocol deliberately prices cache reads at the uncached
+            # input rate for its conservative comparison estimate.
+            conservative_cost = (
+                Decimal(input_tokens + cache_read_tokens) * rates["input"]
+                + Decimal(cache_write_tokens) * cache_write_rate
+                + Decimal(output_tokens) * rates["output"]
+            ) / Decimal(1_000_000)
+            if total_input_tokens > int(attempt["input_upper_bound"]):
+                input_bound_violations.append(index)
+            if output_tokens > int(attempt["max_output_tokens"]):
+                output_bound_violations.append(index)
+            if billed_cost > reserved:
+                billed_cost_over_reservation.append(index)
+            if conservative_cost > reserved:
+                conservative_cost_over_reservation.append(index)
+
+        total_billed += billed_cost
+        total_conservative += conservative_cost
+        arm_summary["aws_rate_estimated_cost_usd"] += billed_cost
+        arm_summary["protocol_conservative_cost_usd"] += conservative_cost
+        attempts.append(
+            {
+                "attempt_index": index,
+                "arm": arm,
+                "phase": attempt["phase"],
+                "scenario_id": attempt["scenario_id"],
+                "turn_index": attempt["turn_index"],
+                "status": attempt["status"],
+                "input_tokens_all_categories": total_input_tokens,
+                "output_tokens": output_tokens,
+                "input_upper_bound_tokens": attempt["input_upper_bound"],
+                "max_output_tokens": attempt["max_output_tokens"],
+                "reserved_usd": str(reserved),
+                "aws_rate_estimated_cost_usd": str(billed_cost),
+                "protocol_conservative_cost_usd": str(conservative_cost),
+                "usage": usage,
+            }
+        )
+
+    def money(amount: Decimal) -> str:
+        return str(amount.quantize(Decimal("0.00000001")))
+
+    for summary in by_arm.values():
+        summary["aws_rate_estimated_cost_usd"] = money(
+            summary["aws_rate_estimated_cost_usd"]
+        )
+        summary["protocol_conservative_cost_usd"] = money(
+            summary["protocol_conservative_cost_usd"]
+        )
+        summary["pretransmission_reservations_usd"] = money(
+            summary["pretransmission_reservations_usd"]
+        )
+    return {
+        "issue": 78,
+        "source_capture": "capture.json",
+        "status": "reconciled_from_raw_converse_usage",
+        "capture_preserved_unchanged": True,
+        "capture_provisional_accounted_cost_usd": report.get("accounted_cost_usd"),
+        "reason": "Converse inputTokens reports uncached tokens separately; the in-run provisional formula omitted cache-read input and the cache-write base rate.",
+        "supersedes_capture_fields": [
+            "accounted_cost_usd",
+            "provider_attempts[].accounted_usd",
+            "operational_metrics.by_arm.*.known_input_tokens",
+            "operational_metrics.by_arm.*.estimated_cost_usd",
+        ],
+        "total_input_tokens_formula": "inputTokens + cacheReadInputTokens + cacheWriteInputTokens",
+        "aws_rate_formula_usd_per_million": {
+            "input": str(rates["input"]),
+            "cache_read": str(rates["cache_read"]),
+            "cache_write": str(cache_write_rate),
+            "output": str(rates["output"]),
+        },
+        "aws_pricing_source": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-openai-gpt-6-luna.html",
+        "protocol_conservative_cache_read_rate_usd_per_million": str(rates["input"]),
+        "aws_rate_estimated_total_cost_usd": money(total_billed),
+        "protocol_conservative_total_cost_usd": money(total_conservative),
+        "pretransmission_reservations_total_usd": money(total_reserved),
+        "approved_cap_usd": str(CAP),
+        "all_input_bounds_respected": not input_bound_violations,
+        "all_output_bounds_respected": not output_bound_violations,
+        "all_aws_rate_estimates_within_reservations": not billed_cost_over_reservation,
+        "all_protocol_conservative_estimates_within_reservations": not conservative_cost_over_reservation,
+        "violations": {
+            "input_bound_attempt_indices": input_bound_violations,
+            "output_bound_attempt_indices": output_bound_violations,
+            "aws_cost_over_reservation_attempt_indices": billed_cost_over_reservation,
+            "conservative_cost_over_reservation_attempt_indices": conservative_cost_over_reservation,
+        },
+        "by_arm": by_arm,
+        "attempts": attempts,
+    }
 
 
 def create_agent_for_arm(
@@ -1039,9 +1210,10 @@ def blank_review_worksheet(
 
 
 def operational_metrics(
-    report: dict[str, Any], scenarios: list[dict[str, Any]]
+    report: dict[str, Any], scenarios: list[dict[str, Any]], candidate: Candidate
 ) -> dict[str, Any]:
     scenario_by_id = {scenario["id"]: scenario for scenario in scenarios}
+    reconciliation = reconcile_provider_costs(report, candidate)
     per_arm: dict[str, Any] = {}
     for arm in ("rag", "embedded"):
         arm_attempts = [
@@ -1066,15 +1238,18 @@ def operational_metrics(
                 observed = [call.get("name") for call in turn.get("tool_calls", [])]
                 for name in observed:
                     tool_counts[name] = tool_counts.get(name, 0) + 1
-                absent = [
-                    name
-                    for name in scenario["turns"][turn_index].get("required_tools", [])
-                    if name not in observed
-                ]
+                configured_required = scenario["turns"][turn_index].get(
+                    "required_tools", []
+                )
+                applicable_required = required_tools_for_arm(arm, configured_required)
+                absent = (
+                    [name for name in applicable_required if name not in observed]
+                    if turn.get("status") in {"completed", "failed"}
+                    else []
+                )
                 turn["tool_assessment"] = {
-                    "required_tools": scenario["turns"][turn_index].get(
-                        "required_tools", []
-                    ),
+                    "configured_required_tools": configured_required,
+                    "required_tools": applicable_required,
                     "observed_tools": observed,
                     "missing_required_tools": absent,
                 }
@@ -1111,20 +1286,27 @@ def operational_metrics(
         known_usage = [
             attempt.get("usage") for attempt in arm_attempts if attempt.get("usage")
         ]
-        cost = sum(
-            (Decimal(attempt["accounted_usd"]) for attempt in arm_attempts), Decimal(0)
-        )
         per_arm[arm] = {
             "completed_conversations": completed,
             "failed_conversations": failed,
             "not_executed_conversations": not_executed,
             "model_requests_including_preflight": len(arm_attempts),
-            "known_input_tokens": sum(item["input_tokens"] for item in known_usage),
+            "known_input_tokens": sum(
+                item["input_tokens"]
+                + item.get("cache_read_tokens", 0)
+                + item.get("cache_write_tokens", 0)
+                for item in known_usage
+            ),
             "known_output_tokens": sum(item["output_tokens"] for item in known_usage),
             "unknown_usage_requests": sum(
                 attempt.get("usage") is None for attempt in arm_attempts
             ),
-            "estimated_cost_usd": str(cost),
+            "estimated_cost_usd": reconciliation["by_arm"][arm][
+                "aws_rate_estimated_cost_usd"
+            ],
+            "protocol_conservative_cost_usd": reconciliation["by_arm"][arm][
+                "protocol_conservative_cost_usd"
+            ],
             "total_tool_calls": sum(tool_counts.values()),
             "tool_calls_by_name": tool_counts,
             "missing_required_tool_turns": missing_tools,
@@ -1137,7 +1319,104 @@ def operational_metrics(
     return {"by_arm": per_arm, "semantic_scoring": "pending blinded human review"}
 
 
-def build_results(report: dict[str, Any], retrieval: dict[str, Any]) -> str:
+def required_tools_for_arm(arm: str, configured: list[str]) -> list[str]:
+    if arm == "embedded":
+        return [name for name in configured if name != "search_store_policies"]
+    return configured
+
+
+def reconcile_operational_tools(
+    report: dict[str, Any], scenarios: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """Recheck observable tool calls using each arm's actual tool set."""
+    scenario_by_id = {scenario["id"]: scenario for scenario in scenarios}
+    by_arm: dict[str, dict[str, Any]] = {
+        arm: {
+            "completed_conversations": 0,
+            "failed_conversations": 0,
+            "not_executed_conversations": 0,
+            "missing_required_tool_turns": [],
+            "policy_scope_mismatches": [],
+        }
+        for arm in ("rag", "embedded")
+    }
+    turns = []
+    for scenario_id, pair in report["conversations"].items():
+        scenario = scenario_by_id[scenario_id]
+        for arm in ("rag", "embedded"):
+            case = pair[arm]
+            arm_summary = by_arm[arm]
+            arm_summary[f"{case['status']}_conversations"] += 1
+            for turn_index, scenario_turn in enumerate(scenario["turns"]):
+                turn = case["turns"][turn_index]
+                configured_required = scenario_turn.get("required_tools", [])
+                applicable_required = required_tools_for_arm(arm, configured_required)
+                observed = [call.get("name") for call in turn.get("tool_calls", [])]
+                missing = (
+                    [name for name in applicable_required if name not in observed]
+                    if turn.get("status") in {"completed", "failed"}
+                    else []
+                )
+                scopes = [
+                    event.get("policy_scope")
+                    for event in turn.get("policy_search_events", [])
+                ]
+                expected_scope = scenario_turn.get("policy_scope")
+                mismatched = [
+                    scope
+                    for scope in scopes
+                    if expected_scope is not None and scope != expected_scope
+                ]
+                if missing:
+                    arm_summary["missing_required_tool_turns"].append(
+                        {
+                            "scenario_id": scenario_id,
+                            "turn_index": turn_index,
+                            "tools": missing,
+                        }
+                    )
+                if arm == "rag" and mismatched:
+                    arm_summary["policy_scope_mismatches"].append(
+                        {
+                            "scenario_id": scenario_id,
+                            "turn_index": turn_index,
+                            "expected": expected_scope,
+                            "observed": scopes,
+                        }
+                    )
+                turns.append(
+                    {
+                        "arm": arm,
+                        "scenario_id": scenario_id,
+                        "turn_index": turn_index,
+                        "execution_status": turn.get("status"),
+                        "configured_required_tools": configured_required,
+                        "applicable_required_tools": applicable_required,
+                        "observed_tools": observed,
+                        "missing_required_tools": missing,
+                        "expected_policy_scope": expected_scope
+                        if arm == "rag"
+                        else None,
+                        "observed_policy_scopes": scopes if arm == "rag" else [],
+                    }
+                )
+    return {
+        "issue": 78,
+        "source_capture": "capture.json",
+        "status": "reconciled_by_arm_tool_set",
+        "capture_preserved_unchanged": True,
+        "reason": "The embedded arm intentionally has no search_store_policies tool; it is excluded from that arm's required-tool checks.",
+        "by_arm": by_arm,
+        "turns": turns,
+    }
+
+
+def build_results(
+    report: dict[str, Any],
+    retrieval: dict[str, Any],
+    reconciliation: dict[str, Any],
+    operational_reconciliation: dict[str, Any],
+) -> str:
     rows = []
     for arm in ("rag", "embedded"):
         completed = [
@@ -1158,17 +1437,10 @@ def build_results(report: dict[str, Any], retrieval: dict[str, Any]) -> str:
         arm_attempts = [
             attempt for attempt in report["provider_attempts"] if attempt["arm"] == arm
         ]
-        input_tokens = sum(
-            (attempt.get("usage") or {}).get("input_tokens", 0)
-            for attempt in arm_attempts
-        )
-        output_tokens = sum(
-            (attempt.get("usage") or {}).get("output_tokens", 0)
-            for attempt in arm_attempts
-        )
-        arm_cost = sum(
-            (Decimal(attempt["accounted_usd"]) for attempt in arm_attempts), Decimal(0)
-        )
+        arm_costs = reconciliation["by_arm"][arm]
+        input_tokens = arm_costs["known_input_tokens"]
+        output_tokens = arm_costs["known_output_tokens"]
+        arm_cost = Decimal(arm_costs["aws_rate_estimated_cost_usd"])
         rows.append(
             (
                 arm,
@@ -1179,12 +1451,26 @@ def build_results(report: dict[str, Any], retrieval: dict[str, Any]) -> str:
                 input_tokens,
                 output_tokens,
                 f"{arm_cost:.8f}",
+                f"{arm_cost / len(arm_attempts):.8f}" if arm_attempts else None,
                 round(statistics.median(latencies), 3) if latencies else None,
                 max(latencies) if latencies else None,
             )
         )
     attempts = report["provider_attempts"]
-    spend = sum((Decimal(row["accounted_usd"]) for row in attempts), Decimal(0))
+    spend = Decimal(reconciliation["aws_rate_estimated_total_cost_usd"])
+    conservative_spend = Decimal(reconciliation["protocol_conservative_total_cost_usd"])
+    reservations = Decimal(reconciliation["pretransmission_reservations_total_usd"])
+    unknown_usage = sum(attempt["usage"] is None for attempt in attempts)
+    average_request_cost = spend / len(attempts) if attempts else Decimal(0)
+    required_tool_misses = {
+        arm: len(
+            operational_reconciliation["by_arm"][arm]["missing_required_tool_turns"]
+        )
+        for arm in ("rag", "embedded")
+    }
+    scope_mismatches = len(
+        operational_reconciliation["by_arm"]["rag"]["policy_scope_mismatches"]
+    )
     lines = [
         "# Issue #78 raw benchmark results",
         "",
@@ -1193,12 +1479,17 @@ def build_results(report: dict[str, Any], retrieval: dict[str, Any]) -> str:
         f"- Model: `{MODEL_ID}` via Bedrock Runtime Converse in `{REGION}`.",
         f"- Paired executions: {len(report['conversations'])} conversations; 36 planned user turns across both arms.",
         f"- Provider requests observed, including preflight: {len(attempts)} / {TOTAL_REQUEST_LIMIT} ceiling.",
-        f"- Accounted estimated cost: US${spend:.8f} / US$1.00 approved cap. Unknown-usage attempts retain their full reservation.",
+        f"- AWS-rate estimated cost, including separate cache rates: US${spend:.8f}.",
+        f"- Average cost per model interaction (one prompt plus response, including preflight): US${average_request_cost:.8f} across {len(attempts)} requests.",
+        f"- Protocol-conservative estimate, pricing cache reads at the uncached input rate: US${conservative_spend:.8f}.",
+        f"- Pre-transmission worst-case reservations summed to US${reservations:.8f} / US$1.00 approved cap; {unknown_usage} requests had unknown usage and remain reserved.",
+        "- `capture.json` is preserved unchanged. Its provisional in-run input-token and cost fields are superseded by the post-run [cost reconciliation](cost-reconciliation.json), which accounts for cache tokens reported separately by Converse.",
         f"- Failed/not-completed conversation executions: {report['execution_summary']['failed_conversations']}.",
         f"- Not-executed conversation executions: {report['execution_summary']['not_executed_conversations']}.",
+        f"- Missing required tool calls with arm-specific tool sets: RAG {required_tool_misses['rag']}; embedded {required_tool_misses['embedded']}. RAG policy-scope mismatches: {scope_mismatches}.",
         "",
-        "| Arm | Completed conversations | Planned | HTTP turns | Model calls | Input tokens | Output tokens | Estimated cost (USD) | Median turn latency (s) | Maximum (s) |",
-        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Arm | Completed conversations | Planned | HTTP turns | Model calls incl. preflight | Total input tokens | Output tokens | AWS-rate cost (USD) | Average USD/call | Median turn latency (s) | Maximum (s) |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for (
         arm,
@@ -1209,13 +1500,17 @@ def build_results(report: dict[str, Any], retrieval: dict[str, Any]) -> str:
         input_tokens,
         output_tokens,
         cost,
+        average_cost,
         median,
         maximum,
     ) in rows:
         lines.append(
-            f"| {arm} | {completed_conversations} | {planned} | {http_turn_count} | {calls} | {input_tokens} | {output_tokens} | {cost} | {median} | {maximum} |"
+            f"| {arm} | {completed_conversations} | {planned} | {http_turn_count} | {calls} | {input_tokens} | {output_tokens} | {cost} | {average_cost} | {median} | {maximum} |"
         )
     lines += [
+        "",
+        "Cache-read and cache-write usage are separate token categories. See [cost-reconciliation.json](cost-reconciliation.json) for the raw token totals, per-request bounds, official-rate estimate, and protocol-conservative estimate.",
+        "Per-turn tool compliance is reconciled using each arm's available tools in [operational-reconciliation.json](operational-reconciliation.json).",
         "",
         f"Retrieval ranking metrics have {retrieval['ranking_metric_denominator']} eligible actual general-scope query calls. The per-query metrics and returned-record coverage are in [retrieval-metrics.json](retrieval-metrics.json).",
         "",
@@ -1526,12 +1821,16 @@ async def execute(
         ),
     }
     report["freeze_verifications_before_requests"] = verifier.verifications
-    report["operational_metrics"] = operational_metrics(report, scenarios)
+    reconciliation = reconcile_provider_costs(report, candidate)
+    operational_reconciliation = reconcile_operational_tools(report, scenarios)
+    report["operational_metrics"] = operational_metrics(report, scenarios, candidate)
     retrieval = context_metrics(report, scenarios, rag_search, _corpus)
     worksheet, arm_map = blank_review_worksheet(report, scenarios, os.urandom(32).hex())
     report["review_status"] = "pending_human_review_no_llm_judge"
     report["retrieval_metric_denominator"] = retrieval["ranking_metric_denominator"]
     write_json(work / "capture.json", report, exclusive=True)
+    write_json(work / "cost-reconciliation.json", reconciliation, exclusive=True)
+    write_json(work / "operational-reconciliation.json", operational_reconciliation)
     write_json(work / "retrieval-metrics.json", retrieval, exclusive=True)
     write_json(
         work / "review.json",
@@ -1558,7 +1857,10 @@ async def execute(
     private_map_path = work / "arm-map.private.json"
     write_json(private_map_path, arm_map, exclusive=True)
     private_map_path.chmod(0o600)
-    (work / "results.md").write_text(build_results(report, retrieval), encoding="utf-8")
+    (work / "results.md").write_text(
+        build_results(report, retrieval, reconciliation, operational_reconciliation),
+        encoding="utf-8",
+    )
     artifact_names = [
         "README.md",
         "protocol.md",
@@ -1567,6 +1869,8 @@ async def execute(
         "readiness.json",
         "preflight.json",
         "capture.json",
+        "cost-reconciliation.json",
+        "operational-reconciliation.json",
         "retrieval-metrics.json",
         "review.json",
         "review-worksheet-primary.json",

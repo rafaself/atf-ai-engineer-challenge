@@ -1,0 +1,7 @@
+{
+  "issue": 78,
+  "status": "awaiting_primary_review",
+  "trigger": "Create/fill rows only for every primary Partial, Fail, or critical case; second reviewer must work independently.",
+  "reviewer_type": "independent_second",
+  "rows": []
+}

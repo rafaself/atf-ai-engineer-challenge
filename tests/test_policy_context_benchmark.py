@@ -14,7 +14,27 @@ from scripts.compare_policy_context import (
     Ledger,
     embedded_instructions,
     load_scenarios,
+    operational_metrics,
 )
+
+
+def _luna_candidate() -> Candidate:
+    return Candidate(
+        key="gpt6_luna",
+        model_id="openai.gpt-6-luna",
+        inference_endpoint="bedrock-runtime",
+        inference_model_id=MODEL_ID,
+        inference_api="converse",
+        context_window_tokens=1_050_000,
+        input_usd_per_million=Decimal("0.11"),
+        output_usd_per_million=Decimal("0.55"),
+        tool_use_status="verified",
+        long_context_threshold_tokens=272_000,
+        long_context_input_usd_per_million=Decimal("0.22"),
+        long_context_output_usd_per_million=Decimal("0.825"),
+        cache_write_usd_per_million=Decimal("0.1375"),
+        long_context_cache_write_usd_per_million=Decimal("0.275"),
+    )
 
 
 def test_embedded_policy_arm_contains_corpus_without_rag_tool() -> None:
@@ -40,22 +60,7 @@ def test_issue_78_fixture_has_twelve_paired_conversations_and_eighteen_turns() -
 def test_budget_guard_rejects_before_creating_a_provider_attempt(
     tmp_path: Path,
 ) -> None:
-    candidate = Candidate(
-        key="gpt6_luna",
-        model_id="openai.gpt-6-luna",
-        inference_endpoint="bedrock-runtime",
-        inference_model_id=MODEL_ID,
-        inference_api="converse",
-        context_window_tokens=1_050_000,
-        input_usd_per_million=Decimal("0.11"),
-        output_usd_per_million=Decimal("0.55"),
-        tool_use_status="verified",
-        long_context_threshold_tokens=272_000,
-        long_context_input_usd_per_million=Decimal("0.22"),
-        long_context_output_usd_per_million=Decimal("0.825"),
-        cache_write_usd_per_million=Decimal("0.1375"),
-        long_context_cache_write_usd_per_million=Decimal("0.275"),
-    )
+    candidate = _luna_candidate()
 
     class Verifier:
         def verify(self) -> None:
@@ -86,3 +91,135 @@ def test_budget_guard_rejects_before_creating_a_provider_attempt(
     assert report["provider_attempts"] == []
     assert report["budget_fault"] == "approved_spend_cap"
     assert (tmp_path / "checkpoint.json").is_file()
+
+
+def test_provider_accounting_includes_cache_tokens_in_input_and_cost(
+    tmp_path: Path,
+) -> None:
+    candidate = _luna_candidate()
+
+    class Verifier:
+        def verify(self) -> None:
+            return None
+
+    attempt = {
+        "arm": "rag",
+        "phase": "main",
+        "scenario_id": "C01",
+        "turn_index": 0,
+        "status": "in_flight",
+        "input_upper_bound": 200,
+        "reserved_usd": "0.001",
+        "accounted_usd": "0.001",
+        "usage": None,
+    }
+    report: dict[str, Any] = {"provider_attempts": [attempt]}
+    ledger = Ledger(
+        report,
+        tmp_path / "checkpoint.json",
+        Decimal("1.00"),
+        candidate,
+        Verifier(),  # type: ignore[arg-type]
+    )
+
+    ledger.after_call(
+        context={"issue_78_attempt_index": 0},
+        parsed={
+            "usage": {
+                "inputTokens": 10,
+                "cacheReadInputTokens": 100,
+                "cacheWriteInputTokens": 50,
+                "outputTokens": 20,
+            }
+        },
+    )
+
+    assert isinstance(attempt["usage"], dict)
+    assert attempt["usage"]["total_input_tokens"] == 160
+    assert attempt["accounted_usd"] == "0.000020075"
+
+
+def test_provider_usage_stops_when_cached_tokens_exceed_input_bound(
+    tmp_path: Path,
+) -> None:
+    class Verifier:
+        def verify(self) -> None:
+            return None
+
+    attempt = {
+        "arm": "rag",
+        "phase": "main",
+        "scenario_id": "C01",
+        "turn_index": 0,
+        "status": "in_flight",
+        "input_upper_bound": 159,
+        "max_output_tokens": 1024,
+        "reserved_usd": "0.001",
+        "accounted_usd": "0.001",
+        "usage": None,
+    }
+    report: dict[str, Any] = {"provider_attempts": [attempt]}
+    ledger = Ledger(
+        report,
+        tmp_path / "checkpoint.json",
+        Decimal("1.00"),
+        _luna_candidate(),
+        Verifier(),  # type: ignore[arg-type]
+    )
+
+    with pytest.raises(BudgetStop, match="provider_usage_exceeded_reservation"):
+        ledger.after_call(
+            context={"issue_78_attempt_index": 0},
+            parsed={
+                "usage": {
+                    "inputTokens": 10,
+                    "cacheReadInputTokens": 100,
+                    "cacheWriteInputTokens": 50,
+                    "outputTokens": 20,
+                }
+            },
+        )
+
+    assert isinstance(attempt["usage"], dict)
+    assert attempt["usage"]["total_input_tokens"] == 160
+    assert report["budget_fault"] == "provider_usage_exceeded_reservation"
+
+
+def test_tool_compliance_does_not_require_rag_policy_tool_in_embedded_arm() -> None:
+    scenarios = [
+        {
+            "id": "C01",
+            "turns": [
+                {
+                    "message": "Confira o pedido e a regra de devolução.",
+                    "required_tools": ["get_my_order", "search_store_policies"],
+                }
+            ],
+        }
+    ]
+    report: dict[str, Any] = {
+        "provider_attempts": [],
+        "conversations": {
+            "C01": {
+                arm: {
+                    "status": "completed",
+                    "turns": [
+                        {
+                            "status": "completed",
+                            "latency_seconds": 1.0,
+                            "tool_calls": [{"name": "get_my_order"}],
+                            "policy_search_events": [],
+                        }
+                    ],
+                }
+                for arm in ("rag", "embedded")
+            }
+        },
+    }
+
+    metrics = operational_metrics(report, scenarios, _luna_candidate())
+
+    assert metrics["by_arm"]["rag"]["missing_required_tool_turns"] == [
+        {"scenario_id": "C01", "turn_index": 0, "tools": ["search_store_policies"]}
+    ]
+    assert metrics["by_arm"]["embedded"]["missing_required_tool_turns"] == []

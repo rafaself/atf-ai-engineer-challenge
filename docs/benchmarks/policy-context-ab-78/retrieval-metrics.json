@@ -1,0 +1,819 @@
+{
+  "ranking_metric_denominator": 5,
+  "ranking_metric_averages": {
+    "recall_at_5": 0.6,
+    "precision_at_5": 0.12000000000000002,
+    "mrr_at_5": 0.6,
+    "ndcg_at_5": 0.6
+  },
+  "ranking_metrics_scope": "answerable general/E5 queries with an actual RAG policy search",
+  "actual_context_coverage": [
+    {
+      "scenario_id": "C01",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Qual é o horário normal de funcionamento da loja?",
+      "policy_scope": "general",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s2"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s2"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": true,
+      "ranking_diagnostic": {
+        "top5": [
+          "policy-v2.1-s2"
+        ],
+        "relevant_chunk_ids": [
+          "policy-v2.1-s2"
+        ],
+        "recall_at_5": 1.0,
+        "precision_at_5": 0.2,
+        "mrr_at_5": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      "runtime_search_latency_seconds": 0.052349
+    },
+    {
+      "scenario_id": "C01",
+      "arm": "rag",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "query": "Qual é o horário normal de funcionamento da loja?\nE nos feriados e no Natal, há atendimento?",
+      "policy_scope": "general",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s2"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s2"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": true,
+      "ranking_diagnostic": {
+        "top5": [
+          "policy-v2.1-s2"
+        ],
+        "relevant_chunk_ids": [
+          "policy-v2.1-s2"
+        ],
+        "recall_at_5": 1.0,
+        "precision_at_5": 0.2,
+        "mrr_at_5": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      "runtime_search_latency_seconds": 0.041457
+    },
+    {
+      "scenario_id": "C01",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s2"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C01",
+      "arm": "embedded",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s2"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C02",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora.",
+      "policy_scope": "online_return",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s4.1",
+        "policy-v2.1-s4.4"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 4e-05
+    },
+    {
+      "scenario_id": "C02",
+      "arm": "rag",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "query": "Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora.\nFoi uma compra online e recebi há cinco dias. Posso devolver?",
+      "policy_scope": "online_return",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s4.1",
+        "policy-v2.1-s4.4"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 3.2e-05
+    },
+    {
+      "scenario_id": "C02",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C02",
+      "arm": "embedded",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C03",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Para uma entrega na Região Metropolitana de Campo Grande, um pedido de R$ 500,00 tem frete grátis?",
+      "policy_scope": "general",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s5.1",
+        "policy-v2.1-s5.2",
+        "policy-v2.1-s5.3"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.1"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": true,
+      "ranking_diagnostic": {
+        "top5": [
+          "policy-v2.1-s5.1",
+          "policy-v2.1-s5.2",
+          "policy-v2.1-s5.3"
+        ],
+        "relevant_chunk_ids": [
+          "policy-v2.1-s5.1"
+        ],
+        "recall_at_5": 1.0,
+        "precision_at_5": 0.2,
+        "mrr_at_5": 1.0,
+        "ndcg_at_5": 1.0
+      },
+      "runtime_search_latency_seconds": 0.09277
+    },
+    {
+      "scenario_id": "C03",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s5.1"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C04",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Comprei pela internet e recebi há oito dias corridos. Ainda posso devolver por arrependimento?",
+      "policy_scope": "online_return",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s4.1",
+        "policy-v2.1-s4.4"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 3.4e-05
+    },
+    {
+      "scenario_id": "C04",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C05",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Recebi ontem uma compra online. Toquei o violão uma vez, mas ele está sem marcas. Tenho a embalagem original aberta, todos os acessórios e o manual. Não houve personalização nem ajuste sob encomenda, não havia aviso de venda final e não é uma boquilha.",
+      "policy_scope": "online_return",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s4.1",
+        "policy-v2.1-s4.4"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 3.8e-05
+    },
+    {
+      "scenario_id": "C05",
+      "arm": "rag",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "query": "Qual é o e-mail do SAC para devolver? Vocês podem emitir uma etiqueta para mim?",
+      "policy_scope": "return_contact",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-cover",
+        "policy-v2.1-s1.2",
+        "policy-v2.1-s4.1",
+        "policy-v2.1-s4.4",
+        "policy-v2.1-s7"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-cover"
+        ],
+        [
+          "policy-v2.1-s1.2"
+        ],
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ],
+        [
+          "policy-v2.1-s7"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 2.9e-05
+    },
+    {
+      "scenario_id": "C05",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C05",
+      "arm": "embedded",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-cover"
+        ],
+        [
+          "policy-v2.1-s1.2"
+        ],
+        [
+          "policy-v2.1-s4.1"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ],
+        [
+          "policy-v2.1-s7"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C06",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Comprei presencialmente ontem e queria trocar o violão só pela cor. Qual regra vale?",
+      "policy_scope": "preference_exchange",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s4.3",
+        "policy-v2.1-s4.4"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.3"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 2.4e-05
+    },
+    {
+      "scenario_id": "C06",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s4.3"
+        ],
+        [
+          "policy-v2.1-s4.4"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C07",
+      "arm": "rag",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "evidence_source": "no_policy_search_returned_this_turn",
+      "runtime_record_ids": [],
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-s3.1"
+        ],
+        [
+          "policy-v2.1-s6.2"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "diagnostic_metrics_eligible": false,
+      "unanswerable": false
+    },
+    {
+      "scenario_id": "C07",
+      "arm": "embedded",
+      "turn_index": 1,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-s3.1"
+        ],
+        [
+          "policy-v2.1-s6.2"
+        ]
+      ],
+      "evidence_group_coverage": [
+        true,
+        true,
+        true
+      ],
+      "context_coverage": 1.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C09",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Meu teclado apresentou defeito 45 dias após a compra. A loja ainda troca ou tenho garantia?",
+      "policy_scope": "defect",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s4.2",
+        "policy-v2.1-s8.1",
+        "policy-v2.1-s8.2",
+        "policy-v2.1-s8.3"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-policy-v2.1-s4.2"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s8.1"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s8.2"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s8.3"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 2.7e-05
+    },
+    {
+      "scenario_id": "C09",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-policy-v2.1-s4.2"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s8.1"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s8.2"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s8.3"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C10",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Qual a parcela mínima para pagar em oito vezes, e posso juntar PIX?",
+      "policy_scope": "general",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s3.1",
+        "policy-v2.1-s3",
+        "policy-v2.1-s6.2"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s3.1"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "diagnostic_metrics_eligible": true,
+      "ranking_diagnostic": {
+        "top5": [
+          "policy-v2.1-s3.1",
+          "policy-v2.1-s3",
+          "policy-v2.1-s6.2",
+          "policy-v2.1-s6.1"
+        ],
+        "relevant_chunk_ids": [
+          "policy-v2.1-policy-v2.1-s3",
+          "policy-v2.1-policy-v2.1-s3.1"
+        ],
+        "recall_at_5": 0.0,
+        "precision_at_5": 0.0,
+        "mrr_at_5": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      "runtime_search_latency_seconds": 0.05654
+    },
+    {
+      "scenario_id": "C10",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-policy-v2.1-s3"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s3.1"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C11",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Achei dois telefones no manual. Qual uso para falar com a loja?",
+      "policy_scope": "general",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s7.3",
+        "policy-v2.1-s2",
+        "policy-v2.1-s7.1"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-policy-v2.1-s1.2"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s7"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "diagnostic_metrics_eligible": true,
+      "ranking_diagnostic": {
+        "top5": [
+          "policy-v2.1-s7.3",
+          "policy-v2.1-s2",
+          "policy-v2.1-s7.1",
+          "policy-v2.1-s10",
+          "policy-v2.1-s7.2"
+        ],
+        "relevant_chunk_ids": [
+          "policy-v2.1-policy-v2.1-s1.2",
+          "policy-v2.1-policy-v2.1-s7"
+        ],
+        "recall_at_5": 0.0,
+        "precision_at_5": 0.0,
+        "mrr_at_5": 0.0,
+        "ndcg_at_5": 0.0
+      },
+      "runtime_search_latency_seconds": 0.040656
+    },
+    {
+      "scenario_id": "C11",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [
+        [
+          "policy-v2.1-policy-v2.1-s1.2"
+        ],
+        [
+          "policy-v2.1-policy-v2.1-s7"
+        ]
+      ],
+      "evidence_group_coverage": [
+        false,
+        false
+      ],
+      "context_coverage": 0.0,
+      "unanswerable": false,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    },
+    {
+      "scenario_id": "C12",
+      "arm": "rag",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "query": "Vocês emprestam um instrumento enquanto o meu está na garantia?",
+      "policy_scope": "general",
+      "evidence_source": "runtime_policy_search",
+      "runtime_record_ids": [
+        "policy-v2.1-s8.3",
+        "policy-v2.1-s4",
+        "policy-v2.1-s4.2",
+        "policy-v2.1-s8.1",
+        "policy-v2.1-s8.2"
+      ],
+      "search_error_type": null,
+      "evidence_groups": [],
+      "evidence_group_coverage": [],
+      "context_coverage": null,
+      "diagnostic_metrics_eligible": false,
+      "ranking_diagnostic": null,
+      "runtime_search_latency_seconds": 0.062388
+    },
+    {
+      "scenario_id": "C12",
+      "arm": "embedded",
+      "turn_index": 0,
+      "execution_status": "completed",
+      "evidence_source": "complete_embedded_corpus_availability",
+      "runtime_record_ids": null,
+      "evidence_groups": [],
+      "evidence_group_coverage": [],
+      "context_coverage": null,
+      "unanswerable": true,
+      "note": "Corpus availability only; this does not establish that the answer used or correctly interpreted the evidence."
+    }
+  ],
+  "embedded_policy_availability": "complete frozen corpus was present in every embedded-arm model request"
+}

@@ -1,0 +1,10 @@
+{
+  "issue": 78,
+  "status": "blank_pending_human_review",
+  "scale": [
+    "Pass",
+    "Partial",
+    "Fail"
+  ],
+  "reviews": []
+}

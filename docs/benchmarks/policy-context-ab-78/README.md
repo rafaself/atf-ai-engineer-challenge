@@ -6,7 +6,7 @@ The final recommendation follows manual review under [protocol.md](protocol.md).
 
 The paid run is capped at US$1.00, including preflight. The runner reserves serialized request bytes plus a fixed token margin before every Runtime Converse request, limits output to 1,024 tokens and turns to six requests, retains unknown-usage reservations, and stops before a request that would exceed the cap. The $1 cap was explicitly approved for issue #78. Production source, prompts and model defaults are not modified by the benchmark.
 
-Current status: protocol and fixture frozen; live capture and required human review pending. See the issue-linked run artifacts in this directory once they are created.
+Live capture completed on 2026-11-03: 24/24 conversation executions, 66 Luna requests, and no failed executions. Cost results are in [results.md](results.md) and [cost-reconciliation.json](cost-reconciliation.json); arm-specific operational checks are in [operational-reconciliation.json](operational-reconciliation.json). Primary human review remains pending; no semantic verdict or architecture recommendation is included.
 
 Run readiness from the repository root:
 
