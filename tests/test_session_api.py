@@ -31,8 +31,6 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from tests._support import run_async
-
 
 def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     tmp_path: Path,
@@ -167,10 +165,8 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
         assert invalid.status_code == 422 and marker not in invalid.text
         assert len(calls) == before
     assert len(built) == 2
-    run_async(
-        ProductSearchTool(SQLiteProductRepository(catalog)).find_product_by_name(
-            payment_method="standard", product_name=marker
-        )
+    ProductSearchTool(SQLiteProductRepository(catalog)).find_product_by_name(
+        payment_method="standard", product_name=marker
     )
     events = [
         json.loads(r.getMessage())

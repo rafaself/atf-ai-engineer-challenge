@@ -1,3 +1,4 @@
+import asyncio
 from decimal import Decimal, localcontext
 from pathlib import Path
 
@@ -5,6 +6,8 @@ import pytest
 from emporio_music.agent.catalog import ProductSearchTool, create_catalog_agent
 from emporio_music.agent.settings import AgentSettings
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -29,8 +32,6 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from tests._support import run_async
-
 
 class RecordingRepository:
     def __init__(self) -> None:
@@ -40,20 +41,21 @@ class RecordingRepository:
         self.query = query
         return ProductSearchResult()
 
+    def lookup_many(self, query: ProductBatchLookupQuery) -> ProductBatchLookupResult:
+        raise AssertionError("This search scenario does not request identified quotes")
+
 
 def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository() -> (
     None
 ):
     repository = RecordingRepository()
     tool = ProductSearchTool(repository)
-    result = run_async(
-        tool.search_available_products(
-            payment_method="standard",
-            category=" Violões ",
-            max_price_brl=Decimal("1000.00"),
-            min_price_brl=Decimal("0.29"),
-            limit=20,
-        )
+    result = tool.search_available_products(
+        payment_method="standard",
+        category=" Violões ",
+        max_price_brl=Decimal("1000.00"),
+        min_price_brl=Decimal("0.29"),
+        limit=20,
     )
     assert repository.query == ProductSearchQuery(
         category="Violões",
@@ -61,6 +63,7 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
         max_price_centavos=100000,
         available_only=True,
         limit=20,
+        sort_order="price_asc",
     )
     assert result["total_matches"] == 0 and result["truncated"] is False
     expected = repository.query
@@ -71,27 +74,27 @@ def test_tool_forwards_exact_money_and_rejects_invalid_input_before_repository()
         Decimal("1e999999"),
     ):
         with pytest.raises(ValidationError):
-            run_async(
-                tool.search_available_products(
-                    payment_method="standard", max_price_brl=amount
-                )
+            tool.search_available_products(
+                payment_method="standard", max_price_brl=amount
             )
     for minimum, maximum in ((Decimal("2"), Decimal("1")),):
         with pytest.raises(ValidationError):
-            run_async(
-                tool.search_available_products(
-                    payment_method="standard",
-                    min_price_brl=minimum,
-                    max_price_brl=maximum,
-                )
+            tool.search_available_products(
+                payment_method="standard", min_price_brl=minimum, max_price_brl=maximum
             )
     with pytest.raises(ValidationError):
-        run_async(
-            tool.search_available_products(payment_method="standard", category=" ")
-        )
+        tool.search_available_products(payment_method="standard", category=" ")
     with pytest.raises(ValidationError):
-        run_async(tool.search_available_products(payment_method="standard", limit=21))
+        tool.search_available_products(payment_method="standard", limit=21)
     assert repository.query is expected
+
+
+def test_search_tool_forwards_price_descending_order() -> None:
+    repository = RecordingRepository()
+    ProductSearchTool(repository).search_available_products(
+        payment_method="standard", sort_order="price_desc"
+    )
+    assert repository.query == ProductSearchQuery(sort_order="price_desc")
 
 
 @pytest.mark.parametrize("bound", ["minimum", "maximum"])
@@ -99,10 +102,8 @@ def test_search_price_bounds_use_the_commercial_limit(bound: str) -> None:
     repository = RecordingRepository()
     tool = ProductSearchTool(repository)
     limit = Decimal("1000000000.00")
-    run_async(
-        tool.search_available_products(
-            payment_method="standard", min_price_brl=limit, max_price_brl=limit
-        )
+    tool.search_available_products(
+        payment_method="standard", min_price_brl=limit, max_price_brl=limit
     )
     assert repository.query is not None
     assert repository.query.min_price_centavos == 100000000000
@@ -110,16 +111,12 @@ def test_search_price_bounds_use_the_commercial_limit(bound: str) -> None:
     expected = repository.query
     with pytest.raises(ValidationError):
         if bound == "minimum":
-            run_async(
-                tool.search_available_products(
-                    payment_method="standard", min_price_brl=Decimal("1000000000.01")
-                )
+            tool.search_available_products(
+                payment_method="standard", min_price_brl=Decimal("1000000000.01")
             )
         else:
-            run_async(
-                tool.search_available_products(
-                    payment_method="standard", max_price_brl=Decimal("1000000000.01")
-                )
+            tool.search_available_products(
+                payment_method="standard", max_price_brl=Decimal("1000000000.01")
             )
     assert repository.query is expected
 
@@ -138,7 +135,7 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     repository = SQLiteProductRepository(database)
     observed: list[object] = []
 
-    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         if any(
             isinstance(part, UserPromptPart) and part.content == "Olá"
             for message in messages
@@ -171,7 +168,7 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     executor = create_catalog_agent(
         AgentSettings(), repository, model=FunctionModel(respond)
     )
-    response = run_async(
+    response = asyncio.run(
         executor.run(
             ChatRequest(message="Quais violões até R$1000?"), context=ExecutionContext()
         )
@@ -180,38 +177,32 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     assert observed and isinstance(observed[0], dict)
     assert observed[0]["total_matches"] == 12 and observed[0]["truncated"] is True
     assert (
-        run_async(
+        asyncio.run(
             executor.run(ChatRequest(message="Olá"), context=ExecutionContext())
         ).answer
         == "Olá!"
     )
     tool = ProductSearchTool(repository)
-    named = run_async(
-        tool.find_product_by_name(payment_method="standard", product_name="GD20")
-    )
+    named = tool.find_product_by_name(payment_method="standard", product_name="GD20")
     assert named["products"] == [
         repository.search(ProductSearchQuery(product_name="GD20"))
         .products[0]
         .model_dump(mode="json")
         | {"price_brl": "2199.00"}
     ]
-    unavailable = run_async(
-        tool.find_product_by_name(payment_method="standard", product_name="GF-3D")
+    unavailable = tool.find_product_by_name(
+        payment_method="standard", product_name="GF-3D"
     )
     assert unavailable["total_matches"] == 1
     assert (
-        run_async(
-            tool.search_available_products(
-                payment_method="standard", product_name="GF-3D"
-            )
-        )["total_matches"]
+        tool.search_available_products(payment_method="standard", product_name="GF-3D")[
+            "total_matches"
+        ]
         == 0
     )
     assert (
-        run_async(
-            tool.search_available_products(
-                payment_method="standard", product_name="nonexistent"
-            )
+        tool.search_available_products(
+            payment_method="standard", product_name="nonexistent"
         )["products"]
         == []
     )
@@ -222,7 +213,12 @@ def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
         def search(self, query: ProductSearchQuery) -> ProductSearchResult:
             raise ProductRetrievalError("Catalog unavailable")
 
-    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        def lookup_many(
+            self, query: ProductBatchLookupQuery
+        ) -> ProductBatchLookupResult:
+            raise ProductRetrievalError("Catalog unavailable")
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(
             parts=[
                 ToolCallPart(
@@ -234,16 +230,12 @@ def test_tool_and_agent_do_not_disguise_repository_failure() -> None:
 
     tool = ProductSearchTool(BrokenRepository())
     with pytest.raises(ProductRetrievalError):
-        run_async(
-            tool.search_available_products(
-                payment_method="standard", product_name="GD20"
-            )
-        )
+        tool.search_available_products(payment_method="standard", product_name="GD20")
     executor = create_catalog_agent(
         AgentSettings(), BrokenRepository(), model=FunctionModel(respond)
     )
     with pytest.raises(ProductRetrievalError):
-        run_async(
+        asyncio.run(
             executor.run(
                 ChatRequest(message="Quanto custa o GD20?"), context=ExecutionContext()
             )
@@ -254,10 +246,8 @@ def test_money_conversion_does_not_inherit_ambient_decimal_rounding() -> None:
     repository = RecordingRepository()
     with localcontext() as context:
         context.prec = 2
-        run_async(
-            ProductSearchTool(repository).search_available_products(
-                payment_method="standard", max_price_brl=Decimal("999.99")
-            )
+        ProductSearchTool(repository).search_available_products(
+            payment_method="standard", max_price_brl=Decimal("999.99")
         )
     assert repository.query is not None
     assert repository.query.max_price_centavos == 99999
@@ -276,7 +266,7 @@ def test_sdk_tool_validation_rejects_invalid_arguments_before_repository(
 ) -> None:
     repository = RecordingRepository()
 
-    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(
             parts=[ToolCallPart("search_available_products", arguments)]
         )
@@ -285,7 +275,7 @@ def test_sdk_tool_validation_rejects_invalid_arguments_before_repository(
         AgentSettings(), repository, model=FunctionModel(respond)
     )
     with pytest.raises(AgentExecutionError):
-        run_async(
+        asyncio.run(
             executor.run(
                 ChatRequest(message="Buscar instrumentos"), context=ExecutionContext()
             )

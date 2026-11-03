@@ -3,6 +3,8 @@
 from typing import Protocol
 
 from emporio_music.domain.catalog import (
+    ProductBatchLookupQuery,
+    ProductBatchLookupResult,
     ProductSearchQuery,
     ProductSearchResult,
 )
@@ -18,4 +20,8 @@ class ProductRepository(Protocol):
         Raise ProductRetrievalError for operational failures rather than
         substituting an empty result.
         """
+        ...
+
+    def lookup_many(self, query: ProductBatchLookupQuery) -> ProductBatchLookupResult:
+        """Resolve identified products from one consistent catalog read."""
         ...

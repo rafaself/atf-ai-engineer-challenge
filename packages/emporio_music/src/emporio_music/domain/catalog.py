@@ -13,6 +13,7 @@ from emporio_music.domain.base import (
 from emporio_music.domain.pricing import PaymentMethod, ProductPricing
 
 ProductStatus = Literal["active", "discontinued", "coming_soon"]
+ProductSortOrder = Literal["price_asc", "price_desc"]
 
 
 class ProductSearchQuery(ContractModel):
@@ -20,8 +21,9 @@ class ProductSearchQuery(ContractModel):
 
     Repositories normalize case/accents and match names by literal substring.
     Unknown filters yield no matches, never an unrestricted search. Results are
-    ordered by payable price ascending, then product ID. Named queries can explicitly
-    disable available_only to inspect unavailable catalog entries.
+    ordered by payable price in the selected direction, then product ID. Named
+    queries can explicitly disable available_only to inspect unavailable catalog
+    entries.
     """
 
     product_id: Annotated[PositiveInt, Field(le=2**63 - 1)] | None = None
@@ -32,6 +34,7 @@ class ProductSearchQuery(ContractModel):
     max_price_centavos: NonnegativeInt | None = None
     available_only: StrictBool = True
     payment_method: PaymentMethod = "standard"
+    sort_order: ProductSortOrder = "price_asc"
     promotions_only: StrictBool = False
     limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 10
 
@@ -77,3 +80,40 @@ class ProductSearchResult(ContractModel):
     @property
     def truncated(self) -> bool:
         return self.total_matches > len(self.products)
+
+
+class ProductBatchLookupQuery(ContractModel):
+    """Identify a bounded set of products in one catalog snapshot."""
+
+    product_ids: Annotated[
+        tuple[Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)], ...],
+        Field(min_length=1, max_length=10),
+    ]
+    payment_method: PaymentMethod
+
+    @model_validator(mode="after")
+    def validate_product_ids(self) -> Self:
+        if len(set(self.product_ids)) != len(self.product_ids):
+            raise ValueError("product IDs must be unique")
+        return self
+
+
+class ProductBatchLookupResult(ContractModel):
+    requested_product_ids: tuple[int, ...]
+    products: tuple[ProductSummary, ...] = ()
+    missing_product_ids: tuple[int, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_lookup(self) -> Self:
+        requested = set(self.requested_product_ids)
+        found = {product.product_id for product in self.products}
+        missing = set(self.missing_product_ids)
+        if (
+            len(requested) != len(self.requested_product_ids)
+            or len(found) != len(self.products)
+            or len(missing) != len(self.missing_product_ids)
+            or found & missing
+            or found | missing != requested
+        ):
+            raise ValueError("batch lookup must account for each requested ID once")
+        return self

@@ -112,9 +112,61 @@ promotion validity. `pricing.explanation` describes the actual applied discount.
 price, percentage and final price from those fields; the demo interface explains the simulation once. History
 never supplies current pricing evidence. The notice does not validate generated claims.
 
+Open-ended catalog searches accept `sort_order="price_asc"` (the default) or
+`sort_order="price_desc"`. Both order by payable price and use ascending product ID
+to break ties, so “most expensive” searches can select the highest-priced result.
+
 The supplied four final promotional prices are 32310, 43920, 196718 and 551908
 centavos for product IDs 127, 121, 90 and 94. These are snapshot calculations, not
 live offers. Their source percentages/original prices remain unchanged in storage.
+
+## Multi-product quotes and comparisons
+
+`calculate_quote` accepts one to ten distinct product IDs, each with a requested
+quantity from 1 to 99. It resolves all IDs, prices, active promotions and stock in
+one read-only catalog transaction. A missing product, inactive product, zero stock,
+or requested quantity above stock prevents a cart total; the tool reports the
+specific missing or unavailable item instead of quoting a partial cart. Historical
+orders remain separate snapshots and are never repriced.
+
+The tool returns exact centavos and two-decimal BRL display values for line
+subtotals, cart totals, shipping, split allocations and installments. `compare` shows
+both payment totals and standard-credit installment plans; `pix` selects the
+existing PIX rule; `credit` uses standard pricing and returns installment plans;
+`split` requires a requested PIX allocation. Promotions still take precedence over PIX. The tool does not apply an
+additional PIX discount to mixed payment because the policy does not define that
+case. Mixed tender is permitted only above R$ 2.000,00; when original and standard
+payable totals land on opposite sides of that threshold, the tool reports the
+unresolved basis instead of deciding eligibility. A split allocation always sums
+to the standard payable merchandise total. Split quotes cannot include shipping
+because the manual does not define how freight is assigned between payment methods.
+
+Installment values are allocated in integer centavos and sum exactly to the chosen
+total. The calculation follows the specific ranges in policy section 3.1: purchases
+below R$ 50,00 have no 1–3 installment option; 4–6 installments require at least
+R$ 80,00 each; 7–12 require at least R$ 100,00 each. Section 3 also states a general
+R$ 100,00 minimum. Plans below R$ 100,00 are returned as `policy_ambiguous`, not
+confirmed eligibility; `max_installments` counts confirmed plans and
+`uncertain_max_installments` reports the highest ambiguous count. A zero-value total
+has no installment options. If shipping is unresolved, installment plans use the
+known merchandise total only and `installment_total_scope` identifies that basis.
+
+Shipping is separate from merchandise totals. For the Campo Grande metropolitan
+area, the approved #43 clarification makes freight free at exactly R$ 500,00 and
+above, and R$ 35,00 below. Since the manual does not say whether the threshold uses
+pre- or post-discount merchandise totals, the tool quotes a charge only when both
+bases produce the same result. Supported local shipping is included in
+`quoted_total_centavos`; unresolved or unsupported shipping leaves that all-in total
+unset. Other-city shipping charges are not estimated because they require CEP,
+weight and dimensions; large instruments may require an individual quote.
+
+`compare_products` accepts only identified product IDs and compares original price,
+payable price or stock, returning ascending values, minimum/maximum ties and the
+numeric difference. For open-ended questions such as the cheapest guitar in a
+category, use `search_available_products` with `sort_order="price_asc"`; for the
+most expensive result, use `sort_order="price_desc"`.
+Both tools read current simulated catalog data. History provides conversational
+references only, not prices or inventory.
 
 ## Verification
 

@@ -1,5 +1,6 @@
 """Read-only tools with customer scope supplied exclusively by per-run dependencies."""
 
+from datetime import date
 from typing import Annotated
 
 from pydantic import Field
@@ -11,8 +12,18 @@ from emporio_music.agent.executor import PydanticAgentExecutor
 from emporio_music.agent.factory import create_agent
 from emporio_music.agent.policies import policy_tools
 from emporio_music.agent.settings import AgentSettings
+from emporio_music.application.deadlines import (
+    calculate_deadline as calculate_policy_deadline,
+)
 from emporio_music.diagnostics import trace
 from emporio_music.domain.conversations import ExecutionContext
+from emporio_music.domain.deadlines import (
+    DeadlineEvent,
+    DeadlineRequest,
+    DeadlineType,
+    DeliveryDestination,
+    DeliveryService,
+)
 from emporio_music.domain.orders import (
     DatabaseId,
     OrderListQuery,
@@ -28,7 +39,7 @@ class OrderTools:
     def __init__(self, repository: OrderRepository) -> None:
         self.repository = repository
 
-    async def list_my_orders(
+    def list_my_orders(
         self,
         ctx: RunContext[ExecutionContext],
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 5,
@@ -48,7 +59,7 @@ class OrderTools:
         result = self.repository.list_orders(identity, OrderListQuery(limit=limit))
         return {**result.model_dump(mode="json"), "data_basis": "simulated_current"}
 
-    async def get_my_order(
+    def get_my_order(
         self, ctx: RunContext[ExecutionContext], order_id: DatabaseId
     ) -> dict[str, object]:
         """Read an order in the selected demo account, with at most 20 items.
@@ -92,6 +103,68 @@ class OrderTools:
             ),
         }
 
+    def calculate_deadline(
+        self,
+        ctx: RunContext[ExecutionContext],
+        deadline_type: DeadlineType,
+        order_id: DatabaseId | None = None,
+        reference_date: date | None = None,
+        reference_event: DeadlineEvent | None = None,
+        request_date: date | None = None,
+        destination: DeliveryDestination | None = None,
+        delivery_service: DeliveryService | None = None,
+    ) -> dict[str, object]:
+        """Calculate or qualify a supported order/policy deadline.
+
+        A stored estimated delivery date is only an estimate; it is never actual
+        receipt. Online-return and legal-warranty calculations require the actual
+        receipt event/date. Defect exchange uses the stored purchase date. Refund
+        timing can only be stated as up to ten business days because the manual
+        does not define its starting event. Delivery windows applied after a
+        supplied dispatch date are conditional estimates; the manual does not
+        explicitly establish dispatch as the start event. Business-day estimates
+        exclude weekends and explicitly do not model holidays.
+
+        Args:
+            deadline_type: delivery, online_return, defect_exchange, refund, or warranty.
+            order_id: Optional order ID to resolve from the selected demo account.
+            reference_date: A customer-reported purchase, dispatch, or actual receipt date.
+            reference_event: Event that the supplied date represents; must match the deadline.
+            request_date: Optional return/exchange/warranty request date for window assessment.
+            destination: Required for a calculated delivery window if no stored estimate exists.
+            delivery_service: PAC, SEDEX, or Jadlog for an outside-Campo-Grande estimate.
+        """
+        request = DeadlineRequest(
+            deadline_type=deadline_type,
+            order_id=order_id,
+            reference_date=reference_date,
+            reference_event=reference_event,
+            request_date=request_date,
+            destination=destination,
+            delivery_service=delivery_service,
+        )
+        identity = ctx.deps.identity
+        order = None
+        selection_required = order_id is not None and identity is None
+        if order_id is not None and identity is not None:
+            trace("tool.called", tool="calculate_deadline", lookup="owned_order")
+            order = self.repository.get_order(
+                identity, OrderLookupQuery(order_id=order_id)
+            )
+        else:
+            trace("tool.called", tool="calculate_deadline", lookup="policy_only")
+        result = calculate_policy_deadline(
+            request,
+            order=order,
+            order_requested=order_id is not None,
+            customer_selection_required=selection_required,
+        )
+        trace("tool.result", tool="calculate_deadline", status=result.status)
+        return {
+            **result.model_dump(mode="json"),
+            "data_basis": "simulated_current",
+        }
+
 
 def create_store_agent(
     settings: AgentSettings,
@@ -111,6 +184,7 @@ def create_store_agent(
             *product_tools(products),
             Tool(tools.list_my_orders),
             Tool(tools.get_my_order),
+            Tool(tools.calculate_deadline),
             *policy_tools(policy_search),
         ],
     )

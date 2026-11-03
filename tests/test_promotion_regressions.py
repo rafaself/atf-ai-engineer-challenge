@@ -29,10 +29,8 @@ def test_supplied_active_offer_is_quoted_separately_from_original_price(
         data / "promotions.csv",
         database,
     )
-    result = run_async(
-        ProductSearchTool(SQLiteProductRepository(database)).find_product_by_name(
-            "Kalani KAL-700T", payment_method="standard"
-        )
+    result = ProductSearchTool(SQLiteProductRepository(database)).find_product_by_name(
+        "Kalani KAL-700T", payment_method="standard"
     )
     products = result["products"]
     assert isinstance(products, list)

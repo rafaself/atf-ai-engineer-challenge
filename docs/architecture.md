@@ -17,11 +17,13 @@ flowchart LR
     HTTP --> Chat[ChatService]
     Chat --> History[Conversation SQLite]
     Chat --> Agent[Pydantic AI / Bedrock]
-    Agent --> Products[Product tools and exact pricing]
+    Agent --> Products[Product search, quotes and comparisons]
     Agent --> Orders[Customer-scoped order tools]
+    Agent --> Deadlines[Policy deadline calculations]
     Agent --> Policy[Bounded policy search]
     Products --> Catalog[Catalog SQLite]
     Orders --> Operations[Operational SQLite]
+    Deadlines --> Operations
     Corpus[Reviewed policy corpus] --> IndexBuild[Explicit policy-index preparation]
     IndexBuild --> E5[Local E5 embeddings]
     Policy --> E5
@@ -49,15 +51,19 @@ flowchart LR
 
 `domain` groups immutable values in focused modules: `chat` for request/response
 values, `identity` for selected customer scope, `conversations` for owned history
-and execution context, `catalog` for product search, `pricing` for quotes, and
-`orders` for order projections. `base` contains shared validation types and the
-frozen model base; `errors` contains application failures.
+and execution context, `catalog` for product search and batch lookup, `pricing`
+for unit prices, `quotes` and `comparisons` for deterministic product results,
+`deadlines` for qualified date calculations, and `orders` for order projections.
+`base` contains shared validation types and the frozen model base; `errors` contains
+application failures.
 
 `ports` groups protocols by boundary (`chat`, `agent`, `catalog`,
 `conversations`, `orders`, `policies`). `ChatServicePort` and its streaming
 extension live in `ports.chat`; the implementation lives in `application.chat`.
 The agent streaming port lives in `ports.agent` and keeps provider events out of
-the application service. `application.pricing` owns the pure price calculation.
+the application service. `application.pricing` owns unit-price calculation;
+`application.quotes`, `application.comparisons` and `application.deadlines` own
+the corresponding pure calculations.
 Package initializers contain docstrings only; callers import each symbol directly
 from its defining module, without compatibility re-exports.
 
@@ -132,18 +138,25 @@ checks cover expected tables/columns and simple markers, without exact SQL-defin
 auditing or source fingerprints. Transactions and schema constraints still protect
 writes. Conversation storage is untouched by preparation.
 
-Catalog tools share one repository. Python calculates integer-centavo price quotes
-before payable-price filtering, ordering/counting and limiting. The original price
-is retained. Active, stocked products may receive one active promotion, otherwise
-explicit PIX pricing. Inactive/unavailable offers do not apply. No dates are inferred.
+Catalog tools share one repository. Search calculates integer-centavo unit prices
+before payable-price filtering, ordering/counting and limiting. Multi-product quotes
+and comparisons batch identified product IDs in one read-only transaction, including
+current promotion and stock data. Active, stocked products may receive one active
+promotion, otherwise explicit PIX pricing. Inactive/unavailable offers do not apply.
+Quotes, installment allocation and comparisons use integer centavos. Unsupported
+freight, mixed-payment and policy-threshold facts remain explicitly unresolved.
 
 Order tools retain a repository, not customer state. Each read validates selected
 customer existence and scopes order/item/count SQL by customer identity. Foreign
 and missing orders have the same result. Contacts, notes and payment methods are
 excluded. Copied product references and historical totals survive catalog changes.
+Deadline lookups reuse that customer-scoped repository. Stored purchase dates and
+estimated delivery are distinct from dispatch, actual receipt and request dates;
+deadline calculations preserve those distinctions and do not reprice orders.
 See [catalog](catalog.md) and [orders](orders.md).
 
-Tools own exact price calculations, payable-price filtering and customer-scoped reads.
+Tools own exact unit/cart calculations, payable-price filtering, numeric comparisons,
+qualified deadlines and customer-scoped reads.
 The output layer protects against blank/internal-control output and appends notices
 from current tool metadata: partial lists and sources consulted. The UI and CLI
 identify the fictional simulation once; per-answer snapshot/ingestion footers are
