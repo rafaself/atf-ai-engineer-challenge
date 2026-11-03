@@ -50,6 +50,8 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
+from tests._support import run_async
+
 DATA = Path(__file__).resolve().parents[1] / "data"
 
 
@@ -271,7 +273,7 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
         ]
         assert all("fotografia importada" not in answer for answer in answers)
 
-    asyncio.run(concurrent())
+    run_async(concurrent())
     assert len(built) == 2
     with sqlite3.connect(conversation_path) as conn:
         assert (
@@ -381,7 +383,7 @@ def test_forged_or_invalid_tool_arguments_do_not_complete_turns(
 ) -> None:
     monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(parts=[ToolCallPart(tool, arguments)])
 
     executor = create_store_agent(
@@ -402,7 +404,7 @@ def test_forged_or_invalid_tool_arguments_do_not_complete_turns(
 def test_order_tools_fail_with_unknown_customer(
     operational_database: Path,
 ) -> None:
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(parts=[ToolCallPart("list_my_orders", {})])
 
     executor = create_store_agent(
@@ -414,7 +416,7 @@ def test_order_tools_fail_with_unknown_customer(
         model=FunctionModel(model),
     )
     with pytest.raises(CustomerSelectionError):
-        asyncio.run(
+        run_async(
             executor.run(
                 ChatRequest(message="listar"),
                 context=ExecutionContext(identity=CustomerIdentity(customer_id=9999)),
@@ -429,7 +431,7 @@ def test_operational_tool_failure_never_saves_a_completed_turn(
     conversations: SQLiteConversationRepository,
     demo_customer: dict[str, int],
 ) -> None:
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         operational_database.unlink()
         return ModelResponse(
             parts=[
@@ -463,7 +465,7 @@ def test_known_empty_account_receives_successful_empty_list(
 ) -> None:
     monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
             part
             for msg in messages

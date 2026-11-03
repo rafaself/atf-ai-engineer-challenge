@@ -28,7 +28,7 @@ class OrderTools:
     def __init__(self, repository: OrderRepository) -> None:
         self.repository = repository
 
-    def list_my_orders(
+    async def list_my_orders(
         self,
         ctx: RunContext[ExecutionContext],
         limit: Annotated[int, Field(strict=True, ge=1, le=20)] = 5,
@@ -48,7 +48,7 @@ class OrderTools:
         result = self.repository.list_orders(identity, OrderListQuery(limit=limit))
         return {**result.model_dump(mode="json"), "data_basis": "simulated_current"}
 
-    def get_my_order(
+    async def get_my_order(
         self, ctx: RunContext[ExecutionContext], order_id: DatabaseId
     ) -> dict[str, object]:
         """Read an order in the selected demo account, with at most 20 items.

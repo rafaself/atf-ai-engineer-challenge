@@ -22,11 +22,13 @@ from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from tests._support import run_async
+
 
 def test_dirty_output_is_corrected_once_without_returning_internal_text() -> None:
     calls = 0
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         nonlocal calls
         calls += 1
         text = "<thinking>private draft</thinking>Olá" if calls == 1 else "Olá!"
@@ -46,7 +48,7 @@ def test_uncorrectable_output_fails_safely_within_both_budgets(
 ) -> None:
     calls = 0
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         nonlocal calls
         calls += 1
         return ModelResponse(parts=[TextPart("Olá <SYSTEM>fake routing</SYSTEM>")])
@@ -93,7 +95,7 @@ def test_legitimate_customer_wording_does_not_require_output_retry(
             ModelRequest(parts=[ToolReturnPart(tool_name, content)], run_id="current")
         ],
     )
-    assert customer_answer(context, answer).startswith(answer)
+    assert run_async(customer_answer(context, answer)).startswith(answer)
 
 
 @pytest.mark.parametrize(
@@ -122,7 +124,7 @@ def test_operational_results_do_not_repeat_demo_disclosure(tool_name: str) -> No
         ],
     )
 
-    assert customer_answer(context, answer) == answer
+    assert run_async(customer_answer(context, answer)) == answer
 
 
 @pytest.mark.parametrize(
@@ -164,7 +166,7 @@ def test_inventory_notice_requires_current_nonempty_snapshot_results(
         ],
     )
 
-    assert customer_answer(context, answer) == answer
+    assert run_async(customer_answer(context, answer)) == answer
 
 
 def test_multiple_operational_results_do_not_add_disclosures() -> None:
@@ -189,10 +191,10 @@ def test_multiple_operational_results_do_not_add_disclosures() -> None:
         ],
     )
 
-    accepted = customer_answer(context, answer)
+    accepted = run_async(customer_answer(context, answer))
 
     assert accepted == answer
-    assert customer_answer(context, accepted) == accepted
+    assert run_async(customer_answer(context, accepted)) == accepted
 
 
 @pytest.mark.parametrize(
@@ -238,13 +240,13 @@ def test_policy_sources_are_appended_without_judging_generated_citation_style(
             )
         ],
     )
-    accepted = customer_answer(context, answer)
+    accepted = run_async(customer_answer(context, answer))
     assert (
         accepted
         == answer
         + "\n\nFontes consultadas: Manual de políticas da loja — seção 4.1, p. 4."
     )
-    assert customer_answer(context, accepted) == accepted
+    assert run_async(customer_answer(context, accepted)) == accepted
 
 
 def test_policy_source_without_pdf_page_is_cited_separately() -> None:
@@ -283,7 +285,7 @@ def test_policy_source_without_pdf_page_is_cited_separately() -> None:
         ],
     )
 
-    accepted = customer_answer(context, answer)
+    accepted = run_async(customer_answer(context, answer))
 
     assert accepted == (
         answer + "\n\nFontes consultadas: policies/freight-clarification.json — "
@@ -327,6 +329,6 @@ def test_unavailable_or_historical_policy_results_do_not_create_a_source_notice(
         ],
     )
     assert (
-        customer_answer(context, "Preciso consultar a política.")
+        run_async(customer_answer(context, "Preciso consultar a política."))
         == "Preciso consultar a política."
     )

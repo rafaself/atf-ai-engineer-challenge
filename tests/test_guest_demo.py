@@ -46,7 +46,7 @@ def test_guest_history_survives_restart_and_mode_switches_fail_before_execution(
     )
     histories: list[list[str]] = []
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         histories.append(
             [p.content for m in messages for p in m.parts if isinstance(p, TextPart)]
         )
@@ -118,7 +118,7 @@ def test_guest_order_tools_explain_selection_without_reading_orders(
         paths, "CONVERSATION_DATABASE_PATH", tmp_path / "history.sqlite3"
     )
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
             p for m in messages for p in m.parts if isinstance(p, ToolReturnPart)
         ]

@@ -1,6 +1,6 @@
 # Empório da Música frontend
 
-A React + TypeScript + Vite customer-support chat for US-19 and US-20, centered on a subtle branded background. It sends messages to the existing FastAPI `/api/chat` endpoint.
+A React + TypeScript + Vite customer-support chat for US-19, US-20, and issue #84, centered on a subtle branded background. It streams messages from FastAPI `/api/chat/stream` and reconciles each committed answer when the server completes the turn.
 
 ## Run locally
 
@@ -26,6 +26,7 @@ For API integration, start the backend on `127.0.0.1:8000` using the setup instr
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 npm run preview
 ```

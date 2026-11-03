@@ -129,7 +129,7 @@ def test_adapter_translates_text_history_per_run_without_identity_metadata() -> 
 def test_service_and_direct_adapter_revalidate_ownership_before_model_call(
     conversations: SQLiteConversationRepository,
 ) -> None:
-    def forbidden(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def forbidden(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         raise AssertionError("The model must not receive a foreign history")
 
     executor = create_agent(AgentSettings(), model=FunctionModel(forbidden))

@@ -35,6 +35,7 @@ check-python:
 
 check-frontend:
 	npm --prefix apps/frontend ci
+	npm --prefix apps/frontend test
 	npm --prefix apps/frontend run lint
 	npm --prefix apps/frontend run typecheck
 	npm --prefix apps/frontend run build

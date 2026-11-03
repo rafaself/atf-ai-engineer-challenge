@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChatClientError, type ChatClient } from "../services/chatClient";
+import { ChatScrollFollower } from "./chatScroll";
 import { Icon } from "./Icon";
 
 type Message = {
   id: number;
   role: "assistant" | "user";
   text: string;
+  status?: "streaming" | "complete" | "partial";
 };
 
 type ChatWidgetProps = {
@@ -35,8 +37,10 @@ export function ChatWidget({ client }: ChatWidgetProps) {
   const [isSending, setIsSending] = useState(false);
   const [requiresNewConversation, setRequiresNewConversation] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [isFollowingOutput, setIsFollowingOutput] = useState(true);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
+  const scrollFollowerRef = useRef<ChatScrollFollower | null>(null);
   const nextMessageId = useRef(1);
   const sessionIdRef = useRef<string | null>(null);
 
@@ -48,21 +52,39 @@ export function ChatWidget({ client }: ChatWidgetProps) {
 
   useEffect(() => {
     const thread = threadRef.current;
-
-    if (thread) {
-      thread.scrollTo({
-        top: thread.scrollHeight,
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-      });
+    if (!thread) {
+      return;
     }
-  }, [messages, isSending, requestError]);
 
-  function appendMessage(role: Message["role"], text: string) {
+    const follower = new ChatScrollFollower(
+      thread,
+      window,
+      () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      setIsFollowingOutput,
+    );
+    scrollFollowerRef.current = follower;
+    thread.addEventListener("scroll", follower.handleScroll, { passive: true });
+
+    return () => {
+      thread.removeEventListener("scroll", follower.handleScroll);
+      follower.dispose();
+      scrollFollowerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    scrollFollowerRef.current?.followNewOutput();
+  }, [messages]);
+
+  function appendMessage(
+    role: Message["role"],
+    text: string,
+    status?: Message["status"],
+  ) {
     const id = nextMessageId.current;
     nextMessageId.current += 1;
-    setMessages((current) => [...current, { id, role, text }]);
+    setMessages((current) => [...current, { id, role, text, status }]);
+    return id;
   }
 
   async function sendMessage(prompt: string) {
@@ -73,16 +95,46 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     }
 
     appendMessage("user", message);
+    const assistantMessageId = appendMessage("assistant", "", "streaming");
     setDraft("");
     setRequestError(null);
     setIsSending(true);
 
     try {
-      const response = await client.sendMessage(message, sessionIdRef.current ?? undefined);
+      const response = await client.streamMessage(
+        message,
+        sessionIdRef.current ?? undefined,
+        (text) => {
+          setMessages((current) =>
+            current.map((item) =>
+              item.id === assistantMessageId
+                ? { ...item, text: item.text + text }
+                : item,
+            ),
+          );
+        },
+      );
       sessionIdRef.current = response.session_id;
-      appendMessage("assistant", response.answer);
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === assistantMessageId
+            ? { ...item, text: response.answer, status: "complete" }
+            : item,
+        ),
+      );
     } catch (error) {
-      setRequestError(describeFailure(error));
+      const failureMessage = describeFailure(error);
+      setMessages((current) =>
+        current.flatMap((item) => {
+          if (item.id !== assistantMessageId) {
+            return [item];
+          }
+          return item.text
+            ? [{ ...item, status: "partial" }]
+            : [];
+        }),
+      );
+      setRequestError(failureMessage);
       if (!(error instanceof ChatClientError) || error.state === "unknown") {
         sessionIdRef.current = null;
         setRequiresNewConversation(true);
@@ -138,53 +190,71 @@ export function ChatWidget({ client }: ChatWidgetProps) {
           </div>
         </header>
 
-        <div
-          aria-label="Conversa atual"
-          aria-live="polite"
-          className="chat-thread"
-          ref={threadRef}
-          role="log"
-        >
-          {messages.length === 0 && (
-            <div className="chat-welcome">
-              <h3>Vamos encontrar<br />o seu próximo som?</h3>
-              <p>Escolha uma sugestão ou escreva sua pergunta.</p>
-              <div aria-label="Perguntas recomendadas" className="quick-replies quick-replies--center">
-                {quickReplies.map(({ label, prompt }) => (
-                  <button
-                    className="quick-reply"
-                    disabled={isSending}
-                    key={label}
-                    onClick={() => void sendMessage(prompt)}
-                    type="button"
-                  >
-                    {prompt}
-                  </button>
-                ))}
+        <div className="chat-thread-shell">
+          <div
+            aria-label="Conversa atual"
+            aria-live="polite"
+            className="chat-thread"
+            ref={threadRef}
+            role="log"
+          >
+            {messages.length === 0 && (
+              <div className="chat-welcome">
+                <h3>Vamos encontrar<br />o seu próximo som?</h3>
+                <p>Escolha uma sugestão ou escreva sua pergunta.</p>
+                <div aria-label="Perguntas recomendadas" className="quick-replies quick-replies--center">
+                  {quickReplies.map(({ label, prompt }) => (
+                    <button
+                      className="quick-reply"
+                      disabled={isSending}
+                      key={label}
+                      onClick={() => void sendMessage(prompt)}
+                      type="button"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {messages.map((message) => (
-            <div className={`message-row message-row--${message.role}`} key={message.id}>
-              <div className="message-bubble">
-                <ReactMarkdown>{message.text}</ReactMarkdown>
+            {messages.map((message) => (
+              message.text && (
+                <div className={`message-row message-row--${message.role}`} key={message.id}>
+                  <div className="message-bubble">
+                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                    {message.status === "partial" && (
+                      <span className="message-status">Resposta parcial; não foi concluída.</span>
+                    )}
+                  </div>
+                </div>
+              )
+            ))}
+
+            {isSending && (
+              <div className="message-row message-row--assistant">
+                <div aria-label="Lia está respondendo" className="typing-indicator" role="status">
+                  <span /><span /><span />
+                </div>
               </div>
-            </div>
-          ))}
+            )}
 
-          {isSending && (
-            <div className="message-row message-row--assistant">
-              <div aria-label="Lia está digitando" className="typing-indicator" role="status">
-                <span /><span /><span />
+            {requestError && (
+              <div className="chat-error" role="alert">
+                <p>{requestError}</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {requestError && (
-            <div className="chat-error" role="alert">
-              <p>{requestError}</p>
-            </div>
+          {!isFollowingOutput && (
+            <button
+              aria-label="Rolar para a mensagem mais recente"
+              className="chat-scroll-bottom"
+              onClick={() => scrollFollowerRef.current?.jumpToBottom()}
+              type="button"
+            >
+              <Icon name="arrowDown" size={18} />
+            </button>
           )}
         </div>
 

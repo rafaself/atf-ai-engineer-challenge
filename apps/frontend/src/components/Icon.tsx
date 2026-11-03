@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type IconName = "music" | "sparkles" | "plus" | "send";
+type IconName = "music" | "sparkles" | "plus" | "send" | "arrowDown";
 
 type IconProps = {
   name: IconName;
@@ -33,6 +33,7 @@ const paths: Record<IconName, ReactNode> = {
       <path d="M7.5 12H21" />
     </>
   ),
+  arrowDown: <path d="M12 4v16m-7-7 7 7 7-7" />,
 };
 
 export function Icon({ name, size = 20 }: IconProps) {

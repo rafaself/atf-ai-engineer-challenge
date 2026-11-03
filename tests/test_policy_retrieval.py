@@ -19,6 +19,8 @@ from emporio_music.policies.corpus import PolicyCorpus
 from emporio_music.policies.retrieval import expand, query_families
 from emporio_music.policies.search import LocalPolicySearch
 
+from tests._support import run_async
+
 
 class FixedEmbedder:
     def __init__(self) -> None:
@@ -155,7 +157,7 @@ def test_search_store_policies_returns_approved_freight_evidence(
         deps=SimpleNamespace(history=[]),
     )
 
-    result = tools.search_store_policies(context, policy_scope="general")  # type: ignore[arg-type]
+    result = run_async(tools.search_store_policies(context, policy_scope="general"))  # type: ignore[arg-type]
 
     record = next(
         item for item in result["records"] if item["id"] == "policy-v2.1-s5.1"

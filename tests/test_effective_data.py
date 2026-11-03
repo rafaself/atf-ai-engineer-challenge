@@ -14,6 +14,8 @@ from emporio_music.infrastructure.sqlite_repository import (
 from emporio_music.paths import DATA_DIRECTORY
 from emporio_music.policies.corpus import prepare
 
+from tests._support import run_async
+
 
 def test_preparation_resolves_holiday_scope_and_freight_before_retrieval() -> None:
     corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
@@ -47,13 +49,17 @@ def test_product_id_followup_and_unrestricted_alternatives_use_real_catalog(
         operational_database.parent / "operational-catalog.sqlite3"
     )
     tool = ProductSearchTool(repository)
-    result = tool.get_product_details(product_id=85, payment_method="standard")
+    result = run_async(
+        tool.get_product_details(product_id=85, payment_method="standard")
+    )
     products = result["products"]
     assert isinstance(products, list)
     assert products[0]["name"] == "Rozini RC-104 Nylon Estudante"
     assert result["total_matches"] == 1
-    alternatives = tool.find_product_alternatives(
-        product_id=83, payment_method="standard", limit=20
+    alternatives = run_async(
+        tool.find_product_alternatives(
+            product_id=83, payment_method="standard", limit=20
+        )
     )
     candidates = alternatives["products"]
     assert isinstance(candidates, list)
@@ -68,9 +74,13 @@ def test_product_id_followup_and_unrestricted_alternatives_use_real_catalog(
         p.product_id for p in expected.products
     ]
     with pytest.raises(TypeError, match="product_name"):
-        tool.get_product_details(
-            product_name="wrong name", product_id=85, payment_method="standard"
-        )  # type: ignore[call-arg]
+        run_async(
+            tool.get_product_details(
+                product_name="wrong name",  # type: ignore[call-arg]
+                product_id=85,
+                payment_method="standard",
+            )
+        )
 
 
 def test_pix_promotion_explanation_uses_the_actual_discount_origin(
@@ -81,7 +91,7 @@ def test_pix_promotion_explanation_uses_the_actual_discount_origin(
             operational_database.parent / "operational-catalog.sqlite3"
         )
     )
-    result = tool.get_product_details(product_id=121, payment_method="pix")
+    result = run_async(tool.get_product_details(product_id=121, payment_method="pix"))
     products = result["products"]
     assert isinstance(products, list)
     assert products[0]["pricing"]["final_price_brl"] == "439.20"
@@ -97,7 +107,9 @@ def test_alternatives_honor_explicit_pix_payment(operational_database: Path) -> 
             operational_database.parent / "operational-catalog.sqlite3"
         )
     )
-    result = tool.find_product_alternatives(product_id=96, payment_method="pix")
+    result = run_async(
+        tool.find_product_alternatives(product_id=96, payment_method="pix")
+    )
     products = result["products"]
     assert isinstance(products, list)
     assert products
@@ -118,7 +130,7 @@ def test_model_visible_lookup_contracts_separate_names_ids_and_require_payment()
     from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
     from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         schemas = {
             tool.name: tool.parameters_json_schema for tool in info.function_tools
         }

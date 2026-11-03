@@ -44,7 +44,7 @@ class ProductSearchTool:
     def __init__(self, repository: ProductRepository) -> None:
         self.repository = repository
 
-    def search_available_products(
+    async def search_available_products(
         self,
         payment_method: PaymentMethod,
         category: NonblankText | None = None,
@@ -89,7 +89,7 @@ class ProductSearchTool:
         )
         return self._search(query)
 
-    def find_product_by_name(
+    async def find_product_by_name(
         self,
         product_name: NonblankText,
         payment_method: PaymentMethod,
@@ -111,7 +111,7 @@ class ProductSearchTool:
             )
         )
 
-    def get_product_details(
+    async def get_product_details(
         self,
         product_id: Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)],
         payment_method: PaymentMethod,
@@ -131,7 +131,7 @@ class ProductSearchTool:
             )
         )
 
-    def find_product_alternatives(
+    async def find_product_alternatives(
         self,
         product_id: Annotated[int, Field(strict=True, ge=1, le=2**63 - 1)],
         payment_method: PaymentMethod,
@@ -150,7 +150,7 @@ class ProductSearchTool:
                 payment_method=payment_method,
                 available_only=False,
                 limit=1,
-            )
+            ),
         )
         if not original.products:
             raise ModelRetry(

@@ -1,19 +1,20 @@
 import asyncio
 import subprocess
 import sys
+from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
 from emporio_music.agent.factory import create_agent
 from emporio_music.agent.settings import AgentSettings, load_agent_settings
-from emporio_music.domain.chat import ChatRequest
+from emporio_music.domain.chat import AgentResponse, ChatRequest
 from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.errors import (
     AgentExecutionError,
     ConfigurationError,
     ProviderUnavailableError,
 )
-from emporio_music.ports.agent import AgentExecutor
+from emporio_music.ports.agent import AgentExecutor, AgentTextDelta
 from pydantic import ValidationError
 from pydantic_ai import Tool
 from pydantic_ai.exceptions import ModelHTTPError
@@ -24,18 +25,18 @@ from pydantic_ai.messages import (
     ToolCallPart,
     ToolReturnPart,
 )
-from pydantic_ai.models.function import AgentInfo, FunctionModel
+from pydantic_ai.models.function import AgentInfo, DeltaToolCall, FunctionModel
 
 
 def test_controlled_tool_round_trip_and_stateless_runs() -> None:
     calls: list[str] = []
 
-    def echo_code(code: str) -> str:
+    async def echo_code(code: str) -> str:
         """Return the supplied verification code."""
         calls.append(code)
         return code
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         if not any(
             isinstance(part, ToolReturnPart)
             for message in messages
@@ -61,8 +62,70 @@ def test_controlled_tool_round_trip_and_stateless_runs() -> None:
     assert calls == ["checked", "checked"]
 
 
+def test_stream_executes_tools_retries_output_validation_and_returns_final_answer() -> (
+    None
+):
+    model_requests = 0
+    tool_calls: list[str] = []
+
+    async def echo_code(code: str) -> str:
+        """Return the supplied verification code."""
+        tool_calls.append(code)
+        return code
+
+    async def stream_response(
+        messages: list[ModelMessage], info: AgentInfo
+    ) -> AsyncGenerator[dict[int, DeltaToolCall] | str, None]:
+        nonlocal model_requests
+        model_requests += 1
+        if model_requests == 1:
+            assert info.function_tools[0].name == "echo_code"
+            yield {
+                0: DeltaToolCall(
+                    name="echo_code",
+                    json_args='{"code":"checked"}',
+                    tool_call_id="verification-call",
+                )
+            }
+        elif model_requests == 2:
+            yield "<thi"
+            yield "nk>private draft</think>"
+        else:
+            yield "Verificado: "
+            yield "checked"
+
+    executor = create_agent(
+        AgentSettings(max_requests=3),
+        model=FunctionModel(stream_function=stream_response),
+        tools=[Tool(echo_code)],
+    )
+
+    async def collect() -> list[AgentTextDelta | AgentResponse]:
+        return [
+            event
+            async for event in executor.stream(
+                ChatRequest(message="Verifique o código"),
+                context=ExecutionContext(),
+            )
+        ]
+
+    events = asyncio.run(collect())
+    assert model_requests == 3
+    assert tool_calls == ["checked"]
+    assert isinstance(events[-1], AgentResponse)
+    assert events[-1].answer == "Verificado: checked"
+    streamed_text = "".join(
+        event.text for event in events if isinstance(event, AgentTextDelta)
+    )
+    assert "private" not in streamed_text and "<think>" not in streamed_text
+    assert any(
+        isinstance(event, AgentTextDelta) and "Verificado: " in event.text
+        for event in events
+    )
+
+
 def test_provider_failure_is_explicit_and_sanitized() -> None:
-    def fail(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def fail(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         raise ModelHTTPError(503, "test", {"detail": "private provider body"})
 
     executor = create_agent(AgentSettings(), model=FunctionModel(fail))
@@ -84,12 +147,12 @@ def test_independent_budgets_stop_model_loop(
     requests = 0
     tools = 0
 
-    def echo() -> str:
+    async def echo() -> str:
         nonlocal tools
         tools += 1
         return "ok"
 
-    def repeat(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def repeat(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         nonlocal requests
         requests += 1
         return ModelResponse(parts=[ToolCallPart("echo", {})])

@@ -14,6 +14,74 @@ _INTERNAL_MARKUP = re.compile(
     r"|<\|(?:im_start|im_end|system|assistant|analysis)\|>",
     re.IGNORECASE,
 )
+_INTERNAL_MARKUP_TAGS = (
+    "think",
+    "thinking",
+    "analysis",
+    "reasoning",
+    "system",
+    "assistant",
+    "developer",
+    "tool",
+    "function",
+)
+_INTERNAL_TOKEN_MARKERS = (
+    "im_start|",
+    "im_end|",
+    "system|",
+    "assistant|",
+    "analysis|",
+)
+
+
+def contains_internal_markup(text: str) -> bool:
+    return _INTERNAL_MARKUP.search(text) is not None
+
+
+def release_safe_stream_text(
+    text: str, *, final: bool = False
+) -> tuple[str, str, bool]:
+    """Release safe text and retain any suffix that could start internal markup."""
+    if contains_internal_markup(text):
+        return "", "", True
+    if final:
+        return text, "", False
+
+    marker_start = text.rfind("<")
+    if marker_start < 0:
+        return text, "", False
+    possible_marker = text[marker_start:]
+    if _is_possible_internal_markup_prefix(possible_marker):
+        return text[:marker_start], possible_marker, False
+    return text, "", False
+
+
+def _is_possible_internal_markup_prefix(text: str) -> bool:
+    if not text.startswith("<"):
+        return False
+    suffix = text[1:].lower()
+    if not suffix:
+        return True
+    suffix = suffix.lstrip()
+    if not suffix:
+        return True
+    if suffix.startswith("|"):
+        candidate = suffix[1:]
+        return any(marker.startswith(candidate) for marker in _INTERNAL_TOKEN_MARKERS)
+
+    if suffix.startswith("/"):
+        suffix = suffix[1:]
+    suffix = suffix.lstrip()
+    if not suffix:
+        return True
+    return any(
+        tag.startswith(suffix)
+        or (
+            suffix.startswith(tag)
+            and (len(suffix) == len(tag) or suffix[len(tag)] in " />")
+        )
+        for tag in _INTERNAL_MARKUP_TAGS
+    )
 
 
 def _truncated_total(
@@ -25,9 +93,9 @@ def _truncated_total(
     return None
 
 
-def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
+async def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
     """Protect presentation and append notices from current tool metadata."""
-    if not answer.strip() or _INTERNAL_MARKUP.search(answer):
+    if not answer.strip() or contains_internal_markup(answer):
         trace("output.rejected", reason="blank_or_internal_markup", retry=ctx.retry)
         raise ModelRetry(
             "Responda somente ao cliente, em português, sem raciocínio interno, "

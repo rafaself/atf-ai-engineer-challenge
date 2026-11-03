@@ -9,12 +9,15 @@ Luna scored 11 Pass / 1 Partial / 0 Fail; GPT-6.1 Sol scored 12 / 0 / 0 at about
 universal model reliability.
 
 The [IAM policy reference](aws/bedrock-invoke-policy.json) retains the existing
-model and embedding permissions and adds least-privilege `bedrock:InvokeModel`
-access for Luna's US profile and its `us-east-1`, `us-east-2`, and `us-west-2`
-destinations. Replace `<AWS_ACCOUNT_ID>` in the profile ARN before applying the
-policy. This Converse-based runtime does not need project, catalog-listing, or
-IAM-management permissions. The owner applies the policy; the repository never
-changes AWS permissions automatically.
+model and embedding permissions and grants least-privilege
+`bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream` access for
+Luna's US profile and its `us-east-1`, `us-east-2`, and `us-west-2` destinations.
+Replace `<AWS_ACCOUNT_ID>` in the profile ARN before applying the policy. This
+Converse-based runtime does not need project, catalog-listing, or IAM-management
+permissions. The owner applies the policy; the repository never changes AWS
+permissions automatically. Confirm the deployed role or user has the streaming
+action before using `/api/chat/stream`; editing this example does not update or
+verify AWS.
 
 The first Titan inference probe was denied; after the owner updated the policy,
 Titan completed the benchmark. `GetFoundationModel` catalog lookup permission is
