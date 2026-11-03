@@ -15,6 +15,8 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from tests._support import run_async
+
 
 def test_supplied_active_offer_is_quoted_separately_from_original_price(
     tmp_path: Path,
@@ -81,7 +83,7 @@ def test_discount_disclosure_uses_current_run_evidence_only(
             ),
         ],
     )
-    answer = customer_answer(ctx, "Oferta consultada.")
+    answer = run_async(customer_answer(ctx, "Oferta consultada."))
     assert answer.startswith("Oferta consultada.")
     assert "fotografia" not in answer
     assert "Historical offer" not in answer and "Kalani" not in answer

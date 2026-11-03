@@ -18,8 +18,11 @@
     },
     {
       "Effect": "Allow",
-      "Sid": "GPT6LunaConverse",
-      "Action": "bedrock:InvokeModel",
+      "Sid": "GPT6LunaConverseAndStream",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
       "Resource": [
         "arn:aws:bedrock:us-east-1:<AWS_ACCOUNT_ID>:inference-profile/us.openai.gpt-6-luna",
         "arn:aws:bedrock:us-east-1::foundation-model/openai.gpt-6-luna",

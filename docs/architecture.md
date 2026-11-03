@@ -58,10 +58,12 @@ for unit prices, `quotes` and `comparisons` for deterministic product results,
 application failures.
 
 `ports` groups protocols by boundary (`chat`, `agent`, `catalog`,
-`conversations`, `orders`, `policies`). `ChatServicePort` lives in `ports.chat`; its
-implementation lives in `application.chat`. `application.pricing` owns unit-price
-calculation; `application.quotes`, `application.comparisons` and
-`application.deadlines` own the corresponding pure calculations.
+`conversations`, `orders`, `policies`). `ChatServicePort` and its streaming
+extension live in `ports.chat`; the implementation lives in `application.chat`.
+The agent streaming port lives in `ports.agent` and keeps provider events out of
+the application service. `application.pricing` owns unit-price calculation;
+`application.quotes`, `application.comparisons` and `application.deadlines` own
+the corresponding pure calculations.
 Package initializers contain docstrings only; callers import each symbol directly
 from its defining module, without compatibility re-exports.
 

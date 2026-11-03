@@ -63,6 +63,17 @@ unknown or differently scoped session IDs return the same 404 without model exec
 Guest sessions are distinguished only by their IDs: anyone with a guest session ID
 can resume it. There is no identity protection for individual demo users.
 
+The React client uses `POST /api/chat/stream` with the same request fields. It
+returns `text/event-stream` events named `delta`, `done`, and `error`. A `delta`
+contains provisional text. `done` contains the authoritative `answer` and
+`session_id` and is sent only after the complete answer is validated and the user /
+assistant pair has been committed. `error` contains a sanitized message. Errors
+before streaming starts use the normal HTTP status and JSON body. If the client
+disconnects before the commit, cancellation closes the provider stream and the
+turn is not saved. A connection lost after commit but before `done` may leave a
+saved turn, so the client reports unknown completion and does not retry. The
+existing `POST /api/chat` JSON contract remains available.
+
 Nested identity, history, context and payment fields remain forbidden; payment
 selection comes from conversational text through typed tools. Message length is
 limited to 4,000 characters. `customer_id` is HTTP-only: the boundary removes it from
@@ -107,8 +118,9 @@ Details are sanitized. A valid empty result differs from a retrieval failure. On
 service rejects overlapping turns on a session while independent sessions can run
 concurrently. A complete user/assistant pair saves atomically before success. There
 are no expected revisions or cross-instance guarantees. Run one process/service.
-Failed/cancelled executions save no completed turn. Response loss after commit can
-still leave a saved turn; automatic retry deduplication is outside the demo.
+Failed/cancelled executions save no completed turn. Streaming failures after the
+response starts use sanitized in-band `error` events. Response loss after commit
+can still leave a saved turn; automatic retry deduplication is outside the demo.
 
 ## Direct application calls
 

@@ -15,7 +15,7 @@ class PolicyTools:
     def __init__(self, search: PolicySearchPort) -> None:
         self.search = search
 
-    def search_store_policies(
+    async def search_store_policies(
         self, ctx: RunContext[ExecutionContext], policy_scope: PolicyScope
     ) -> PolicySearchResult:
         """Search current policy evidence in the explicitly chosen rule scope.

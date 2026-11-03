@@ -51,7 +51,7 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     monkeypatch.setattr(logging.getLogger("emporio.pipeline"), "propagate", True)
     calls = []
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         calls.append(True)
         returned = [
             part

@@ -4,7 +4,11 @@ export type ChatResponse = {
 };
 
 export type ChatClient = {
-  sendMessage: (message: string, sessionId?: string) => Promise<ChatResponse>;
+  streamMessage: (
+    message: string,
+    sessionId: string | undefined,
+    onDelta: (text: string) => void,
+  ) => Promise<ChatResponse>;
 };
 
 export type ChatFailureState = "failed" | "unknown";

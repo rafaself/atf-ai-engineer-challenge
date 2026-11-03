@@ -4,7 +4,10 @@ from collections.abc import Sequence
 
 import boto3  # type: ignore[import-untyped]
 from botocore.config import Config  # type: ignore[import-untyped]
-from botocore.exceptions import BotoCoreError, ClientError  # type: ignore[import-untyped]
+from botocore.exceptions import (  # type: ignore[import-untyped]
+    BotoCoreError,
+    ClientError,
+)
 from pydantic_ai import Agent, Tool
 from pydantic_ai.models import Model
 from pydantic_ai.models.bedrock import BedrockConverseModel

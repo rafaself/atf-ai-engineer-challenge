@@ -136,7 +136,7 @@ class ProductSearchTool:
                 payment_method=payment_method,
                 available_only=False,
                 limit=1,
-            )
+            ),
         )
         if not original.products:
             raise ModelRetry(

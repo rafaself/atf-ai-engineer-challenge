@@ -15,6 +15,8 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from tests._support import run_async
+
 
 def test_missing_operations_cannot_validate_customer_selection(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -73,5 +75,5 @@ def test_order_notices_use_only_current_evidence() -> None:
             ),
         ],
     )
-    answer = customer_answer(ctx, "Resposta atual")
+    answer = run_async(customer_answer(ctx, "Resposta atual"))
     assert "7 pedidos" in answer and "25 itens" in answer and "99" not in answer

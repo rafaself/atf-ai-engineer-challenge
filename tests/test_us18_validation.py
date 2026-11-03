@@ -27,7 +27,7 @@ from scripts.validate_us18 import (
 
 
 def test_failed_probe_retains_messages_and_safe_cause_without_a_final_answer() -> None:
-    def invalid(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def invalid(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(
             parts=[TextPart("<thinking>Unacceptable draft</thinking>")]
         )
@@ -49,7 +49,7 @@ def test_failed_probe_retains_messages_and_safe_cause_without_a_final_answer() -
 
 
 def test_recorder_counts_only_current_responses_with_assistant_history() -> None:
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(parts=[TextPart("Resposta atual")])
 
     recorder = RecordingAgent(
@@ -95,7 +95,7 @@ def test_access_denial_diagnostic_keeps_actions_without_raw_provider_message() -
             }
         }
 
-    def denied(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def denied(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         raise Denied("private details")
 
     recorder = RecordingAgent(

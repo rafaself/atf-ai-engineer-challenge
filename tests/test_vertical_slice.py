@@ -1,6 +1,5 @@
 """High-risk catalog facts across the complete offline HTTP/tool/SQLite boundary."""
 
-import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +30,8 @@ from pydantic_ai.messages import (
     ToolReturnPart,
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
+
+from tests._support import run_async
 
 INVENTORY_NOTICE = (
     "Preços e estoque refletem uma fotografia importada do catálogo; "
@@ -103,7 +104,7 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     observed: list[dict[str, Any]] = []
     answer = "Resposta de controle; não é avaliação LLM."
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
             part
             for message in messages
@@ -166,7 +167,7 @@ def test_customer_budget_supports_comparison_or_clarification_without_echoing_am
     )
     calls = 0
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         nonlocal calls
         calls += 1
         returned = [
@@ -235,7 +236,7 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
     )
     observed: list[int] = []
 
-    def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def model(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returned = [
             part
             for message in messages
@@ -259,7 +260,7 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
     executor = create_catalog_agent(
         AgentSettings(), SQLiteProductRepository(database), model=FunctionModel(model)
     )
-    response = asyncio.run(
+    response = run_async(
         ChatService(executor, conversations).chat(
             ChatRequest(
                 message="E quanto custa agora?", session_id=context.session.session_id

@@ -12,6 +12,8 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from tests._support import run_async
+
 
 def test_guest_reaches_chat_service_without_customer_metadata() -> None:
     called = False
@@ -62,5 +64,5 @@ def test_output_notices_use_current_run_even_if_sdk_history_has_old_tools() -> N
             ),
         ],
     )
-    answer = customer_answer(ctx, "Resposta atual")
+    answer = run_async(customer_answer(ctx, "Resposta atual"))
     assert "12" in answer and "99" not in answer

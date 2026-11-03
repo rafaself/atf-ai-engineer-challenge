@@ -1,6 +1,5 @@
 """US-17 trace regressions: scripted models verify contracts, not LLM quality."""
 
-import asyncio
 import json
 from pathlib import Path
 from typing import cast
@@ -38,6 +37,8 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
+
+from tests._support import run_async
 
 
 class SourcePolicySearch:
@@ -99,7 +100,7 @@ def test_historical_qwen_answer_preserves_receipt_uncertainty_without_new_disclo
         "confirmação em tempo real. A previsão de entrega, se informada, não "
         "confirma a data real de recebimento."
     )
-    accepted = customer_answer(context, answer)
+    accepted = run_async(customer_answer(context, answer))
     assert accepted.startswith(answer)
     assert notice not in accepted
     assert "Fontes consultadas:" in accepted
@@ -108,7 +109,7 @@ def test_historical_qwen_answer_preserves_receipt_uncertainty_without_new_disclo
 
     # Replaying an answer that already carries the application notice must not
     # append the same notice twice.
-    assert customer_answer(context, accepted) == accepted
+    assert run_async(customer_answer(context, accepted)) == accepted
 
 
 @pytest.mark.parametrize(
@@ -153,7 +154,7 @@ def test_order_snapshot_notice_requires_nonempty_current_order_data(
             ModelRequest(parts=[ToolReturnPart(tool_name, content)], run_id="current")
         ],
     )
-    answer = customer_answer(context, "Aqui estão os pedidos encontrados.")
+    answer = run_async(customer_answer(context, "Aqui estão os pedidos encontrados."))
     assert "fotografia importada" not in answer
 
 
@@ -179,7 +180,7 @@ def test_order_snapshot_notice_ignores_previous_run_results() -> None:
         ],
     )
     answer = "Aqui estão os pedidos encontrados."
-    assert customer_answer(context, answer) == answer
+    assert run_async(customer_answer(context, answer)) == answer
 
 
 def test_mixed_answer_can_correctly_discuss_the_recorded_claims(
@@ -190,7 +191,7 @@ def test_mixed_answer_can_correctly_discuss_the_recorded_claims(
     policy = SourcePolicySearch({"4.1", "4.3"})
     requests = 0
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         nonlocal requests
         requests += 1
         returned_tools = {
@@ -282,7 +283,7 @@ def test_order_return_without_id_allows_clarification(
     identity: CustomerIdentity | None,
     operational_database: Path,
 ) -> None:
-    def clarify(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def clarify(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         return ModelResponse(parts=[TextPart("Qual é o número do pedido?")])
 
     agent = create_store_agent(
@@ -294,7 +295,7 @@ def test_order_return_without_id_allows_clarification(
         model=FunctionModel(clarify),
         policy_search=SourcePolicySearch({"4.1"}),
     )
-    result = asyncio.run(
+    result = run_async(
         agent.run(
             ChatRequest(message="Quero devolver meu pedido."),
             context=ExecutionContext(identity=identity),
@@ -321,7 +322,7 @@ def test_recorded_qwen_candidate_is_delivered_without_citation_retry(
     )
     requests = 0
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         nonlocal requests
         requests += 1
         returned = {

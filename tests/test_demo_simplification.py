@@ -23,6 +23,8 @@ from pydantic_ai.messages import ModelRequest, ToolReturnPart
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
 
+from tests._support import run_async
+
 
 def test_readers_accept_additional_columns_without_exact_ddl_auditing(
     operational_database: Path,
@@ -80,7 +82,7 @@ def test_discounted_products_do_not_append_demo_disclosures() -> None:
         "Instrument 1: R$ 10,00, desconto de 10%, final R$ 9,00.\n"
         "Instrument 2: R$ 10,00, desconto de 10%, final R$ 9,00."
     )
-    answer = customer_answer(context, model_answer)
+    answer = run_async(customer_answer(context, model_answer))
     assert answer.startswith(model_answer)
     assert answer.count("Instrument 1") == answer.count("Instrument 2") == 1
     assert answer.count("10%") == 2

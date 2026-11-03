@@ -13,31 +13,32 @@ from emporio_music.domain.errors import (
 from fastapi.responses import JSONResponse
 
 
-def application_failure_handler(exc: ApplicationError) -> JSONResponse:
+def application_failure_response(exc: ApplicationError) -> tuple[int, str]:
     if isinstance(exc, CustomerSelectionError):
-        return JSONResponse(
-            status_code=422,
-            content={"detail": "Unknown demo customer"},
-        )
+        return 422, "Unknown demo customer"
     if isinstance(exc, SessionAccessError):
-        return JSONResponse(
-            status_code=404, content={"detail": "Conversation session unavailable"}
-        )
+        return 404, "Conversation session unavailable"
     if isinstance(exc, SessionConflictError):
-        return JSONResponse(
-            status_code=409, content={"detail": "Conversation turn conflicts"}
-        )
+        return 409, "Conversation turn conflicts"
     if isinstance(exc, AgentTimeoutError):
-        return JSONResponse(
-            status_code=504, content={"detail": "Conversation timed out"}
-        )
+        return 504, "Conversation timed out"
     if isinstance(
         exc, (ConfigurationError, PolicyRetrievalError, ProviderUnavailableError)
     ):
-        return JSONResponse(
-            status_code=503, content={"detail": "Agent service unavailable"}
-        )
-    return JSONResponse(status_code=500, content={"detail": "Conversation failed"})
+        return 503, "Agent service unavailable"
+    return 500, "Conversation failed"
+
+
+def application_failure_handler(exc: ApplicationError) -> JSONResponse:
+    status_code, detail = application_failure_response(exc)
+    return JSONResponse(status_code=status_code, content={"detail": detail})
+
+
+def sanitized_stream_failure(exc: Exception) -> str:
+    """Return the existing safe failure detail for an SSE error event."""
+    if isinstance(exc, ApplicationError):
+        return application_failure_response(exc)[1]
+    return "Internal server error"
 
 
 def invalid_request_handler() -> JSONResponse:

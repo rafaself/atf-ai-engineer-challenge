@@ -71,8 +71,10 @@ def test_product_id_followup_and_unrestricted_alternatives_use_real_catalog(
     ]
     with pytest.raises(TypeError, match="product_name"):
         tool.get_product_details(
-            product_name="wrong name", product_id=85, payment_method="standard"
-        )  # type: ignore[call-arg]
+            product_name="wrong name",  # type: ignore[call-arg]
+            product_id=85,
+            payment_method="standard",
+        )
 
 
 def test_pix_promotion_explanation_uses_the_actual_discount_origin(
@@ -120,7 +122,7 @@ def test_model_visible_lookup_contracts_separate_names_ids_and_require_payment()
     from pydantic_ai.messages import ModelMessage, ModelResponse, TextPart
     from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         schemas = {
             tool.name: tool.parameters_json_schema for tool in info.function_tools
         }

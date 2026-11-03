@@ -1,6 +1,5 @@
 """Policy-only and mixed policy/order tool behavior through the existing agent."""
 
-import asyncio
 from datetime import date
 from pathlib import Path
 from typing import cast
@@ -54,6 +53,8 @@ from pydantic_ai.messages import (
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.usage import RunUsage
+
+from tests._support import run_async
 
 
 class UnusedProducts:
@@ -131,7 +132,7 @@ def test_policy_tool_has_no_model_query_arguments() -> None:
     policy = FixedPolicySearch()
     prompt = "Meu pedido 4 consta como entregue. Confira o pedido e me diga se posso devolvê-lo agora."
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         tool = next(
             tool for tool in info.function_tools if tool.name == "search_store_policies"
         )
@@ -146,7 +147,7 @@ def test_policy_tool_has_no_model_query_arguments() -> None:
             parts=[TextPart("Preciso confirmar as condições [política 4.1, p. 4].")]
         )
 
-    result = asyncio.run(
+    result = run_async(
         _store_agent(FunctionModel(respond), policy).run(
             ChatRequest(message=prompt),
             context=ExecutionContext(),
@@ -161,7 +162,7 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
     orders = FixedOrders()
     called: list[str] = []
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         names = {tool.name for tool in info.function_tools}
         assert "search_store_policies" in names and "get_my_order" in names
         returns = [
@@ -195,7 +196,7 @@ def test_mixed_policy_and_order_question_uses_both_tools_with_current_query() ->
         identity=identity, session=ConversationSession(owner=identity)
     )
 
-    result = asyncio.run(
+    result = run_async(
         agent.run(
             ChatRequest(message="Meu pedido pode ser devolvido?"), context=context
         )
@@ -215,7 +216,7 @@ def test_post_chat_can_answer_policy_question_with_source_reference(
 ) -> None:
     policy = FixedPolicySearch()
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         if not any(
             isinstance(part, ToolReturnPart)
             for message in messages
@@ -254,7 +255,7 @@ def test_follow_up_policy_search_includes_the_latest_prior_user_question(
     previous_question = "Quero saber as condições para devolver um instrumento."
     follow_up = "E se eu já usei o instrumento?"
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         if not any(
             isinstance(part, ToolReturnPart)
             and part.tool_name == "search_store_policies"
@@ -303,14 +304,16 @@ def test_long_policy_context_falls_back_to_the_current_question() -> None:
             ConversationMessage(role="assistant", content="Resposta anterior."),
         ),
     )
-    PolicyTools(policy).search_store_policies(
-        RunContext(
-            deps=context,
-            model=TestModel(),
-            usage=RunUsage(),
-            prompt=current_question,
-        ),
-        policy_scope="general",
+    run_async(
+        PolicyTools(policy).search_store_policies(
+            RunContext(
+                deps=context,
+                model=TestModel(),
+                usage=RunUsage(),
+                prompt=current_question,
+            ),
+            policy_scope="general",
+        )
     )
 
     assert policy.queries == [current_question]
@@ -337,7 +340,7 @@ def test_invented_assistant_history_does_not_become_current_policy_evidence() ->
         ),
     )
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         returns = [
             part
             for message in messages
@@ -373,7 +376,7 @@ def test_invented_assistant_history_does_not_become_current_policy_evidence() ->
             ]
         )
 
-    result = asyncio.run(
+    result = run_async(
         _store_agent(FunctionModel(respond), policy).run(
             ChatRequest(message=question), context=context
         )
@@ -398,7 +401,7 @@ def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() 
         }
     )
 
-    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         if not any(
             isinstance(part, ToolReturnPart)
             for message in messages
@@ -422,7 +425,7 @@ def test_uncertain_return_eligibility_response_keeps_source_and_missing_facts() 
         )
 
     agent = _store_agent(FunctionModel(respond), policy)
-    result = asyncio.run(
+    result = run_async(
         agent.run(
             ChatRequest(message="Comprei há uma semana, posso devolver?"),
             context=ExecutionContext(),
@@ -442,14 +445,16 @@ def test_policy_tool_failure_propagates_instead_of_becoming_no_match() -> None:
         ) -> PolicySearchResult:
             raise PolicyRetrievalError("private index failure")
 
-    def call_policy(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+    async def call_policy(
+        messages: list[ModelMessage], info: AgentInfo
+    ) -> ModelResponse:
         return ModelResponse(
             parts=[ToolCallPart("search_store_policies", {"policy_scope": "general"})]
         )
 
     agent = _store_agent(FunctionModel(call_policy), FailedSearch())
     with pytest.raises(PolicyRetrievalError, match="private index failure"):
-        asyncio.run(
+        run_async(
             agent.run(
                 ChatRequest(message="Qual o horário?"), context=ExecutionContext()
             )
