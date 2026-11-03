@@ -54,4 +54,4 @@ source preservation, availability, PIX non-stacking, budget boundaries and refre
 follow-ups. Two failing regressions were observed before implementation. Other new
 tests were checked after implementation. Controlled answers prove wiring, not live
 Portuguese interpretation or semantic grounding; explicitly opted-in evaluation
-remains US-13. See [catalog behavior](../catalog.md) and [validation](../validation.md).
+remains US-13. See [catalog behavior](../guides/catalog.md) and [validation](../validation.md).

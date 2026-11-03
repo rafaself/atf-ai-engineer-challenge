@@ -1,6 +1,6 @@
 # Catalog and pricing reference
 
-Use the [README Getting Started guide](../README.md#getting-started) for normal
+Use the [README Getting Started guide](../../README.md#getting-started) for normal
 Docker setup.
 The individual importer below remains available for focused experiments.
 

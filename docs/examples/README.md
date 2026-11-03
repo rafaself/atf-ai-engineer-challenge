@@ -28,7 +28,7 @@ answers together; HTTP success alone does not establish correctness. The Sprint 
 index explains SDK trace capture. No separate recorder framework is required.
 
 The old catalog-only recorder has been retired. The small opt-in
-[provider probe](../bedrock.md) remains available for diagnosing Bedrock tool calling;
+[provider probe](../guides/bedrock.md) remains available for diagnosing Bedrock tool calling;
 it does not establish customer conversation quality.
 Completed one-off evaluation runners are retained in the
 [scripts archive](../../scripts/archive/README.md).
@@ -51,7 +51,7 @@ inventory-notice updates, while preserving the earlier #40 capture.
 The [post-implementation #43 review](issue-43-review/README.md) preserves its
 approved Qwen sample and 12-query local E5 retrieval check. Sprint 4 setup and
 integration checks are recorded in the
-[US-23 validation report](../sprint-4-validation.md).
+[US-23 validation report](../archive/sprints/sprint-4-validation.md).
 
 ## Historical Sprint 1 evidence
 

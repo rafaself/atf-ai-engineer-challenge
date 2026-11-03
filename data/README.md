@@ -46,7 +46,7 @@ not live prices or availability.
 US-03 ingestion preserves these source files. It converts prices exactly to
 integer centavos, validates references/types/statuses/dates/specs, and stores
 additional normalized name columns for lookup. Original descriptive fields are
-retained. See [catalog import and retrieval](../docs/catalog.md) for the full
+retained. See [catalog import and retrieval](../docs/guides/catalog.md) for the full
 snapshot replacement and schema compatibility rules.
 
 ## Owner-approved freight clarification

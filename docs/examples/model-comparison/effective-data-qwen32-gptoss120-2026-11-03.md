@@ -2,7 +2,7 @@
 
 ## Delivery
 
-Implemented the [data-processing plan](../../data-processing.md) locally:
+Implemented the [data-processing plan](../../guides/data-processing.md) locally:
 
 - Canonical opening hours put exceptions in the holiday label and introduce
   possible special service for Natal, Black Friday and the store anniversary.

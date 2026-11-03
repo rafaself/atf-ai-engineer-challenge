@@ -91,8 +91,8 @@ index and E5 cache; `make down` keeps that data. Only run
 `docker compose down --volumes` when you intend to delete it. The demo has no
 authentication, so use fictional data.
 
-The standalone CLI is optional; see the [CLI guide](docs/cli.md). For local
-API and frontend development, see [API setup](docs/api.md) and the
+The standalone CLI is optional; see the [CLI guide](docs/guides/cli.md). For local
+API and frontend development, see [API setup](docs/guides/api.md) and the
 [frontend guide](apps/frontend/README.md).
 
 ## Model and technical choices
@@ -110,8 +110,8 @@ tool calls; deterministic Python and parameterized SQL handle structured
 catalog, pricing and order facts. Policy answers use local Chroma retrieval with
 cached multilingual E5 embeddings, and prompts constrain tool use and factual
 claims. SQLite stores operational snapshots and conversation history. See
-[architecture](docs/architecture.md), [Bedrock configuration](docs/bedrock.md)
-and [policy retrieval](docs/policy-retrieval.md) for details.
+[architecture](docs/architecture.md), [Bedrock configuration](docs/guides/bedrock.md)
+and [policy retrieval](docs/guides/policy-retrieval.md) for details.
 
 ## Known limitations and evidence
 

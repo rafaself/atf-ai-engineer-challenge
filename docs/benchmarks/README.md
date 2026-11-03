@@ -109,7 +109,7 @@ charges. Benchmark index-directory bytes are shared across benchmark collections
 not per-model sizes.
 
 Recall/MRR, multi-group coverage, denominators and frozen gates follow
-[US-14's protocol](../policy-retrieval.md). Unsupported cases receive rankings but
+[US-14's protocol](../guides/policy-retrieval.md). Unsupported cases receive rankings but
 no recall/MRR; nearest neighbors are not evidence of answerability. Retrieval
 results do not establish generated answer quality or cross-language performance.
 

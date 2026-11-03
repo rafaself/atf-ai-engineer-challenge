@@ -2,12 +2,12 @@
 
 US-11 adds read-only account orders to the local fictional demo. The project
 owner confirmed the supplied customer/order data is fictitious and approved its
-publication. Original CSVs, provenance and SHA-256 checksums are in [data](../data/README.md).
+publication. Original CSVs, provenance and SHA-256 checksums are in [data](../../data/README.md).
 This is snapshot retrieval, not production authentication or a fulfillment system.
 
 ## Required import
 
-For normal Docker setup, follow the [README Getting Started guide](../README.md#getting-started).
+For normal Docker setup, follow the [README Getting Started guide](../../README.md#getting-started).
 For a focused operational refresh after catalog setup, the individual importer is:
 
 ```bash
@@ -102,8 +102,8 @@ The prompt is not a universal semantic grounding check. Failures propagate throu
 ChatService without saving a completed turn. Diagnostics allow metadata/counts and
 safe error classes only; no identifiers, credentials, contacts, tracking or tool rows.
 
-See [API setup](api.md), [ADR-0005](adr/0005-authorized-operational-snapshots.md) and
-[validation evidence](validation.md). Controlled models verify wiring and isolation;
+See [API setup](api.md), [ADR-0005](../adr/0005-authorized-operational-snapshots.md) and
+[validation evidence](../validation.md). Controlled models verify wiring and isolation;
 real Portuguese tool choice, follow-ups and adversarial behavior remain opt-in US-13.
 Catalog-only factories and smoke/examples are isolated probes, never an HTTP fallback
 when operational storage is missing.

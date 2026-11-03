@@ -3,12 +3,12 @@
 The agent factory uses Pydantic AI 2.64.0 with boto3 1.43.123. GPT-6 Luna
 (`us.openai.gpt-6-luna`) is the runtime default, invoked through the US
 cross-Region profile from `us-east-1`. The owner selected it for the cost/latency
-balance in the [full v7 comparison](examples/model-comparison/full-qwen-luna-sol-2026-11-03.md):
+balance in the [full v7 comparison](../examples/model-comparison/full-qwen-luna-sol-2026-11-03.md):
 Luna scored 11 Pass / 1 Partial / 0 Fail; GPT-6.1 Sol scored 12 / 0 / 0 at about
 20.5 times the estimated cost in that one run. This sample does not establish
 universal model reliability.
 
-The [IAM policy reference](aws/bedrock-invoke-policy.json) retains the existing
+The [IAM policy reference](../aws/bedrock-invoke-policy.json) retains the existing
 model and embedding permissions and grants least-privilege
 `bedrock:InvokeModel` and `bedrock:InvokeModelWithResponseStream` access for
 Luna's US profile and its `us-east-1`, `us-east-2`, and `us-west-2` destinations.
@@ -107,7 +107,7 @@ The application does not reject generated text by parsing currency amounts, cita
 punctuation or inferred request intent. These heuristics caused false rejections.
 Exact calculations remain in the pricing tools; tool use and faithful presentation
 remain model behaviors to evaluate. The source footer records consulted policy
-sections, without certifying every claim. See the [closing review](examples/sprint-2/closure/README.md).
+sections, without certifying every claim. See the [closing review](../examples/sprint-2/closure/README.md).
 Those captures predate the source-only rule; no new live-model quality is claimed.
 Re-import the generated catalog with `--promotions` before use;
 see [pricing rules and source limits](catalog.md). The Sprint 2 evidence includes
@@ -133,7 +133,7 @@ historical results cannot add new selection notices; corrective retries are stil
 included. The service preserves typed errors, timeout, and caller cancellation.
 No persistence write runs in a background worker after cancellation. The short
 SQLite commit cannot be interrupted asynchronously; the current single-process
-and response-loss limits are in [architecture](architecture.md).
+and response-loss limits are in [architecture](../architecture.md).
 
 Guests use empty identity context and can persist catalog conversations. Non-null
 HTTP customer selection is registry-validated before session/model access; it is
@@ -141,7 +141,7 @@ local fictional selection, not authentication. SDK dependencies carry selected
 scope separately from model messages. The smoke module remains an independent
 provider probe; the historical catalog-only recorder is retired. US-13's reviewed
 conversations used the full HTTP composition and persisted sessions; see
-[the evidence index](examples/sprint-2/README.md)
+[the evidence index](../examples/sprint-2/README.md)
 and [API setup](api.md). Store-policy retrieval/evaluation belongs to the later
 retrieval sprint and is not part of Sprint 2 acceptance.
 

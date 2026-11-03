@@ -11,7 +11,7 @@ Sprint 3 delivers the implemented policy path and its evaluation, with an honest
 assessment of remaining limits. RAG superiority over Full Context and broader
 retrieval/model optimization are not closure requirements. The later owner-approved
 output simplification supersedes the earlier prose-based monetary, citation and
-mixed-intent gates; their removal is documented in the [US-18 report](examples/us-18/results.md#owner-approved-output-simplification-after-the-failed-batch).
+mixed-intent gates; their removal is documented in the [US-18 report](../../examples/us-18/results.md#owner-approved-output-simplification-after-the-failed-batch).
 
 | Closure item | Evidence and limit |
 | --- | --- |
@@ -28,7 +28,7 @@ The latest approved six-turn live batch stopped after its first HTTP 500 at revi
 exhaustion; the candidate also omitted online-purchase applicability and missing-fact
 questions. The other five turns were not executed. There has been no post-simplification
 live model run. The passing HTTP replay establishes delivery, not semantic correctness
-or general tool-selection reliability. See the [preserved batch review](examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
+or general tool-selection reliability. See the [preserved batch review](../../examples/us-18/results.md#finding-5-authorized-current-code-grounding-batch).
 
 Remaining retrieval targets, multi-turn/topic-switch retrieval noise, policy
 applicability, missing-fact handling, unsupported model claims and missed tool calls

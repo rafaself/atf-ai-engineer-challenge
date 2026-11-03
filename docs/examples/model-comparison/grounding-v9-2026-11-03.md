@@ -25,7 +25,7 @@ prove either invalid. Each entry retains section and page references.
 All 29 original excerpt texts and page lists, and all seven supplied CSV/PDF files,
 are unchanged. The metadata participates in the existing corpus fingerprint.
 The derived corpus/freeze and ignored local E5 index were rebuilt together; the
-embedding text is unchanged. See [data processing](../../data-processing.md).
+embedding text is unchanged. See [data processing](../../guides/data-processing.md).
 
 ## Controlled comparison
 

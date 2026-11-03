@@ -153,7 +153,7 @@ excluded. Copied product references and historical totals survive catalog change
 Deadline lookups reuse that customer-scoped repository. Stored purchase dates and
 estimated delivery are distinct from dispatch, actual receipt and request dates;
 deadline calculations preserve those distinctions and do not reprice orders.
-See [catalog](catalog.md) and [orders](orders.md).
+See [catalog](guides/catalog.md) and [orders](guides/orders.md).
 
 Tools own exact unit/cart calculations, payable-price filtering, numeric comparisons,
 qualified deadlines and customer-scoped reads.

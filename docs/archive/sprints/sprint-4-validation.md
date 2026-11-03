@@ -2,7 +2,7 @@
 
 > Archived Sprint 4 validation record. Paths and commands below describe the
 > repository layout at that time. For the current modular-monolith layout and
-> commands, see the [README](../README.md) and [architecture](architecture.md).
+> commands, see the [README](../../README.md) and [architecture](../../architecture.md).
 
 Candidate base: `790feb1` (`integration/sprint-4`), validated on 2026-11-02.
 The US-23 changes add the backend typing marker and reconcile submission docs.
@@ -138,7 +138,7 @@ HTTP, additional CLI dependencies or live model calls.
 
 ## Conversation evidence
 
-[Four actual Portuguese conversations](examples/submission.md) cover catalog,
+[Four actual Portuguese conversations](../../examples/submission.md) cover catalog,
 pricing, promotions, contextual follow-ups, scoped orders, policies and scope
 redirection. These are historical captures with explicit model/date/revision
 limits. Failed attempts and mixed-policy failures remain linked. No new Bedrock

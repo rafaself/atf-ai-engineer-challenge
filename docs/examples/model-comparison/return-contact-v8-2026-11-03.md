@@ -29,7 +29,7 @@ phone/WhatsApp entries, online-return rule and exclusions. Its guidance says:
 The system and tool instructions route SAC, return contacts, label, posting and
 paperwork requests to this scope. No production dependency, supplied source
 bytes, corpus records or embedding input changed. Processing rationale is in
-[data-processing.md](../../data-processing.md).
+[data-processing.md](../../guides/data-processing.md).
 
 ## Reviewed results
 

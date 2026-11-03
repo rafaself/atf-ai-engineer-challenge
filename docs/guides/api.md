@@ -1,6 +1,6 @@
 # Local chat API
 
-Use the [README Getting Started guide](../README.md#getting-started) for the
+Use the [README Getting Started guide](../../README.md#getting-started) for the
 recommended Docker setup and preparation/startup sequence. Run one uvicorn process
 on loopback for local API development. Setup uses the same fixed storage paths as
 the API and never opens the conversation database. The application does not load
@@ -23,7 +23,7 @@ uv run --env-file .env --project apps/api --extra policy-rag --locked uvicorn em
 ```
 
 Policy indexing remains explicit in this path too. To develop the React client
-against this API, follow the [frontend guide](../apps/frontend/README.md).
+against this API, follow the [frontend guide](../../apps/frontend/README.md).
 
 ## Guest and fictional-customer requests
 
@@ -145,5 +145,5 @@ saving it. A CustomerIdentity value alone does not authenticate an external call
 validates non-null IDs against the operational registry. Stop the server before
 manually resetting conversation storage; removing it makes old session IDs inaccessible.
 Diagnostics contain counts, timings and safe error classes, not raw messages, answers,
-identifiers, credentials or tool rows. See [architecture](architecture.md) and
+identifiers, credentials or tool rows. See [architecture](../architecture.md) and
 [provider setup](bedrock.md) for remaining execution limits.
