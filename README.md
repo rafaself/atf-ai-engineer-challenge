@@ -111,8 +111,14 @@ For deterministic project checks, install Python 3.12+, `uv`, and Node.js 20.19+
 
 ## AI-assisted development
 
-My workflow was developed based on AI Agents orchestration with my supervision and coding as well. I used ChatGPT to go deeper in some approaches, plan implementations, struct tasks and elaborate more technical prompts to refine my goals, while Codex and their subagents stay most responsible for the execution, refactor and tests. Sometimes, I used Codex as well to plan and discuss about topics since they have more access to the project.
+I used an iterative, human-led workflow to develop the project. I contributed directly to the code and used AI agents as guided collaborators. I stayed responsible for the scope, architectural choices, tradeoffs, and acceptance criteria, treating AI suggestions as proposals to evaluate rather than decisions to accept automatically.
 
-I have adopted a iterative planning process, delegation, review and validation, giving more importance to simplicity, code quality, maintenance and fundamental technical decisions. I kept control over architectural decisions, using IA as critical helper and not only code generator. So big part of decisions, analysis, approach suggestions and planning was made by me. So AI Agents was more as assistants guided.
+I used ChatGPT mainly to explore approaches, clarify requirements, structure work into issues or stories, and refine technical prompts. Codex was my main environment for repository work, including implementation, refactoring, testing, reviews, and subagent coordination. The roles overlapped: I also used Codex to plan when its access to the codebase was useful, and ChatGPT sometimes helped formalize project artifacts.
 
-The main point was to balance the benefits of the delegation with the coordination cost, avoiding excessive decisions, rework and unnecessary complexity.
+I planned work from the challenge requirements and project goals, turning them into bounded tasks with clear outcomes, constraints, and validation expectations. I emphasized simplicity, correctness, code quality, and maintainability, and refined plans when a proposal exceeded the task’s scope or added complexity without enough value.
+
+For larger or parallel tasks, I used separate branches and Git worktrees to isolate changes and let work proceed against a specific repository state. I delegated independent, well-bounded tasks to subagents, giving each a clear objective, scope or file ownership, constraints, and expected deliverables. I kept dependent work sequenced, then integrated and reviewed the results centrally to catch conflicts and check them against the original requirements.
+
+Repository guidance helped make this process repeatable. `AGENTS.md` documented project-wide working agreements and constraints; repository skills under `.agents/skills/` provided focused workflows for tasks such as implementing work items, domain testing, and architecture audits. These instructions helped align agent work with the project’s scope, quality expectations, and validation practices.
+
+The usual cycle was to define the goal and boundaries, plan the work, delegate where it made sense, review the changes, and validate the result. I used delegation where it reduced execution time, while keeping coordination overhead, rework, and unnecessary complexity under control.
