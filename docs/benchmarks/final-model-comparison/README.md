@@ -4,15 +4,17 @@
 
 This is the **dedicated, prominently documented final model-selection experiment** for Empório da Música. It compares the same production-like agent stack across **ten** Bedrock models, all using **non-streaming Bedrock Runtime Converse**. It is distinct from [RAG versus embedded policies (#78)](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78): the retrieval architecture remains fixed here.
 
+The benchmark is independent of all previous runs: this directory owns its fixture, current-application rubric, budget, captures and selection rule. Historical question text is provenance only; old expectations, approvals, verdicts and resume state are not inputs to this experiment.
+
 ## Fixed workload
 
 | Property | Frozen value |
 | --- | --- |
-| Candidates | 10 (including Qwen control and incumbent GPT-6 Luna) |
+| Candidates | 10 (including Qwen and incumbent GPT-6 Luna) |
 | Scenarios | 16 Portuguese conversations |
 | Turns per candidate | 26 |
 | Total planned | 160 conversations / 260 HTTP chat turns |
-| Source | 12 unchanged v7 regressions + 4 prewritten targeted scenarios |
+| Source | 16 locally frozen scenarios; 12 reuse historical question text with independently defined expectations |
 | Interface | `POST /api/chat` → `ChatService` → Pydantic AI → Bedrock Runtime Converse → local tools |
 | Data | Frozen effective policies, E5/Chroma index and fictional SQLite snapshots |
 | Evaluation | Manual Pass/Partial/Fail + grounding, critical errors, tools, reliability, tokens, cost, latency |
@@ -24,14 +26,14 @@ This is the **dedicated, prominently documented final model-selection experiment
 - [Protocol and precommitted selection rule](protocol.md)
 - [Exact questions, conversation turns and expected behavior](scenarios.json)
 - [Exact ten model routes and rate assumptions](models.json)
-- [Historical v7 fixture](../../examples/model-comparison/scenarios-current-v7.json)
+- [Historical question provenance](../../examples/model-comparison/scenarios-current-v7.json) — not this experiment's rubric
 - [Existing comparison runner](../../../scripts/compare_models.py) — needs bounded adaptation for the ten-model final run, seeded interleaving and this dedicated result location
 
 The results artifacts `preflight.json`, `capture.json`, `review.json` and `results.md` **do not exist yet** and must not be fabricated. The implementing runner must write sanitized immutable captures under this directory and keep previous reports untouched.
 
 ## Execution checklist
 
-1. Implement only the necessary benchmark-runner extensions and offline tests. The old issue-#40 harness currently recognizes eight candidates and cannot yet execute this full protocol unchanged.
+1. Implement only the necessary benchmark-runner extensions and offline tests. Reusable runner helpers currently recognize eight candidates; the final run needs its own ten-model configuration and accounting, without historical experiment restrictions or resume state.
 2. Validate the clean code revision and input/index hashes, exact dataset counts, current model routes, price assumptions, model/provider request parameters, and budget guard **without inference**.
 3. Obtain fresh explicit user approval for a paid cap not exceeding US$10.00. Run the fixed tool-using Converse preflight for all candidates and record preflight costs.
 4. Run one model-interleaved, seeded pass of all 16 scenarios, capturing every attempt/failure and preserving all model/operational tool evidence.

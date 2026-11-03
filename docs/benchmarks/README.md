@@ -6,7 +6,8 @@ The [final-model-comparison](final-model-comparison/README.md) directory contain
 the frozen protocol, 16-conversation/26-turn fixture, and ten-model manifest for
 the final end-to-end model-selection evaluation. All candidates use the **same
 Bedrock Runtime Converse integration** and current RAG application. This is
-separate from the RAG-versus-embedded-policy experiment (#78).
+independent of previous model benchmarks and the RAG-versus-embedded-policy
+experiment (#78), with its own rubric, spending approval and run artifacts.
 
 **Status:** documented and frozen for implementation review; no new paid run or
 human-reviewed results have been produced.

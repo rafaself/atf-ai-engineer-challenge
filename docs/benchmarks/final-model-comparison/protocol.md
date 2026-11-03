@@ -1,4 +1,4 @@
-# Final model-selection benchmark — frozen protocol v1.0
+# Final model-selection benchmark — frozen protocol v1.1
 
 **Status:** methodological specification frozen on 2026-11-03; implementation and paid run not started.
 **Scope:** Empório da Música customer-support agent, application-level Bedrock Runtime Converse.
@@ -11,7 +11,7 @@ Determine which of the **ten named Bedrock models** is best suited for the **unc
 
 **Every candidate must use the same integration:** `Pydantic AI → BedrockConverseModel → bedrock-runtime Converse`, via the existing FastAPI `POST /api/chat` / `ChatService` / typed local tools / SQLite / E5-Chroma policy retrieval. **No Mantle, Responses API, different agents, per-model prompt or tool-schema variants, or additional LLM stages.** Inference IDs may be foundation model IDs or regional inference profiles, but the endpoint and API must stay identical.
 
-This experiment holds RAG fixed. The independent **RAG versus embedded-policy** architecture experiment is issue [#78](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78), and its results must not be pooled into this model ranking.
+This is a standalone experiment with its own fixture, rubric, budget, captures and selection rule. Earlier benchmarks supply neither scoring requirements nor reusable spending approval, results or resume state. Reusing question text or runner helpers does not create an experimental dependency. This experiment holds RAG fixed; results from **RAG versus embedded-policy** [#78](https://github.com/rafaself/atf-ai-engineer-challenge/issues/78) must not be pooled into this model ranking either.
 
 ## 2. Candidates (fixed)
 
@@ -23,7 +23,7 @@ Use all entries of `models.json`, in this canonical order for registration, repo
 4. `nemotron_super_3_120b` — `nvidia.nemotron-super-3-120b`
 5. `gpt_oss_20b` — `openai.gpt-oss-20b-1:0`
 6. `gpt_oss_120b` — `openai.gpt-oss-120b-1:0`
-7. `qwen3_32b` — `qwen.qwen3-32b-v1:0` (historical control)
+7. `qwen3_32b` — `qwen.qwen3-32b-v1:0`
 8. `claude_haiku_5_5` — `us.anthropic.claude-haiku-5-5`
 9. `gpt6_luna` — `us.openai.gpt-6-luna` (incumbent)
 10. `gpt6_1_sol` — `us.openai.gpt-6.1-sol`
@@ -35,7 +35,7 @@ Official NVIDIA model cards: [Nano](https://docs.aws.amazon.com/bedrock/latest/u
 ## 3. Fixed workload and source freeze
 
 `scenarios.json` contains **16 Portuguese conversations and 26 turns per model**, hence **160 planned conversations / 260 planned HTTP turns** for ten models:
-- 12 **unchanged** v7 regression conversations (20 turns) copied from `docs/examples/model-comparison/scenarios-current-v7.json`.
+- 12 question sequences (20 turns) originally used in `docs/examples/model-comparison/scenarios-current-v7.json`, with expected behavior defined independently in this benchmark's local fixture against the current application.
 - Four explicitly authored **new scenario probes** (six turns total), targeting online return/procedure claims, two-product follow-up references, historical order total versus unit price, and holiday-hour uncertainty.
 
 These are **targeted regression probes**, not independently collected blind holdouts. Do not claim generalization from their outcomes.
@@ -90,7 +90,7 @@ Cost accounting: count current model responses separately from SDK/HTTP provider
 
 Review **the full completed conversation**, including all user questions, all final customer-visible answers, operational-tool results, policy evidence and run traces. Keep raw captures immutable. Randomized model aliases (not names) should be provided in the review worksheet; reveal the alias map only after the primary verdicts are frozen. Provider-specific phrasing may make full blinding impossible; report this limitation.
 
-The `expected.facts` and `expected.critical_errors` fields in `scenarios.json` are mandatory scenario-specific criteria. The original 12 rubric entries are unchanged. For every completed conversation, score these **independent dimensions**:
+The `expected.facts` and `expected.critical_errors` fields in this directory's `scenarios.json` are the mandatory scenario-specific criteria. Historical rubric entries and verdicts do not override them. In particular, SAC/label questions require `return_contact`; its included return sections satisfy eligibility-evidence needs in the same turn without a duplicate `online_return` call. For every completed conversation, score these **independent dimensions**:
 
 - **Answer quality (Pass / Partial / Fail):**
   - `Pass`: all materially requested facts/conditions answered correctly; no material unsupported factual claim, misleading definitive decision or needed clarification omitted.
@@ -144,7 +144,7 @@ This is an **engineering selection rule**, not statistical evidence that one mod
 
 ## 9. Implementation contract and deliverables
 
-Keep implementation in `scripts/` and tests in `tests/`. Extend/reuse `scripts/compare_models.py` and `scripts/evaluation_support.py` where appropriate, but **do not change production agent code, add providers/adapters or create a generic benchmark framework**. In particular, the existing runner currently hardcodes eight candidates, an issue-#40 cost cap and some candidate-specific constraints; these must be made compatible with this separate protocol **without rewriting historical experiment behavior**. The runner must support the ten frozen candidates, model-interleaved seeded schedule, full-run accounting and the existing route. Add targeted offline tests for fixture counts, all routes, sanitized captures, spending guard, score aggregation and error classification.
+Keep implementation in `scripts/` and tests in `tests/`. Reuse `scripts/compare_models.py` and `scripts/evaluation_support.py` helpers where appropriate, but **do not change production agent code, add providers/adapters or create a generic benchmark framework**. The existing runner hardcodes eight candidates and historical experiment constraints, so it cannot execute this protocol unchanged. The final run must use this directory's fixture, model manifest, fresh approval, accounting and resume identity; do not inherit old candidate restrictions, budget caps or checkpoint state. Historical artifacts remain untouched. The runner must support the ten frozen candidates, model-interleaved seeded schedule, full-run accounting and the existing route. Add targeted offline tests for fixture counts, all routes, sanitized captures, spending guard, score aggregation and error classification.
 
 Deliver under this **exclusive highlighted directory**, without overwriting old benchmark results:
 

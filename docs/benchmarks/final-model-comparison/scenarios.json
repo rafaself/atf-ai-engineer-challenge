@@ -1,6 +1,6 @@
 {
-  "version": 8,
-  "issue": null,
+  "version": 1,
+  "issue": 80,
   "scenario_count": 16,
   "planned_turns_per_model": 26,
   "scenarios": [
@@ -176,7 +176,7 @@
           "Policy section 2 gives weekday hours 09:00–18:00, Saturday 09:00–13:00, and Sunday/holiday closure.",
           "The same evidence says special-date hours, including Natal, may be extended and that changes are communicated in advance.",
           "Because the policy does not confirm the schedule for a specific Natal, do not assert either that the store is open or categorically closed on Natal; communicate the uncertainty.",
-          "When the first answer retains both the normal closure and special-date qualification, reuse that sufficient evidence without a redundant policy lookup; score tool choice separately from answer faithfulness.",
+          "Refresh general policy evidence for the holiday/Natal follow-up: earlier assistant text is conversational context, not source evidence. This required current read is not redundant; score tool choice separately from answer faithfulness.",
           "The product topic switch requires a fresh find_product_by_name lookup; the current catalog lists Takamine GD20 at R$ 2,199.00 with stock 5.",
           "Name lookup uses find_product_by_name; identified-product follow-ups use get_product_details with product_id. Every catalog read explicitly supplies payment_method, pix for a PIX request and standard otherwise."
         ],
@@ -281,7 +281,7 @@
         "facts": [
           "The reported receipt interval is one day. Original opened packaging is not disqualified for being unsealed. Use without marks is not signs of use.",
           "Extract only user-supported facts; do not impose perfect condition, sealed packaging, additional documents or payment method as eligibility prerequisites.",
-          "For the follow-up refresh online_return scope and explain only documented procedures. State only the documented procedure limit and supported read-only capabilities. Do not invent a SAC address, telephone or posting label."
+          "For the SAC email/label follow-up use return_contact scope, which includes sections 4.1 and 4.4 plus contact evidence and procedure guidance. This single scoped read is sufficient; do not require a separate online_return call. Explain only documented procedures and supported read-only capabilities. Do not relabel a general contact as a returns SAC, invent contacts or labels, or resolve conflicting contact records without evidence."
         ],
         "critical_errors": [
           "rejecting solely because of reported use or opened packaging",
@@ -327,7 +327,7 @@
           "search_store_policies"
         ],
         "facts": [
-          "Use online_return policy evidence in both turns, refreshed when new customer facts arrive.",
+          "Use online_return scope for the first eligibility question. For the follow-up combining new eligibility facts and label issuance, use return_contact scope: it refreshes sections 4.1 and 4.4 and supplies procedure guidance. Do not require an additional online_return call for evidence already returned in that turn.",
           "Within seven calendar days of actual receipt is only one necessary condition; original packaging, no signs of use, all accessories and manual also matter.",
           "Customer reports no signs of use, original opened packaging and missing one included accessory; do not equate playing with visible signs of use or require a sealed box.",
           "The missing included accessory fails a documented condition; do not automatically approve eligibility or promise a refund, and do not invent additional paperwork.",
@@ -419,7 +419,7 @@
       }
     }
   ],
-  "description": "Final 10-candidate Bedrock Runtime Converse comparison: unchanged 12-conversation v7 regression suite plus four prewritten scenario probes (6 turns), with current effective-policy expectations.",
+  "description": "Independent final 10-candidate Bedrock Runtime Converse comparison: 16 conversations and 26 turns with a self-contained rubric aligned to the current application and effective policies.",
   "review_dimensions": {
     "answer_quality": "Pass/partial/fail rates correctness, grounded claims, applicable conditions and useful answers. Unnecessary successful tool calls alone do not lower this verdict.",
     "tool_use": "Record missing required tool reads, freshness, wrong arguments and entity references separately from answer quality.",
@@ -428,7 +428,7 @@
     "severity": "High severity includes invented actionable contacts, return procedures/capabilities, unsupported refund timing, definitive unsupported eligibility, privacy leaks and wrong authoritative prices/availability. Do not hide actionable fabrication among cosmetic Partial issues.",
     "accounting": "Count current-run responses and provider HTTP attempts separately; synthetic history is context, not inference."
   },
-  "purpose": "Frozen final model-selection benchmark under the live application stack, not an independent holdout or a statistical reliability guarantee.",
-  "inherited_fixture": "docs/examples/model-comparison/scenarios-current-v7.json",
+  "purpose": "Standalone final model-selection benchmark under the live application stack. Reused question text does not make this a blind holdout or a statistical reliability guarantee. Previous fixtures and verdicts do not govern this rubric.",
+  "question_provenance": "The first 12 question sequences originated in docs/examples/model-comparison/scenarios-current-v7.json; this local fixture alone defines their expected behavior for the final benchmark.",
   "benchmark_directory": "docs/benchmarks/final-model-comparison"
 }
