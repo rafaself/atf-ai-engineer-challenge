@@ -51,7 +51,7 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
 
     @lru_cache(maxsize=1)
     def customer_repository() -> SQLiteOrderRepository:
-        return create_order_repository()
+        return create_order_repository() ## TODO: verify ask the user
 
     def select_demo_customer(customer_id: int | None) -> CustomerIdentity | None:
         if customer_id is None:
