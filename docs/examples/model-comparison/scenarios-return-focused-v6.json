@@ -1,0 +1,124 @@
+{
+  "version": 6,
+  "issue": 43,
+  "scenario_count": 4,
+  "planned_turns_per_model": 6,
+  "review_dimensions": {
+    "answer_quality": "Pass/partial/fail rates correctness, grounded claims, applicable conditions and useful answers. Unnecessary successful tool calls alone do not lower this verdict.",
+    "tool_use": "Record missing required tool reads, freshness, wrong arguments and entity references separately from answer quality.",
+    "efficiency": "Record redundant calls and corrective calls separately.",
+    "presentation": "Assess clear concise customer text, one-time demo disclosure, no mandatory per-answer snapshot or freight-ingestion notice. Source references must truthfully describe effective policy.",
+    "severity": "High severity includes invented actionable contacts, return procedures/capabilities, unsupported refund timing, definitive unsupported eligibility, privacy leaks and wrong authoritative prices/availability. Do not hide actionable fabrication among cosmetic Partial issues.",
+    "accounting": "Count current-run model responses separately from observed provider HTTP attempts; synthetic assistant history is trace context, not inference. Structured return output calls are distinguished from data-tool calls."
+  },
+  "scenarios": [
+    {
+      "id": "outside-online-window",
+      "turns": [
+        {
+          "message": "Comprei pela internet e recebi há oito dias corridos. Ainda posso devolver por arrependimento?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies",
+          "answer_online_return"
+        ],
+        "facts": [
+          "Use online_return scope and correctly extract online purchase and eight-day receipt interval from exact user evidence.",
+          "Eight days is outside the seven-calendar-day online remorse window; do not conclude that every other policy is unavailable."
+        ],
+        "critical_errors": [
+          "reversing the deadline",
+          "unjustified blanket denial",
+          "invented return procedure"
+        ]
+      }
+    },
+    {
+      "id": "used-without-marks-and-procedure",
+      "turns": [
+        {
+          "message": "Recebi ontem uma compra online. Toquei o violão uma vez, mas ele está sem marcas. Tenho a embalagem original aberta, todos os acessórios e o manual. Não houve personalização nem ajuste sob encomenda, não havia aviso de venda final e não é uma boquilha."
+        },
+        {
+          "message": "Qual é o e-mail do SAC para devolver? Vocês podem emitir uma etiqueta para mim?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies",
+          "answer_online_return"
+        ],
+        "facts": [
+          "The reported receipt interval is one day. Original opened packaging is not disqualified for being unsealed. Use without marks is not signs of use.",
+          "Extract only user-supported facts; do not impose perfect condition, sealed packaging, additional documents or payment method as eligibility prerequisites.",
+          "For the follow-up refresh online_return scope and choose request_kind=procedure. State only the documented procedure limit and supported read-only capabilities. Do not invent a SAC address, telephone or posting label."
+        ],
+        "critical_errors": [
+          "rejecting solely because of reported use or opened packaging",
+          "invented actionable contacts",
+          "claiming to issue a label or initiate a return",
+          "invented workflow"
+        ]
+      }
+    },
+    {
+      "id": "in-store-preference-scope",
+      "turns": [
+        {
+          "message": "Comprei presencialmente ontem e queria trocar o violão só pela cor. Qual regra vale?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Choose preference_exchange and return sections 4.3 and 4.4.",
+          "Explain preference exchange, desired-product availability, condition/original packaging and applicable price differences. Do not apply the online remorse refund window/procedure or reject all possibilities because purchase was in store."
+        ],
+        "critical_errors": [
+          "applying an online-only rule to refuse the preference exchange",
+          "invented authoritative conditions or procedures"
+        ]
+      }
+    },
+    {
+      "id": "mixed-order-return-followup",
+      "customer_id": 1,
+      "turns": [
+        {
+          "message": "Meu pedido 4 consta como entregue. Confira os detalhes e me diga se posso devolvê-lo agora."
+        },
+        {
+          "message": "Foi uma compra online e recebi há cinco dias. Posso devolver?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "get_my_order",
+          "search_store_policies",
+          "answer_online_return"
+        ],
+        "facts": [
+          "The first answer consults both the selected customer order and the return policy.",
+          "An imported delivered status and estimated_delivery do not establish the actual receipt date or purchase channel.",
+          "The follow-up supplies online purchase and a five-day receipt interval; explain the seven-day request window, but do not decide eligibility until packaging, use, accessories and manuals are confirmed.",
+          "Ask only for remaining eligibility facts; distinguish customer-reported facts from imported order data.",
+          "Treat order results as current simulated system records; estimated_delivery is not actual receipt. Preserve return exclusions, do not require sealed packaging, and do not equate any use with signs of use. Do not promise posting labels, return initiation or other unavailable actions.",
+          "Each assessment reads search_store_policies(policy_scope=online_return) in the current run, selecting sections 4.1 and 4.4 without preference-exchange or unrelated shipping rules.",
+          "Finish both assessments with the bounded answer_online_return output function. Known customer facts need exact user quotes; unknown facts remain null. Ask only remaining confirmations; refund payment method is not an eligibility condition."
+        ],
+        "critical_errors": [
+          "unjustified definitive eligibility decision",
+          "customer-boundary disclosure",
+          "invented actionable contact details",
+          "invented label issuance or return-initiation capability",
+          "invented return workflow or refund timing/eligibility conditions"
+        ]
+      }
+    }
+  ],
+  "purpose": "Three previously unrun holdout conversations plus a mixed-order return regression recheck; frozen before this final focused run."
+}

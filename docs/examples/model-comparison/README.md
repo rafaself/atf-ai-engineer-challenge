@@ -1,5 +1,42 @@
 # Bedrock Runtime model comparison (#40)
 
+The latest [Luna budget-echo benchmark](luna-budget-clarification-2026-11-03.md)
+records two Luna-only full v7 runs. The first inline instruction did not stop the
+budget echo; the clearer standalone instruction produced 12/0/0 in the second
+manual review. The order-total clarification remained in both prompts.
+
+The preceding [Luna order-total clarification benchmark](luna-order-total-clarification-2026-11-03.md)
+resolved its target mixed order/return presentation issue. Its 11/1/0 score
+included the budget echo, which this later experiment addresses.
+
+The latest [full Qwen / Luna / Haiku benchmark](full-qwen-luna-haiku-2026-11-03.md)
+completed 60 HTTP turns with no execution errors under a fresh approved US$4 cap.
+Qwen scored 9/1/2 and Luna/Haiku each scored 11/1/0 (pass/partial/fail).
+Luna had the lowest estimated cost and shorter answers than Haiku in this sample.
+
+The current [minimal grounding comparison](grounding-v9-2026-11-03.md) records a
+controlled baseline, two rejected prompt/scope variants and the retained
+source-only evidence improvement. It reviews correctness, tools and UX separately;
+return-procedure hallucinations remain unresolved.
+
+The latest focused [return-contact experiment](return-contact-v8-2026-11-03.md)
+tests a dedicated lookup and explicit guidance on four conversations / five turns
+per model. Both models still make unsupported conclusions; GPT-OSS invents a
+document checklist and label workflow despite retrieving the new evidence.
+
+The latest [scoped harness evaluation](scoped-harness-qwen32-gptoss120-2026-11-03.md) records the 12-conversation v7 run, corrected historical call accounting, and the rejected structured-return output experiment.
+
+The current default is [v7](scenarios-current-v7.json), covering 12 conversations
+and 20 HTTP turns per model. It retains scoped policies, explicit product/payment
+contracts and stronger severity review. The bounded-output experiment was rejected
+after live failures; its captures and patch remain available. See the
+[scoped harness review](scoped-harness-qwen32-gptoss120-2026-11-03.md).
+
+See the [accounting erratum](accounting-erratum-2026-11-03.md) before comparing
+historical model-call totals. Version 2 separates current responses, provider
+attempts, data tools and structured output functions.
+
+
 The latest [effective-data and simulation evaluation](effective-data-qwen32-gptoss120-2026-11-03.md)
 records canonical prepared policies, one-time disclosure and reviewed v4 dimensions.
 Historical results below retain their original criteria.
@@ -107,9 +144,10 @@ The runner now checks local policy dependencies, cached E5 weights, and the
 existing policy index before any paid model request. It does not download model
 weights. Refresh rates and route checks on the day of a new run. The runner loads
 only AWS settings silently and never writes credential values to a capture.
-Use repeated `--model-key` options to select a subset of candidates and
-`--scenarios-file` to provide a separately versioned fixture. The runner defaults
-to [current v4](scenarios-current-v4.json); Qwen remains the required baseline.
+Use repeated `--model-key` options to select candidates and `--scenarios-file` to
+provide a separately versioned fixture. A single-model diagnostic can select one
+model; multi-model comparisons require Qwen as the baseline. The runner defaults
+to [current v4](scenarios-current-v4.json).
 
 ```sh
 uv run --group benchmark --directory apps/backend --locked \

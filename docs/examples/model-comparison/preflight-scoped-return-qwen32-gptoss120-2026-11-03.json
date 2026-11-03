@@ -1,0 +1,94 @@
+{
+  "issue": 40,
+  "accounting_version": 2,
+  "status": "ready_no_paid_calls",
+  "region": "us-east-1",
+  "paid_calls": 0,
+  "approved_cost_cap_usd": "1.00",
+  "scenario_count": 9,
+  "planned_turns_per_model": 16,
+  "pricing_file": "docs/examples/model-comparison/pricing.json",
+  "scenario_file": "docs/examples/model-comparison/scenarios-current-v5.json",
+  "candidate_keys": [
+    "qwen3_32b",
+    "gpt_oss_120b"
+  ],
+  "source_freeze": {
+    "application": {
+      "commit": "93316169f70734b94ca4ef41e9d5fb237f008c80",
+      "working_tree_dirty": true,
+      "source_files_sha256": "1a73b42277e9630851fed796efd93f798ae6176816c87bfe7ae040b3b49b0ed0",
+      "source_file_count": 64
+    },
+    "source_files_sha256": {
+      "data/SHA256SUMS": "13a78e201aa07ba689e4235eee8446a1f77b043b3e165aff3d478dc4da02252a",
+      "data/products.csv": "78d911d96ee891abb163b6c858e895025aa530ab27d0290540f05d5098377c12",
+      "data/categories.csv": "7a7901e16c8c6357a956031ada45a6fd6a4cc9bd7bc1edc05448cc55b01b0a9e",
+      "data/promotions.csv": "cbe08c7e91b00437c0c00a7ef1486deba73de52d23e3f97f51a7dbd557d759e0",
+      "data/customers.csv": "1cd724dc86eac6258913cc890abf23d3893c57a99c9325ebfb91dfad3c7b0f37",
+      "data/orders.csv": "deb9c2480605d8d22117d569f0045fd156c5e9a58ffeebb847ff61b3b9512fd5",
+      "data/order_items.csv": "7656eb681821d48e0c932f61d3188309b955c25446578235f2d8e69604b0f0bc",
+      "data/store_policies.pdf": "b7527f96896929f4ba929de117651c6717e25b7a3b92b34bc54d5ba32f6156f7",
+      "data/policies/corpus.json": "b4f5cc4a32e45cb1cd35b5c53f77dd29f882146299210f94da2a9a0042f80c9a",
+      "data/policies/freeze.json": "993688077a2629e255f46b073cc259ee692187d124b3527028864fa553955226",
+      "data/catalog.sqlite3": "ac119875ebb2265ac98e29953abd10cb407c5b295946e6d666598e5f4e691926",
+      "data/operations.sqlite3": "ff9af766ddce62b4743acc64188eb5ccf29a58d19a752fc5dcba3c319714467a",
+      "apps/backend/pyproject.toml": "88b7ed21289ca94affaef01b1578604beb28c0ba17cd63c00761ac9f58eaa975",
+      "apps/backend/uv.lock": "339190061df6532db89266874cc4acab32937ec63e857b9d0fc3a3a30f6d46e0",
+      "docs/examples/model-comparison/scenarios.json": "70f9528afc7a1d7cb40ecbeeb926acf65a21b7ac09778b898d16d0f3f55dd8f7",
+      "docs/examples/model-comparison/pricing.json": "9614251bac723bd75f57820be05732b3a54789fbdd2982f1ed0f47fa1307ac67",
+      "docs/examples/model-comparison/protocol.md": "843d5f747cea5ab3dd0a9d396c5ca9b0d680d4aea114c42118d11965e7e3f201",
+      "docs/examples/model-comparison/scenarios-current-v3.json": "c6ec8304588aff6dfff58df4226ae84b7f0135ffedeb3724e68319dbd239b637",
+      "docs/examples/model-comparison/scenarios-current-v4.json": "7ba21e582bf28238e4f504840b5786c03c8f4723b4aa26b9088b55ce2f5686ad",
+      "docs/examples/model-comparison/scenarios-current-v5.json": "7e1e58b2577cf9eab73bb627cb74a38c3afd11392c1e34de42a89b16b80712ea",
+      "docs/examples/model-comparison/scenarios-return-holdout-v5.json": "2d9e7ba0b3c8cd25822709332dc4296539eb3193df269939bb313f1efde72837",
+      "docs/examples/model-comparison/scenarios-frozen-v1.json": "20b4210c198d3742a65ca7a9997bcd762626feac30b07aa9c4fe8872b8244b62"
+    },
+    "policy_index_sha256": "0614367fcaebf047cb199a68750501b46c1c481fab2f8fc2051ddb1da2d80890",
+    "scenario_sha256": "7e1e58b2577cf9eab73bb627cb74a38c3afd11392c1e34de42a89b16b80712ea"
+  },
+  "runtime_settings_verified": true,
+  "pricing_verification": "verified_today",
+  "endpoint_tool_manifest_freshness": "current",
+  "retrieval_readiness": {
+    "status": "ready",
+    "embedding_model": "intfloat/multilingual-e5-base",
+    "index_collection": "policy-e5",
+    "evidence_records": 1
+  },
+  "account_preflight": {
+    "status": "checked",
+    "paid_calls": 0,
+    "models": [
+      {
+        "model_id": "qwen.qwen3-32b-v1:0",
+        "status": "available",
+        "agreement": "AVAILABLE",
+        "authorization": "AUTHORIZED",
+        "entitlement": "AVAILABLE",
+        "region": "AVAILABLE"
+      },
+      {
+        "model_id": "openai.gpt-oss-120b-1:0",
+        "status": "available",
+        "agreement": "AVAILABLE",
+        "authorization": "AUTHORIZED",
+        "entitlement": "AVAILABLE",
+        "region": "AVAILABLE"
+      }
+    ]
+  },
+  "endpoint_tool_compatibility": {
+    "qwen.qwen3-32b-v1:0": {
+      "endpoint": "bedrock-runtime",
+      "api": "converse",
+      "status": "verified"
+    },
+    "openai.gpt-oss-120b-1:0": {
+      "endpoint": "bedrock-runtime",
+      "api": "converse",
+      "status": "verified"
+    }
+  },
+  "finished_at_utc": "2026-11-03T06:13:26.906387+00:00"
+}

@@ -1,0 +1,873 @@
+diff --git a/apps/backend/src/emporio_music_backend/agent/factory.py b/apps/backend/src/emporio_music_backend/agent/factory.py
+index c267428..c080b0d 100644
+--- a/apps/backend/src/emporio_music_backend/agent/factory.py
++++ b/apps/backend/src/emporio_music_backend/agent/factory.py
+@@ -12,7 +12,7 @@ from botocore.exceptions import (  # type: ignore[import-untyped]
+     ProfileNotFound,
+ )
+ from pydantic import ValidationError
+-from pydantic_ai import Agent, Tool
++from pydantic_ai import Agent, Tool, ToolOutput
+ from pydantic_ai.exceptions import AgentRunError, ModelAPIError, ModelTimeoutError
+ from pydantic_ai.messages import (
+     ModelMessage,
+@@ -28,6 +28,7 @@ from pydantic_ai.usage import UsageLimits
+
+ from emporio_music_backend.agent.output import customer_answer
+ from emporio_music_backend.agent.persona import STORE_INSTRUCTIONS
++from emporio_music_backend.agent.return_answer import answer_online_return
+ from emporio_music_backend.agent.settings import AgentSettings
+ from emporio_music_backend.contracts.chat import AgentResponse, ChatRequest
+ from emporio_music_backend.contracts.conversations import ExecutionContext
+@@ -106,6 +107,7 @@ def create_agent(
+     *,
+     model: Model | None = None,
+     tools: Sequence[Tool[ExecutionContext]] = (),
++    enable_online_returns: bool = False,
+ ) -> PydanticAgentExecutor:
+     """Construct explicitly, using a supplied test/alternative model without AWS setup."""
+     injected_model = model is not None
+@@ -146,8 +148,11 @@ def create_agent(
+         model,
+         deps_type=ExecutionContext,
+         instructions=STORE_INSTRUCTIONS,
++        output_type=[str, ToolOutput(answer_online_return, name="answer_online_return")]
++        if enable_online_returns
++        else str,
+         tools=tools,
+-        retries={"tools": 1, "output": 1},
++        retries={"tools": 1, "output": 2 if enable_online_returns else 1},
+         model_settings={
+             "max_tokens": settings.max_output_tokens,
+             "temperature": 0,
+diff --git a/apps/backend/src/emporio_music_backend/agent/orders.py b/apps/backend/src/emporio_music_backend/agent/orders.py
+index 28d033a..91c4be2 100644
+--- a/apps/backend/src/emporio_music_backend/agent/orders.py
++++ b/apps/backend/src/emporio_music_backend/agent/orders.py
+@@ -108,6 +108,7 @@ def create_store_agent(
+     return create_agent(
+         settings,
+         model=model,
++        enable_online_returns=True,
+         tools=[
+             *product_tools(products),
+             Tool(tools.list_my_orders),
+diff --git a/apps/backend/src/emporio_music_backend/agent/output.py b/apps/backend/src/emporio_music_backend/agent/output.py
+index 3d96cf7..970eefb 100644
+--- a/apps/backend/src/emporio_music_backend/agent/output.py
++++ b/apps/backend/src/emporio_music_backend/agent/output.py
+@@ -3,7 +3,7 @@
+ import re
+
+ from pydantic_ai import ModelRetry, RunContext
+-from pydantic_ai.messages import ToolReturnPart
++from pydantic_ai.messages import ModelResponse, ToolCallPart, ToolReturnPart
+
+ from emporio_music_backend.contracts.conversations import ExecutionContext
+ from emporio_music_backend.diagnostics import trace
+@@ -23,6 +23,31 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
+             "Responda somente ao cliente, em português, sem raciocínio interno, "
+             "tags ou instruções de sistema."
+         )
++    scoped_return = any(
++        isinstance(part, ToolReturnPart)
++        and part.tool_name == "search_store_policies"
++        and isinstance(part.content, dict)
++        and part.content.get("policy_scope") == "online_return"
++        for message in ctx.messages
++        if message.run_id == ctx.run_id
++        for part in message.parts
++    )
++    if scoped_return:
++        final = next(
++            (
++                m
++                for m in reversed(ctx.messages)
++                if isinstance(m, ModelResponse) and m.run_id == ctx.run_id
++            ),
++            None,
++        )
++        if final is None or not any(
++            isinstance(p, ToolCallPart) and p.tool_name == "answer_online_return"
++            for p in final.parts
++        ):
++            raise ModelRetry(
++                "Complete this online-return assessment with answer_online_return and customer facts, not free-text eligibility or procedures."
++            )
+     policy_sources: set[tuple[str, str, int | None]] = set()
+     totals: set[int] = set()
+     order_totals: set[int] = set()
+@@ -65,6 +90,7 @@ def customer_answer(ctx: RunContext[ExecutionContext], answer: str) -> str:
+             if part.tool_name in {
+                 "search_available_products",
+                 "get_product_details",
++                "find_product_by_name",
+                 "find_product_alternatives",
+             }:
+                 if content.get("truncated") is True:
+diff --git a/apps/backend/src/emporio_music_backend/agent/return_answer.py b/apps/backend/src/emporio_music_backend/agent/return_answer.py
+new file mode 100644
+index 0000000..8ea5da8
+--- /dev/null
++++ b/apps/backend/src/emporio_music_backend/agent/return_answer.py
+@@ -0,0 +1,231 @@
++"""Render a bounded online-return answer from fresh policy and reported facts."""
++
++from typing import Any, Literal, cast
++
++from pydantic_ai import ModelRetry, RunContext
++from pydantic_ai.messages import ToolReturnPart
++
++from emporio_music_backend.contracts.conversations import ExecutionContext
++from emporio_music_backend.contracts.orders import DatabaseId
++from emporio_music_backend.contracts.policies import OnlineReturnRule
++from emporio_music_backend.contracts.returns import OnlineReturnFacts, ReturnFactName
++
++_QUESTIONS = {
++    "online_purchase": "A compra foi feita online?",
++    "days_since_receipt": "Há quantos dias corridos você recebeu o produto de fato?",
++    "original_packaging": "O produto está na embalagem original?",
++    "no_signs_of_use": "O produto está sem sinais de uso?",
++    "all_accessories": "Todos os acessórios estão presentes?",
++    "all_manuals": "Todos os manuais estão presentes?",
++    "customized_or_custom_setup": "Houve personalização ou ajuste sob encomenda?",
++    "clearance_explicit_final_sale": "A compra foi de liquidação com aviso explícito de venda final?",
++    "wind_instrument_mouthpiece": "O item é uma boquilha de instrumento de sopro?",
++}
++
++_LABELS = {
++    "original_packaging": "embalagem original",
++    "no_signs_of_use": "ausência de sinais de uso",
++    "all_accessories": "todos os acessórios",
++    "all_manuals": "todos os manuais",
++    "customized_or_custom_setup": "personalização ou ajuste sob encomenda",
++    "clearance_explicit_final_sale": "liquidação com aviso explícito de venda final",
++    "wind_instrument_mouthpiece": "item ser boquilha de instrumento de sopro",
++}
++
++
++def render_online_return(rule: OnlineReturnRule, facts: OnlineReturnFacts) -> str:
++    """Decide only this documented rule; do not invent an operational workflow."""
++    days = facts.days_since_receipt
++    deadline = rule["request_deadline_calendar_days_after_receipt"]
++    if facts.online_purchase is False:
++        return "Esta regra de arrependimento se aplica a compras online. Para avaliar uma compra presencial, precisamos consultar a política correspondente ao seu caso."
++    if days is not None and days > deadline:
++        return f"Você informou recebimento há {days} dias corridos. Isso ultrapassa o prazo de {deadline} dias desta regra de arrependimento para compras online. Isso não determina se outra regra, como a de defeito, se aplica."
++    prefix = (
++        f"Você informou recebimento há {days} dias corridos, dentro do prazo de {deadline} dias para solicitar devolução por arrependimento em compra online."
++        if days is not None
++        else f"Para compras online, o prazo para solicitar devolução por arrependimento é de até {deadline} dias corridos após o recebimento real, sem espera mínima."
++    )
++    unmet = [
++        key
++        for key in rule["required_customer_facts"]
++        if key != "actual_receipt_date" and getattr(facts, key) is False
++    ]
++    exclusions = [
++        key
++        for key in rule["excluded_product_conditions"]
++        if getattr(facts, key) is True
++    ]
++    if unmet or exclusions:
++        reasons = []
++        if unmet:
++            reasons.append(
++                "Condições não atendidas: "
++                + ", ".join(_LABELS[key] for key in unmet)
++                + "."
++            )
++        if exclusions:
++            reasons.append(
++                "Exclusões informadas: "
++                + ", ".join(_LABELS[key] for key in exclusions)
++                + "."
++            )
++        return (
++            prefix
++            + "\n\n"
++            + "\n".join(reasons)
++            + " Isso não determina se outra política se aplica."
++        )
++    needed = [
++        "days_since_receipt" if key == "actual_receipt_date" else key
++        for key in rule["required_customer_facts"]
++    ]
++    needed.extend(rule["excluded_product_conditions"])
++    missing = [key for key in needed if getattr(facts, key) is None]
++    if missing:
++        questions = [
++            _QUESTIONS[key]
++            for key in missing
++            if key not in rule["excluded_product_conditions"]
++            and key not in {"all_accessories", "all_manuals"}
++        ]
++        if "all_accessories" in missing and "all_manuals" in missing:
++            questions.append("Todos os acessórios e manuais estão presentes?")
++        else:
++            questions.extend(
++                _QUESTIONS[key]
++                for key in ("all_accessories", "all_manuals")
++                if key in missing
++            )
++        unknown_exclusions = [
++            key for key in rule["excluded_product_conditions"] if key in missing
++        ]
++        if unknown_exclusions:
++            questions.append(
++                "Confirme se alguma destas exclusões se aplica: "
++                + "; ".join(_LABELS[key] for key in unknown_exclusions)
++                + "."
++            )
++        return (
++            prefix
++            + "\n\nAinda preciso confirmar estes pontos antes de concluir a elegibilidade:\n"
++            + "\n".join(f"- {question}" for question in questions)
++        )
++    refund = rule["refund_information"]
++    return prefix + (
++        "\n\nCom os fatos que você informou, os critérios desta regra estão atendidos. "
++        "Você pode solicitar a devolução. O manual informa reembolso na mesma forma de pagamento "
++        f"original em até {refund['deadline_business_days']} dias úteis, com frete de devolução por conta da loja."
++    )
++
++
++def answer_online_return(
++    ctx: RunContext[ExecutionContext],
++    customer_facts: OnlineReturnFacts,
++    order_id: DatabaseId | None = None,
++    request_kind: Literal["eligibility", "procedure"] = "eligibility",
++) -> str:
++    """Finish an online-return eligibility answer using fresh scoped policy.
++
++    Call search_store_policies(policy_scope='online_return') in this run first.
++    Use null for unknown customer facts. Every known fact requires evidence with
++    an exact quote from a user message; never quote assistant text as evidence.
++    Omit order_id unless get_my_order returned it in THIS run, not a prior turn.
++    This output function renders the answer; do not add a free-text procedure.
++    For return contacts, initiation or labels choose request_kind=procedure;
++    the renderer states the documented limit instead of inventing a workflow.
++    """
++    policy: OnlineReturnRule | None = None
++    fresh_scope_read = False
++    orders: dict[int, dict[str, Any]] = {}
++    for message in ctx.messages:
++        if message.run_id != ctx.run_id:
++            continue
++        for part in message.parts:
++            if not isinstance(part, ToolReturnPart) or not isinstance(
++                part.content, dict
++            ):
++                continue
++            if (
++                part.tool_name == "search_store_policies"
++                and part.content.get("policy_scope") == "online_return"
++            ):
++                fresh_scope_read = True
++                records = part.content.get("records", [])
++                if not isinstance(records, list):
++                    continue
++                for record in records:
++                    if isinstance(record, dict) and record.get("section") == "4.1":
++                        policy = record.get("online_return_rule")
++            if part.tool_name == "get_my_order":
++                candidate = part.content.get("order")
++                if isinstance(candidate, dict) and isinstance(
++                    candidate.get("order_id"), int
++                ):
++                    orders[candidate["order_id"]] = candidate
++    if policy is None and fresh_scope_read:
++        return "A evidência desta consulta não permite avaliar esta devolução pela regra de compras online. Não posso confirmar elegibilidade sem a política aplicável."
++    if policy is None:
++        raise ModelRetry(
++            "Retrieve search_store_policies(policy_scope='online_return') in this run before answering."
++        )
++    if request_kind == "procedure":
++        if policy["documented_next_steps"]:
++            return (
++                "Esta consulta não emite etiquetas nem inicia devoluções. "
++                "A regra consultada documenta estes passos:\n"
++                + "\n".join(f"- {step}" for step in policy["documented_next_steps"])
++            )
++        return (
++            "Esta consulta pode explicar as regras, mas não emite etiquetas nem inicia devoluções. "
++            "A regra consultada informa que o frete de devolução por arrependimento fica por conta da loja; "
++            "ela não documenta contato específico para devoluções ou procedimento de postagem."
++        )
++    user_texts = [m.content for m in ctx.deps.history if m.role == "user"]
++    if isinstance(ctx.prompt, str):
++        user_texts.append(ctx.prompt)
++    unsupported_facts: dict[str, None] = {}
++    for key, value in customer_facts.model_dump(exclude={"evidence"}).items():
++        if value is None:
++            continue
++        quote = customer_facts.evidence.get(cast(ReturnFactName, key))
++        if not quote or not any(quote in text for text in user_texts):
++            # Unsupported extractions remain unknown; never certify them or
++            # turn an omitted quote into an HTTP failure.
++            unsupported_facts[key] = None
++    answer = render_online_return(
++        policy, customer_facts.model_copy(update=unsupported_facts)
++    )
++    if order_id is None and len(orders) == 1:
++        order_id = next(iter(orders))
++    elif order_id is None and len(orders) > 1:
++        answer = (
++            "Para apresentar detalhes de um pedido, preciso que você indique qual dos pedidos consultados deseja.\n\n"
++            + answer
++        )
++    if order_id is not None:
++        order = orders.get(order_id)
++        if order is None:
++            return (
++                "Não consultei os detalhes atuais desse pedido neste turno.\n\n"
++                + answer
++            )
++        status = {
++            "pending": "pendente",
++            "confirmed": "confirmado",
++            "shipped": "enviado",
++            "delivered": "entregue",
++            "cancelled": "cancelado",
++        }[order["status"]]
++        total = str(order["total_brl"]).replace(".", ",")
++        details = [f"Pedido {order_id}: status {status}; total R$ {total}."]
++        for item in order.get("items", []):
++            details.append(f"- {item['quantity']} × {item['product_name']}")
++        if order.get("tracking_code"):
++            details.append(f"Rastreio: {order['tracking_code']}.")
++        if order.get("estimated_delivery"):
++            details.append(
++                f"Previsão de entrega: {order['estimated_delivery']} (não é confirmação de recebimento real)."
++            )
++        answer = "\n".join(details) + "\n\n" + answer
++    return answer
+diff --git a/apps/backend/src/emporio_music_backend/contracts/returns.py b/apps/backend/src/emporio_music_backend/contracts/returns.py
+new file mode 100644
+index 0000000..6722542
+--- /dev/null
++++ b/apps/backend/src/emporio_music_backend/contracts/returns.py
+@@ -0,0 +1,58 @@
++"""Customer-reported online-return facts, with evidence rather than free prose."""
++
++from collections.abc import Mapping
++from typing import Annotated, Literal
++
++from pydantic import Field, StrictBool, field_validator
++
++from emporio_music_backend.contracts.base import ContractModel, NonblankText
++
++ReturnFactName = Literal[
++    "online_purchase",
++    "days_since_receipt",
++    "original_packaging",
++    "no_signs_of_use",
++    "all_accessories",
++    "all_manuals",
++    "customized_or_custom_setup",
++    "clearance_explicit_final_sale",
++    "wind_instrument_mouthpiece",
++]
++
++
++class OnlineReturnFacts(ContractModel):
++    """Unknown facts stay null. Every known fact needs an exact customer quote.
++
++    Quotes establish where the extraction came from, not its semantic correctness.
++    Never infer physical condition from delivered status or product names.
++    """
++
++    online_purchase: StrictBool | None = None
++    days_since_receipt: Annotated[int, Field(strict=True, ge=0, le=36500)] | None = None
++    original_packaging: StrictBool | None = None
++    no_signs_of_use: StrictBool | None = None
++    all_accessories: StrictBool | None = None
++    all_manuals: StrictBool | None = None
++    customized_or_custom_setup: StrictBool | None = None
++    clearance_explicit_final_sale: StrictBool | None = None
++    wind_instrument_mouthpiece: StrictBool | None = None
++    evidence: dict[ReturnFactName, NonblankText] = Field(
++        default_factory=dict,
++        description=(
++            "For every non-null fact, include the SAME field name "
++            "mapped to an exact quote from a user message. Use {} only when all "
++            "facts are unknown. Schema text is never customer evidence."
++        ),
++    )
++
++    @field_validator("evidence", mode="before")
++    @classmethod
++    def retain_text_quotes(cls, value: object) -> dict[str, str]:
++        """Malformed quote entries establish no customer facts."""
++        if not isinstance(value, Mapping):
++            return {}
++        return {
++            key: quote
++            for key, quote in value.items()
++            if isinstance(key, str) and isinstance(quote, str) and quote.strip()
++        }
+diff --git a/apps/backend/tests/test_return_answer.py b/apps/backend/tests/test_return_answer.py
+new file mode 100644
+index 0000000..9ff8c04
+--- /dev/null
++++ b/apps/backend/tests/test_return_answer.py
+@@ -0,0 +1,459 @@
++"""Return deadlines, evidence boundaries and bounded final-answer rendering."""
++
++import asyncio
++from pathlib import Path
++
++import pytest
++from pydantic import ValidationError
++from pydantic_ai import ModelRetry, RunContext
++from pydantic_ai.messages import (
++    ModelMessage,
++    ModelRequest,
++    ModelResponse,
++    TextPart,
++    ToolCallPart,
++    ToolReturnPart,
++    UserPromptPart,
++)
++from pydantic_ai.models.function import AgentInfo, FunctionModel
++from pydantic_ai.models.test import TestModel
++from pydantic_ai.usage import RunUsage
++
++from emporio_music_backend.agent.orders import create_store_agent
++from emporio_music_backend.agent.return_answer import (
++    answer_online_return,
++    render_online_return,
++)
++from emporio_music_backend.agent.settings import AgentSettings
++from emporio_music_backend.contracts.catalog import (
++    ProductSearchQuery,
++    ProductSearchResult,
++)
++from emporio_music_backend.contracts.chat import ChatRequest
++from emporio_music_backend.contracts.conversations import (
++    ConversationMessage,
++    ConversationSession,
++    ExecutionContext,
++)
++from emporio_music_backend.contracts.identity import CustomerIdentity
++from emporio_music_backend.contracts.orders import (
++    OrderDetail,
++    OrderListQuery,
++    OrderListResult,
++    OrderLookupQuery,
++)
++from emporio_music_backend.contracts.policies import (
++    OnlineReturnRule,
++    PolicyExcerpt,
++    PolicyScope,
++    PolicySearchResult,
++)
++from emporio_music_backend.contracts.returns import OnlineReturnFacts
++from emporio_music_backend.paths import DATA_DIRECTORY
++from emporio_music_backend.policy_corpus import prepare
++
++
++def prepared_rule() -> OnlineReturnRule:
++    rule = next(
++        c
++        for c in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
++        if c.section == "4.1"
++    ).online_return_rule
++    assert rule is not None
++    return rule
++
++
++@pytest.mark.parametrize("days", [0, 5, 7])
++def test_deadline_is_inclusive_and_unknown_conditions_block_eligibility(
++    days: int,
++) -> None:
++    answer = render_online_return(
++        prepared_rule(),
++        OnlineReturnFacts(online_purchase=True, days_since_receipt=days, evidence={}),
++    )
++    assert f"há {days} dias corridos, dentro do prazo de 7" in answer
++    assert "antes de concluir a elegibilidade" in answer
++    assert "Você pode solicitar a devolução" not in answer
++    assert "embalagem original" in answer and "sinais de uso" in answer
++    assert "etiqueta" not in answer and "@" not in answer
++
++
++def test_day_eight_is_outside_this_window_without_denying_other_policies() -> None:
++    answer = render_online_return(
++        prepared_rule(),
++        OnlineReturnFacts(online_purchase=True, days_since_receipt=8, evidence={}),
++    )
++    assert "ultrapassa o prazo de 7 dias" in answer
++    assert "outra regra" in answer
++
++
++def test_complete_reported_facts_can_satisfy_only_the_documented_rule() -> None:
++    facts = OnlineReturnFacts(
++        evidence={},
++        online_purchase=True,
++        days_since_receipt=7,
++        original_packaging=True,
++        no_signs_of_use=True,
++        all_accessories=True,
++        all_manuals=True,
++        customized_or_custom_setup=False,
++        clearance_explicit_final_sale=False,
++        wind_instrument_mouthpiece=False,
++    )
++    answer = render_online_return(prepared_rule(), facts)
++    assert "Com os fatos que você informou" in answer
++    assert "Você pode solicitar a devolução" in answer
++    assert "10 dias úteis" in answer
++    assert "centro de distribuição" not in answer and "etiqueta" not in answer
++    assert "lacrada" not in answer and "documentos" not in answer
++
++
++def test_return_schema_has_no_free_procedure_or_contact_field() -> None:
++    with pytest.raises(ValidationError, match="extra_forbidden"):
++        OnlineReturnFacts.model_validate({"contact": "invented@example.com"})
++
++
++def test_return_output_requires_fresh_policy_not_previous_assistant_prose() -> None:
++    context = RunContext(
++        deps=ExecutionContext(),
++        model=TestModel(),
++        usage=RunUsage(),
++        prompt="Recebi há cinco dias",
++        run_id="current",
++        messages=[],
++    )
++    with pytest.raises(ModelRetry, match="in this run"):
++        answer_online_return(context, OnlineReturnFacts(evidence={}))
++
++
++def test_insufficient_scoped_evidence_gives_no_eligibility_decision() -> None:
++    context = RunContext(
++        deps=ExecutionContext(),
++        model=TestModel(),
++        usage=RunUsage(),
++        run_id="current",
++        messages=[
++            ModelRequest(
++                run_id="current",
++                parts=[
++                    ToolReturnPart(
++                        "search_store_policies",
++                        {
++                            "policy_scope": "online_return",
++                            "status": "insufficient_evidence",
++                            "records": [],
++                        },
++                    )
++                ],
++            )
++        ],
++    )
++    answer = answer_online_return(context, OnlineReturnFacts(evidence={}))
++    assert "Não posso confirmar elegibilidade" in answer
++    assert "Você pode solicitar" not in answer
++
++
++def test_procedure_response_has_no_invented_contact_or_action() -> None:
++    context = RunContext(
++        deps=ExecutionContext(),
++        model=TestModel(),
++        usage=RunUsage(),
++        run_id="current",
++        messages=[
++            ModelRequest(
++                run_id="current",
++                parts=[
++                    ToolReturnPart(
++                        "search_store_policies",
++                        {
++                            "policy_scope": "online_return",
++                            "records": [
++                                {
++                                    "section": "4.1",
++                                    "online_return_rule": prepared_rule(),
++                                }
++                            ],
++                        },
++                    )
++                ],
++            )
++        ],
++    )
++    answer = answer_online_return(
++        context, OnlineReturnFacts(evidence={}), request_kind="procedure"
++    )
++    assert "não emite etiquetas nem inicia devoluções" in answer
++    assert "não documenta contato específico" in answer
++    assert "@" not in answer and "SAC" not in answer
++
++
++def test_assistant_claims_cannot_supply_customer_fact_evidence() -> None:
++    context = RunContext(
++        deps=ExecutionContext(
++            session=ConversationSession(),
++            history=(
++                ConversationMessage(role="user", content="Meu pedido consta entregue"),
++                ConversationMessage(role="assistant", content="Foi compra online"),
++            ),
++        ),
++        model=TestModel(),
++        usage=RunUsage(),
++        prompt="Posso devolver?",
++        run_id="current",
++        messages=[
++            ModelRequest(
++                run_id="current",
++                parts=[
++                    ToolReturnPart(
++                        "search_store_policies",
++                        {
++                            "policy_scope": "online_return",
++                            "records": [
++                                {
++                                    "section": "4.1",
++                                    "online_return_rule": prepared_rule(),
++                                }
++                            ],
++                        },
++                    )
++                ],
++            )
++        ],
++    )
++    answer = answer_online_return(
++        context,
++        OnlineReturnFacts(
++            online_purchase=True, evidence={"online_purchase": "Foi compra online"}
++        ),
++    )
++    assert "A compra foi feita online?" in answer
++    assert "Você pode solicitar a devolução" not in answer
++
++
++class PreparedSearch:
++    def __init__(self) -> None:
++        self.calls: list[PolicyScope] = []
++
++    def search(
++        self, query: str, *, policy_scope: PolicyScope = "general"
++    ) -> PolicySearchResult:
++        assert policy_scope == "online_return"
++        self.calls.append(policy_scope)
++        records: list[PolicyExcerpt] = []
++        for chunk in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks:
++            if chunk.section not in {"4.1", "4.4"}:
++                continue
++            record: PolicyExcerpt = {
++                "id": chunk.id,
++                "source": "store_policies.pdf",
++                "section": chunk.section,
++                "hierarchy": chunk.hierarchy,
++                "pages": chunk.pages,
++                "text": chunk.text,
++            }
++            if chunk.online_return_rule is not None:
++                record["online_return_rule"] = chunk.online_return_rule
++            records.append(record)
++        return {
++            "status": "evidence_found",
++            "records": records,
++            "policy_scope": policy_scope,
++        }
++
++
++class UnusedProducts:
++    def search(self, query: ProductSearchQuery) -> ProductSearchResult:
++        raise AssertionError("Not a catalog question")
++
++
++class UnusedOrders:
++    def list_orders(
++        self, identity: CustomerIdentity, query: OrderListQuery
++    ) -> OrderListResult:
++        raise AssertionError("No order details requested")
++
++    def get_order(
++        self, identity: CustomerIdentity, query: OrderLookupQuery
++    ) -> OrderDetail | None:
++        raise AssertionError("No order details requested")
++
++
++def test_scoped_return_rejects_prose_and_treats_omitted_evidence_as_unknown() -> None:
++    calls = 0
++
++    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
++        nonlocal calls
++        calls += 1
++        if calls == 1:
++            return ModelResponse(
++                parts=[
++                    ToolCallPart(
++                        "search_store_policies", {"policy_scope": "online_return"}
++                    )
++                ]
++            )
++        if calls == 2:
++            return ModelResponse(
++                parts=[
++                    TextPart("Escreva para invented@example.com; emitiremos etiqueta.")
++                ]
++            )
++        assert calls == 3
++        assert any(t.name == "answer_online_return" for t in info.output_tools)
++        return ModelResponse(
++            parts=[
++                ToolCallPart(
++                    "answer_online_return",
++                    {
++                        "customer_facts": {
++                            "online_purchase": True,
++                            "days_since_receipt": 5,
++                        }
++                    },
++                )
++            ]
++        )
++
++    agent = create_store_agent(
++        AgentSettings(),
++        UnusedProducts(),
++        UnusedOrders(),
++        model=FunctionModel(respond),
++        policy_search=PreparedSearch(),
++    )
++    answer = asyncio.run(
++        agent.run(
++            ChatRequest(
++                message="Foi compra online e recebi há cinco dias. Posso devolver?"
++            ),
++            context=ExecutionContext(),
++        )
++    ).answer
++    assert calls == 3
++    assert "A compra foi feita online?" in answer
++    assert "Há quantos dias" in answer
++    assert "confirmar" in answer
++    assert "invented@example.com" not in answer and "etiqueta" not in answer
++
++
++def test_http_followup_refreshes_scope_and_preserves_reported_facts(
++    tmp_path: Path,
++) -> None:
++    from fastapi.testclient import TestClient
++
++    from emporio_music_backend.api.app import create_app
++    from emporio_music_backend.application.chat import ChatService
++    from emporio_music_backend.infrastructure.conversations import (
++        SQLiteConversationRepository,
++    )
++
++    policy = PreparedSearch()
++
++    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
++        current_policy = any(
++            isinstance(part, ToolReturnPart)
++            and part.tool_name == "search_store_policies"
++            for message in messages
++            for part in message.parts
++        )
++        if not current_policy:
++            return ModelResponse(
++                parts=[
++                    ToolCallPart(
++                        "search_store_policies", {"policy_scope": "online_return"}
++                    )
++                ]
++            )
++        question = next(
++            part.content
++            for message in reversed(messages)
++            for part in message.parts
++            if isinstance(part, UserPromptPart)
++        )
++        facts = (
++            {
++                "online_purchase": True,
++                "days_since_receipt": 5,
++                "evidence": {
++                    "online_purchase": "Foi compra online",
++                    "days_since_receipt": "recebi há cinco dias",
++                },
++            }
++            if "cinco dias" in question
++            else {"evidence": {}}
++        )
++        return ModelResponse(
++            parts=[ToolCallPart("answer_online_return", {"customer_facts": facts})]
++        )
++
++    agent = create_store_agent(
++        AgentSettings(),
++        UnusedProducts(),
++        UnusedOrders(),
++        model=FunctionModel(respond),
++        policy_search=policy,
++    )
++    service = ChatService(
++        agent, SQLiteConversationRepository(tmp_path / "chat.sqlite3")
++    )
++    with TestClient(create_app(service)) as client:
++        first = client.post("/api/chat", json={"message": "Posso devolver uma compra?"})
++        assert first.status_code == 200
++        second = client.post(
++            "/api/chat",
++            json={
++                "message": "Foi compra online e recebi há cinco dias. Posso devolver?",
++                "session_id": first.json()["session_id"],
++            },
++        )
++    assert second.status_code == 200
++    answer = second.json()["answer"]
++    assert "dentro do prazo de 7" in answer
++    assert "antes de concluir a elegibilidade" in answer
++    assert "A compra foi feita online?" not in answer
++    assert "Há quantos dias" not in answer
++    assert "etiqueta" not in answer
++    assert policy.calls == ["online_return", "online_return"]
++
++
++def test_malformed_quote_entries_cannot_certify_known_facts() -> None:
++    facts = OnlineReturnFacts.model_validate(
++        {
++            "online_purchase": True,
++            "evidence": {"online_purchase": True, "days_since_receipt": ""},
++        }
++    )
++    assert facts.evidence == {}
++
++
++def test_stale_order_reference_does_not_block_supported_policy_answer() -> None:
++    context = RunContext(
++        deps=ExecutionContext(),
++        model=TestModel(),
++        usage=RunUsage(),
++        run_id="current",
++        prompt="Posso devolver?",
++        messages=[
++            ModelRequest(
++                run_id="current",
++                parts=[
++                    ToolReturnPart(
++                        "search_store_policies",
++                        {
++                            "policy_scope": "online_return",
++                            "records": [
++                                {
++                                    "section": "4.1",
++                                    "online_return_rule": prepared_rule(),
++                                }
++                            ],
++                        },
++                    )
++                ],
++            )
++        ],
++    )
++    answer = answer_online_return(context, OnlineReturnFacts(), order_id=4)
++    assert "Não consultei os detalhes atuais desse pedido neste turno" in answer
++    assert "até 7 dias corridos" in answer
++    assert "Pedido 4:" not in answer and "799,90" not in answer

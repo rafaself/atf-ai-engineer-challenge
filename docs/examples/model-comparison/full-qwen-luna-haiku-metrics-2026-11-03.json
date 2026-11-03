@@ -1,0 +1,76 @@
+{
+  "models": [
+    {
+      "model": "qwen.qwen3-32b-v1:0",
+      "inference_model_id": "qwen.qwen3-32b-v1:0",
+      "verdicts": {
+        "pass": 9,
+        "partial": 1,
+        "fail": 2
+      },
+      "critical_errors": 1,
+      "http_errors": 0,
+      "provider_attempts": 42,
+      "model_responses": 42,
+      "correction_retry_parts": 0,
+      "median_end_to_end_seconds": 1.498,
+      "max_end_to_end_seconds": 4.279,
+      "mean_answer_words_excluding_sources": 69.6,
+      "input_tokens": 140715,
+      "output_tokens": 3276,
+      "estimated_cost_usd": "0.02307285",
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+    },
+    {
+      "model": "openai.gpt-6-luna",
+      "inference_model_id": "us.openai.gpt-6-luna",
+      "verdicts": {
+        "pass": 11,
+        "partial": 1,
+        "fail": 0
+      },
+      "critical_errors": 0,
+      "http_errors": 0,
+      "provider_attempts": 41,
+      "model_responses": 41,
+      "correction_retry_parts": 0,
+      "median_end_to_end_seconds": 2.006,
+      "max_end_to_end_seconds": 6.533,
+      "mean_answer_words_excluding_sources": 47.6,
+      "input_tokens": 101653,
+      "output_tokens": 3118,
+      "estimated_cost_usd": "0.0137254425",
+      "cache_read_tokens": 71436,
+      "cache_write_tokens": 30135
+    },
+    {
+      "model": "anthropic.claude-haiku-5-5",
+      "inference_model_id": "us.anthropic.claude-haiku-5-5",
+      "verdicts": {
+        "pass": 11,
+        "partial": 1,
+        "fail": 0
+      },
+      "critical_errors": 0,
+      "http_errors": 0,
+      "provider_attempts": 41,
+      "model_responses": 41,
+      "correction_retry_parts": 0,
+      "median_end_to_end_seconds": 4.804,
+      "max_end_to_end_seconds": 10.715,
+      "mean_answer_words_excluding_sources": 110.3,
+      "input_tokens": 213913,
+      "output_tokens": 10386,
+      "estimated_cost_usd": "0.02924273",
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0
+    }
+  ],
+  "paid_calls": 124,
+  "estimated_run_usd": "0.0660410225",
+  "fresh_approved_cap_usd": "4.00",
+  "remaining_fresh_cap_usd": "3.9339589775",
+  "previous_session_estimated_usd": "0.38084325",
+  "session_cumulative_estimated_usd": "0.4468842725"
+}

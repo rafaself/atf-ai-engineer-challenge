@@ -1,0 +1,164 @@
+{
+  "version": 9,
+  "issue": 40,
+  "scenario_count": 6,
+  "planned_turns_per_model": 8,
+  "scenarios": [
+    {
+      "id": "procedure-clean",
+      "turns": [
+        {
+          "message": "Para devolver minha compra online por arrependimento, quais documentos envio e como obtenho a etiqueta de postagem?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Manual does not document return paperwork, label issuance or posting steps. Say this concisely without inventing requirements or claiming no service exists."
+        ],
+        "critical_errors": [
+          "invented return documents, label issuance, posting steps or specialized contact responsibility"
+        ],
+        "review_dimensions": {
+          "factual_correctness": "supported / omission / unsupported; cite actual statement",
+          "tool_selection": "sufficient current policy evidence; scope preference alone is not factual failure",
+          "ux": "answer legitimate questions; no false refusal, unnecessary questions or excessive caveats",
+          "execution": "HTTP status, latency, provider attempts and correction retries"
+        }
+      }
+    },
+    {
+      "id": "procedure-followup",
+      "turns": [
+        {
+          "message": "Como funciona a devolução por arrependimento de uma compra online?"
+        },
+        {
+          "message": "Para devolver minha compra online por arrependimento, quais documentos envio e como obtenho a etiqueta de postagem?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Explain the seven-day window and product conditions accurately; then preserve uncertainty about procedure, documents and labels even if earlier assistant text suggested a process."
+        ],
+        "critical_errors": [
+          "invented return documents, label issuance, posting steps or specialized contact responsibility"
+        ],
+        "review_dimensions": {
+          "factual_correctness": "supported / omission / unsupported; cite actual statement",
+          "tool_selection": "sufficient current policy evidence; scope preference alone is not factual failure",
+          "ux": "answer legitimate questions; no false refusal, unnecessary questions or excessive caveats",
+          "execution": "HTTP status, latency, provider attempts and correction retries"
+        }
+      }
+    },
+    {
+      "id": "contact-authority",
+      "turns": [
+        {
+          "message": "Quero perguntar sobre uma devolução. Quais e-mails e telefones constam no manual? Ele indica algum SAC específico ou qual contato tem prioridade?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Preserve the two email spellings and both phone entries. Section 7 explicitly names the primary remote WhatsApp channel; no dedicated returns SAC or authoritative email is designated. General contacts may be suggested for questions without guaranteeing fulfillment."
+        ],
+        "critical_errors": [
+          "invented return documents, label issuance, posting steps or specialized contact responsibility"
+        ],
+        "review_dimensions": {
+          "factual_correctness": "supported / omission / unsupported; cite actual statement",
+          "tool_selection": "sufficient current policy evidence; scope preference alone is not factual failure",
+          "ux": "answer legitimate questions; no false refusal, unnecessary questions or excessive caveats",
+          "execution": "HTTP status, latency, provider attempts and correction retries"
+        }
+      }
+    },
+    {
+      "id": "legitimate-return",
+      "turns": [
+        {
+          "message": "Comprei online um violão comum, não personalizado nem de venda final, e recebi ontem. Toquei uma vez, mas não há sinais de uso. Tenho a embalagem original, os acessórios e manuais. Ainda estou no prazo para pedir devolução?"
+        },
+        {
+          "message": "Quem paga o frete dessa devolução e qual é a forma e o prazo do reembolso?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Do not equate use with signs of use or require sealed packaging/documents. Seven calendar days after actual receipt; store-paid return freight, same payment method, ten business days without invented starting event. Answer supported facts without refusal."
+        ],
+        "critical_errors": [
+          "invented return documents, label issuance, posting steps or specialized contact responsibility"
+        ],
+        "review_dimensions": {
+          "factual_correctness": "supported / omission / unsupported; cite actual statement",
+          "tool_selection": "sufficient current policy evidence; scope preference alone is not factual failure",
+          "ux": "answer legitimate questions; no false refusal, unnecessary questions or excessive caveats",
+          "execution": "HTTP status, latency, provider attempts and correction retries"
+        }
+      }
+    },
+    {
+      "id": "legitimate-contact",
+      "turns": [
+        {
+          "message": "Qual é o endereço da loja e o principal WhatsApp de atendimento remoto indicado no manual?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Address Rua 14 de Maio 3200 Centro Campo Grande MS; section 7 names (67) 3321-4500 as primary remote channel. Answer these supported facts without unnecessary refusal or requiring resolution of unrelated email discrepancies."
+        ],
+        "critical_errors": [
+          "invented return documents, label issuance, posting steps or specialized contact responsibility"
+        ],
+        "review_dimensions": {
+          "factual_correctness": "supported / omission / unsupported; cite actual statement",
+          "tool_selection": "sufficient current policy evidence; scope preference alone is not factual failure",
+          "ux": "answer legitimate questions; no false refusal, unnecessary questions or excessive caveats",
+          "execution": "HTTP status, latency, provider attempts and correction retries"
+        }
+      }
+    },
+    {
+      "id": "refund-clock-unknown",
+      "turns": [
+        {
+          "message": "Os dez dias úteis do reembolso começam no meu pedido de devolução, na postagem ou quando a loja recebe o produto?"
+        }
+      ],
+      "expected": {
+        "required_tools": [
+          "search_store_policies"
+        ],
+        "facts": [
+          "Manual gives ten business days but does not specify its starting event. Do not choose one or refuse to state the known deadline."
+        ],
+        "critical_errors": [
+          "invented return documents, label issuance, posting steps or specialized contact responsibility"
+        ],
+        "review_dimensions": {
+          "factual_correctness": "supported / omission / unsupported; cite actual statement",
+          "tool_selection": "sufficient current policy evidence; scope preference alone is not factual failure",
+          "ux": "answer legitimate questions; no false refusal, unnecessary questions or excessive caveats",
+          "execution": "HTTP status, latency, provider attempts and correction retries"
+        }
+      }
+    }
+  ]
+}

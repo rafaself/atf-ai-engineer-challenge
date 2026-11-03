@@ -1,0 +1,168 @@
+{
+  "comparisons": [
+    {
+      "arm": "baseline",
+      "model": "qwen.qwen3-32b-v1:0",
+      "verdicts": {
+        "pass": 1,
+        "partial": 4,
+        "fail": 1
+      },
+      "http_errors": 0,
+      "provider_attempts": 15,
+      "median_latency_s": 1.745,
+      "max_latency_s": 7.537,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 0,
+      "no_current_policy_turns": 1,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 87,
+      "estimated_cost_usd": "0.00857040"
+    },
+    {
+      "arm": "baseline",
+      "model": "openai.gpt-oss-120b-1:0",
+      "verdicts": {
+        "pass": 0,
+        "partial": 1,
+        "fail": 5
+      },
+      "http_errors": 0,
+      "provider_attempts": 18,
+      "median_latency_s": 3.034,
+      "max_latency_s": 10.589,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 2,
+      "no_current_policy_turns": 0,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 167.5,
+      "estimated_cost_usd": "0.00959880"
+    },
+    {
+      "arm": "revised",
+      "model": "qwen.qwen3-32b-v1:0",
+      "verdicts": {
+        "pass": 1,
+        "partial": 2,
+        "fail": 3
+      },
+      "http_errors": 0,
+      "provider_attempts": 14,
+      "median_latency_s": 2.506,
+      "max_latency_s": 5.427,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 0,
+      "no_current_policy_turns": 2,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 1,
+      "mean_answer_words_excluding_footer": 110.2,
+      "estimated_cost_usd": "0.00842805"
+    },
+    {
+      "arm": "revised",
+      "model": "openai.gpt-oss-120b-1:0",
+      "verdicts": {
+        "pass": 0,
+        "partial": 1,
+        "fail": 5
+      },
+      "http_errors": 0,
+      "provider_attempts": 16,
+      "median_latency_s": 3.287,
+      "max_latency_s": 9.32,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 0,
+      "no_current_policy_turns": 0,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 176.2,
+      "estimated_cost_usd": "0.00866895"
+    },
+    {
+      "arm": "final",
+      "model": "qwen.qwen3-32b-v1:0",
+      "verdicts": {
+        "pass": 1,
+        "partial": 3,
+        "fail": 2
+      },
+      "http_errors": 0,
+      "provider_attempts": 14,
+      "median_latency_s": 1.655,
+      "max_latency_s": 7.067,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 0,
+      "no_current_policy_turns": 2,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 85.9,
+      "estimated_cost_usd": "0.00823800"
+    },
+    {
+      "arm": "final",
+      "model": "openai.gpt-oss-120b-1:0",
+      "verdicts": {
+        "pass": 0,
+        "partial": 1,
+        "fail": 5
+      },
+      "http_errors": 0,
+      "provider_attempts": 16,
+      "median_latency_s": 3.135,
+      "max_latency_s": 7.741,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 0,
+      "no_current_policy_turns": 0,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 154.4,
+      "estimated_cost_usd": "0.00840930"
+    },
+    {
+      "arm": "source-only",
+      "model": "qwen.qwen3-32b-v1:0",
+      "verdicts": {
+        "pass": 1,
+        "partial": 4,
+        "fail": 1
+      },
+      "http_errors": 0,
+      "provider_attempts": 15,
+      "median_latency_s": 1.74,
+      "max_latency_s": 7.228,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 0,
+      "no_current_policy_turns": 1,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 99.8,
+      "estimated_cost_usd": "0.00904815"
+    },
+    {
+      "arm": "source-only",
+      "model": "openai.gpt-oss-120b-1:0",
+      "verdicts": {
+        "pass": 2,
+        "partial": 0,
+        "fail": 4
+      },
+      "http_errors": 0,
+      "provider_attempts": 17,
+      "median_latency_s": 3.521,
+      "max_latency_s": 8.603,
+      "correction_retry_parts": 0,
+      "redundant_policy_calls": 1,
+      "no_current_policy_turns": 0,
+      "false_refusals": 0,
+      "unnecessary_clarifications": 0,
+      "mean_answer_words_excluding_footer": 170.6,
+      "estimated_cost_usd": "0.00934095"
+    }
+  ],
+  "experiment_estimated_cost_usd": "0.07030260",
+  "previous_cumulative_usd": "0.31054065",
+  "cumulative_estimated_cost_usd": "0.38084325",
+  "remaining_approved_usd": "0.61915675"
+}
