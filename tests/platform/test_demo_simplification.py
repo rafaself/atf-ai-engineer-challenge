@@ -94,10 +94,10 @@ def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
     project_copy: Path,
 ) -> None:
     data = project_copy / "data"
-    catalog, operations, conversations = (
-        data / (name + ".sqlite3")
-        for name in ("catalog", "operations", "conversations")
-    )
+    catalog = data / "catalog" / "catalog.sqlite3"
+    operations = data / "operations" / "operations.sqlite3"
+    conversations = data / "conversations" / "conversations.sqlite3"
+    conversations.parent.mkdir(parents=True)
     conversations.write_bytes(b"untouched history sentinel")
     environment = {
         key: value for key, value in os.environ.items() if not key.startswith("AWS_")
@@ -110,7 +110,7 @@ def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
         OPERATIONS_DATABASE_PATH=str(tmp_path / "wrong-operations.sqlite3"),
         CONVERSATION_DATABASE_PATH=str(tmp_path / "wrong-conversations.sqlite3"),
     )
-    original = {path: path.read_bytes() for path in data.glob("*.csv")}
+    original = {path: path.read_bytes() for path in data.rglob("*.csv")}
     for _ in range(2):
         result = subprocess.run(
             [
@@ -129,6 +129,8 @@ def test_one_prepare_command_is_repeatable_preserves_history_and_needs_no_aws(
             "65 products, 25 promotions, 50 customers, 20 orders and 22 items"
             in result.stdout
         )
+    assert catalog.is_file()
+    assert operations.is_file()
     assert conversations.read_bytes() == b"untouched history sentinel"
     assert all(path.read_bytes() == raw for path, raw in original.items())
     with sqlite3.connect(operations) as connection:

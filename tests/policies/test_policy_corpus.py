@@ -16,7 +16,7 @@ from emporio_music.policies.corpus import (
 
 
 def test_manual_tables_cross_pages_and_source_bytes_are_preserved() -> None:
-    source = DATA_DIRECTORY / "store_policies.pdf"
+    source = DATA_DIRECTORY / "policies" / "store_policies.pdf"
     before = source.read_bytes()
     corpus = prepare(source)
     chunks = {chunk.section: chunk for chunk in corpus.chunks}
@@ -61,14 +61,14 @@ def test_approved_freight_clarification_covers_threshold_edges(
     assert fee == Decimal(expected_fee)
     record = next(
         chunk
-        for chunk in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+        for chunk in prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf").chunks
         if chunk.id == "policy-v2.1-s5.1"
     )
     assert expected_statement in record.text
 
 
 def test_freight_clarification_is_geographically_scoped_and_provenanced() -> None:
-    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    corpus = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf")
     record = next(chunk for chunk in corpus.chunks if chunk.id == "policy-v2.1-s5.1")
 
     assert record.section == "5.1"
@@ -96,7 +96,7 @@ def test_incomplete_extraction_is_rejected() -> None:
 
 
 def test_labels_reference_existing_evidence_and_preserve_frozen_dataset() -> None:
-    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    corpus = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf")
     ids = {chunk.id for chunk in corpus.chunks}
     directory = DATA_DIRECTORY / "policies"
     freeze = json.loads((directory / "freeze.json").read_text())
@@ -155,7 +155,8 @@ def test_benchmark_runner_loads_current_versioned_questions() -> None:
 
 def test_normalization_keeps_table_relationships_and_joins_wrapped_values() -> None:
     chunks = {
-        c.section: c for c in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+        c.section: c
+        for c in prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf").chunks
     }
     assert (
         "Forma: PIX | Condições: Pagamento à vista | Observações: 5% de desconto sobre o preço de tabela"
@@ -170,9 +171,9 @@ def test_normalization_keeps_table_relationships_and_joins_wrapped_values() -> N
         assert "  " not in chunk.text
         assert "\u200b" not in chunk.text
     saved = json.loads((DATA_DIRECTORY / "policies" / "corpus.json").read_text())
-    regenerated = prepare(DATA_DIRECTORY / "store_policies.pdf").model_dump(
-        exclude_none=True
-    )
+    regenerated = prepare(
+        DATA_DIRECTORY / "policies" / "store_policies.pdf"
+    ).model_dump(exclude_none=True)
     # Tool version is provenance, not semantic content. Text drift still fails.
     saved.pop("extractor_version")
     regenerated.pop("extractor_version")
@@ -188,7 +189,8 @@ def test_supplied_csv_and_pdf_checksums_remain_unchanged() -> None:
 
 def test_cover_preserves_conflicting_contact_with_page_reference() -> None:
     chunks = {
-        c.section: c for c in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+        c.section: c
+        for c in prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf").chunks
     }
     assert chunks["cover"].pages == [1]
     assert "contato@emporiodamusica.com.br" in chunks["cover"].text
@@ -198,7 +200,7 @@ def test_cover_preserves_conflicting_contact_with_page_reference() -> None:
 def test_full_manual_review_distinguishes_unknown_procedures_from_no_requirements() -> (
     None
 ):
-    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    corpus = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf")
     chunk = next(c for c in corpus.chunks if c.section == "4.1")
     assert chunk.online_return_rule is not None
     procedure = chunk.online_return_rule["procedure"]
@@ -238,5 +240,5 @@ def test_new_source_cannot_inherit_negative_findings_from_old_manual() -> None:
 
 
 def test_heading_only_sections_are_marked_non_indexable() -> None:
-    chunks = prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+    chunks = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf").chunks
     assert {c.section for c in chunks if not c.indexable} == {"5", "6", "8"}

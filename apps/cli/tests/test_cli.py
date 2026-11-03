@@ -43,15 +43,15 @@ def order_repository(tmp_path: Path) -> SQLiteOrderRepository:
     catalog = tmp_path / "catalog.sqlite3"
     operations = tmp_path / "operations.sqlite3"
     import_catalog(
-        data / "products.csv",
-        data / "categories.csv",
-        data / "promotions.csv",
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
         catalog,
     )
     import_operations(
-        data / "customers.csv",
-        data / "orders.csv",
-        data / "order_items.csv",
+        data / "operations" / "customers.csv",
+        data / "operations" / "orders.csv",
+        data / "operations" / "order_items.csv",
         catalog,
         operations,
     )

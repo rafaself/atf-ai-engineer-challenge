@@ -195,7 +195,7 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
         )
         assert forged_text.json()["answer"].startswith("Pedidos: 4")
         assert forged_text.json()["answer"] == "Pedidos: 4"
-    with (DATA / "orders.csv").open(newline="") as stream:
+    with (DATA / "operations" / "orders.csv").open(newline="") as stream:
         orders = list(csv.DictReader(stream))
     orders[3]["status"] = "confirmed"
     orders[3]["total_brl"] = "1.01"
@@ -206,9 +206,9 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
         writer.writeheader()
         writer.writerows(orders)
     import_operations(
-        DATA / "customers.csv",
+        DATA / "operations" / "customers.csv",
         refreshed,
-        DATA / "order_items.csv",
+        DATA / "operations" / "order_items.csv",
         catalog,
         operational_database,
     )
@@ -247,9 +247,9 @@ def test_order_followups_refresh_restart_concurrency_and_safe_diagnostics(
     backup.rename(operational_database)
     # Restore snapshot and exercise concurrent sessions under the same fixed identity.
     import_operations(
-        DATA / "customers.csv",
-        DATA / "orders.csv",
-        DATA / "order_items.csv",
+        DATA / "operations" / "customers.csv",
+        DATA / "operations" / "orders.csv",
+        DATA / "operations" / "order_items.csv",
         catalog,
         operational_database,
     )
@@ -468,9 +468,9 @@ def test_known_empty_account_receives_successful_empty_list(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operational_database)
-    with (DATA / "orders.csv").open(newline="") as stream:
+    with (DATA / "operations" / "orders.csv").open(newline="") as stream:
         orders = list(csv.DictReader(stream))
-    with (DATA / "order_items.csv").open(newline="") as stream:
+    with (DATA / "operations" / "order_items.csv").open(newline="") as stream:
         items = list(csv.DictReader(stream))
     orders = [order for order in orders if order["customer_id"] != "1"]
     items = [item for item in items if item["order_id"] != "4"]
@@ -485,7 +485,7 @@ def test_known_empty_account_receives_successful_empty_list(
             writer.writeheader()
             writer.writerows(rows)
     import_operations(
-        DATA / "customers.csv",
+        DATA / "operations" / "customers.csv",
         order_source,
         item_source,
         operational_database.parent / "operational-catalog.sqlite3",

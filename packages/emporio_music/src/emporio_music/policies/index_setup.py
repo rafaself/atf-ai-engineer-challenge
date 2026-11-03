@@ -30,7 +30,7 @@ def load_verified_policy_corpus(
     )
     freeze: dict[str, Any] = json.loads((policy_directory / "freeze.json").read_text())
     source_sha256 = hashlib.sha256(
-        (data_directory / corpus.source).read_bytes()
+        (policy_directory / corpus.source).read_bytes()
     ).hexdigest()
     clarification_sha256 = hashlib.sha256(
         (data_directory / FREIGHT_CLARIFICATION_SOURCE).read_bytes()

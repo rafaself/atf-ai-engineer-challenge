@@ -1,6 +1,6 @@
 # Interactive Python CLI
 
-The CLI calls the shared package's `ChatService` directly. It does not start an HTTP server, add a separate conversation database, or load environment files on its own. Conversation history uses the shared configured data directory; the repository-root default remains `data/conversations.sqlite3`.
+The CLI calls the shared package's `ChatService` directly. It does not start an HTTP server, add a separate conversation database, or load environment files on its own. Conversation history uses the shared configured data directory; the repository-root default is `data/conversations/conversations.sqlite3`.
 
 From the repository root, install the CLI package and prepare the existing catalog and fictional-customer snapshots:
 

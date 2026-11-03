@@ -391,7 +391,7 @@ def prepare(source: Path, *, data_directory: Path | None = None) -> PolicyCorpus
     clarification_path = source_data_directory / FREIGHT_CLARIFICATION_SOURCE
     manifest = (source_data_directory / "SHA256SUMS").read_text()
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
-    if f"{digest}  store_policies.pdf" not in manifest:
+    if f"{digest}  policies/store_policies.pdf" not in manifest:
         raise ValueError("Source checksum mismatch; review the manual before preparing")
     clarification_bytes = clarification_path.read_bytes()
     clarification_sha256 = hashlib.sha256(clarification_bytes).hexdigest()
@@ -419,7 +419,7 @@ def prepare(source: Path, *, data_directory: Path | None = None) -> PolicyCorpus
 
 
 def main() -> None:
-    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    corpus = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf")
     destination = DATA_DIRECTORY / "policies" / "corpus.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(corpus.model_dump_json(indent=2, exclude_none=True) + "\n")

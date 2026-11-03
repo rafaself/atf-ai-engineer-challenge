@@ -27,7 +27,9 @@ def prepare_policy_index(
     chunks = [chunk for chunk in corpus.chunks if chunk.indexable]
     configuration = policy_index_configuration(corpus, chunks_sha256, E5_CONFIG)
     index = PolicyIndex(
-        data_directory / "policy-indexes", POLICY_COLLECTION, configuration
+        data_directory / "policies" / "policy-indexes",
+        POLICY_COLLECTION,
+        configuration,
     )
     if index.exists() and not rebuild:
         raise ValueError("Policy index already exists; pass --rebuild to replace it")
@@ -62,7 +64,11 @@ def main() -> int:
     except (ImportError, OSError, PolicyRetrievalError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
-    print(f"Prepared {count} policy records in {DATA_DIRECTORY / 'policy-indexes'}.")
+    print(
+        "Prepared "
+        f"{count} policy records in "
+        f"{DATA_DIRECTORY / 'policies' / 'policy-indexes'}."
+    )
     return 0
 
 

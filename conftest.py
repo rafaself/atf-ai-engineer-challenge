@@ -54,12 +54,15 @@ def operational_database(tmp_path: Path) -> Path:
     catalog = tmp_path / "operational-catalog.sqlite3"
     database = tmp_path / "operations.sqlite3"
     import_catalog(
-        data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
+        catalog,
     )
     import_operations(
-        data / "customers.csv",
-        data / "orders.csv",
-        data / "order_items.csv",
+        data / "operations" / "customers.csv",
+        data / "operations" / "orders.csv",
+        data / "operations" / "order_items.csv",
         catalog,
         database,
     )
@@ -86,6 +89,8 @@ def project_copy(tmp_path: Path) -> Path:
     )
     data = project / "data"
     data.mkdir()
-    for path in (REPOSITORY_ROOT / "data").glob("*.csv"):
-        shutil.copyfile(path, data / path.name)
+    for path in (REPOSITORY_ROOT / "data").rglob("*.csv"):
+        destination = data / path.relative_to(REPOSITORY_ROOT / "data")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, destination)
     return project

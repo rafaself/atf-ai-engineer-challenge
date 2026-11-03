@@ -104,7 +104,7 @@ def test_original_import_is_repeatable_minimal_and_preserves_exact_totals(
             "city",
         }
         rows_before = conn.execute("SELECT * FROM orders ORDER BY order_id").fetchall()
-    with (DATA / "orders.csv").open(newline="") as stream:
+    with (DATA / "operations" / "orders.csv").open(newline="") as stream:
         original = list(csv.DictReader(stream))
     row = original[0]
     detail = repository.get_order(
@@ -115,9 +115,9 @@ def test_original_import_is_repeatable_minimal_and_preserves_exact_totals(
     assert not hasattr(detail, "unit_price")
     assert operational_database.stat().st_mode & 0o777 == 0o600
     import_operations(
-        DATA / "customers.csv",
-        DATA / "orders.csv",
-        DATA / "order_items.csv",
+        DATA / "operations" / "customers.csv",
+        DATA / "operations" / "orders.csv",
+        DATA / "operations" / "order_items.csv",
         operational_database.parent / "operational-catalog.sqlite3",
         operational_database,
     )
@@ -392,9 +392,9 @@ def test_copied_product_references_survive_catalog_changes(
     # Order facts are the operational import, not a join against mutable catalog prices/names.
     assert repository.get_order(identity, query) == original
     import_operations(
-        DATA / "customers.csv",
-        DATA / "orders.csv",
-        DATA / "order_items.csv",
+        DATA / "operations" / "customers.csv",
+        DATA / "operations" / "orders.csv",
+        DATA / "operations" / "order_items.csv",
         catalog,
         operational_database,
     )

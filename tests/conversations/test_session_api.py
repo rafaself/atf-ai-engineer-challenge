@@ -46,7 +46,10 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     catalog = tmp_path / "catalog.sqlite3"
     conversations = tmp_path / "conversations.sqlite3"
     import_catalog(
-        data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
+        catalog,
     )
     monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)
     monkeypatch.setattr(paths, "CONVERSATION_DATABASE_PATH", conversations)
@@ -129,7 +132,10 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     second_name = first.json()["answer"].splitlines()[1].removeprefix("2. ")
     # Re-import replaces the catalog, not the independently stored conversation.
     import_catalog(
-        data / "products.csv", data / "categories.csv", data / "promotions.csv", catalog
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
+        catalog,
     )
     with sqlite3.connect(catalog) as connection:
         connection.execute(

@@ -177,14 +177,22 @@ def input_paths() -> list[Path]:
         DIRECTORY / "protocol.md",
         DIRECTORY / "scenarios.json",
         ROOT / "data/SHA256SUMS",
-        ROOT / "data/store_policies.pdf",
-        ROOT / "data/catalog.sqlite3",
-        ROOT / "data/operations.sqlite3",
+        ROOT / "data/policies/store_policies.pdf",
+        paths.CATALOG_DATABASE_PATH,
+        paths.OPERATIONS_DATABASE_PATH,
     ]
     fixed.extend(sorted((ROOT / "packages/emporio_music/src").rglob("*.py")))
     fixed.extend(sorted((ROOT / "apps/api/src").rglob("*.py")))
-    fixed.extend(sorted((ROOT / "data").glob("*.csv")))
-    fixed.extend(sorted((ROOT / "data/policies").rglob("*")))
+    fixed.extend(sorted((ROOT / "data/catalog").glob("*.csv")))
+    fixed.extend(sorted((ROOT / "data/operations").glob("*.csv")))
+    fixed.extend(
+        sorted(
+            path
+            for path in (ROOT / "data/policies").rglob("*")
+            if "policy-indexes" not in path.parts
+            and "policy-benchmark-indexes" not in path.parts
+        )
+    )
     missing = [str(path) for path in fixed if not path.is_file()]
     if missing:
         raise ValueError("Required frozen input is missing: " + ", ".join(missing))
@@ -219,7 +227,7 @@ def source_freeze(*, require_clean_tree: bool) -> dict[str, Any]:
         for path in sorted(weights.rglob("*"))
         if path.is_file()
     }
-    index_files = tree_manifest(paths.DATA_DIRECTORY / "policy-indexes")
+    index_files = tree_manifest(paths.POLICY_INDEX_DIRECTORY)
     if not weight_files or not index_files:
         raise ValueError("The pinned local E5 weights and policy index are required")
     weight_stamps = weight_stat_stamps(weights)
@@ -263,7 +271,7 @@ class FreezeVerifier:
         if actual_files != self.frozen["files_sha256"]:
             raise BudgetStop("source_file_changed_during_run")
         if (
-            tree_manifest(paths.DATA_DIRECTORY / "policy-indexes")
+            tree_manifest(paths.POLICY_INDEX_DIRECTORY)
             != self.frozen["policy_index_files_sha256"]
         ):
             raise BudgetStop("policy_index_changed_during_run")

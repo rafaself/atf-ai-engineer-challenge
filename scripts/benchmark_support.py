@@ -239,9 +239,15 @@ def estimate_usage_cost(
 def _copy_policy_inputs(target: Path) -> Path:
     """Copy the frozen policy inputs so Chroma can only touch a temporary index."""
     target.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(paths.DATA_DIRECTORY / "policies", target / "policies")
-    shutil.copy2(paths.DATA_DIRECTORY / "store_policies.pdf", target)
-    shutil.copytree(paths.DATA_DIRECTORY / "policy-indexes", target / "policy-indexes")
+    shutil.copytree(
+        paths.DATA_DIRECTORY / "policies",
+        target / "policies",
+        ignore=shutil.ignore_patterns("policy-indexes", "policy-benchmark-indexes"),
+    )
+    shutil.copytree(
+        paths.POLICY_INDEX_DIRECTORY,
+        target / "policies" / "policy-indexes",
+    )
     return target
 
 

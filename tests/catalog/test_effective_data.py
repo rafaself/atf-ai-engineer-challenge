@@ -18,7 +18,7 @@ from emporio_music.policies.corpus import prepare
 
 
 def test_preparation_resolves_holiday_scope_and_freight_before_retrieval() -> None:
-    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    corpus = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf")
     hours = next(c for c in corpus.chunks if c.section == "2")
     assert "Domingos e feriados, com exceções de datas especiais" in hours.text
     assert "Natal, Black Friday e aniversário da loja" in hours.text
@@ -33,7 +33,7 @@ def test_preparation_resolves_holiday_scope_and_freight_before_retrieval() -> No
 
 
 def test_return_rule_is_prepared_with_conditions_and_exclusions() -> None:
-    corpus = prepare(DATA_DIRECTORY / "store_policies.pdf")
+    corpus = prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf")
     rule = next(c for c in corpus.chunks if c.section == "4.1").online_return_rule
     assert rule is not None
     assert rule["request_deadline_calendar_days_after_receipt"] == 7

@@ -1,3 +1,4 @@
 # Preserve supplied CSV bytes (including original line endings) on every checkout.
-data/*.csv -text whitespace=cr-at-eol
-data/*.pdf -text
+data/catalog/*.csv -text whitespace=cr-at-eol
+data/operations/*.csv -text whitespace=cr-at-eol
+data/policies/*.pdf -text

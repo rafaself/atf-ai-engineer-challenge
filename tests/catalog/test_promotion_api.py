@@ -198,7 +198,12 @@ def test_promotion_history_pix_refresh_concurrent_quotes_and_failed_turns(
     # Independent temporary snapshot with no offers; never edit the supplied CSV.
     no_offers = tmp_path / "independent-empty-promotions.csv"
     no_offers.write_text(",".join(PROMOTION_COLUMNS) + "\n")
-    import_catalog(DATA / "products.csv", DATA / "categories.csv", no_offers, catalog)
+    import_catalog(
+        DATA / "catalog" / "products.csv",
+        DATA / "catalog" / "categories.csv",
+        no_offers,
+        catalog,
+    )
     app = api_app.create_app()
     with TestClient(app) as client:
         refreshed = client.post(

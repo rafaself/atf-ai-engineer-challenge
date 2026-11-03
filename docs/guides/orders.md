@@ -9,12 +9,12 @@ For normal Docker setup, follow the [README Getting Started guide](../../README.
 ```bash
 uv run --project packages/emporio_music --locked python -m \
   emporio_music.infrastructure.operations_import \
-  --customers data/customers.csv \
-  --orders data/orders.csv \
-  --order-items data/order_items.csv
+  --customers data/operations/customers.csv \
+  --orders data/operations/orders.csv \
+  --order-items data/operations/order_items.csv
 ```
 
-Expected output: `Imported 50 customers, 20 orders and 22 items`. Catalog and operational destinations use `EMPORIO_MUSIC_DATA_DIR`: `catalog.sqlite3` and `operations.sqlite3` beneath that directory. The default remains `data/` when commands run from the repository root. They are separate from `data/conversations.sqlite3`; environment/CLI path overrides and runtime collision checks are unnecessary. The importer accepts explicit CSV sources for focused experiments and validates data before replacing its owned snapshot. Generated files are Git-ignored and owned operational snapshots have mode 0600. Do not edit the generated schema or use an unrelated SQLite database.
+Expected output: `Imported 50 customers, 20 orders and 22 items`. Catalog and operational destinations use `EMPORIO_MUSIC_DATA_DIR`: `catalog/catalog.sqlite3` and `operations/operations.sqlite3` beneath that directory. The default remains `data/` when commands run from the repository root. They are separate from `data/conversations/conversations.sqlite3`; environment/CLI path overrides and runtime collision checks are unnecessary. The importer accepts explicit CSV sources for focused experiments and validates data before replacing its owned snapshot. Generated files are Git-ignored and owned operational snapshots have mode 0600. Do not edit the generated schema or use an unrelated SQLite database.
 
 Each successful import replaces all owned rows in one SQLite transaction, removing customers, orders, items and copied product references absent from the new snapshot. Validation completes before destination creation; invalid source data leaves an existing snapshot unchanged. Write failures roll back the replacement. Foreign or incompatible schemas are rejected, never migrated or overwritten. A new file can remain empty after an infrastructure failure; correct the cause and repeat the import. Stop the demo before manually resetting files. Re-import does not reset conversations.
 

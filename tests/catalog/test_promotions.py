@@ -148,7 +148,7 @@ def test_all_original_promotions_are_stored_without_repair_and_quoted_from_snaps
     operational_database: Path,
 ) -> None:
     catalog = operational_database.parent / "operational-catalog.sqlite3"
-    with (DATA / "promotions.csv").open(newline="") as stream:
+    with (DATA / "catalog" / "promotions.csv").open(newline="") as stream:
         expected = [
             (
                 int(row["promotion_id"]),

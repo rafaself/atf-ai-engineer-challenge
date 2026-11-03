@@ -96,9 +96,9 @@ def test_snapshot_facts_survive_http_agent_tool_pipeline(
     data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
-        data / "products.csv",
-        data / "categories.csv",
-        data / "promotions.csv",
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
         database,
     )
     observed: list[dict[str, Any]] = []
@@ -210,9 +210,9 @@ def test_direct_history_uses_fresh_catalog_results_without_replaying_old_notices
     data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
-        data / "products.csv",
-        data / "categories.csv",
-        data / "promotions.csv",
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
         database,
     )
     identity = CustomerIdentity(customer_id=1)

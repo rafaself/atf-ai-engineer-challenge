@@ -19,6 +19,15 @@ from emporio_music.infrastructure.conversations import (
 )
 
 
+def test_repository_creates_grouped_storage_parent(tmp_path: Path) -> None:
+    path = tmp_path / "conversations" / "conversations.sqlite3"
+
+    repository = SQLiteConversationRepository(path)
+
+    assert repository.database_path == path
+    assert path.is_file()
+
+
 def test_restart_history_limits_and_private_database(tmp_path: Path) -> None:
     path = tmp_path / "conversations.sqlite3"
     repository = SQLiteConversationRepository(path)

@@ -32,6 +32,7 @@ class SQLiteConversationRepository:
     def __init__(self, database_path: Path) -> None:
         self.database_path = database_path
         try:
+            self.database_path.parent.mkdir(parents=True, exist_ok=True)
             try:
                 descriptor = os.open(
                     self.database_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600

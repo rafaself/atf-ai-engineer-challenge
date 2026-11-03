@@ -69,12 +69,17 @@ def sources(
 
 def test_supplied_snapshot_and_grounded_searches(tmp_path: Path) -> None:
     data = REPOSITORY_ROOT / "data"
-    products, categories = data / "products.csv", data / "categories.csv"
+    products, categories = (
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+    )
     hashes = [
         hashlib.sha256(path.read_bytes()).digest() for path in (products, categories)
     ]
     database = tmp_path / "catalog.sqlite3"
-    report = import_catalog(products, categories, data / "promotions.csv", database)
+    report = import_catalog(
+        products, categories, data / "catalog" / "promotions.csv", database
+    )
     assert (report.products, report.categories) == (65, 9)
     repository: ProductRepository = SQLiteProductRepository(database)
     budget = repository.search(
@@ -379,7 +384,8 @@ def test_money_is_exact_and_missing_database_is_not_created(tmp_path: Path) -> N
 def test_import_module_command_paths_and_exits(
     tmp_path: Path, project_copy: Path, invalid_specs: str | None, diagnostic: str
 ) -> None:
-    products, categories, database = sources(project_copy / "data")
+    products, categories, _ = sources(project_copy / "data")
+    database = project_copy / "data" / "catalog" / "catalog.sqlite3"
     command = [
         sys.executable,
         "-m",

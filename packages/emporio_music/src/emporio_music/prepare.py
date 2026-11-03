@@ -17,15 +17,15 @@ from emporio_music.infrastructure.operations_import import (
 
 def prepare_data() -> tuple[ImportReport, OperationsImportReport]:
     catalog_import_report = import_catalog(
-        paths.DATA_DIRECTORY / "products.csv",
-        paths.DATA_DIRECTORY / "categories.csv",
-        paths.DATA_DIRECTORY / "promotions.csv",
+        paths.CATALOG_DIRECTORY / "products.csv",
+        paths.CATALOG_DIRECTORY / "categories.csv",
+        paths.CATALOG_DIRECTORY / "promotions.csv",
         paths.CATALOG_DATABASE_PATH,
     )
     operations_import_report = import_operations(
-        paths.DATA_DIRECTORY / "customers.csv",
-        paths.DATA_DIRECTORY / "orders.csv",
-        paths.DATA_DIRECTORY / "order_items.csv",
+        paths.OPERATIONS_DIRECTORY / "customers.csv",
+        paths.OPERATIONS_DIRECTORY / "orders.csv",
+        paths.OPERATIONS_DIRECTORY / "order_items.csv",
         paths.CATALOG_DATABASE_PATH,
         paths.OPERATIONS_DATABASE_PATH,
     )

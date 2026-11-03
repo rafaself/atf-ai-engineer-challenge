@@ -194,7 +194,9 @@ def main() -> int:
     parser.add_argument("--budget-usd", type=float, default=0.10)
     parser.add_argument("--repeats", type=int, default=3)
     parser.add_argument(
-        "--index-dir", type=Path, default=DATA_DIRECTORY / "policy-benchmark-indexes"
+        "--index-dir",
+        type=Path,
+        default=DATA_DIRECTORY / "policies" / "policy-benchmark-indexes",
     )
     parser.add_argument(
         "--output-dir", type=Path, default=DATA_DIRECTORY.parent / "docs" / "benchmarks"

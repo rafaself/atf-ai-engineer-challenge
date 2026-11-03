@@ -129,9 +129,9 @@ def test_controlled_agent_queries_real_catalog_and_returns_grounded_metadata(
     data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
-        data / "products.csv",
-        data / "categories.csv",
-        data / "promotions.csv",
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
         database,
     )
     repository = SQLiteProductRepository(database)

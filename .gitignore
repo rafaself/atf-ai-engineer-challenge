@@ -30,6 +30,9 @@ dist/
 .DS_Store
 
 # Explicit local policy embedding indexes (never commit generated vectors).
+# Keep a pre-reorganization index ignored if it remains in a local data volume.
 data/policy-indexes/
+data/policies/policy-indexes/
+data/policies/policy-benchmark-indexes/
 # Local model/tokenizer and package caches; keep them on disk rather than tmpfs.
 data/benchmark-cache/

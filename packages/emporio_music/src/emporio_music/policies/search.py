@@ -49,7 +49,9 @@ class LocalPolicySearch:
         chunks = {chunk.id: chunk for chunk in corpus.chunks if chunk.indexable}
         config = policy_index_configuration(corpus, chunks_sha256, E5_CONFIG)
         index = PolicyIndex(
-            self._data_directory / "policy-indexes", POLICY_COLLECTION, config
+            self._data_directory / "policies" / "policy-indexes",
+            POLICY_COLLECTION,
+            config,
         )
         index.open(list(chunks))
 

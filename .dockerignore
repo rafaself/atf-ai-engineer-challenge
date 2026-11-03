@@ -13,6 +13,12 @@
 **/.ruff_cache/
 **/.cache/
 **/dist/
+data/**/*.db
+data/**/*.db-*
+data/**/*.sqlite
+data/**/*.sqlite-*
+data/**/*.sqlite3
+data/**/*.sqlite3-*
 data/*.db
 data/*.db-*
 data/*.sqlite
@@ -20,4 +26,6 @@ data/*.sqlite-*
 data/*.sqlite3
 data/*.sqlite3-*
 data/policy-indexes/
+data/policies/policy-indexes/
+data/policies/policy-benchmark-indexes/
 data/benchmark-cache/

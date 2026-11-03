@@ -90,7 +90,7 @@ History survives restarts. Try promotions followed by `E o segundo no PIX?`. Too
 | `HISTORY_MAX_CHARACTERS` | 24000; supported 1–64000 |
 | `PIPELINE_LOGS` | 0; set 1 for metadata diagnostics |
 
-`EMPORIO_MUSIC_DATA_DIR` explicitly selects the source-data and persistent runtime directory. It defaults to `data` relative to the process working directory; the documented commands run from the repository root. Compose sets `/app/data` on the persistent volume. The API's React build path is `EMPORIO_MUSIC_FRONTEND_DIR`, defaulting to `apps/frontend/dist` from the repository root. Conversation files are private; preparation refreshes only source snapshots. Before using this version with a v1 conversation database, stop the server and move that file aside, preserving it. Startup then creates a fresh database at the fixed path. There is no automatic reset or migration. Source CSV/PDF files remain unchanged.
+`EMPORIO_MUSIC_DATA_DIR` explicitly selects the grouped source-data and persistent runtime directory. It defaults to `data` relative to the process working directory; the documented commands run from the repository root. Compose sets `/app/data` on the persistent volume. The API's React build path is `EMPORIO_MUSIC_FRONTEND_DIR`, defaulting to `apps/frontend/dist` from the repository root. Conversation files are private; preparation refreshes only source snapshots. To preserve an existing root-level `conversations.sqlite3`, stop the server and move it to `conversations/conversations.sqlite3` under the configured data directory before upgrading. There is no automatic reset or migration. Source CSV/PDF files remain unchanged.
 
 ## Errors and persistence
 

@@ -35,8 +35,10 @@ def _runtime_data(tmp_path: Path, *, build_index: bool) -> PolicyIndex | None:
     repository_data = REPOSITORY_ROOT / "data"
     policy_directory = tmp_path / "policies"
     policy_directory.mkdir()
-    for name in ("store_policies.pdf",):
-        shutil.copy2(repository_data / name, tmp_path / name)
+    shutil.copy2(
+        repository_data / "policies" / "store_policies.pdf",
+        policy_directory / "store_policies.pdf",
+    )
     for name in ("corpus.json", "freeze.json"):
         shutil.copy2(repository_data / "policies" / name, policy_directory / name)
     shutil.copy2(
@@ -65,7 +67,7 @@ def _runtime_data(tmp_path: Path, *, build_index: bool) -> PolicyIndex | None:
         else [0.0, 1.0, *([0.0] * 766)]
         for chunk in chunks
     ]
-    index = PolicyIndex(tmp_path / "policy-indexes", "policy-e5", config)
+    index = PolicyIndex(policy_directory / "policy-indexes", "policy-e5", config)
     index.build(chunks, vectors, rebuild=False)
     return index
 

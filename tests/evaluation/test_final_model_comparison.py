@@ -350,9 +350,9 @@ def test_serialized_converse_tool_roundtrip_is_guarded_without_network(
     root = REPOSITORY_ROOT
     catalog = tmp_path / "catalog.sqlite3"
     import_catalog(
-        root / "data/products.csv",
-        root / "data/categories.csv",
-        root / "data/promotions.csv",
+        root / "data/catalog/products.csv",
+        root / "data/catalog/categories.csv",
+        root / "data/catalog/promotions.csv",
         catalog,
     )
     monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog)

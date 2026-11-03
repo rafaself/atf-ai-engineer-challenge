@@ -24,9 +24,9 @@ def test_supplied_active_offer_is_quoted_separately_from_original_price(
     data = REPOSITORY_ROOT / "data"
     database = tmp_path / "catalog.sqlite3"
     import_catalog(
-        data / "products.csv",
-        data / "categories.csv",
-        data / "promotions.csv",
+        data / "catalog" / "products.csv",
+        data / "catalog" / "categories.csv",
+        data / "catalog" / "promotions.csv",
         database,
     )
     result = ProductSearchTool(SQLiteProductRepository(database)).find_product_by_name(

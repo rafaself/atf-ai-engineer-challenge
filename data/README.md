@@ -1,15 +1,15 @@
 # Fictional source snapshots
 
-These CSV files were copied byte-for-byte from the supplied `ai-engineer-technical-challenge-2026/data/` directory on 2026-10-31:
+These CSV files were copied byte-for-byte from the supplied `ai-engineer-technical-challenge-2026/data/` directory on 2026-10-31 and grouped by use:
 
-- `products.csv` (source: `desafio_tecnico_ai_eng - products.csv`)
-- `categories.csv` (source: `desafio_tecnico_ai_eng - categories.csv`)
-- `customers.csv` (source: `desafio_tecnico_ai_eng - customers.csv`)
-- `orders.csv` (source: `desafio_tecnico_ai_eng - orders.csv`)
-- `order_items.csv` (source: `desafio_tecnico_ai_eng - order_items.csv`)
-- `promotions.csv` (source: `desafio_tecnico_ai_eng - promotions.csv`)
+- `catalog/products.csv` (source: `desafio_tecnico_ai_eng - products.csv`)
+- `catalog/categories.csv` (source: `desafio_tecnico_ai_eng - categories.csv`)
+- `catalog/promotions.csv` (source: `desafio_tecnico_ai_eng - promotions.csv`)
+- `operations/customers.csv` (source: `desafio_tecnico_ai_eng - customers.csv`)
+- `operations/orders.csv` (source: `desafio_tecnico_ai_eng - orders.csv`)
+- `operations/order_items.csv` (source: `desafio_tecnico_ai_eng - order_items.csv`)
 
-`store_policies.pdf` was copied byte-for-byte from `políticas_da_loja.pdf` in the same reference directory on 2026-11-01. Only its filename is translated.
+`policies/store_policies.pdf` was copied byte-for-byte from `políticas_da_loja.pdf` in the same reference directory on 2026-11-01. Only its filename is translated.
 
 Filenames are translated to English; original encoding, line endings, and contents are preserved. Git attributes disable line-ending conversion for these CSVs on checkout. The source bundle is `Desafio_Técnico_AI_Engineer_2026-20260616T150750Z-3-001.zip`; copies here for products/categories come from its supplied extracted resource directory. US-11 copies customer/order/item entries directly from that same original ZIP. The project owner confirmed on 2026-10-31 that this data is **fictitious** and approved committing these three original CSVs. Customer names/contact fields and order notes are fictional source fixtures, not real customer records. No cleaning, re-encoding, or newline conversion is applied. The snapshot has 50 customers, 20 orders, and 22 order-item rows. US-12 copies all 25 original promotion records from the same ZIP, with four marked active. Its bytes match both the archive entry and extracted supplied file. No dates/columns are added and no values, inactive records, line endings or encodings are changed. The original policy PDF remains byte-for-byte identical to the supplied resource.
 
@@ -21,7 +21,7 @@ From this directory, verify the checked-in snapshot with:
 sha256sum --check SHA256SUMS
 ```
 
-The manifest covers all six CSV files and `store_policies.pdf`. Each copy matches its supplied original byte-for-byte. These checks establish source identity, not live prices or availability. US-03 ingestion preserves these source files. It converts prices exactly to integer centavos, validates references/types/statuses/dates/specs, and stores additional normalized name columns for lookup. Original descriptive fields are retained. See [catalog import and retrieval](../docs/guides/catalog.md) for the full snapshot replacement and schema compatibility rules.
+The manifest covers all six CSV files and the policy PDF by their paths relative to this directory. Each copy matches its supplied original byte-for-byte. These checks establish source identity, not live prices or availability. US-03 ingestion preserves these source files. It converts prices exactly to integer centavos, validates references/types/statuses/dates/specs, and stores additional normalized name columns for lookup. Original descriptive fields are retained. See [catalog import and retrieval](../docs/guides/catalog.md) for the full snapshot replacement and schema compatibility rules.
 
 ## Owner-approved freight clarification
 

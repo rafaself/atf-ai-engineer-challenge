@@ -180,13 +180,19 @@ def source_freeze(*, require_clean: bool = True) -> dict[str, Any]:
             "apps/cli/pyproject.toml",
         )
     ]
-    files += list((ROOT / "data").glob("*.csv"))
+    files += list((ROOT / "data/catalog").glob("*.csv"))
+    files += list((ROOT / "data/operations").glob("*.csv"))
     files += [
-        ROOT / "data/store_policies.pdf",
+        ROOT / "data/policies/store_policies.pdf",
         paths.CATALOG_DATABASE_PATH,
         paths.OPERATIONS_DATABASE_PATH,
     ]
-    files += list((ROOT / "data/policies").rglob("*"))
+    files += [
+        path
+        for path in (ROOT / "data/policies").rglob("*")
+        if "policy-indexes" not in path.parts
+        and "policy-benchmark-indexes" not in path.parts
+    ]
     hashes = {
         str(p.relative_to(ROOT)): _sha256(p) for p in sorted(set(files)) if p.is_file()
     }
@@ -198,14 +204,14 @@ def source_freeze(*, require_clean: bool = True) -> dict[str, Any]:
         for p in sorted(weights.rglob("*"))
         if p.is_file()
     }
-    if not weight_hashes or not (paths.DATA_DIRECTORY / "policy-indexes").is_dir():
+    if not weight_hashes or not paths.POLICY_INDEX_DIRECTORY.is_dir():
         raise ValueError(
             "Prepare the existing cached E5 weights and policy index first"
         )
     return {
         "application": code,
         "files_sha256": hashes,
-        "index_tree_sha256": _tree_sha256(paths.DATA_DIRECTORY / "policy-indexes"),
+        "index_tree_sha256": _tree_sha256(paths.POLICY_INDEX_DIRECTORY),
         "e5_revision": E5_REVISION,
         "e5_files_sha256": weight_hashes,
     }

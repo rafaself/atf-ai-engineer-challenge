@@ -332,7 +332,7 @@ def test_invented_assistant_history_does_not_become_current_policy_evidence() ->
     policy = FixedPolicySearch()
     rule = next(
         c.online_return_rule
-        for c in prepare(DATA_DIRECTORY / "store_policies.pdf").chunks
+        for c in prepare(DATA_DIRECTORY / "policies" / "store_policies.pdf").chunks
         if c.section == "4.1"
     )
     assert rule is not None
