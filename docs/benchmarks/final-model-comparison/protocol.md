@@ -1,6 +1,6 @@
-# Final model-selection benchmark — frozen protocol v1.1
+# Final model-selection benchmark — frozen protocol v1.2
 
-**Status:** methodological specification frozen on 2026-11-03; implementation and paid run not started.
+**Status:** measurement protocol v1.2 frozen on 2026-11-03 and executed under issue #82. Post-capture review amendment v1.3 below authorizes an explicitly labeled AI assessment; human forms remain blank.
 **Scope:** Empório da Música customer-support agent, application-level Bedrock Runtime Converse.
 **Source fixtures:** `scenarios.json` and `models.json` in this directory.
 **Baseline:** the current runtime architecture, not a model-only prompt exercise.
@@ -59,6 +59,8 @@ Use the **same frozen live application** for all candidates:
 | Temperature requested | `0` (only where supported; **record actual serialized setting**) |
 | Top-p, reasoning-effort override, explicit prompt caching | none |
 | Max output tokens/model request | `1024` |
+| Aggregate input upper bound per candidate | `2,000,000`, including preflight; identical for all ten candidates |
+| Input bound per provider request | serialized UTF-8 request bytes + `2048`; at most the smaller of the model context and short-context tier limit |
 | Agent request limit / tool-call limit per chat turn | `6` / `5` |
 | Provider read timeout | `15 seconds` |
 | Chat-service timeout | `60 seconds` |
@@ -81,6 +83,8 @@ Before the first paid request:
 2. Check source hashes, local SQLite, verified effective policy index and E5 cache, dependencies, runtime config and unique output path **without inference**.
 3. Simulate maximum accounting for **26 turns/model × up to six model requests/turn** plus one bounded tool-call preflight per model. Reserve conservatively using actual request bounds, provider-supported rate tiers, cache-write premiums and full output ceilings; block before any call that could exceed the approved cap. Never treat reserved spend as an invoice.
 4. Preflight all candidates using the same short, predeclared **catalog tool-use prompt**: `Confira no catálogo o preço e o estoque do Yamaha C40 Nylon Natural.` Check at least one actual local tool call, successful tool result, follow-up Converse response, usage capture and correct response shape. Preflight responses are **not** scored as benchmark cases; include their costs in global spend accounting.
+
+The implementation freezes the same aggregate input bound of **2,000,000 tokens per candidate**, including preflight, and at most **162 provider requests per candidate** (27 chat turns × 6 requests). Each request stays in the standard short-context tier. At the manifest rates, reserving all input at the greater of the uncached-input and cache-write rates plus all 162 × 1,024 output tokens gives a combined maximum of **US$9.81175456**. This is an enforced envelope, not expected spend. Exceeding an input bound or encountering usage above a reservation stops all inference; bounds are never silently raised. Before-call reservations are checkpointed durably before transmission; missing usage retains the reservation. An interrupted attempted conversation is not replayed on resume.
 
 A confirmed incompatible or inaccessible candidate is `excluded_preflight` with exact error category and 26 `not_executed` main turns; proceed to the other candidates if safe. If any live chat turn fails, capture the HTTP response and sanitized exception category, stop that scenario for that candidate and preserve subsequent turns as `not_executed`; do not assign a semantic quality verdict. Continue independent scenarios for that candidate unless its model route is unavailable or a budget safety condition requires a stop. A global budget/accounting fault stops **all** further inference immediately. No automatic benchmark-level retries or prompt repair. A resumed run must skip previously attempted turns and carry forward their entire cost.
 
@@ -144,7 +148,7 @@ This is an **engineering selection rule**, not statistical evidence that one mod
 
 ## 9. Implementation contract and deliverables
 
-Keep implementation in `scripts/` and tests in `tests/`. Reuse `scripts/compare_models.py` and `scripts/evaluation_support.py` helpers where appropriate, but **do not change production agent code, add providers/adapters or create a generic benchmark framework**. The existing runner hardcodes eight candidates and historical experiment constraints, so it cannot execute this protocol unchanged. The final run must use this directory's fixture, model manifest, fresh approval, accounting and resume identity; do not inherit old candidate restrictions, budget caps or checkpoint state. Historical artifacts remain untouched. The runner must support the ten frozen candidates, model-interleaved seeded schedule, full-run accounting and the existing route. Add targeted offline tests for fixture counts, all routes, sanitized captures, spending guard, score aggregation and error classification.
+Keep implementation in `scripts/` and tests in `tests/`. `scripts/final_model_comparison.py` is the standalone entry point; it reuses accounting/capture helpers from `scripts/compare_models.py` and `scripts/evaluation_support.py` without inheriting historical runner restrictions. `scripts/final_model_review.py` prepares blinded human worksheets and aggregates submitted judgments. **Do not change production agent code, add providers/adapters or create a generic benchmark framework.** The final run uses this directory's fixture, model manifest, fresh approval, accounting and resume identity. Historical artifacts remain untouched. Offline tests cover the ten frozen candidates, schedule, sanitized captures, spending guard, resume, actual SDK serialization with stubbed network I/O, review gates and selection aggregation.
 
 Deliver under this **exclusive highlighted directory**, without overwriting old benchmark results:
 
@@ -164,3 +168,38 @@ Deliver under this **exclusive highlighted directory**, without overwriting old 
 No RAG-vs-embedded comparison, prompt/model tuning, new embedding methods, vendor API differences, alternate decoding configurations, long-context stress test, statistical hypothesis test, production default change, hidden retries or synthetic "perfect" scores. Preserve all historical benchmarks and discuss them only as non-comparable context.
 
 **Frozen design changes require a new protocol version and new capture names before another main run.**
+
+## 11. Owner amendment v1.3 — after capture, 2026-11-03
+
+After all 260 main HTTP turns had been attempted, the owner explicitly changed
+the review requirement:
+
+> Skip human review by now, give only what your evaluation generated. But let the worksheet ready at the end. I change the protocol you can judge.
+
+This supersedes §6's human-primary, independent-human-second and no-LLM-judge
+requirements **for the present report only**. The published semantic evaluation
+is one **unblinded Codex AI assessment**, authorized after seeing the operational
+capture, without independent human review. It is not a preregistered human or
+blinded evaluation. No additional paid inference is used for judging.
+
+The 16 scenarios, source authority, critical-error definitions, Pass/Partial/Fail
+rubric, execution-failure separation and §8 eligibility/tiebreak rules are
+unchanged. `ai-review.json` preserves evidence-linked assessments separately
+from the original, blank `review.json` and `review-worksheet.json`. The reporting
+tool requires both recorded owner authorization and `--allow-ai-review` to apply
+AI assessments and labels the result `ai_review_complete`. Its default human
+workflow still requires independent second reviews. The resulting selection is
+a provisional AI finding, available for later human verification.
+
+No measurement was repeated after this amendment. `capture.json` remains the
+byte-identical completed v1.2 capture; its source manifest points to the original
+measurement commit, not the later reporting edits. Original v1.2 text is available
+at that commit, recorded in the capture.
+
+Separately, the owner waived a clean-tree interruption caused by their concurrent
+README edit: “Ignore this clean-tree guard, it was me. Just keep going!” The run
+continued from the identical clean measurement commit in an isolated checkout
+after exact source/data/index/E5 equality checks. Every attempted case remained
+untouched, including the interrupted case. The original capture and carried
+spend are preserved in `capture-interrupted.json` and
+`capture.json.resolved_control_stops`; this was a resume, not a new experiment.

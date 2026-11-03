@@ -6,7 +6,8 @@
   "endpoint_tool_checked_at_utc": "2026-11-03",
   "price_list_version": "20261102165015",
   "verified": true,
-  "verification_note": "Eight existing rates/routes carried from the recorded 2026-11-03 project pricing manifest; two NVIDIA in-region Standard USD rates and Converse model IDs verified against AWS official model cards/pricing on 2026-11-03. Reverify all ten on the live-run date before enabling inference. Manifest metadata is not evidence of AWS account entitlement.",
+  "verification_note": "All ten routes rechecked against AWS official model cards on 2026-11-03. Nova, Qwen and GPT-OSS rates rechecked against the us-east-1 public price list; Haiku US Geo rates against the official foundation-model pricing feed; NVIDIA against the AWS pricing table; Luna/Sol US Geo and cache-write premiums against model-card price tables. Qwen SKUs identify Runtime, not Mantle. Reverify on a later run date. Documentation does not establish account entitlement or functional tool compatibility; this experiment's actual preflight records those separately.",
+  "foundation_price_feed_url": "https://b0.p.awsstatic.com/pricing/2.0/meteredUnitMaps/bedrockfoundationmodels/USD/current/bedrockfoundationmodels.json",
   "models": [
     {
       "key": "nova_micro",
@@ -120,8 +121,8 @@
       "input_usd_per_million": 0.15,
       "output_usd_per_million": 0.6,
       "price_skus": {
-        "input": "U6WAJF7G3M4RQS3M",
-        "output": "7TG6VJR3W3D8EKG8"
+        "input": "5UQHJ7CFUZCUD9UX",
+        "output": "RA2QAWYCCM9R5BR6"
       },
       "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/us-east-1/index.json",
       "rate_status": "verified",

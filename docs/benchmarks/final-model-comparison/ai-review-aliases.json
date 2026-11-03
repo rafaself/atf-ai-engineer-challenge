@@ -1,0 +1,12 @@
+{
+  "nova_micro": "nova_micro",
+  "nova_lite": "nova_lite",
+  "nemotron_nano_3_30b": "nemotron_nano_3_30b",
+  "nemotron_super_3_120b": "nemotron_super_3_120b",
+  "gpt_oss_20b": "gpt_oss_20b",
+  "gpt_oss_120b": "gpt_oss_120b",
+  "qwen3_32b": "qwen3_32b",
+  "claude_haiku_5_5": "claude_haiku_5_5",
+  "gpt6_luna": "gpt6_luna",
+  "gpt6_1_sol": "gpt6_1_sol"
+}
