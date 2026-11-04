@@ -8,6 +8,7 @@ import {
   type ChatClient,
   type ConversationSummary,
 } from "../services/chatClient";
+import assistantAvatar from "../assets/assistant-avatar.webp";
 import { ChatScrollFollower } from "./chatScroll";
 import { Icon } from "./Icon";
 
@@ -346,20 +347,21 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     >
       <div className="chat-panel__surface">
         <header className="chat-header">
-          <img alt="Lia" className="assistant-avatar" src="/assistant-avatar.webp" />
+          <img alt="Arte" className="assistant-avatar" src={assistantAvatar} />
           <div className="chat-header__identity">
-            <h2 id="chat-title">Lia</h2>
+            <h2 id="chat-title">Arte</h2>
             <p>Assistente virtual</p>
           </div>
           <div className="chat-header__actions">
             <button
-              className="history-button"
+              aria-label="Histórico"
+              className="icon-button"
               disabled={isSending}
               onClick={() => void openHistory()}
+              title="Histórico"
               type="button"
             >
-              <Icon name="history" size={16} />
-              <span>Histórico</span>
+              <Icon name="history" size={20} />
             </button>
             <button
               aria-label="Iniciar nova conversa"
@@ -425,7 +427,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
 
             {isSending && (
               <div className="message-row message-row--assistant">
-                <div aria-label="Lia está respondendo" className="typing-indicator" role="status">
+                <div aria-label="Arte está respondendo" className="typing-indicator" role="status">
                   <span /><span /><span />
                 </div>
               </div>
@@ -508,7 +510,7 @@ export function ChatWidget({ client }: ChatWidgetProps) {
           <label className="sr-only" htmlFor="chat-message">Sua mensagem</label>
           <input
             autoComplete="off"
-            disabled={isSending || requiresNewConversation}
+            disabled={requiresNewConversation}
             id="chat-message"
             maxLength={300}
             onChange={(event) => setDraft(event.target.value)}
