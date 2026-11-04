@@ -24,6 +24,8 @@
 
 Empório da Música is an AI-powered customer support application for a fictional musical instrument store. Built with Python, FastAPI, React, and Pydantic AI, it combines structured SQL queries with Retrieval-Augmented Generation (RAG) to answer questions about products, pricing, availability, orders, and store policies. Powered by Amazon Bedrock, the application focuses on accurate, context-aware responses through a conversational interface.
 
+<img width="1324" height="860" alt="image" src="https://github.com/user-attachments/assets/4d05df80-4aef-4773-b639-4711460048cf" />
+
 ## Technologies
 
 - **Backend:** Python, FastAPI, Pydantic AI
