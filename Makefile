@@ -5,16 +5,16 @@ build:
 	docker compose build app
 
 prepare-data:
-	docker compose run --rm app python -m emporio_music.prepare
+	docker compose run --rm --entrypoint python app -m emporio_music.prepare
 
 prepare-policy:
-	docker compose run --rm app python -m emporio_music.prepare_policy_index --allow-download
+	docker compose run --rm --entrypoint python app -m emporio_music.prepare_policy_index --allow-download
 
 rebuild-policy:
-	docker compose run --rm app python -m emporio_music.prepare_policy_index --allow-download --rebuild
+	docker compose run --rm --entrypoint python app -m emporio_music.prepare_policy_index --allow-download --rebuild
 
 up:
-	docker compose up --detach app
+	docker compose up --build --detach --wait app
 
 down:
 	docker compose down

@@ -47,11 +47,11 @@ Empório da Música is an AI-powered customer support application for a fictiona
 
 - Docker Engine and Docker Compose. Docker Desktop requires version 4.34+ with host networking enabled.
 - AWS credentials authorized to invoke the configured Bedrock model. Credentials are needed to chat, and model requests may incur charges.
-- Internet access the first time you prepare the policy index.
+- Internet access during the image build to install dependencies and download the pinned policy embedding model.
 
 >
 >**Ask your agent to run this project with the following prompt**
->Clone this project from https://github.com/rafaself/atf-ai-engineer-challenge, then set it up and run it with Docker Compose. Read the README and Compose configuration first. Check that Docker Engine, Compose, and host networking are available (Docker Desktop 4.34+). Do not overwrite an existing .env file; if it is missing, create it from .env.example. Configure Docker-compatible Bedrock credentials without printing or exposing secrets. Build the app, prepare the demo data and policy index, and start it using the documented Compose workflow. Keep it bound to localhost and use fictional data. If credentials or Docker support are missing, stop and tell me what to configure. Report the chat and API docs URLs when it is running.
+>Clone this project from https://github.com/rafaself/atf-ai-engineer-challenge, then set it up and run it with Docker Compose. Read the README and Compose configuration first. Check that Docker Engine, Compose, and host networking are available (Docker Desktop 4.34+). Do not overwrite an existing .env file; if it is missing, create it from .env.example. Configure Docker-compatible Bedrock credentials without printing or exposing secrets. Run docker compose up --build --detach --wait app; the image prepares the demo data and policy index automatically. Keep it bound to localhost and use fictional data. If credentials or Docker support are missing, stop and tell me what to configure. Report the chat and API docs URLs when it is running.
 >
 
 > 
@@ -86,24 +86,18 @@ Run these commands from the repository root. Choose either option.
 **Using Make** (requires GNU Make):
 
 ```bash
-make build
-make prepare-data
-make prepare-policy
 make up
 ```
 
 **Using Docker Compose** (does not require Make):
 
 ```bash
-docker compose build app
-docker compose run --rm app python -m emporio_music.prepare
-docker compose run --rm app python -m emporio_music.prepare_policy_index --allow-download
-docker compose up --detach app
+docker compose up --build --detach --wait app
 ```
 
 Open the chat at [http://127.0.0.1:8000](http://127.0.0.1:8000). The API docs are at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs).
 
-Preparing the policy index downloads the embedding model; do this once for each new data volume. The demo has no authentication, so use fictional data. Stop the app with `make down` or `docker compose down`.
+The image build imports the supplied CSVs into SQLite and prepares the policy index with the pinned embedding model. Startup installs these ready snapshots into the volume before opening the API, including on a fresh volume. Each restart refreshes the catalog, orders and policies from the image; conversation history is preserved. No manual preparation or embedding-model download is needed at runtime. AWS credentials and Bedrock access are still required to chat; the container health check verifies HTTP readiness, not AWS authorization. The demo has no authentication, so use fictional data. Stop the app with `make down` or `docker compose down`.
 
 ## Technical Decisions
 

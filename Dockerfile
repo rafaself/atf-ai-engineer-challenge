@@ -28,7 +28,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     EMPORIO_MUSIC_DATA_DIR=/app/data \
     EMPORIO_MUSIC_FRONTEND_DIR=/app/apps/frontend/dist \
-    HF_HOME=/app/data/benchmark-cache/hf \
+    HF_HOME=/opt/emporio-music/hf \
     PATH=/app/.venv/bin:$PATH
 WORKDIR /app
 
@@ -41,15 +41,17 @@ RUN apt-get update \
 COPY --from=python-build /app/.venv/ /app/.venv/
 COPY --from=frontend-build /app/apps/frontend/dist/ /app/apps/frontend/dist/
 COPY scripts/ /app/scripts/
-COPY data/ /app/data/
+COPY data/ /opt/emporio-music/data/
 
-RUN mkdir -p /app/data/catalog /app/data/operations /app/data/conversations \
-        /app/data/policies/policy-indexes /app/data/policies/policy-benchmark-indexes \
-        /app/data/benchmark-cache/hf \
-    && chown -R app:app /app/data
+RUN mkdir -p /app/data /opt/emporio-music/hf \
+    && chown -R app:app /app/data /opt/emporio-music
 USER app
 
-RUN python -c "from pathlib import Path; import emporio_music; from emporio_music.paths import DATA_DIRECTORY; assert DATA_DIRECTORY == Path('/app/data'); assert Path(emporio_music.__file__).resolve().is_relative_to(Path('/app/.venv')); assert (DATA_DIRECTORY / 'catalog' / 'products.csv').is_file(); probe = DATA_DIRECTORY / '.container-path-smoke'; probe.write_text('ok', encoding='utf-8'); assert probe.read_text(encoding='utf-8') == 'ok'; probe.unlink()"
+# Prepare all supplied data and pinned local embeddings in the image. A fresh
+# runtime volume needs neither manual setup nor a model download.
+RUN EMPORIO_MUSIC_DATA_DIR=/opt/emporio-music/data python -m emporio_music.prepare \
+    && EMPORIO_MUSIC_DATA_DIR=/opt/emporio-music/data python -m emporio_music.prepare_policy_index --allow-download
 
 EXPOSE 8000
+ENTRYPOINT ["python", "-m", "emporio_music.container_start"]
 CMD ["uvicorn", "emporio_music_api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

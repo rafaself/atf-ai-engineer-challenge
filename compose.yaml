@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     environment:
-      HF_HOME: /app/data/benchmark-cache/hf
+      HF_HOME: /opt/emporio-music/hf
       EMPORIO_MUSIC_DATA_DIR: /app/data
       EMPORIO_MUSIC_FRONTEND_DIR: /app/apps/frontend/dist
     # Some VPN or firewall policies may block traffic through Docker bridge subnets.
@@ -23,6 +23,12 @@ services:
       - "8000"
     volumes:
       - app-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
 volumes:
   app-data:
