@@ -153,7 +153,7 @@ I chose React as the primary user interface because I believed it would provide 
 
 ### Chat History / Data Persistence
 
-
+I use simple SQLite persistence so conversations remain available across application restarts. The UI displays saved conversations and lets users reopen or delete them, providing continuity without additional infrastructure.
 
 ### Data Processing
 
