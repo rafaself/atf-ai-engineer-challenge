@@ -107,6 +107,8 @@ The project's shared core is the independently installable `emporio_music` packa
 
 I use Pydantic AI to orchestrate function (tool) calls. The model interprets the conversation and chooses from typed tools; application code handles exact pricing, product quotes and comparisons, customer-scoped order lookups, and deadline calculations against SQLite. This keeps business rules and data access in deterministic functions while the model focuses on understanding requests and writing responses.
 
+I chose Pydantic AI because typed tool contracts and explicit per-run context let me validate inputs and pass customer scope without building a custom orchestration framework.
+
 For store policies, the agent can call a read-only RAG tool. It searches a reviewed policy corpus indexed with local multilingual E5 embeddings and Chroma, then returns a bounded set of source-linked passages. I chose this as the long-term approach because it lets the agent retrieve relevant policy excerpts without placing the entire corpus in every prompt. As the policy collection grows, this keeps the retrieved context focused and lets policy updates flow through the reviewed corpus and index instead of expanding the system prompt. The index still needs to be rebuilt and checked when its sources change.
 
 I compared RAG with providing the full policy corpus in GPT-6 Luna's prompt across 12 paired conversations. The table summarizes the operational results; the comparison used arm-specific tool requirements.
@@ -123,6 +125,10 @@ I compared RAG with providing the full policy corpus in GPT-6 Luna's prompt acro
 | Missed required tool calls | 1 | 0 |
 
 In this small run, RAG used fewer input tokens and had lower estimated cost, while embedded policies had lower median latency and no missed required tool calls. The project owner also reviewed the paired conversations and agrees with the results; this small sample does not establish performance on other conversations. An earlier retrieval-only benchmark met none of its frozen target sets, so the current RAG implementation remains provisional. See the [full policy-context benchmark](docs/evaluations/policy-context/results.md), [comparison protocol](docs/evaluations/policy-context/protocol.md), and [policy retrieval guide](docs/guides/policy-retrieval.md).
+
+### Prompting Strategy
+
+I keep the store persona, business scope, evidence requirements and tool-use rules in shared agent instructions so the API and CLI follow the same guidance. The prompt directs the model to consult current data, preserve policy conditions and uncertainty, and politely redirect unrelated questions. Business calculations and customer isolation remain in application code because prompt instructions alone cannot guarantee correctness.
 
 ### Provider
 
@@ -149,7 +155,7 @@ These costs are benchmark estimates, not invoices. See the [full benchmark resul
 
 ### User Interface
 
-I chose React as the primary user interface because I believed it would provide a better experience for interacting with the agent. I also implemented a CLI for users who prefer working in the terminal.
+I chose React as the primary user interface because a chat view makes follow-up questions, streamed responses and saved conversations easy to access in one place. I also implemented a CLI for users who prefer working in the terminal and for direct interaction without an HTTP server.
 
 ### Chat History / Data Persistence
 
@@ -158,6 +164,8 @@ I use simple SQLite persistence so conversations remain available across applica
 ### Data Processing
 
 I prepared the supplied catalog and policy data so the agent can retrieve structured evidence and handle exact business calculations. Catalog ingestion validates records, normalizes product names for search, and converts prices to integer centavos. Policy processing organizes PDF sections and tables while preserving their source references. For holidays, I made the distinction between regular closures and possible special hours explicit. The manual does not specify hours for Natal, Black Friday, or the store anniversary, so the prepared policy preserves that uncertainty instead of inventing a schedule. The original CSV and PDF files remain unchanged.
+
+Validation catches malformed records before import, name normalization improves product matching, and integer centavos avoid floating-point rounding errors. Keeping the original files and policy references makes derived data and retrieved evidence traceable.
 
 ## Known limitations and evidence
 
