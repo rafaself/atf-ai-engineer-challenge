@@ -330,7 +330,7 @@ def test_fixed_customer_is_rechecked_after_snapshot_reimport(
         ("orders.csv", "order_id", "4"),
         ("order_items.csv", "order_id", "4"),
     ):
-        with (DATA / filename).open(newline="") as stream:
+        with (DATA / "operations" / filename).open(newline="") as stream:
             reader = csv.DictReader(stream)
             rows = [row for row in reader if row[field] != removed]
             columns = reader.fieldnames

@@ -14,6 +14,8 @@ from emporio_music.domain.chat import (
 )
 from emporio_music.domain.conversations import (
     ConversationSnapshot,
+    ConversationSummary,
+    ConversationTranscript,
     ExecutionContext,
     HistoryLimits,
 )
@@ -33,12 +35,13 @@ from emporio_music.ports.agent import (
 from emporio_music.ports.chat import (
     ChatStreamDelta,
     ChatStreamEvent,
+    ConversationHistoryPort,
     StreamingChatServicePort,
 )
 from emporio_music.ports.conversations import ConversationRepository
 
 
-class ChatService(StreamingChatServicePort):
+class ChatService(StreamingChatServicePort, ConversationHistoryPort):
     """Run one turn and commit it before returning success; retain no history cache."""
 
     def __init__(
@@ -60,6 +63,21 @@ class ChatService(StreamingChatServicePort):
         # Only active IDs are retained. Access is synchronous on the local server loop;
         # The demo supports one service instance/process; no cross-instance coordinator.
         self._active: set[UUID] = set()
+
+    def list_conversations(
+        self, identity: CustomerIdentity | None
+    ) -> tuple[ConversationSummary, ...]:
+        return self._conversations.list_for(identity)
+
+    def get_conversation(
+        self, session_id: UUID, identity: CustomerIdentity | None
+    ) -> ConversationTranscript:
+        return self._conversations.load_full(session_id, identity)
+
+    def delete_conversation(
+        self, session_id: UUID, identity: CustomerIdentity | None
+    ) -> None:
+        self._conversations.delete(session_id, identity)
 
     async def chat(
         self, request: ChatRequest, *, context: ExecutionContext

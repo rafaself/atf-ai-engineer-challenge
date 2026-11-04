@@ -15,6 +15,9 @@ from emporio_music.agent.catalog import ProductSearchTool
 from emporio_music.agent.executor import PydanticAgentExecutor
 from emporio_music.agent.orders import create_store_agent
 from emporio_music.agent.settings import AgentSettings
+from emporio_music.application.chat import ChatService
+from emporio_music.domain.chat import AgentResponse, ChatRequest
+from emporio_music.domain.conversations import ExecutionContext
 from emporio_music.domain.identity import CustomerIdentity
 from emporio_music.infrastructure.catalog_import import import_catalog
 from emporio_music.infrastructure.conversations import SQLiteConversationRepository
@@ -24,6 +27,7 @@ from emporio_music.infrastructure.sqlite_repository import (
 from emporio_music.ports.catalog import ProductRepository
 from emporio_music.ports.orders import OrderRepository
 from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from pydantic_ai.messages import (
     ModelMessage,
     ModelResponse,
@@ -33,7 +37,14 @@ from pydantic_ai.messages import (
 )
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 
-from tests._support import REPOSITORY_ROOT
+from tests._support import REPOSITORY_ROOT, run_async
+
+
+class _UnusedAgent:
+    async def run(
+        self, request: ChatRequest, *, context: ExecutionContext
+    ) -> AgentResponse:
+        raise AssertionError("History endpoints must not invoke the agent")
 
 
 def test_restart_followup_refresh_isolation_and_safe_diagnostics(
@@ -197,6 +208,105 @@ def test_restart_followup_refresh_isolation_and_safe_diagnostics(
     with sqlite3.connect(conversations) as connection:
         assert connection.execute("SELECT count(*) FROM sessions").fetchone()[0] == 3
         assert connection.execute("SELECT count(*) FROM turns").fetchone()[0] == 4
+
+
+def test_history_api_lists_loads_and_deletes_only_owned_sessions(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    fixed_demo_identity: CustomerIdentity,
+) -> None:
+    conversations_path = tmp_path / "conversations.sqlite3"
+    monkeypatch.setattr(paths, "CONVERSATION_DATABASE_PATH", conversations_path)
+    repository = SQLiteConversationRepository(conversations_path)
+    older = repository.create(fixed_demo_identity)
+    repository.append(older, user_message="Primeira", answer="Resposta 1")
+    repository.append(older, user_message="Continuação", answer="Resposta 2")
+    newer = repository.create(fixed_demo_identity)
+    repository.append(newer, user_message="Mais recente", answer="Resposta recente")
+    empty = repository.create(fixed_demo_identity)
+    foreign = repository.create(CustomerIdentity(customer_id=2))
+    repository.append(foreign, user_message="Alheia", answer="Privada")
+    service = ChatService(_UnusedAgent(), repository)
+
+    async def run_in_test_thread(function: Any, *args: Any, **kwargs: Any) -> Any:
+        return function(*args, **kwargs)
+
+    monkeypatch.setattr(api_app, "run_in_threadpool", run_in_test_thread)
+    test_app = api_app.create_app(chat_service=service)
+
+    async def fixed_chat_service_factory() -> Any:
+        return lambda: service
+
+    test_app.dependency_overrides[api_app.get_chat_service_factory] = (
+        fixed_chat_service_factory
+    )
+
+    async def exercise() -> None:
+        transport = ASGITransport(app=test_app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            listed = await client.get("/api/conversations")
+            assert listed.status_code == 200
+            assert listed.json() == [
+                {"session_id": str(newer.session_id), "title": "Mais recente"},
+                {"session_id": str(older.session_id), "title": "Primeira"},
+            ]
+
+            loaded = await client.get(f"/api/conversations/{older.session_id}")
+            assert loaded.status_code == 200
+            assert loaded.json() == {
+                "session_id": str(older.session_id),
+                "messages": [
+                    {"role": "user", "content": "Primeira"},
+                    {"role": "assistant", "content": "Resposta 1"},
+                    {"role": "user", "content": "Continuação"},
+                    {"role": "assistant", "content": "Resposta 2"},
+                ],
+            }
+
+            deleted = await client.delete(f"/api/conversations/{older.session_id}")
+            assert deleted.status_code == 204
+            listed_after_delete = await client.get("/api/conversations")
+            assert [item["session_id"] for item in listed_after_delete.json()] == [
+                str(newer.session_id)
+            ]
+
+            inaccessible = (
+                older.session_id,
+                foreign.session_id,
+                empty.session_id,
+                uuid4(),
+            )
+            responses = [
+                await client.get(f"/api/conversations/{session_id}")
+                for session_id in inaccessible
+            ]
+            assert [response.status_code for response in responses] == [404] * len(
+                inaccessible
+            )
+            assert all(
+                response.json() == {"detail": "Conversation session unavailable"}
+                for response in responses
+            )
+            delete_responses = [
+                await client.delete(f"/api/conversations/{foreign.session_id}"),
+                await client.delete(f"/api/conversations/{uuid4()}"),
+            ]
+            assert [response.status_code for response in delete_responses] == [404, 404]
+            assert all(
+                response.json() == {"detail": "Conversation session unavailable"}
+                for response in delete_responses
+            )
+            assert (
+                await client.get("/api/conversations/not-a-uuid")
+            ).status_code == 422
+            assert (
+                await client.delete("/api/conversations/not-a-uuid")
+            ).status_code == 422
+
+    run_async(exercise())
+    with sqlite3.connect(conversations_path) as connection:
+        assert connection.execute("SELECT count(*) FROM sessions").fetchone()[0] == 3
+        assert connection.execute("SELECT count(*) FROM turns").fetchone()[0] == 2
 
 
 @pytest.mark.parametrize(

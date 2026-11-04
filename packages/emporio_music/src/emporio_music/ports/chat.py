@@ -3,9 +3,15 @@
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from typing import Protocol
+from uuid import UUID
 
 from emporio_music.domain.chat import ChatRequest, ChatResponse
-from emporio_music.domain.conversations import ExecutionContext
+from emporio_music.domain.conversations import (
+    ConversationSummary,
+    ConversationTranscript,
+    ExecutionContext,
+)
+from emporio_music.domain.identity import CustomerIdentity
 
 
 class ChatServicePort(Protocol):
@@ -34,3 +40,19 @@ class StreamingChatServicePort(ChatServicePort, Protocol):
     ) -> AsyncGenerator[ChatStreamEvent, None]:
         """Yield deltas, then the authoritative committed response."""
         ...
+
+
+class ConversationHistoryPort(Protocol):
+    """Read and delete saved conversations for a trusted application identity."""
+
+    def list_conversations(
+        self, identity: CustomerIdentity | None
+    ) -> tuple[ConversationSummary, ...]: ...
+
+    def get_conversation(
+        self, session_id: UUID, identity: CustomerIdentity | None
+    ) -> ConversationTranscript: ...
+
+    def delete_conversation(
+        self, session_id: UUID, identity: CustomerIdentity | None
+    ) -> None: ...

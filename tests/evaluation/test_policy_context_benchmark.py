@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from emporio_music import paths
 
 from scripts.benchmark_support import Candidate
 from scripts.compare_policy_context import (
@@ -234,7 +235,15 @@ def test_tool_compliance_does_not_require_rag_policy_tool_in_embedded_arm() -> N
     assert metrics["by_arm"]["embedded"]["missing_required_tool_turns"] == []
 
 
-def test_current_comparison_inputs_exclude_retired_benchmarks() -> None:
+def test_current_comparison_inputs_exclude_retired_benchmarks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    catalog_database = tmp_path / "catalog.sqlite3"
+    operations_database = tmp_path / "operations.sqlite3"
+    catalog_database.touch()
+    operations_database.touch()
+    monkeypatch.setattr(paths, "CATALOG_DATABASE_PATH", catalog_database)
+    monkeypatch.setattr(paths, "OPERATIONS_DATABASE_PATH", operations_database)
     names = [path.as_posix() for path in input_paths()]
     assert not any("docs/examples/" in path for path in names)
     assert any(

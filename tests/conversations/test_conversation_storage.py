@@ -65,6 +65,71 @@ def test_restart_history_limits_and_private_database(tmp_path: Path) -> None:
     assert path.stat().st_mode & 0o077 == 0
 
 
+def test_history_lists_completed_sessions_by_recent_activity_and_loads_full_transcript(
+    conversations: SQLiteConversationRepository,
+) -> None:
+    owner = CustomerIdentity(customer_id=1)
+    stranger = CustomerIdentity(customer_id=2)
+    older = conversations.create(owner)
+    conversations.append(
+        older, user_message="Primeira pergunta", answer="Primeira resposta"
+    )
+    conversations.append(older, user_message="Acompanhamento", answer="Resposta final")
+    newer = conversations.create(owner)
+    conversations.append(newer, user_message="Outra conversa", answer="Outra resposta")
+    empty = conversations.create(owner)
+    foreign = conversations.create(stranger)
+    conversations.append(foreign, user_message="Privada", answer="Não mostrar")
+
+    items = conversations.list_for(owner)
+    assert [(item.session_id, item.title) for item in items] == [
+        (newer.session_id, "Outra conversa"),
+        (older.session_id, "Primeira pergunta"),
+    ]
+    transcript = conversations.load_full(older.session_id, owner)
+    assert transcript.session_id == older.session_id
+    assert [(message.role, message.content) for message in transcript.messages] == [
+        ("user", "Primeira pergunta"),
+        ("assistant", "Primeira resposta"),
+        ("user", "Acompanhamento"),
+        ("assistant", "Resposta final"),
+    ]
+    assert empty.session_id not in {item.session_id for item in items}
+
+    conversations.append(older, user_message="Retomada", answer="Última resposta")
+    assert [item.session_id for item in conversations.list_for(owner)] == [
+        older.session_id,
+        newer.session_id,
+    ]
+
+
+def test_delete_history_removes_only_the_owned_conversation(
+    conversations: SQLiteConversationRepository,
+) -> None:
+    owner = CustomerIdentity(customer_id=1)
+    other_owner = CustomerIdentity(customer_id=2)
+    first = conversations.create(owner)
+    second = conversations.create(owner)
+    foreign = conversations.create(other_owner)
+    for session, prompt in (
+        (first, "Excluir"),
+        (second, "Preservar"),
+        (foreign, "Outro cliente"),
+    ):
+        conversations.append(session, user_message=prompt, answer="Resposta")
+
+    conversations.delete(first.session_id, owner)
+
+    assert [item.session_id for item in conversations.list_for(owner)] == [
+        second.session_id
+    ]
+    assert [item.session_id for item in conversations.list_for(other_owner)] == [
+        foreign.session_id
+    ]
+    with pytest.raises(SessionAccessError):
+        conversations.load_full(first.session_id, owner)
+
+
 @pytest.mark.parametrize("owner_id,stranger_id", [(1, 2), (1, None), (None, 1)])
 def test_foreign_and_unknown_sessions_never_expose_or_append_history(
     tmp_path: Path,

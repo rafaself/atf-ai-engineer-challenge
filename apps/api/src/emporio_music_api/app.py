@@ -7,7 +7,7 @@ from functools import lru_cache
 from threading import Lock
 from time import perf_counter
 from typing import Annotated, cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from emporio_music.composition import (
     build_chat_service as compose_chat_service,
@@ -19,6 +19,8 @@ from emporio_music.composition import (
 from emporio_music.diagnostics import failure, request_id, trace
 from emporio_music.domain.chat import ChatRequest, ChatResponse
 from emporio_music.domain.conversations import (
+    ConversationSummary,
+    ConversationTranscript,
     ExecutionContext,
 )
 from emporio_music.domain.errors import ApplicationError
@@ -27,11 +29,12 @@ from emporio_music.infrastructure.sqlite_orders import SQLiteOrderRepository
 from emporio_music.ports.chat import (
     ChatServicePort,
     ChatStreamDelta,
+    ConversationHistoryPort,
     StreamingChatServicePort,
 )
 from fastapi import Body, Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -235,6 +238,48 @@ def create_app(chat_service: ChatServicePort | None = None) -> FastAPI:
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )
+
+    @app.get("/api/conversations", response_model=list[ConversationSummary])
+    async def list_conversations(
+        chat_service_factory: Annotated[
+            ChatServiceFactory, Depends(get_chat_service_factory)
+        ],
+    ) -> list[ConversationSummary]:
+        identity = await run_in_threadpool(fixed_demo_identity)
+        service = cast(
+            ConversationHistoryPort,
+            await run_in_threadpool(chat_service_factory),
+        )
+        return list(await run_in_threadpool(service.list_conversations, identity))
+
+    @app.get("/api/conversations/{session_id}", response_model=ConversationTranscript)
+    async def get_conversation(
+        session_id: UUID,
+        chat_service_factory: Annotated[
+            ChatServiceFactory, Depends(get_chat_service_factory)
+        ],
+    ) -> ConversationTranscript:
+        identity = await run_in_threadpool(fixed_demo_identity)
+        service = cast(
+            ConversationHistoryPort,
+            await run_in_threadpool(chat_service_factory),
+        )
+        return await run_in_threadpool(service.get_conversation, session_id, identity)
+
+    @app.delete("/api/conversations/{session_id}", status_code=204)
+    async def delete_conversation(
+        session_id: UUID,
+        chat_service_factory: Annotated[
+            ChatServiceFactory, Depends(get_chat_service_factory)
+        ],
+    ) -> Response:
+        identity = await run_in_threadpool(fixed_demo_identity)
+        service = cast(
+            ConversationHistoryPort,
+            await run_in_threadpool(chat_service_factory),
+        )
+        await run_in_threadpool(service.delete_conversation, session_id, identity)
+        return Response(status_code=204)
 
     frontend_index = api_paths.FRONTEND_DIRECTORY / "index.html"
     frontend_assets = api_paths.FRONTEND_DIRECTORY / "assets"

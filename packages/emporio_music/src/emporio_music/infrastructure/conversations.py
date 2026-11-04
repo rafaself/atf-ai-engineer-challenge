@@ -13,6 +13,8 @@ from emporio_music.domain.conversations import (
     ConversationMessage,
     ConversationSession,
     ConversationSnapshot,
+    ConversationSummary,
+    ConversationTranscript,
     ExecutionContext,
     HistoryLimits,
 )
@@ -115,6 +117,38 @@ class SQLiteConversationRepository:
             ) from exc
         return session
 
+    def list_for(
+        self, identity: CustomerIdentity | None
+    ) -> tuple[ConversationSummary, ...]:
+        """List completed sessions by most recent persisted turn."""
+        if identity is not None:
+            identity = CustomerIdentity.model_validate(identity)
+        try:
+            with closing(self._connect()) as connection:
+                rows = connection.execute(
+                    "SELECT s.session_id, "
+                    "(SELECT t.user_message FROM turns AS t "
+                    " WHERE t.session_id = s.session_id ORDER BY t.sequence LIMIT 1) "
+                    "FROM sessions AS s "
+                    "WHERE s.customer_id IS ? "
+                    "AND EXISTS (SELECT 1 FROM turns AS t "
+                    " WHERE t.session_id = s.session_id) "
+                    "ORDER BY (SELECT max(t.rowid) FROM turns AS t "
+                    " WHERE t.session_id = s.session_id) DESC",
+                    (identity.customer_id if identity else None,),
+                ).fetchall()
+                return tuple(
+                    ConversationSummary(
+                        session_id=UUID(session_id),
+                        title=title,
+                    )
+                    for session_id, title in rows
+                )
+        except (sqlite3.Error, ValidationError, ValueError) as exc:
+            raise ConversationPersistenceError(
+                "Conversation history could not be listed"
+            ) from exc
+
     def load(
         self,
         session_id: UUID,
@@ -163,6 +197,70 @@ class SQLiteConversationRepository:
         except (sqlite3.Error, ValidationError, ValueError) as exc:
             raise ConversationPersistenceError(
                 "Conversation history could not be loaded"
+            ) from exc
+
+    def load_full(
+        self, session_id: UUID, identity: CustomerIdentity | None
+    ) -> ConversationTranscript:
+        """Load every completed turn for an owned history view."""
+        if identity is not None:
+            identity = CustomerIdentity.model_validate(identity)
+        try:
+            with closing(self._connect()) as connection:
+                connection.execute("BEGIN")
+                row = connection.execute(
+                    "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id IS ?",
+                    (str(session_id), identity.customer_id if identity else None),
+                ).fetchone()
+                if row is None:
+                    raise SessionAccessError("Conversation session is inaccessible")
+                rows = connection.execute(
+                    "SELECT user_message, answer FROM turns "
+                    "WHERE session_id = ? ORDER BY sequence",
+                    (str(session_id),),
+                ).fetchall()
+                if not rows:
+                    raise SessionAccessError("Conversation session is inaccessible")
+                messages = tuple(
+                    message
+                    for user_message, answer in rows
+                    for message in (
+                        ConversationMessage(role="user", content=user_message),
+                        ConversationMessage(role="assistant", content=answer),
+                    )
+                )
+                return ConversationTranscript(
+                    session_id=session_id,
+                    messages=messages,
+                )
+        except (sqlite3.Error, ValidationError, ValueError) as exc:
+            raise ConversationPersistenceError(
+                "Conversation history could not be loaded"
+            ) from exc
+
+    def delete(self, session_id: UUID, identity: CustomerIdentity | None) -> None:
+        """Permanently remove an owned session and its completed turns."""
+        if identity is not None:
+            identity = CustomerIdentity.model_validate(identity)
+        try:
+            with closing(self._connect()) as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                row = connection.execute(
+                    "SELECT 1 FROM sessions WHERE session_id = ? AND customer_id IS ?",
+                    (str(session_id), identity.customer_id if identity else None),
+                ).fetchone()
+                if row is None:
+                    raise SessionAccessError("Conversation session is inaccessible")
+                connection.execute(
+                    "DELETE FROM turns WHERE session_id = ?", (str(session_id),)
+                )
+                connection.execute(
+                    "DELETE FROM sessions WHERE session_id = ?", (str(session_id),)
+                )
+                connection.commit()
+        except sqlite3.Error as exc:
+            raise ConversationPersistenceError(
+                "Conversation could not be deleted"
             ) from exc
 
     def append(

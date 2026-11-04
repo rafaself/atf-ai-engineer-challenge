@@ -3,7 +3,11 @@ import ReactMarkdown from "react-markdown";
 import type { Element, Root, Text } from "hast";
 import type { Parent } from "unist";
 import type { Plugin } from "unified";
-import { ChatClientError, type ChatClient } from "../services/chatClient";
+import {
+  ChatClientError,
+  type ChatClient,
+  type ConversationSummary,
+} from "../services/chatClient";
 import { ChatScrollFollower } from "./chatScroll";
 import { Icon } from "./Icon";
 
@@ -94,6 +98,11 @@ export function ChatWidget({ client }: ChatWidgetProps) {
   const [isSending, setIsSending] = useState(false);
   const [requiresNewConversation, setRequiresNewConversation] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState<ConversationSummary[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [historyBusySession, setHistoryBusySession] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [isFollowingOutput, setIsFollowingOutput] = useState(true);
   const messageInputRef = useRef<HTMLInputElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -251,6 +260,80 @@ export function ChatWidget({ client }: ChatWidgetProps) {
     messageInputRef.current?.focus({ preventScroll: true });
   }
 
+  async function openHistory() {
+    if (isSending) {
+      return;
+    }
+    setIsHistoryOpen(true);
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      setHistoryItems(await client.listConversations());
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Não foi possível carregar o histórico.");
+    } finally {
+      setIsHistoryLoading(false);
+    }
+  }
+
+  async function restoreConversation(sessionId: string) {
+    if (isSending || historyBusySession) {
+      return;
+    }
+    setHistoryBusySession(sessionId);
+    setHistoryError(null);
+    try {
+      const transcript = await client.getConversation(sessionId);
+      const restoredMessages: Message[] = transcript.messages.map((message, index) => ({
+        id: index + 1,
+        role: message.role,
+        text: message.content,
+        status: "complete",
+      }));
+      nextMessageId.current = restoredMessages.length + 1;
+      sessionIdRef.current = transcript.session_id;
+      setMessages(restoredMessages);
+      setRequiresNewConversation(false);
+      setRequestError(null);
+      setDraft("");
+      setIsHistoryOpen(false);
+      messageInputRef.current?.focus({ preventScroll: true });
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Não foi possível abrir esta conversa.");
+    } finally {
+      setHistoryBusySession(null);
+    }
+  }
+
+  async function deleteConversation(item: ConversationSummary) {
+    if (isSending || historyBusySession) {
+      return;
+    }
+    const confirmed = window.confirm(
+      `Excluir permanentemente a conversa “${item.title}”? Esta ação não pode ser desfeita.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+    setHistoryBusySession(item.session_id);
+    setHistoryError(null);
+    try {
+      await client.deleteConversation(item.session_id);
+      setHistoryItems((current) => current.filter((conversation) => conversation.session_id !== item.session_id));
+      if (sessionIdRef.current === item.session_id) {
+        sessionIdRef.current = null;
+        setMessages([]);
+        setRequiresNewConversation(false);
+        setRequestError(null);
+        setDraft("");
+      }
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Não foi possível excluir esta conversa.");
+    } finally {
+      setHistoryBusySession(null);
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void sendMessage(draft);
@@ -269,6 +352,15 @@ export function ChatWidget({ client }: ChatWidgetProps) {
             <p>Assistente virtual</p>
           </div>
           <div className="chat-header__actions">
+            <button
+              className="history-button"
+              disabled={isSending}
+              onClick={() => void openHistory()}
+              type="button"
+            >
+              <Icon name="history" size={16} />
+              <span>Histórico</span>
+            </button>
             <button
               aria-label="Iniciar nova conversa"
               className="icon-button"
@@ -357,6 +449,60 @@ export function ChatWidget({ client }: ChatWidgetProps) {
             </button>
           )}
         </div>
+
+        {isHistoryOpen && (
+          <section
+            aria-labelledby="history-title"
+            aria-modal="true"
+            className="history-overlay"
+            role="dialog"
+          >
+            <header className="history-overlay__header">
+              <div>
+                <h3 id="history-title">Histórico</h3>
+                <p>Suas conversas salvas</p>
+              </div>
+              <button
+                aria-label="Fechar histórico"
+                className="history-close-button"
+                onClick={() => setIsHistoryOpen(false)}
+                type="button"
+              >
+                <Icon name="close" size={18} />
+              </button>
+            </header>
+            <div className="history-list" aria-live="polite">
+              {isHistoryLoading && <p className="history-state">Carregando conversas...</p>}
+              {historyError && <p className="history-state history-state--error" role="alert">{historyError}</p>}
+              {!isHistoryLoading && !historyError && historyItems.length === 0 && (
+                <p className="history-state">Nenhuma conversa salva ainda.</p>
+              )}
+              {!isHistoryLoading && historyItems.map((item) => (
+                <article className="history-item" key={item.session_id}>
+                  <button
+                    className="history-item__open"
+                    disabled={isSending || historyBusySession !== null}
+                    onClick={() => void restoreConversation(item.session_id)}
+                    type="button"
+                  >
+                    <span>{item.title}</span>
+                    {historyBusySession === item.session_id && <small>Carregando...</small>}
+                  </button>
+                  <button
+                    aria-label={`Excluir conversa: ${item.title}`}
+                    className="history-item__delete"
+                    disabled={isSending || historyBusySession !== null}
+                    onClick={() => void deleteConversation(item)}
+                    title="Excluir conversa"
+                    type="button"
+                  >
+                    <Icon name="trash" size={17} />
+                  </button>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
 
         <form className="chat-composer" onSubmit={handleSubmit}>
           <label className="sr-only" htmlFor="chat-message">Sua mensagem</label>

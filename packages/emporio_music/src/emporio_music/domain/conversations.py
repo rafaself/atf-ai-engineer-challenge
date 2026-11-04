@@ -63,3 +63,30 @@ class ConversationSnapshot(ContractModel):
             identity=self.session.owner, session=self.session, history=self.history
         )
         return self
+
+
+class ConversationSummary(ContractModel):
+    """A saved conversation title for the history list."""
+
+    session_id: UUID4
+    title: NonblankText
+
+
+class ConversationTranscript(ContractModel):
+    """The complete user/assistant transcript shown when history is reopened."""
+
+    session_id: UUID4
+    messages: tuple[ConversationMessage, ...]
+
+    @model_validator(mode="after")
+    def validate_complete_turns(self) -> Self:
+        if (
+            len(self.messages) == 0
+            or len(self.messages) % 2
+            or any(
+                message.role != ("user" if index % 2 == 0 else "assistant")
+                for index, message in enumerate(self.messages)
+            )
+        ):
+            raise ValueError("Transcript must contain complete user/assistant turns")
+        return self
